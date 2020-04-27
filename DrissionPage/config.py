@@ -10,17 +10,17 @@ Path(global_tmp_path).mkdir(parents=True, exist_ok=True)
 
 global_driver_options = {
     # ---------------已打开的浏览器---------------
-    # 'debuggerAddress': '127.0.0.1:9222',
+    'debuggerAddress': '127.0.0.1:9222',
     # ---------------chromedriver路径---------------
     'chromedriver_path': r'D:\python\Google Chrome\Chrome\chromedriver.exe',
     # ---------------手动指定使用的浏览器位置---------------
     # 'binary_location': r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
     # ---------------启动参数---------------
     'arguments': [
-        '--headless',  # 隐藏浏览器窗口
+        # '--headless',  # 隐藏浏览器窗口
         '--mute-audio',  # 静音
         '--no-sandbox',
-        '--blink-settings=imagesEnabled=false',  # 不加载图片
+        # '--blink-settings=imagesEnabled=false',  # 不加载图片
         # r'--user-data-dir="E:\tmp\chrome_tmp"',  # 指定用户文件夹路径
         # '-–disk-cache-dir=""',  # 指定缓存路径
         'zh_CN.UTF-8',  # 编码格式

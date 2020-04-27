@@ -12,9 +12,9 @@ from requests_html import Element, HTMLSession
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from DrissionPage.drission import Drission
-from DrissionPage.driver_page import DriverPage
-from DrissionPage.session_page import SessionPage
+from .drission import Drission
+from .driver_page import DriverPage
+from .session_page import SessionPage
 
 
 class Null(object):
@@ -182,6 +182,18 @@ class MixPage(Null, SessionPage, DriverPage):
             return super().find_all(loc, show_errmsg)
         elif self._mode == 'd':
             return super(SessionPage, self).find_all(loc, timeout=timeout, show_errmsg=show_errmsg)
+
+    def search(self, value: str, mode: str = None, timeout: float = 10):
+        if self._mode == 's':
+            return super().search(value, mode=mode)
+        elif self._mode == 'd':
+            return super(SessionPage, self).search(value, mode=mode, timeout=timeout)
+
+    def search_all(self, value: str, timeout: float = 10):
+        if self._mode == 's':
+            return super().search_all(value)
+        elif self._mode == 'd':
+            return super(SessionPage, self).search_all(value, timeout=timeout)
 
     def get_attr(self, loc_or_ele: Union[WebElement, Element, tuple], attr: str) -> str:
         """获取元素属性值"""

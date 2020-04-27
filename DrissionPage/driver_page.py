@@ -95,7 +95,6 @@ class DriverPage(object):
             elif mode == 'visible':
                 msg = '元素不可见或不存在'
                 ele = wait.until(EC.visibility_of_element_located(loc))
-            # print(loc,ele)
             return ele
         except:
             if show_errmsg:
@@ -104,6 +103,25 @@ class DriverPage(object):
     def find_all(self, loc: tuple, timeout: float = 10, show_errmsg=True) -> list:
         """查找符合条件的所有元素"""
         return self.find(loc, mode='all', timeout=timeout, show_errmsg=show_errmsg)
+
+    def search(self, value: str, mode: str = None, timeout: float = 10):
+        mode = mode if mode else 'single'
+        if mode not in ['single', 'all']:
+            raise ValueError("mode须在'single', 'all'中选择")
+        ele = []
+        try:
+            loc = 'xpath', f'//*[contains(text(),"{value}")]'
+            wait = WebDriverWait(self.driver, timeout=timeout)
+            if mode == 'single':
+                ele = wait.until(EC.presence_of_element_located(loc))
+            elif mode == 'all':
+                ele = wait.until(EC.presence_of_all_elements_located(loc))
+            return ele
+        except:
+            return ele
+
+    def search_all(self, value: str, timeout: float = 10):
+        return self.search(value, mode='all', timeout=timeout)
 
     def get_attr(self, loc_or_ele: Union[WebElement, tuple], attr: str) -> str:
         """获取元素属性"""

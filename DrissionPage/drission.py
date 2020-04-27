@@ -12,7 +12,7 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
 
-from DrissionPage.config import global_driver_options, global_session_options
+from .config import global_driver_options, global_session_options
 
 
 def _get_chrome_options(options: dict) -> Options:

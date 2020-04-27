@@ -11,7 +11,7 @@ from urllib import parse
 
 from requests_html import Element, HTMLSession, HTMLResponse
 
-from DrissionPage.config import global_session_options
+from .config import global_session_options
 
 
 def _translate_loc(loc):
@@ -114,6 +114,23 @@ class SessionPage(object):
     def find_all(self, loc: tuple, show_errmsg: bool = True) -> list:
         """查找符合条件的所有元素"""
         return self.find(loc, mode='all', show_errmsg=True)
+
+    def search(self, value: str, mode: str = None):
+        mode = mode if mode else 'single'
+        if mode not in ['single', 'all']:
+            raise ValueError("mode须在'single', 'all'中选择")
+        try:
+            if mode == 'single':
+                ele = self.response.html.xpath(f'.//*[contains(text(),"{value}")]', first=True)
+                return ele
+            elif mode == 'all':
+                eles = self.response.html.xpath(f'.//*[contains(text(),"{value}")]')
+                return eles
+        except:
+            return None
+
+    def search_all(self, value: str):
+        return self.search(value, mode='all')
 
     def _get_ele(self, loc_or_ele: Union[Element, tuple]) -> Element:
         """获取loc或元素实例，返回元素实例"""
