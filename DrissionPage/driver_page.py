@@ -104,7 +104,13 @@ class DriverPage(object):
         """查找符合条件的所有元素"""
         return self.find(loc, mode='all', timeout=timeout, show_errmsg=show_errmsg)
 
-    def search(self, value: str, mode: str = None, timeout: float = 10):
+    def search(self, value: str, mode: str = None, timeout: float = 10) -> Union[WebElement, list, None]:
+        """根据内容搜索元素
+        :param value: 搜索内容
+        :param mode: 可选'single','all'
+        :param timeout: 超时时间
+        :return: 页面元素对象
+        """
         mode = mode if mode else 'single'
         if mode not in ['single', 'all']:
             raise ValueError("mode须在'single', 'all'中选择")
@@ -118,9 +124,13 @@ class DriverPage(object):
                 ele = wait.until(EC.presence_of_all_elements_located(loc))
             return ele
         except:
-            return ele
+            if mode == 'single':
+                return None
+            elif mode == 'all':
+                return []
 
-    def search_all(self, value: str, timeout: float = 10):
+    def search_all(self, value: str, timeout: float = 10) -> list:
+        """根据内容搜索元素"""
         return self.search(value, mode='all', timeout=timeout)
 
     def get_attr(self, loc_or_ele: Union[WebElement, tuple], attr: str) -> str:

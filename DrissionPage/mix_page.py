@@ -183,13 +183,20 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).find_all(loc, timeout=timeout, show_errmsg=show_errmsg)
 
-    def search(self, value: str, mode: str = None, timeout: float = 10):
+    def search(self, value: str, mode: str = None, timeout: float = 10) -> Union[WebElement, Element, None]:
+        """根据内容搜索元素
+        :param value: 搜索内容
+        :param mode: 可选'single','all'
+        :param timeout: 超时时间
+        :return: 页面元素对象，s模式下返回Element，d模式下返回WebElement
+        """
         if self._mode == 's':
             return super().search(value, mode=mode)
         elif self._mode == 'd':
             return super(SessionPage, self).search(value, mode=mode, timeout=timeout)
 
-    def search_all(self, value: str, timeout: float = 10):
+    def search_all(self, value: str, timeout: float = 10) -> list:
+        """根据内容搜索元素"""
         if self._mode == 's':
             return super().search_all(value)
         elif self._mode == 'd':

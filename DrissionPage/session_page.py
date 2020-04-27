@@ -115,7 +115,12 @@ class SessionPage(object):
         """查找符合条件的所有元素"""
         return self.find(loc, mode='all', show_errmsg=True)
 
-    def search(self, value: str, mode: str = None):
+    def search(self, value: str, mode: str = None) -> Union[Element, list, None]:
+        """根据内容搜索元素
+        :param value: 搜索内容
+        :param mode: 可选'single','all'
+        :return: 页面元素对象
+        """
         mode = mode if mode else 'single'
         if mode not in ['single', 'all']:
             raise ValueError("mode须在'single', 'all'中选择")
@@ -127,9 +132,10 @@ class SessionPage(object):
                 eles = self.response.html.xpath(f'.//*[contains(text(),"{value}")]')
                 return eles
         except:
-            return None
+            return
 
-    def search_all(self, value: str):
+    def search_all(self, value: str) -> list:
+        """根据内容搜索元素"""
         return self.search(value, mode='all')
 
     def _get_ele(self, loc_or_ele: Union[Element, tuple]) -> Element:
