@@ -4,54 +4,27 @@
 @Contact :   g1879@qq.com
 @File    :   session_page.py
 """
-import re
-from html import unescape
-from typing import Union
+import os
+from pathlib import Path
+from random import random
+from time import time
+from typing import Union, List
 from urllib import parse
 
-from requests_html import Element, HTMLSession, HTMLResponse
+from requests_html import HTMLSession, HTMLResponse
 
-from .config import global_session_options
-
-
-def _translate_loc(loc):
-    """把By类型转为xpath或css selector"""
-    loc_by = loc_str = None
-    if loc[0] == 'xpath':
-        loc_by = 'xpath'
-        loc_str = loc[1]
-    elif loc[0] == 'css selector':
-        loc_by = 'css selector'
-        loc_str = loc[1]
-    elif loc[0] == 'id':
-        loc_by = 'css selector'
-        loc_str = f'#{loc[1]}'
-    elif loc[0] == 'class name':
-        loc_by = 'xpath'
-        loc_str = f'//*[@class="{loc[1]}"]'
-    elif loc[0] == 'link text':
-        loc_by = 'xpath'
-        loc_str = f'//a[text()="{loc[1]}"]'
-    elif loc[0] == 'name':
-        loc_by = 'css selector'
-        loc_str = f'[name={loc[1]}]'
-    elif loc[0] == 'tag name':
-        loc_by = 'css selector'
-        loc_str = loc[1]
-    elif loc[0] == 'partial link text':
-        loc_by = 'xpath'
-        loc_str = f'//a[contains(text(),"{loc[1]}")]'
-    return loc_by, loc_str
+from .common import get_loc_from_str, translate_loc_to_xpath, avoid_duplicate_name
+from .config import OptionsManager
+from .session_element import SessionElement, execute_session_find
 
 
 class SessionPage(object):
-    """SessionPage封装了页面操作的常用功能，使用requests_html来获取、解析网页。
-    """
+    """SessionPage封装了页面操作的常用功能，使用requests_html来获取、解析网页。"""
 
-    def __init__(self, session: HTMLSession, locs=None):
+    def __init__(self, session: HTMLSession):
         """初始化函数"""
         self._session = session
-        self._locs = locs
+        # self._locs = locs
         self._url = None
         self._url_available = None
         self._response = None
@@ -79,118 +52,48 @@ class SessionPage(object):
         """当前session的cookies"""
         return self.session.cookies.get_dict()
 
-    def get_title(self) -> str:
+    @property
+    def title(self) -> str:
         """获取网页title"""
-        return self.get_text(('css selector', 'title'))
+        return self.ele(('css selector', 'title')).text
 
-    def find(self, loc: tuple, mode: str = None, show_errmsg: bool = True) -> Union[Element, list]:
+    @property
+    def html(self) -> str:
+        """获取元素innerHTML，如未指定元素则获取所有源代码"""
+        return self.response.html.html
+
+    def ele(self, loc_or_ele: Union[tuple, str, SessionElement], mode: str = None, show_errmsg: bool = False) \
+            -> Union[SessionElement, List[SessionElement], None]:
         """查找一个元素
-        :param loc: 页面元素地址
+        :param loc_or_ele: 页面元素地址
         :param mode: 以某种方式查找元素，可选'single','all'
         :param show_errmsg: 是否显示错误信息
         :return: 页面元素对象或列表
         """
-        mode = mode if mode else 'single'
-        if mode not in ['single', 'all']:
-            raise ValueError("mode须在'single', 'all'中选择")
-        loc_by, loc_str = _translate_loc(loc)
-        msg = first = None
-        try:
-            if mode == 'single':
-                msg = '未找到元素'
-                first = True
-            elif mode == 'all':
-                msg = '未找到元素s'
-                first = False
-            if loc_by == 'xpath':
-                return self.response.html.xpath(loc_str, first=first, _encoding='utf-8')
-            else:
-                return self.response.html.find(loc_str, first=first, _encoding='utf-8')
-        except:
-            if show_errmsg:
-                print(msg, loc)
-                raise
+        if isinstance(loc_or_ele, SessionElement):
+            return loc_or_ele
+        elif isinstance(loc_or_ele, str):
+            loc = get_loc_from_str(loc_or_ele)
+        else:
+            loc = translate_loc_to_xpath(loc_or_ele)
 
-    def find_all(self, loc: tuple, show_errmsg: bool = True) -> list:
+        return execute_session_find(self.response.html, loc, mode, show_errmsg)
+
+    def eles(self, loc: Union[tuple, str], show_errmsg: bool = False) -> List[SessionElement]:
         """查找符合条件的所有元素"""
-        return self.find(loc, mode='all', show_errmsg=True)
-
-    def search(self, value: str, mode: str = None) -> Union[Element, list, None]:
-        """根据内容搜索元素
-        :param value: 搜索内容
-        :param mode: 可选'single','all'
-        :return: 页面元素对象
-        """
-        mode = mode if mode else 'single'
-        if mode not in ['single', 'all']:
-            raise ValueError("mode须在'single', 'all'中选择")
-        try:
-            if mode == 'single':
-                ele = self.response.html.xpath(f'.//*[contains(text(),"{value}")]', first=True)
-                return ele
-            elif mode == 'all':
-                eles = self.response.html.xpath(f'.//*[contains(text(),"{value}")]')
-                return eles
-        except:
-            return
-
-    def search_all(self, value: str) -> list:
-        """根据内容搜索元素"""
-        return self.search(value, mode='all')
-
-    def _get_ele(self, loc_or_ele: Union[Element, tuple]) -> Element:
-        """获取loc或元素实例，返回元素实例"""
-        # ======================================
-        # ** 必须与DriverPage类中同名函数保持一致 **
-        # ======================================
-        if isinstance(loc_or_ele, tuple):
-            return self.find(loc_or_ele)
-        return loc_or_ele
-
-    def get_attr(self, loc_or_ele: Union[Element, tuple], attr: str) -> str:
-        """获取元素属性"""
-        ele = self._get_ele(loc_or_ele)
-        try:
-            if attr == 'href':
-                # 如直接获取attr只能获取相对地址
-                for link in ele.absolute_links:
-                    return link
-            elif attr == 'class':
-                class_str = ''
-                for key, i in enumerate(ele.attrs['class']):
-                    class_str += ' ' if key > 0 else ''
-                    class_str += i
-                return class_str
-            else:
-                return ele.attrs[attr]
-        except:
-            return ''
-
-    def get_html(self, loc_or_ele: Union[Element, tuple] = None) -> str:
-        """获取元素innerHTML，如未指定元素则获取所有源代码"""
-        if not loc_or_ele:
-            return self.response.html.html
-        ele = self._get_ele(loc_or_ele)
-        re_str = r'<.*?>(.*)</.*?>'
-        html = unescape(ele.html).replace('\xa0', ' ')
-        r = re.match(re_str, html, flags=re.DOTALL)
-        return r.group(1)
-
-    def get_text(self, loc_or_ele: Union[Element, tuple]) -> str:
-        """获取innerText"""
-        ele = self._get_ele(loc_or_ele)
-        return unescape(ele.text).replace('\xa0', ' ')
+        return self.ele(loc, mode='all', show_errmsg=True)
 
     def get(self, url: str, params: dict = None, go_anyway: bool = False, **kwargs) -> Union[bool, None]:
         """用get方式跳转到url，调用_make_response()函数生成response对象"""
         to_url = f'{url}?{parse.urlencode(params)}' if params else url
         if not url or (not go_anyway and self.url == to_url):
             return
-        self._response = self._make_response(to_url, **kwargs)[0]
-        self._url_available = self._response
+        self._url = url
+        self._response = self._make_response(to_url, **kwargs)
+        if self._response:
+            self._response.html.encoding = self._response.encoding  # 修复requests_html丢失编码方式的bug
+        self._url_available = True if self._response and self._response.status_code == 200 else False
         return self._url_available
-
-    # ------------以下为独占函数--------------
 
     def post(self, url: str, params: dict = None, data: dict = None, go_anyway: bool = False, **kwargs) \
             -> Union[bool, None]:
@@ -198,11 +101,75 @@ class SessionPage(object):
         to_url = f'{url}?{parse.urlencode(params)}' if params else url
         if not url or (not go_anyway and self._url == to_url):
             return
-        self._response = self._make_response(to_url, mode='post', data=data, **kwargs)[0]
-        self._url_available = self._response
+        self._url = url
+        self._response = self._make_response(to_url, mode='post', data=data, **kwargs)
+        if self._response:
+            self._response.html.encoding = self._response.encoding  # 修复requests_html丢失编码方式的bug
+        self._url_available = True if self._response and self._response.status_code == 200 else False
         return self._url_available
 
-    def _make_response(self, url: str, mode: str = 'get', data: dict = None, **kwargs) -> tuple:
+    def download(self, file_url: str, goal_path: str = None, rename: str = None, **kwargs) -> tuple:
+        """下载一个文件，生成的response不写入self._response，是临时的"""
+        goal_path = goal_path or OptionsManager().get_value('paths', 'global_tmp_path')
+        if not goal_path:
+            raise IOError('No path specified.')
+
+        kwargs['stream'] = True
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = 20
+
+        r = self._make_response(file_url, mode='get', **kwargs)
+        if not r:
+            print('Invalid link')
+            return False, 'Invalid link'
+        # -------------------获取文件名-------------------
+        # header里有文件名，则使用它，否则在url里截取，但不能保证url包含文件名
+        if 'Content-disposition' in r.headers:
+            file_name = r.headers['Content-disposition'].split('"')[1].encode('ISO-8859-1').decode('utf-8')
+        elif os.path.basename(file_url):
+            file_name = os.path.basename(file_url).split("?")[0]
+        else:
+            file_name = f'untitled_{time()}_{random.randint(0, 100)}'
+        file_full_name = rename or file_name
+        # 避免和现有文件重名
+        file_full_name = avoid_duplicate_name(goal_path, file_full_name)
+        # 打印要下载的文件
+        print_txt = file_full_name if file_name == file_full_name else f'{file_name} -> {file_full_name}'
+        print(print_txt)
+        # -------------------开始下载-------------------
+        # 获取远程文件大小
+        file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else None
+        # 已下载文件大小和下载状态
+        downloaded_size, download_status = 0, False
+        # 完整的存放路径
+        full_path = Path(f'{goal_path}\\{file_full_name}')
+        try:
+            with open(str(full_path), 'wb') as tmpFile:
+                print(f'Downloading to: {goal_path}')
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        tmpFile.write(chunk)
+                        # 如表头有返回文件大小，显示进度
+                        if file_size:
+                            downloaded_size += 1024
+                            rate = downloaded_size / file_size if downloaded_size < file_size else 1
+                            print('\r {:.0%} '.format(rate), end="")
+        except Exception as e:
+            download_status, info = False, f'Download failed.\n{e}'
+            raise
+        else:
+            download_status, info = (False, 'File size is 0.') if full_path.stat().st_size == 0 else (True, 'Success.')
+        finally:
+            # 删除下载出错文件
+            if not download_status and full_path.exists():
+                full_path.unlink()
+            r.close()
+        # -------------------显示并返回值-------------------
+        print(info, '\n')
+        info = file_full_name if download_status else info
+        return download_status, info
+
+    def _make_response(self, url: str, mode: str = 'get', data: dict = None, **kwargs) -> Union[HTMLResponse, bool]:
         """生成response对象。接收mode参数，以决定用什么方式。
         :param url: 要访问的网址
         :param mode: 'get','post'中选择
@@ -211,14 +178,17 @@ class SessionPage(object):
         :return: Response对象
         """
         if mode not in ['get', 'post']:
-            raise ValueError("mode须在'get', 'post'中选择")
-        self._url = url
-        if not kwargs:
-            kwargs = global_session_options
-        else:
-            for i in global_session_options:
-                if i not in kwargs:
-                    kwargs[i] = global_session_options[i]
+            raise ValueError("mode must be 'get' or 'post'.")
+
+        # 设置referer值
+        if self._url:
+            if 'headers' in set(x.lower() for x in kwargs):
+                if 'referer' not in set(x.lower() for x in kwargs['headers']):
+                    kwargs['headers']['Referer'] = self._url
+            else:
+                kwargs['headers'] = self.session.headers
+                kwargs['headers']['Referer'] = self._url
+
         try:
             r = None
             if mode == 'get':
@@ -227,12 +197,7 @@ class SessionPage(object):
                 r = self.session.post(url, data=data, **kwargs)
         except:
             return_value = False
-            info = 'URL Invalid'
         else:
-            if r.status_code == 200:
-                return_value = r
-                info = 'Success'
-            else:
-                return_value = False
-                info = f'{r.status_code}'
-        return return_value, info
+            # r.encoding = 'utf-8'
+            return_value = r
+        return return_value

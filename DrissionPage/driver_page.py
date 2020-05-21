@@ -4,25 +4,26 @@
 @Contact :   g1879@qq.com
 @File    :   driver_page.py
 """
-from html import unescape
-from time import sleep
-from typing import Union
+from glob import glob
+from typing import Union, List, Any
 from urllib import parse
 
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.wait import WebDriverWait
+
+from .common import get_loc_from_str
+from .config import OptionsManager
+from .driver_element import DriverElement, execute_driver_find
 
 
 class DriverPage(object):
     """DriverPage封装了页面操作的常用功能，使用selenium来获取、解析、操作网页"""
 
-    def __init__(self, driver: WebDriver, locs=None):
+    def __init__(self, driver: WebDriver, timeout: float = 10):  # , locs=None
         """初始化函数，接收一个WebDriver对象，用来操作网页"""
         self._driver = driver
-        self._locs = locs
+        self.timeout = timeout
+        # self._locs = locs
         self._url = None
         self._url_available = None
 
@@ -39,9 +40,24 @@ class DriverPage(object):
             return self._driver.current_url
 
     @property
+    def html(self) -> str:
+        """获取元素innerHTML，如未指定元素则获取页面源代码"""
+        return self.driver.find_element_by_xpath("//*").get_attribute("outerHTML")
+
+    @property
     def url_available(self) -> bool:
         """url有效性"""
         return self._url_available
+
+    @property
+    def cookies(self) -> list:
+        """返回当前网站cookies"""
+        return self.driver.get_cookies()
+
+    @property
+    def title(self) -> str:
+        """获取网页title"""
+        return self._driver.title
 
     def get(self, url: str, params: dict = None, go_anyway: bool = False) -> Union[None, bool]:
         """跳转到url"""
@@ -50,162 +66,43 @@ class DriverPage(object):
             return
         self._url = to_url
         self.driver.get(to_url)
-        self._url_available = True if self.check_driver_url() else False
+        self._url_available = self.check_page()
         return self._url_available
 
-    @property
-    def cookies(self) -> list:
-        """返回当前网站cookies"""
-        return self.driver.get_cookies()
-
-    def get_title(self) -> str:
-        """获取网页title"""
-        return self._driver.title
-
-    def _get_ele(self, loc_or_ele: Union[WebElement, tuple]) -> WebElement:
-        """接收loc或元素实例，返回元素实例"""
-        # ========================================
-        # ** 必须与SessionPage类中同名函数保持一致 **
-        # ========================================
-        if isinstance(loc_or_ele, tuple):
-            return self.find(loc_or_ele)
-        return loc_or_ele
-
-    def find(self, loc: tuple, mode: str = None, timeout: float = 10, show_errmsg: bool = True) \
-            -> Union[WebElement, list]:
-        """查找一个元素
-        :param loc: 页面元素地址
+    def ele(self, loc_or_ele: Union[tuple, str, DriverElement], mode: str = None,
+            timeout: float = None, show_errmsg: bool = False) -> Union[DriverElement, List[DriverElement], None]:
+        """根据loc获取元素或列表，可用用字符串控制获取方式，可选'id','class','name','tagName'
+        例：ele.find('id:ele_id')
+        :param loc_or_ele: 页面元素地址
         :param mode: 以某种方式查找元素，可选'single' , 'all', 'visible'
         :param timeout: 是否显示错误信息
         :param show_errmsg: 是否显示错误信息
         :return: 页面元素对象或列表
         """
-        mode = mode if mode else 'single'
-        if mode not in ['single', 'all', 'visible']:
-            raise ValueError("mode须在'single', 'all', 'visible'中选择")
-        msg = ele = None
-        try:
-            wait = WebDriverWait(self.driver, timeout=timeout)
-            if mode == 'single':
-                msg = '未找到元素'
-                ele = wait.until(EC.presence_of_element_located(loc))
-            elif mode == 'all':
-                msg = '未找到元素s'
-                ele = wait.until(EC.presence_of_all_elements_located(loc))
-            elif mode == 'visible':
-                msg = '元素不可见或不存在'
-                ele = wait.until(EC.visibility_of_element_located(loc))
-            return ele
-        except:
-            if show_errmsg:
-                print(msg, loc)
+        if isinstance(loc_or_ele, DriverElement):
+            return loc_or_ele
+        elif isinstance(loc_or_ele, str):
+            loc_or_ele = get_loc_from_str(loc_or_ele)
 
-    def find_all(self, loc: tuple, timeout: float = 10, show_errmsg=True) -> list:
+        timeout = timeout or self.timeout
+        return execute_driver_find(self.driver, loc_or_ele, mode, show_errmsg, timeout)
+
+    def eles(self, loc: Union[tuple, str], timeout: float = None, show_errmsg=False) -> List[DriverElement]:
         """查找符合条件的所有元素"""
-        return self.find(loc, mode='all', timeout=timeout, show_errmsg=show_errmsg)
-
-    def search(self, value: str, mode: str = None, timeout: float = 10) -> Union[WebElement, list, None]:
-        """根据内容搜索元素
-        :param value: 搜索内容
-        :param mode: 可选'single','all'
-        :param timeout: 超时时间
-        :return: 页面元素对象
-        """
-        mode = mode if mode else 'single'
-        if mode not in ['single', 'all']:
-            raise ValueError("mode须在'single', 'all'中选择")
-        ele = []
-        try:
-            loc = 'xpath', f'//*[contains(text(),"{value}")]'
-            wait = WebDriverWait(self.driver, timeout=timeout)
-            if mode == 'single':
-                ele = wait.until(EC.presence_of_element_located(loc))
-            elif mode == 'all':
-                ele = wait.until(EC.presence_of_all_elements_located(loc))
-            return ele
-        except:
-            if mode == 'single':
-                return None
-            elif mode == 'all':
-                return []
-
-    def search_all(self, value: str, timeout: float = 10) -> list:
-        """根据内容搜索元素"""
-        return self.search(value, mode='all', timeout=timeout)
-
-    def get_attr(self, loc_or_ele: Union[WebElement, tuple], attr: str) -> str:
-        """获取元素属性"""
-        ele = self._get_ele(loc_or_ele)
-        try:
-            return ele.get_attribute(attr)
-        except:
-            return ''
-
-    def get_html(self, loc_or_ele: Union[WebElement, tuple] = None) -> str:
-        """获取元素innerHTML，如未指定元素则获取页面源代码"""
-        if not loc_or_ele:
-            return self.driver.find_element_by_xpath("//*").get_attribute("outerHTML")
-        return unescape(self.get_attr(loc_or_ele, 'innerHTML')).replace('\xa0', ' ')
-
-    def get_text(self, loc_or_ele: Union[WebElement, tuple]) -> str:
-        """获取innerText"""
-        return unescape(self.get_attr(loc_or_ele, 'innerText')).replace('\xa0', ' ')
+        return self.ele(loc, mode='all', timeout=timeout, show_errmsg=show_errmsg)
 
     # ----------------以下为独有函数-----------------------
 
-    def find_visible(self, loc: tuple, timeout: float = 10, show_errmsg: bool = True) -> WebElement:
-        """查找一个可见元素"""
-        return self.find(loc, mode='visible', timeout=timeout, show_errmsg=show_errmsg)
+    def check_page(self) -> Union[bool, None]:
+        """检查页面是否符合预期
+        由子类自行实现各页面的判定规则"""
+        return None
 
-    def check_driver_url(self) -> bool:
-        """由子类自行实现各页面的判定规则"""
-        return True
-
-    def input(self, loc_or_ele: Union[WebElement, tuple], value: str, clear: bool = True) -> bool:
-        """向文本框填入文本"""
-        ele = self._get_ele(loc_or_ele)
-        try:
-            if clear:
-                self.run_script(ele, "arguments[0].value=''")
-            ele.send_keys(value)
-            return True
-        except:
-            raise
-
-    def click(self, loc_or_ele: Union[WebElement, tuple]) -> bool:
-        """点击一个元素"""
-        ele = self._get_ele(loc_or_ele)
-        if not ele:
-            raise
-        for _ in range(10):
-            try:
-                ele.click()
-                return True
-            except Exception as e:
-                print(e)
-                sleep(0.2)
-        # 点击失败代表被遮挡，用js方式点击
-        print(f'用js点击{loc_or_ele}')
-        try:
-            self.run_script(ele, 'arguments[0].click()')
-            return True
-        except:
-            raise
-
-    def set_attr(self, loc_or_ele: Union[WebElement, tuple], attribute: str, value: str) -> bool:
-        """设置元素属性"""
-        ele = self._get_ele(loc_or_ele)
-        try:
-            self.driver.execute_script(f"arguments[0].{attribute} = '{value}';", ele)
-            return True
-        except:
-            raise
-
-    def run_script(self, loc_or_ele: Union[WebElement, tuple], script: str) -> bool:
+    def run_script(self, script: str) -> Any:
         """执行js脚本"""
-        ele = self._get_ele(loc_or_ele)
+        ele = self.ele(('css selector', 'html'))
         try:
-            return self.driver.execute_script(script, ele)
+            return ele.run_script(script)
         except:
             raise
 
@@ -228,10 +125,10 @@ class DriverPage(object):
         """关闭当前标签页"""
         self.driver.close()
 
-    def close_other_tabs(self, tab_index: int = None) -> None:
-        """关闭其它标签页，没有传入序号代表保留当前页"""
+    def close_other_tabs(self, index: int = None) -> None:
+        """传入序号，关闭序号以外标签页，没有传入序号代表保留当前页"""
         tabs = self.driver.window_handles  # 获得所有标签页权柄
-        page_handle = tabs[tab_index] if tab_index >= 0 else self.driver.current_window_handle
+        page_handle = tabs[index] if index >= 0 else self.driver.current_window_handle
         for i in tabs:  # 遍历所有标签页，关闭非保留的
             if i != page_handle:
                 self.driver.switch_to.window(i)
@@ -244,39 +141,55 @@ class DriverPage(object):
             self.driver.switch_to.default_content()
             return True
         else:
-            ele = self._get_ele(loc_or_ele)
+            ele = self.ele(loc_or_ele)
             try:
-                self.driver.switch_to.frame(ele)
+                self.driver.switch_to.frame(ele.inner_ele)
                 return True
             except:
                 raise
 
-    def get_screen(self, loc_or_ele: Union[WebElement, tuple], path: str, file_name: str = None) -> str:
-        """获取元素截图"""
-        ele = self._get_ele(loc_or_ele)
-        name = file_name if file_name else ele.tag_name
-        # 等待元素加载完成
-        js = 'return arguments[0].complete && typeof arguments[0].naturalWidth ' \
-             '!= "undefined" && arguments[0].naturalWidth > 0'
-        while not self.run_script(ele, js):
-            pass
+    def screenshot(self, path: str = None, filename: str = None) -> str:
+        """获取网页截图"""
+        ele = self.ele(('css selector', 'html'))
+        path = path or OptionsManager().get_value('paths', 'global_tmp_path')
+        if not path:
+            raise IOError('No path specified.')
+        name = filename or self.title
         img_path = f'{path}\\{name}.png'
-        ele.screenshot(img_path)
+        ele.screenshot(path, name)
         return img_path
 
     def scroll_to_see(self, loc_or_ele: Union[WebElement, tuple]) -> None:
         """滚动直到元素可见"""
-        ele = self._get_ele(loc_or_ele)
-        self.run_script(ele, "arguments[0].scrollIntoView();")
+        ele = self.ele(loc_or_ele)
+        ele.run_script("arguments[0].scrollIntoView();")
 
-    def choose_select_list(self, loc_or_ele: Union[WebElement, tuple], text: str) -> bool:
-        """选择下拉列表"""
-        ele = Select(self._get_ele(loc_or_ele))
-        try:
-            ele.select_by_visible_text(text)
-            return True
-        except:
-            return False
+    def scroll_to(self, mode: str = 'bottom', pixel: int = 300) -> None:
+        """滚动页面，按照参数决定如何滚动
+        :param mode: 滚动的方向，top、bottom、rightmost、leftmost、up、down、left、right
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if mode == 'top':
+            self.driver.execute_script("window.scrollTo(document.documentElement.scrollLeft,0);")
+        elif mode == 'bottom':
+            self.driver.execute_script(
+                "window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight);")
+        elif mode == 'rightmost':
+            self.driver.execute_script("window.scrollTo(document.body.scrollWidth,document.documentElement.scrollTop);")
+        elif mode == 'leftmost':
+            self.driver.execute_script("window.scrollTo(0,document.documentElement.scrollTop);")
+        elif mode == 'up':
+            self.driver.execute_script(f"window.scrollBy(0,-{pixel});")
+        elif mode == 'down':
+            self.driver.execute_script(f"window.scrollBy(0,{pixel});")
+        elif mode == 'left':
+            self.driver.execute_script(f"window.scrollBy(-{pixel},0);")
+        elif mode == 'right':
+            self.driver.execute_script(f"window.scrollBy({pixel},0);")
+        else:
+            raise KeyError(
+                "mode must be selected among 'top','bottom','rightmost','leftmost','up','down','left','right'.")
 
     def refresh(self) -> None:
         """刷新页面"""
@@ -291,11 +204,19 @@ class DriverPage(object):
         if not x and not y:
             self.driver.maximize_window()
         else:
-            new_x = x if x else self.driver.get_window_size()['width']
-            new_y = y if y else self.driver.get_window_size()['height']
+            if x <= 0 or y <= 0:
+                raise KeyError('x and y must greater than 0.')
+            new_x = x or self.driver.get_window_size()['width']
+            new_y = y or self.driver.get_window_size()['height']
             self.driver.set_window_size(new_x, new_y)
 
-    def close_driver(self) -> None:
-        """关闭driver及浏览器"""
-        self._driver.quit()
-        self._driver = None
+    def is_downloading(self, download_path: str = None) -> bool:
+        if download_path:
+            p = download_path
+        else:
+            try:
+                p = OptionsManager().get_value('chrome_options', 'experimental_options')['prefs'][
+                    'download.default_directory']
+            except IOError('No download path found.'):
+                raise
+        return not glob(f'{p}\\*.crdownload')
