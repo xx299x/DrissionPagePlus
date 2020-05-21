@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-with open("README.md", "r",encoding='utf-8') as fh:
+with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 setup(
@@ -11,9 +11,9 @@ setup(
     version="0.8.0",
     author="g1879",
     author_email="g1879@qq.com",
-    description="A module that integrates selenium and requests session, encapsulates common page operations, "
-                "can achieve seamless switching between the two modes.",
+    description="A module that integrates selenium and requests session, encapsulates common page operations.",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     license="BSD",
     keywords="DrissionPage",
     url="https://github.com/g1879/DrissionPage",
@@ -25,7 +25,8 @@ setup(
         "requests"
     ],
     classifiers=[
-        "Development Status :: 1 - Alpha",
+        "Programming Language :: Python :: 3.6",
+        "Development Status :: 4 - Beta",
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
