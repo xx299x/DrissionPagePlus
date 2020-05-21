@@ -96,7 +96,7 @@ from DrissionPage import *
 
 ## 创建驱动器对象
 
-Drission对象用于管理driver和session对象。本库维护了一个ini文件，可直接从里面的配置信息创建驱动器。详细方法见[保存配置](# 保存配置)。也可以在初始化时传入配置信息。
+Drission对象用于管理driver和session对象。本库维护了一个ini文件，可直接从里面的配置信息创建驱动器。详细方法见[保存配置]。也可以在初始化时传入配置信息。
 
 **driver模式注意事项（只使用session模式可忽略）：**
 
@@ -105,7 +105,7 @@ Drission对象用于管理driver和session对象。本库维护了一个ini文�
 - 注意chromedriver.exe和chrome.exe版本匹配。
 
 ```python
-# 两个路径已写入系统变量
+# 两个路径已写入系统变量或ini文件
 drission = Drission()  
 
 # 用传入的配置信息创建
@@ -115,7 +115,7 @@ driver_options.binary_location = 'D:\\chrome\\chrome.exe'  # chrome.exe路径
 driver_path = 'C:\\chrome\\chromedriver.exe'  # driver_path路径
 drission = Drission(driver_options = driver_options, driver_path = driver_path) 
 
-# 保存到ini文件
+# 把两个路径保存到ini文件
 from DrissionPage.config import OptionsManager
 options = OptionsManager()
 driver_path = 'C:\\chrome\\chromedriver.exe'  # driver_path路径
