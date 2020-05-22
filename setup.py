@@ -8,7 +8,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
     name="DrissionPage",
-    version="0.8.0",
+    version="0.8.3",
     author="g1879",
     author_email="g1879@qq.com",
     description="A module that integrates selenium and requests session, encapsulates common page operations.",
@@ -17,6 +17,7 @@ setup(
     license="BSD",
     keywords="DrissionPage",
     url="https://github.com/g1879/DrissionPage",
+    include_package_data=True,
     packages=find_packages(),
     install_requires=[
         "selenium",
@@ -30,4 +31,5 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
+    python_requires='>=3.6'
 )

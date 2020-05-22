@@ -23,7 +23,7 @@ DrissionPage，即driver和session的合体。
 - https://github.com/g1879/DrissionPage
 - https://gitee.com/g1879/DrissionPage
 
-**联系邮箱：**g1879@qq.com
+**联系邮箱：** g1879@qq.com
 
 # 特性
 
@@ -242,6 +242,8 @@ element.location  # 元素位置
 ## 保存配置
 
 因chrome和headers配置繁多，故设置一个ini文件专门用于保存常用配置，你可使用OptionsManager对象获取和保存配置，用DriverOptions对象修改chrome配置。你也可以保存多个ini文件，按不同项目须要调用。
+
+注：建议把常用配置文件保存到别的路径，以防本库升级时配置被重置。
 
 ### ini文件内容
 
