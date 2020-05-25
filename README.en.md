@@ -78,7 +78,7 @@ Title after login: Dashboard - Gitee
 Learn Git Branching https://oschina.gitee.io/learn-git-branching/
 ```
 
-# Installation
+# Install
 
 ***
 
