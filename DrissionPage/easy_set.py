@@ -70,17 +70,6 @@ def set_paths(driver_path: str = None,
         check_driver_version(driver_path, chrome_path)
 
 
-def set_headless(on_off: bool) -> None:
-    """设置headless"""
-    do = DriverOptions()
-    if on_off:
-        if '--headless' not in do.arguments:
-            do.add_argument('--headless')
-    else:
-        do.remove_argument('--headless')
-    do.save()
-
-
 def set_proxy(proxy: str) -> None:
     """设置代理"""
     do = DriverOptions()
@@ -96,13 +85,37 @@ def set_proxy(proxy: str) -> None:
         do.add_argument(f'--proxy-server={proxy}')
     do.save()
 
-def set_comm(value:str) -> None:
-    if value=='no_img':
-        pass
-    elif value=='mute':
-        pass
-    elif value=='':
-        pass
+
+def set_argument(arg: str, on_off: bool) -> None:
+    pass
+
+
+def set_headless(on_off: bool = True) -> None:
+    """设置headless"""
+    do = DriverOptions()
+    if on_off:
+        if '--headless' not in do.arguments:
+            do.add_argument('--headless')
+    else:
+        do.remove_argument('--headless')
+    do.save()
+
+
+def set_no_imgs(on_off: bool = True) -> None:
+    pass
+
+
+def set_no_js(on_off: bool = True) -> None:
+    pass
+
+
+def set_mute(on_off: bool = True) -> None:
+    pass
+
+
+def set_user_agent(user_agent: str) -> None:
+    pass
+
 
 def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bool:
     """检查传入的chrome和chromedriver是否匹配"""
