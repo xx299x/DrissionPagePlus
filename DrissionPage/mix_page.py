@@ -32,13 +32,13 @@ class MixPage(Null, SessionPage, DriverPage):
     这些功能由DriverPage和SessionPage类实现。
     """
 
-    def __init__(self, drission: Drission, mode='d', timeout: float = 10):
+    def __init__(self, drission: Drission = None, mode: str = 'd', timeout: float = 10):
         """初始化函数
         :param drission: 整合了driver和session的类
         :param mode: 默认使用selenium的d模式
         """
         super().__init__()
-        self._drission = drission
+        self._drission = drission or Drission()
         self._session = None
         self._driver = None
         self._url = None
