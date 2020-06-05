@@ -25,12 +25,13 @@ Even better, it is very concise and user-friendly, with little code and friendly
 
 ***
 
--Allows seamless switching between selenium and requests, sharing session.
--The two modes provide a unified operation method with consistent user experience.
--Common methods are encapsulated in units of pages to facilitate PO mode expansion.
--Humanized operation method of page elements to reduce the workload of page analysis and coding.
--Save configuration information to file for easy recall.
--Some common functions (such as click) have been optimized to better meet the actual needs.
+- Allows seamless switching between selenium and requests, sharing session.
+- The two modes provide a unified operation method with consistent user experience.
+- Common methods are encapsulated in units of pages to facilitate PO mode expansion.
+- Humanized operation method of page elements to reduce the workload of page analysis and coding.
+- Save configuration information to file for easy recall.
+- Some common functions (such as click) have been optimized to better meet the actual needs.
+- Easy configuration method to get rid of the cumbersome browser configuration.
 
 # Idea
 
@@ -44,25 +45,16 @@ Even better, it is very concise and user-friendly, with little code and friendly
 
 The following code implements exactly the same function, comparing the code amounts of the two:
 
-1. Find all elements whose name is ele_name
+1. Find the element whose first text contains 'some text'
 
 ```python
 # selenium:
-element = WebDriverWait(driver).until(ec.presence_of_all_elements_located((By.XPATH, '//*[@name="ele_name"]')))
+element = WebDriverWait(driver).until(ec.presence_of_all_elements_located((By.XPATH, '//*[contains(text(), "some text")]')))
 # DrissionPage:
-element = page.eles('@name:ele_name')
+element = page.ele('some text')
 ```
 
-2. Find the element whose first text contains 'some text'
-
-```python
-# selenium:
-element = WebDriverWait(driver, timeout = 2).until(ec.presence_of_element_located((By.XPATH, '//*[contains(text(), "some text")]')))
-# DrissionPage:
-element = page.ele('some text', timeout = 2)
-```
-
-3. Jump to the first tab
+2. Jump to the first tab
 
 ```python
 # selenium
@@ -71,7 +63,7 @@ driver.switch_to.window(driver.window_handles[0])
 page.to_tab(0)
 ```
 
-4. Drag an element
+3. Drag an element
 
 ```python
 # selenium
@@ -80,7 +72,7 @@ ActionChains(driver).drag_and_drop(ele1, ele2).perform()
 ele1.drag_to(ele2)
 ```
 
-5. Scroll the window to the bottom (keep the horizontal scroll bar unchanged)
+4. Scroll the window to the bottom (keep the horizontal scroll bar unchanged)
 
 ```python
 # selenium
@@ -88,6 +80,18 @@ driver.execute_script("window.scrollTo(document.documentElement.scrollLeft,docum
 # DrissionPage
 page.scroll_to('bottom')
 ```
+
+5. Set headless mode
+
+```python
+# selenium
+options = webdriver.ChromeOptions()
+options.add_argument("--headless")
+# DrissionPage
+set_headless()
+```
+
+
 
 # Background
 
@@ -108,8 +112,7 @@ The design concept of this library is to keep everything simple, try to provide 
 Example: Log in to the website with selenium, then switch to requests to read the web page.
 
 ```python
-drission = Drission()  # Create Drive Object
-page = MixPage(drission)  # Create page object, default driver mode
+page = MixPage()  # Create page object, default driver mode
 page.get('https://gitee.com/profile')  # Visit personal center page (redirect to the login page)
 
 page.ele('@id:user_login').input('your_user_name')  # Use selenium to log in
@@ -184,7 +187,7 @@ If you choose the third method, please run these lines of code before using the 
 
 ```python
 from DrissionPage.easy_set import set_paths
-driver_path = 'C:\\chrome\\chromedriver.exe'  # Your chromedriver.exe path, optional
+driver_path = 'D:\\chrome\\chromedriver.exe'  # Your chromedriver.exe path, optional
 chrome_path = 'D:\\chrome\\chrome.exe'  # Your chrome.exe path, optional
 set_paths(driver_path, chrome_path)
 ```
@@ -210,6 +213,8 @@ In addition to the above two paths, this method can also set the following paths
 debugger_address  # Opened browser address, eg. 127.0.0.1:9222
 download_path  # Download path
 global_tmp_path  # Temporary folder path
+user_data_path # User data path
+cache_path # Cache path
 ```
 
 Tips：
@@ -222,7 +227,8 @@ Tips：
 
 ## Create Drission Object 
 
-Drission objects are used to manage driver and session objects. It can be created by directly reading the configuration information of the ini file, or it can be passed in during initialization.
+Drission objects are used to manage driver and session objects.Drission objects are used to transmit drives when multiple pages work together, enabling multiple page classes to control the same browser or Session object.  
+It can be created by directly reading the configuration information of the ini file, or it can be passed in during initialization.
 
 ```python
 # Created by default ini file
@@ -241,7 +247,7 @@ from DrissionPage.config import DriverOptions
 driver_options = DriverOptions()  # Create driver configuration object
 driver_options.binary_location = 'D:\\chrome\\chrome.exe'  # chrome.exe path
 session_options = {'headers': {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)'}}
-driver_path = 'C:\\chrome\\chromedriver.exe'  # driver_path path
+driver_path = 'D:\\chrome\\chromedriver.exe'  # driver_path path
 
 drission = Drission(driver_options, session_options, driver_path)  # Create object through incoming configuration
 ```
@@ -250,11 +256,17 @@ drission = Drission(driver_options, session_options, driver_path)  # Create obje
 
 ## Use MixPage objects
 
-The MixPage page object encapsulates commonly used web page operations and implements the switch between driver and session mode.
+The MixPage page object encapsulates commonly used web page operations and implements the switch between driver and session mode.  
+MixPage must receive a Drission object and use its driver or session. If no one is sent, MixPage will create a Drission itself (Use configurations from the default INI file).  
+
+Tips: When multi-page objects work together, remember to manually create Drission objects and transfer them to page objects for use. Otherwise, page objects can create their own Drission objects, rendering the information impossible to transmit.
 
 ```python
+# Automatic creation of Drission objects is recommended only for single page objects
+page = MixPage()  
+
 page = MixPage(drission)  # Default driver mode
-page = MixPage(drission, mode='s', timeout=10)  # Session mode, element waiting time 5 seconds (default 10 seconds)
+page = MixPage(drission, mode='d', timeout=5)  # driver mode, element waiting time 5 seconds (default 10 seconds)
 
 # Visit URL
 page.get(url, **kwargs)
@@ -383,7 +395,9 @@ arguments = [
             ; No sandbox
             '--no-sandbox',
             ; Google documentation mentions the need to add this attribute to avoid bugs
-            '--disable-gpu'
+            '--disable-gpu',
+            ; ignore errors
+            'ignore-certificate-errors'
             ]
 ; Plugin
 extensions = []
@@ -395,11 +409,11 @@ experimental_options = {
                        ; No pop-up window
                        'profile.default_content_setting_values': {'notifications': 2},
                        ; Disable PDF plugin
-                       'plugins.plugins_list': [{"enabled": False, "name": "Chrome PDF Viewer"}],
+                       'plugins.plugins_list': [{"enabled": False, "name": "Chrome PDF Viewer"}]
+                       },
                        ; Set to developer mode, anti-anti-reptile (useless)
-                       'excludeSwitches': ["ignore-certificate-errors", "enable-automation"],
+                       'excludeSwitches': ["enable-automation"],
                        'useAutomationExtension': False
-                       }
                        }
 
 [session_options]
@@ -456,6 +470,25 @@ remove_all_extensions()  # Remove all plugins
 save()  # Save configuration to ini file
 save('D:\\settings.ini')  # Save to other path
 ```
+
+
+
+## easy_set methods
+
+​	Chrome's configuration is hard to remember, so write the common configuration as a simple method that will modify the ini file.
+
+```python
+set_headless(True)  # Set headless mode
+set_no_imgs(True)  # Set no-PIC mode
+set_no_js(True)  # Disable JavaScript
+set_mute(True)  # Silent mode
+set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # set user agent
+set_proxy('127.0.0.1:8888')  # set proxy
+set_paths(paths)  # See the Initialization section 
+set_argument(arg, on_off)  # Set a property without value, eg.'zh_CN.UTF-8', if on_off is False, delete the item
+set_value_argument(arg, value)  # Set a property with value, eg.'--proxy-server=http://127.0.0.1:8888', Set to '' to delete the item
+```
+
 
 
 # PO mode
@@ -641,7 +674,7 @@ print(page.ele('@id:su').text)  # Output:百度一下
 
 ## MixPage class
 
-class **MixPage**(drission: Drission, mode='d', timeout: float = 10)
+class **MixPage**(drission: Drission = None, mode:str = 'd', timeout: float = 10)
 
 MixPage encapsulates common functions for page operations and can seamlessly switch between driver and session modes. Cookies are automatically synchronized when switching.  
 The function of obtaining information is common to the two modes, and the function of operating page elements is only available in the d mode. Calling a function unique to a certain mode will automatically switch to that mode.  
@@ -649,7 +682,7 @@ It inherits from DriverPage and SessionPage classes. These functions are impleme
 
 Parameter Description:
 
-- drission - Drission object
+- drission - Drission objects, if not transmitted will create one
 - mode - Mode, optional 'd' or 's', default is 'd'
 - timeout - Search element time-out time (can also be set separately each time element search)
 
@@ -1401,7 +1434,7 @@ Parameter Description:
 
 
 
-- ## easy_set methods
+## easy_set methods
 
   The configuration of chrome is too difficult to remember, so the commonly used configuration is written as a simple method, and the call will modify the relevant content of the ini file.
 
