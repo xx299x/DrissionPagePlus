@@ -41,80 +41,72 @@ def set_paths(driver_path: str = None,
         experimental_options = om.get_value('chrome_options', 'experimental_options')
         experimental_options['prefs']['download.default_directory'] = download_path
         om.set_item('chrome_options', 'experimental_options', experimental_options)
-    if uesr_data_path is not None or cache_path is not None:
-        arguments = list(om.get_value('chrome_options', 'arguments'))
-        up_ok = cp_ok = False
-        to_remove = []  # 待删设置，检查完再一次删，免得影响列表后面的元素
-        for key, arg in enumerate(arguments):
-            if uesr_data_path is not None and '--user-data-dir' in arg:
-                if uesr_data_path == '':
-                    to_remove.append(arg)
-                else:
-                    arguments[key] = f'--user-data-dir={uesr_data_path}'
-                up_ok = True
-            if cache_path is not None and '--disk-cache-dir' in arg:
-                if cache_path == '':
-                    to_remove.append(arg)
-                else:
-                    arguments[key] = f'--disk-cache-dir={cache_path}'
-                cp_ok = True
-        for arg in to_remove:
-            arguments.remove(arg)
-        if uesr_data_path and not up_ok:
-            arguments.append(f'--user-data-dir={uesr_data_path}')
-        if cache_path and not cp_ok:
-            arguments.append(f'--disk-cache-dir={cache_path}')
-        om.set_item('chrome_options', 'arguments', arguments)
     om.save()
+    if uesr_data_path is not None:
+        set_value_argument('--user-data-dir', uesr_data_path)
+    if cache_path is not None:
+        set_value_argument('--disk-cache-dir', cache_path)
     if check_version:
         check_driver_version(driver_path, chrome_path)
 
 
-def set_proxy(proxy: str) -> None:
+def set_value_argument(arg: str, value: str) -> None:
     """设置代理"""
     do = DriverOptions()
     pr_ok = False
-    for key, arg in enumerate(do.arguments):
-        if '--proxy-server' in arg:
+    for key, argument in enumerate(do.arguments):
+        print(argument)
+        if arg in argument:
             do.remove_argument(do.arguments[key])
-            if proxy:
-                do.add_argument(f'--proxy-server={proxy}')
+            print(value)
+            if value:
+                do.add_argument(f'{arg}={value}')
             pr_ok = True
             break
     if not pr_ok:
-        do.add_argument(f'--proxy-server={proxy}')
+        do.add_argument(f'{arg}={value}')
+        print(do.arguments)
     do.save()
 
 
 def set_argument(arg: str, on_off: bool) -> None:
-    pass
+    """设置argument"""
+    do = DriverOptions()
+    if on_off:
+        if arg not in do.arguments:
+            do.add_argument(arg)
+    else:
+        do.remove_argument(arg)
+    do.save()
+
+
+def set_proxy(proxy: str) -> None:
+    """设置代理"""
+    set_value_argument('--proxy-server', proxy)
 
 
 def set_headless(on_off: bool = True) -> None:
     """设置headless"""
-    do = DriverOptions()
-    if on_off:
-        if '--headless' not in do.arguments:
-            do.add_argument('--headless')
-    else:
-        do.remove_argument('--headless')
-    do.save()
+    set_argument('--headless', on_off)
 
 
 def set_no_imgs(on_off: bool = True) -> None:
-    pass
+    """设置headless"""
+    set_argument('--blink-settings=imagesEnabled=false', on_off)
 
 
 def set_no_js(on_off: bool = True) -> None:
-    pass
+    """设置禁用js"""
+    set_argument('--disable-javascript', on_off)
 
 
 def set_mute(on_off: bool = True) -> None:
-    pass
+    """设置静音"""
+    set_argument('--mute-audio', on_off)
 
 
 def set_user_agent(user_agent: str) -> None:
-    pass
+    set_value_argument('user-agent', user_agent)
 
 
 def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bool:
