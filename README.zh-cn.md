@@ -255,11 +255,12 @@ MixPage须接收一个Drission对象并使用其中的driver或session，如没�
 Tips: 多页面对象协同工作时，记得手动创建Drission对象并传递给页面对象使用。否则页面对象会各自创建自己的Drission对象，使信息无法传递。
 
 ```python
-# 自动创建Drission对象，建议只在单页面对象情况下使用
-page = MixPage()
+# 创建MixPage对象的方法
+page = MixPage()  # 自动创建Drission对象，driver模式，建议只在单页面对象情况下使用
+page = MixPage('s')  # 以session模式快速创建，自动创建Drission对象
 
-page = MixPage(drission)  # 默认driver模式
-page = MixPage(drission, mode='d', timeout=5)  # driver模式，元素等待时间5秒（默认10秒）
+page = MixPage(drission)  # 以传入Drission对象创建
+page = MixPage(drission, mode='s', timeout=5)  # session模式，等待时间5秒（默认10秒）
 
 # 访问URL
 page.get(url, **kwargs)
@@ -292,15 +293,15 @@ Tips：调用只属于driver模式的方法，会自动切换到driver模式。
 # 根据属性查找
 page.ele('@id:ele_id', timeout = 2)  # 查找id为ele_id的元素，设置等待时间2秒
 page.eles('@class:class_name')  # 查找所有class为class_name的元素   
+page.eles('@class')  # 查找所有拥有class属性的元素
 
 # 根据tag name查找
 page.ele('tag:li')  # 查找第一个li元素  
 page.eles('tag:li')  # 查找所有li元素  
 
-# 根据位置查找
-page.ele('@id:ele_id').parent  # 父元素  
-page.ele('@id:ele_id').next  # 下一个兄弟元素  
-page.ele('@id:ele_id').prev  # 上一个兄弟元素  
+# 根据tag name及属性查找
+page.ele('tag:div@class=div_class')  # 查找class为div_class的div元素
+page.eles('tag:div@class')  # 查找所有拥有class属性的div元素
 
 # 根据文本内容查找
 page.ele('search text')  # 查找包含传入文本的元素  
@@ -320,6 +321,11 @@ page.ele(loc2)
 element = page.ele('@id:ele_id')
 element.ele('@class:class_name')  # 在element下级查找第一个class为ele_class的元素
 element.eles('tag:li')  # 在ele_id下级查找所有li元素
+
+# 根据位置查找
+element.parent  # 父元素  
+element.next  # 下一个兄弟元素  
+element.prev  # 上一个兄弟元素  
 
 # 串连查找
 page.ele('@id:ele_id').ele('tag:div').next.ele('some text').eles('tag:a')
@@ -667,7 +673,7 @@ class **Drission**(driver_options: Union[dict, Options] = None, session_options:
 
 ## MixPage类
 
-class **MixPage**(drission: Drission = None, mode:str = 'd', timeout: float = 10)
+class **MixPage**(drission: Union[Drission, str] = None, mode:str = 'd', timeout: float = 10)
 
 MixPage封装了页面操作的常用功能，可在driver和session模式间无缝切换。切换的时候会自动同步cookies。  
 获取信息功能为两种模式共有，操作页面元素功能只有d模式有。调用某种模式独有的功能，会自动切换到该模式。  
@@ -675,9 +681,9 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 参数说明：
 
-- drission - Drission对象，如没传入则创建一个
+- drission - Drission对象，如没传入则创建一个。传入's'或'd'时快速配置相应模式
 - mode - 模式，可选'd'或's'，默认为'd'
-- timeout - 查找元素超时时间（每次查找元素时还可单独设置）
+- timeout - 超时时间，driver模式查找元素时间及session模式连接时间
 
 ### url  
 

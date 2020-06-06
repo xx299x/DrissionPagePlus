@@ -262,11 +262,12 @@ MixPage must receive a Drission object and use its driver or session. If no one 
 Tips: When multi-page objects work together, remember to manually create Drission objects and transfer them to page objects for use. Otherwise, page objects can create their own Drission objects, rendering the information impossible to transmit.
 
 ```python
-# Automatic creation of Drission objects is recommended only for single page objects
-page = MixPage()  
+# Ways to create MixPage objects
+page = MixPage()  # Automatic creation of Drission objects is recommended only for single page objects
+page = MixPage('s')  # Quickly create in session mode, automatically create a Drission object
 
-page = MixPage(drission)  # Default driver mode
-page = MixPage(drission, mode='d', timeout=5)  # driver mode, element waiting time 5 seconds (default 10 seconds)
+page = MixPage(drission)  # Created by passing in a Drission object
+page = MixPage(drission, mode='s', timeout=5)  # session mode, waiting time 5 seconds (default 10 seconds)
 
 # Visit URL
 page.get(url, **kwargs)
@@ -299,15 +300,15 @@ Note: The element search timeout is 10 seconds by default, you can also set it a
 # Find by attribute
 page.ele('@id:ele_id', timeout = 2)  # Find the element with id ele_id and set the waiting time to 2 seconds
 page.eles('@class:class_name')  # Find all elements with class class_name   
+page.eles('@class')  # Find all elements with class attribute
 
 # Search by tag name
 page.ele('tag:li')  # Find the first li element  
 page.eles('tag:li')  # Find all li elements  
 
-# Find by location
-page.ele('@id:ele_id').parent  # Parent element  
-page.ele('@id:ele_id').next  # Next sibling element  
-page.ele('@id:ele_id').prev  # Previous brother element  
+# Search by tag name and attributes
+page.ele('tag:div@class=div_class')  # Find the first div element whose class is div_class
+page.eles('tag:div@class')  # Find all div elements with class attribute
 
 # Find by text
 page.ele('search text')  # Find elements containing incoming text  
@@ -327,6 +328,11 @@ page.ele(loc2)
 element = page.ele('@id:ele_id')
 element.ele('@class:class_name')  # Find the first element whose class is ele_class at the lower level of element
 element.eles('tag:li')  # Find all li elements below ele_id
+
+# Find by location
+element.parent  # Parent element  
+elementnext  # Next sibling element  
+element.prev  # Previous brother element  
 
 # Tandem search
 page.ele('@id:ele_id').ele('tag:div').next.ele('some text').eles('tag:a')
@@ -675,7 +681,7 @@ print(page.ele('@id:su').text)  # Output:百度一下
 
 ## MixPage class
 
-class **MixPage**(drission: Drission = None, mode:str = 'd', timeout: float = 10)
+class **MixPage**(drission: Union[Drission, str] = None, mode:str = 'd', timeout: float = 10)
 
 MixPage encapsulates common functions for page operations and can seamlessly switch between driver and session modes. Cookies are automatically synchronized when switching.  
 The function of obtaining information is common to the two modes, and the function of operating page elements is only available in the d mode. Calling a function unique to a certain mode will automatically switch to that mode.  
@@ -683,9 +689,9 @@ It inherits from DriverPage and SessionPage classes. These functions are impleme
 
 Parameter Description:
 
-- drission - Drission objects, if not transmitted will create one
+- drission - Drission objects, if not transmitted will create one. Quickly configure the corresponding mode when passing in's' or'd'
 - mode - Mode, optional 'd' or 's', default is 'd'
-- timeout - Search element time-out time (can also be set separately each time element search)
+- timeout - Timeout time, driver mode search element time and session mode connection time
 
 ### url  
 
