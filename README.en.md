@@ -397,7 +397,9 @@ arguments = [
             ; Google documentation mentions the need to add this attribute to avoid bugs
             '--disable-gpu',
             ; ignore errors
-            'ignore-certificate-errors'
+            'ignore-certificate-errors',
+            ; Hidden message bar
+            '--disable-infobars'
             ]
 ; Plugin
 extensions = []
@@ -485,8 +487,7 @@ set_mute(True)  # Silent mode
 set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # set user agent
 set_proxy('127.0.0.1:8888')  # set proxy
 set_paths(paths)  # See the Initialization section 
-set_argument(arg, on_off)  # Set a property without value, eg.'zh_CN.UTF-8', if on_off is False, delete the item
-set_value_argument(arg, value)  # Set a property with value, eg.'--proxy-server=http://127.0.0.1:8888', Set to '' to delete the item
+set_argument(arg, on_off)  # Set the property. If the property has no value (e.g. 'zh_CN.utf-8'), the value is bool representing the switch. If value is "" or False, delete the attribute entry
 ```
 
 
@@ -1455,27 +1456,16 @@ Parameter Description:
   - cache_path - Cache path
   - check_version - Whether to check whether chromedriver and chrome match
 
-  ### set_value_argument
-
-  ​	set_value_argument(arg: str, value: str) -> None
-
-  ​	Set valued attributes.
-
-  ​	Parameter Description:
-
-  - arg - Attribute name
-  - value - Attribute value
-
   ### set_argument
 
-  ​	set_argument(arg: str, on_off: bool) -> None
+  	set_argument(arg: str, value: Union[bool, str]) -> None
 
-  ​	Set an attribute with no value.
+  	Set the properties. If the attribute has no value (such as' zh_CN.utf-8 '), the value is passed into the bool to indicate the switch; Otherwise, value passes in STR, and when value is "" or False, the attribute entry is deleted.
 
   ​	Parameter Description:
 
   - arg - Attribute name
-  - on_off - On or off
+  - value - Attribute value, pass in a value if it has a value, pass in a bool if it doesn't
 
   ### set_headless
 

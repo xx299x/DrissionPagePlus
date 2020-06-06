@@ -390,7 +390,9 @@ arguments = [
             ; 谷歌文档提到需要加上这个属性来规避bug
             '--disable-gpu',
             ; 忽略警告
-            'ignore-certificate-errors'
+            'ignore-certificate-errors',
+            ; 不显示信息栏
+            '--disable-infobars'
             ]
 ; 插件
 extensions = []
@@ -478,8 +480,7 @@ set_mute(True)  # 开启静音模式
 set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # 设置user agent
 set_proxy('127.0.0.1:8888')  # 设置代理
 set_paths(paths)  # 见 [初始化] 一节
-set_argument(arg, on_off)  # 设置不带值的属性，如'zh_CN.UTF-8'，on_off为False则删除该项
-set_value_argument(arg, value)  # 设置带值的属性，如'--proxy-server=http://127.0.0.1:8888'，设为''则删除该项
+set_argument(arg, value)  # 设置属性，若属性无值（如'zh_CN.UTF-8'），value为bool表示开关；否则value为str，当value为''或False，删除该属性项
 ```
 
 # PO模式
@@ -1447,27 +1448,16 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 - cache_path - 缓存路径
 - check_version - 是否检查chromedriver和chrome是否匹配
 
-### set_value_argument
-
-​	set_value_argument(arg: str, value: str) -> None
-
-​	设置有值的属性。
-
-​	参数说明：
-
-- arg - 属性名
-- value - 属性值
-
 ### set_argument
 
-​	set_argument(arg: str, on_off: bool) -> None
+​	set_argument(arg: str, value: Union[bool, str]) -> None
 
-​	设置没有值的属性。
+​	设置属性。若属性无值（如'zh_CN.UTF-8'），value传入bool表示开关；否则value传入str，当value为''或False，删除该属性项。
 
 ​	参数说明：
 
 - arg - 属性名
-- on_off - 开或关
+- value - 属性值，有值的属性传入值，没有的传入bool
 
 ### set_headless
 
