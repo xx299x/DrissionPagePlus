@@ -73,7 +73,9 @@ def get_loc_from_str(loc: str) -> tuple:
     tag:div - div元素
     tag:div@class:ele_class - class含有ele_class的div元素
     tag:div@class=ele_class - class等于ele_class的div元素
-    text:search_text - 文本包含search_text的元素
+    tag:div@text():search_text - 文本含有search_text的div元素
+    tag:div@text()=search_text - 文本等于search_text的div元素
+    text:search_text - 文本含有search_text的元素
     text=search_text - 文本等于search_text的元素
     xpath://div[@class="ele_class"]
     css:div.ele_class
@@ -94,7 +96,8 @@ def get_loc_from_str(loc: str) -> tuple:
             r = re.split(r'([:=])', at_lst[1], maxsplit=1)
             if len(r) == 3:
                 mode = 'exact' if r[1] == '=' else 'fuzzy'
-                loc_str = _make_xpath_str(at_lst[0], f'@{r[0]}', r[2], mode)
+                arg_str = r[0] if r[0] == 'text()' else f'@{r[0]}'
+                loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
             else:
                 loc_str = f'//{at_lst[0]}[@{r[0]}]'
     elif loc.startswith(('text=', 'text:')):
