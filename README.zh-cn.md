@@ -1119,9 +1119,9 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 ### click
 
-​	click(by_js=False) -> bool
+​	click(by_js=None) -> bool
 
-​	点击元素，如不成功则用js方式点击，可指定用js方式点击。
+​	点击元素，如不成功则用js方式点击，可指定是否用js方式点击。
 
 ​	参数说明：
 

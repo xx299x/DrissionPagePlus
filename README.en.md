@@ -1124,9 +1124,9 @@ Parameter Description:
 
 ### click
 
-​	click(by_js=False) -> bool
+​	click(by_js=None) -> bool
 
-​	Click on the element. If it is unsuccessful, click on js. You can specify click on js.
+​	Click on the element. If it is unsuccessful, click on js. You can specify click on js or not.
 
 ​	Parameter Description:
 
