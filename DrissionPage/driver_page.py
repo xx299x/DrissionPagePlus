@@ -5,7 +5,7 @@
 @File    :   driver_page.py
 """
 from glob import glob
-from time import sleep
+# from time import sleep
 from typing import Union, List, Any
 from urllib.parse import quote
 
@@ -13,8 +13,8 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import get_loc_from_str, clean_folder, avoid_duplicate_name
-from .config import OptionsManager
+from .common import get_loc_from_str, avoid_duplicate_name  # , clean_folder
+# from .config import OptionsManager
 from .driver_element import DriverElement, execute_driver_find
 
 
