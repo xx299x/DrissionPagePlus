@@ -5,7 +5,6 @@
 @File    :   driver_page.py
 """
 from glob import glob
-from time import sleep
 from typing import Union, List, Any
 from urllib.parse import quote
 
@@ -13,8 +12,7 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import get_loc_from_str, clean_folder, avoid_duplicate_name
-from .config import OptionsManager
+from .common import get_loc_from_str, avoid_duplicate_name
 from .driver_element import DriverElement, execute_driver_find
 
 
@@ -147,7 +145,7 @@ class DriverPage(object):
                 self.driver.switch_to.default_content()
             elif loc_or_ele == 'parent':
                 self.driver.switch_to.parent_frame()
-            elif ':' not in loc_or_ele:
+            elif ':' not in loc_or_ele and '=' not in loc_or_ele:
                 # 传入id或name
                 self.driver.switch_to.frame(loc_or_ele)
             else:
