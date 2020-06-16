@@ -5,8 +5,6 @@
 @File    :   mix_page.py
 """
 from typing import Union, List
-from urllib import parse
-from urllib.parse import quote
 
 from requests import Response
 from requests_html import HTMLSession
@@ -47,6 +45,7 @@ class MixPage(Null, SessionPage, DriverPage):
         self._driver = None
         self._url = None
         self._response = None
+        self._proxies = None
         self.timeout = timeout
         self._url_available = None
         self._mode = mode
@@ -155,11 +154,10 @@ class MixPage(Null, SessionPage, DriverPage):
 
     # ----------------重写SessionPage的函数-----------------------
 
-    def post(self, url: str, params: dict = None, data: dict = None, go_anyway: bool = False, **kwargs) \
-            -> Union[bool, None]:
+    def post(self, url: str, data: dict = None, go_anyway: bool = False, **kwargs) -> Union[bool, None]:
         """post前先转换模式，但不跳转"""
         self.change_mode('s', go=False)
-        return super().post(url, params, data, go_anyway, **kwargs)
+        return super().post(url, data, go_anyway, **kwargs)
 
     # ----------------重写DriverPage的函数-----------------------
 
@@ -182,9 +180,6 @@ class MixPage(Null, SessionPage, DriverPage):
 
     def get(self, url: str, go_anyway=False, **kwargs) -> Union[bool, None]:
         """跳转到一个url，跳转前先同步cookies，跳转后判断目标url是否可用"""
-        # to_url = quote(url, safe='/:&?=%;#@')
-        # if not url or (not go_anyway and self.url == to_url):
-        #     return
         if self._mode == 'd':
             if super(SessionPage, self).get(url=url, go_anyway=go_anyway) is None:
                 return
