@@ -112,7 +112,7 @@ class Drission(object):
             self._driver = self.driver
             self._driver.get(url)
             for cookie in cookies:
-                self._driver.add_cookie(cookie)
+                self._ensure_add_cookie(cookie)
 
     def cookies_to_session(self, copy_user_agent: bool = False, driver: WebDriver = None, session: Session = None) \
             -> None:
@@ -151,6 +151,8 @@ class Drission(object):
             browser_domain = ''
         if cookie_domain not in browser_domain:
             driver.get(f'http://{cookie_domain.lstrip("http://")}')
+        if 'expiry' in cookie:
+            cookie['expiry'] = int(cookie['expiry'])
 
         driver.add_cookie(cookie)
 
