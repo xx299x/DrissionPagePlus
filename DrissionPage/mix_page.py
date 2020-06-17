@@ -45,7 +45,6 @@ class MixPage(Null, SessionPage, DriverPage):
         self._driver = None
         self._url = None
         self._response = None
-        self._proxies = None
         self.timeout = timeout
         self._url_available = None
         self._mode = mode
@@ -111,6 +110,7 @@ class MixPage(Null, SessionPage, DriverPage):
         每次访问时切换到d模式，主要用于独有函数及外部调用
         :return:selenium的WebDriver对象
         """
+        # TODO: 改成每次获取drission的driver
         if self._driver is None:
             self._driver = self._drission.driver
         self.change_mode('d')
