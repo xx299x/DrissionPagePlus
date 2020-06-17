@@ -61,7 +61,6 @@ class SessionPage(object):
     @property
     def html(self) -> str:
         """获取元素innerHTML，如未指定元素则获取所有源代码"""
-        # return unescape(self.response.html.raw_html.replace(b'\x08', b'').decode()).replace('\xa0', ' ')
         return self.response.html.html
 
     def ele(self, loc_or_ele: Union[tuple, str, SessionElement], mode: str = None, show_errmsg: bool = False) \
@@ -85,7 +84,7 @@ class SessionPage(object):
         """查找符合条件的所有元素"""
         return self.ele(loc, mode='all', show_errmsg=True)
 
-    def get(self, url: str,  go_anyway: bool = False, **kwargs) -> Union[bool, None]:
+    def get(self, url: str, go_anyway: bool = False, **kwargs) -> Union[bool, None]:
         """用get方式跳转到url，调用_make_response()函数生成response对象"""
         to_url = quote(url, safe='/:&?=%;#@')
         if not url or (not go_anyway and self.url == to_url):
@@ -97,8 +96,7 @@ class SessionPage(object):
         self._url_available = True if self._response and self._response.ok else False
         return self._url_available
 
-    def post(self, url: str,  data: dict = None, go_anyway: bool = False, **kwargs) \
-            -> Union[bool, None]:
+    def post(self, url: str, data: dict = None, go_anyway: bool = False, **kwargs) -> Union[bool, None]:
         """用post方式跳转到url，调用_make_response()函数生成response对象"""
         to_url = quote(url, safe='/:&?=%;#@')
         if not url or (not go_anyway and self._url == to_url):

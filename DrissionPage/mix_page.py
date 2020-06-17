@@ -110,6 +110,7 @@ class MixPage(Null, SessionPage, DriverPage):
         每次访问时切换到d模式，主要用于独有函数及外部调用
         :return:selenium的WebDriver对象
         """
+        # TODO: 改成每次获取drission的driver
         if self._driver is None:
             self._driver = self._drission.driver
         self.change_mode('d')
@@ -153,8 +154,7 @@ class MixPage(Null, SessionPage, DriverPage):
 
     # ----------------重写SessionPage的函数-----------------------
 
-    def post(self, url: str, params: dict = None, data: dict = None, go_anyway: bool = False, **kwargs) \
-            -> Union[bool, None]:
+    def post(self, url: str, data: dict = None, go_anyway: bool = False, **kwargs) -> Union[bool, None]:
         """post前先转换模式，但不跳转"""
         self.change_mode('s', go=False)
         return super().post(url, data, go_anyway, **kwargs)
