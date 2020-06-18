@@ -602,7 +602,7 @@ print(page.ele('@id:su').text)  # Output:百度一下
 
 ## Drission class
 
-​	class **Drission**(driver_options: Union[dict, Options] = None, session_options: dict = None, driver_path: str = None, ini_path = None)
+​	class **Drission**(driver_options: Union[dict, Options] = None, session_options: dict = None, driver_path: str = None, ini_path = None, proxy: dict = None)
 
 ​	Used to manage driver and session objects.
 
@@ -628,6 +628,10 @@ print(page.ele('@id:su').text)  # Output:百度一下
 ### session_options
 
 ​	Return session configuration in dictionary format.
+
+### proxy
+
+​	Return proxy configuration in dictionary format.
 
 ### cookies_to_session
 

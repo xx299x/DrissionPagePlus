@@ -597,7 +597,7 @@ print(page.ele('@id:su').text)  # 输出：百度一下
 
 ## Drission类
 
-class **Drission**(driver_options: Union[dict, Options] = None, session_options: dict = None, driver_path: str = None, ini_path: str = None)
+class **Drission**(driver_options: Union[dict, Options] = None, session_options: dict = None, driver_path: str = None, ini_path: str = None, proxy: dict = None)
 
 用于管理driver和session对象。
 
@@ -623,6 +623,10 @@ class **Drission**(driver_options: Union[dict, Options] = None, session_options:
 ### session_options
 
 ​	以字典格式返回或设置session配置。
+
+### proxy
+
+​	以字典格式返回代理配置。
 
 ### cookies_to_session
 
