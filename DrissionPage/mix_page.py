@@ -49,9 +49,9 @@ class MixPage(Null, SessionPage, DriverPage):
         self._url_available = None
         self._mode = mode
         if mode == 's':
-            self._session = self._drission.session
+            self._session = True
         elif mode == 'd':
-            self._driver = self._drission.driver
+            self._driver = True
         else:
             raise KeyError("mode must be 'd' or 's'.")
 
@@ -93,7 +93,7 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 's':  # d转s
             self._url = self.session_url
             if self._session is None:
-                self._session = self._drission.session
+                self._session = True
             if self._driver:
                 self.cookies_to_session()
             if go:
@@ -107,25 +107,18 @@ class MixPage(Null, SessionPage, DriverPage):
     @property
     def driver(self) -> WebDriver:
         """返回driver对象，如没有则创建
-        每次访问时切换到d模式，主要用于独有函数及外部调用
+        每次访问时切换到d模式，用于独有函数及外部调用
         :return:selenium的WebDriver对象
         """
-        # TODO: 改成每次获取drission的driver
-        if self._driver is None:
-            self._driver = self._drission.driver
         self.change_mode('d')
-        return self._driver
+        return self._drission.driver
 
     @property
     def session(self) -> HTMLSession:
         """返回session对象，如没有则创建
-        每次访问时切换到s模式，主要用于独有函数及外部调用
         :return:requests-html的HTMLSession对象
         """
-        if self._session is None:
-            self._session = self._drission.session
-        # self.change_mode('s')
-        return self._session
+        return self._drission.session
 
     @property
     def response(self) -> Response:
