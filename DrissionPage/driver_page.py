@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   driver_page.py
 """
+import time
 from glob import glob
 from typing import Union, List, Any
 from urllib.parse import quote
@@ -68,8 +69,11 @@ class DriverPage(object):
         self._url_available = self.check_page()
         return self._url_available
 
-    def ele(self, loc_or_ele: Union[tuple, str, DriverElement], mode: str = None,
-            timeout: float = None, show_errmsg: bool = False) -> Union[DriverElement, List[DriverElement], None]:
+    def ele(self,
+            loc_or_ele: Union[tuple, str, DriverElement],
+            mode: str = None,
+            timeout: float = None,
+            show_errmsg: bool = False) -> Union[DriverElement, List[DriverElement], None]:
         """根据loc获取元素或列表，可用用字符串控制获取方式，可选'id','class','name','tagName'
         例：ele.find('id:ele_id')
         :param loc_or_ele: 页面元素地址
@@ -91,6 +95,47 @@ class DriverPage(object):
         return self.ele(loc, mode='all', timeout=timeout, show_errmsg=show_errmsg)
 
     # ----------------以下为独有函数-----------------------
+    def wait_ele(self, loc_or_ele, mode: str, timeout: float = None):
+        """
+        :param loc_or_ele:
+        :param mode: show, hidden, del,
+        :param timeout:
+        :return:
+        """
+        from selenium.webdriver.support.wait import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as ec
+
+        timeout = timeout or self.timeout
+        is_ele = False
+        if isinstance(loc_or_ele, DriverElement):
+            loc_or_ele = loc_or_ele.inner_ele
+            is_ele = True
+        elif isinstance(loc_or_ele, WebElement):
+            is_ele = True
+        elif isinstance(loc_or_ele, str):
+            loc_or_ele = get_loc_from_str(loc_or_ele)
+
+        if is_ele:  # 当传入参数是元素对象时
+            end_time = time.time() + timeout
+            if mode == 'del':
+                while True:
+                    try:
+                        loc_or_ele.is_enabled()
+                    except:
+                        return True
+                    if time.time() > end_time:
+                        return False
+            elif mode == 'visible':
+                pass
+            elif mode == 'invisible':
+                pass
+        else:  # 当传入参数是控制字符串或元组时
+            if mode == 'del':
+                return WebDriverWait(self.driver, timeout).until_not(ec.presence_of_element_located(*loc_or_ele))
+            elif mode == 'visible':
+                return WebDriverWait(self.driver, timeout).until(ec.visibility_of_element_located(*loc_or_ele))
+            elif mode == 'invisible':
+                return WebDriverWait(self.driver, timeout).until_not(ec.visibility_of_element_located(*loc_or_ele))
 
     def check_page(self) -> Union[bool, None]:
         """检查页面是否符合预期
