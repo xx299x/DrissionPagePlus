@@ -101,12 +101,12 @@ class DriverPage(object):
                  timeout: float = None) -> bool:
         """等待元素从dom删除、显示、隐藏
         :param loc_or_ele: 元素、获取元素的字符串或元素的loc
-        :param mode: 等待方式，可选：'del', 'visible', 'invisible'
+        :param mode: 等待方式，可选：'del', 'display', 'hidden'
         :param timeout: 超时时间
         :return: 等待是否成功
         """
-        if mode.lower() not in ['del', 'visible', 'invisible']:
-            raise ValueError('mode can only be "del", "visible", "invisible"')
+        if mode.lower() not in ['del', 'display', 'hidden']:
+            raise ValueError('mode can only be "del", "display", "hidden"')
 
         from selenium.webdriver.support.wait import WebDriverWait
         from selenium.webdriver.support import expected_conditions as ec
@@ -133,18 +133,18 @@ class DriverPage(object):
                         loc_or_ele.is_enabled()
                     except:
                         return True
-                elif mode == 'visible' and loc_or_ele.is_displayed():
+                elif mode == 'display' and loc_or_ele.is_displayed():
                     return True
-                elif mode == 'invisible' and not loc_or_ele.is_displayed():
+                elif mode == 'hidden' and not loc_or_ele.is_displayed():
                     return True
             return False
         else:  # 当传入参数是控制字符串或元组时
             try:
                 if mode == 'del':
                     WebDriverWait(self.driver, timeout).until_not(ec.presence_of_element_located(loc_or_ele))
-                elif mode == 'visible':
+                elif mode == 'display':
                     WebDriverWait(self.driver, timeout).until(ec.visibility_of_element_located(loc_or_ele))
-                elif mode == 'invisible':
+                elif mode == 'hidden':
                     WebDriverWait(self.driver, timeout).until_not(ec.visibility_of_element_located(loc_or_ele))
                 return True
             except:
