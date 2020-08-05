@@ -67,7 +67,9 @@ class SessionPage(object):
             loc_or_ele: Union[tuple, str, SessionElement],
             mode: str = None,
             show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement], None]:
-        """查找一个元素
+        """根据loc获取元素或列表，可用字符串控制获取方式，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'
+        如没有控制关键字，会按字符串文本搜索
+        例：page.ele('@id:ele_id')，page.ele('首页')
         :param loc_or_ele: 页面元素地址
         :param mode: 以某种方式查找元素，可选'single','all'
         :param show_errmsg: 是否显示错误信息
