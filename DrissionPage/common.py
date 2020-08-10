@@ -52,12 +52,29 @@ class DrissionElement(object):
     def prev(self):
         return
 
+    @property
+    def xpath(self):
+        def get_xpath(ele: DrissionElement, xpath_str=''):
+            ele_id = ele.attr('id')
+            if ele_id:
+                return None, f'//*[@id="{ele_id}"]{xpath_str}'
+            else:
+                brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}', timeout=0.001))  # FIXME: 修改这里
+                xpath_str = f'/{ele.tag}[{brothers + 1}]{xpath_str}' if brothers > 0 else f'/{ele.tag}{xpath_str}'
+                ele = ele.parent
+            print(xpath_str)
+            while ele:
+                ele, xpath_str = get_xpath(ele, xpath_str)
+            return ele, xpath_str
+
+        return get_xpath(self)[1]
+
     @abstractmethod
-    def ele(self, loc: tuple, mode: str = None, show_errmsg: bool = True):
+    def ele(self, loc: Union[tuple, str], mode: str = None, show_errmsg: bool = True):
         pass
 
     @abstractmethod
-    def eles(self, loc: tuple, show_errmsg: bool = True):
+    def eles(self, loc: Union[tuple, str], show_errmsg: bool = True):
         pass
 
     @abstractmethod
