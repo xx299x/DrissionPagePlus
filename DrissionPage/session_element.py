@@ -69,35 +69,21 @@ class SessionElement(DrissionElement):
         :param num: 第几级父元素
         :return: SessionElement对象
         """
-        try:
-            return SessionElement(
-                Element(element=self.inner_ele.element.xpath(f'..{"/.." * (num - 1)}')[0], url=self.inner_ele.url))
-        except IndexError:
-            return None
+        return self.ele(f'xpath:..{"/.." * (num - 1)}')
 
     def nexts(self, num: int = 1):
         """返回后面第num个兄弟元素      \n
         :param num: 后面第几个兄弟元素
         :return: SessionElement对象
         """
-        try:
-            return SessionElement(
-                Element(element=self.inner_ele.element.xpath(f'./following-sibling::*[{num}]')[0],
-                        url=self.inner_ele.url))
-        except IndexError:
-            return None
+        return self.ele(f'xpath:./following-sibling::*[{num}]')
 
     def prevs(self, num: int = 1):
         """返回前面第num个兄弟元素        \n
         :param num: 前面第几个兄弟元素
         :return: SessionElement对象
         """
-        try:
-            return SessionElement(
-                Element(element=self.inner_ele.element.xpath(f'./preceding-sibling::*[{num}]')[0],
-                        url=self.inner_ele.url))
-        except IndexError:
-            return None
+        return self.ele(f'xpath:./preceding-sibling::*[{num}]')
 
     def ele(self, loc_or_str: Union[tuple, str], mode: str = None, show_errmsg: bool = False):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
@@ -223,7 +209,6 @@ def execute_session_find(page_or_ele: BaseParser,
     if mode not in ['single', 'all']:
         raise ValueError("Argument mode can only be 'single' or 'all'.")
     loc_by, loc_str = loc
-    result = None
     try:
         ele = None
         if loc_by == 'xpath':
@@ -236,13 +221,10 @@ def execute_session_find(page_or_ele: BaseParser,
             ele = page_or_ele.find(loc_str)
 
         if mode == 'single':
-            result = SessionElement(ele[0]) if ele else None
+            return SessionElement(ele[0]) if ele else None
         elif mode == 'all':
-            result = [SessionElement(e) for e in ele]
-
-        return result
+            return [SessionElement(e) for e in ele]
     except:
-        # raise
         if show_errmsg:
             print('Element(s) not found.', loc)
             raise
