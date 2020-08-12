@@ -899,6 +899,16 @@ The following methods only take effect in driver mode, and will automatically sw
 
 ​	Returns the serial number of the current tab.
 
+### create_tab
+
+​	create_tab(url: str = '') -> None
+
+​	Create and locate a tab page, which is at the end.
+
+​	Parameter Description:
+
+- url - URL to jump in the new tab page
+
 ### close_current_tab
 
 ​	close_current_tab() -> None
@@ -921,7 +931,7 @@ The following methods only take effect in driver mode, and will automatically sw
 
 ​	Jump to a tab page with a serial number.
 
-Parameter Description:
+​	Parameter Description:
 
 - index - The serial number of the target tab, start from 0
 
@@ -936,10 +946,13 @@ Parameter Description:
 - loc_or_ele - To search for iframe element conditions, you can receive iframe serial number (starting at 0), id or name, control string, loc parameter, WebElement object, DriverElement object, pass 'main' to jump to the top level, pass 'parent' to jump to parent level.
 
 ​	Examples:
-- to_iframe('@id:iframe_id')
-- to_iframe(iframe_element)
-- to_iframe(0)
-- to_iframe('iframe_name')
+- to_iframe('tag:iframe')          - Positioning by the query string passed in the iframe
+- to_iframe('iframe_id')           - Positioning by the id attribute of the iframe
+- to_iframe('iframe_name')     - Positioning by the name attribute of the iframe
+- to_iframe(iframe_element)  - Positioning by passing in the element object
+- to_iframe(0)                         - Positioning by the serial number of the iframe
+- to_iframe('main')                  - Switch to the top level
+- to_iframe('parent')                - Switch to the previous level
 
 ### scroll_to_see
 

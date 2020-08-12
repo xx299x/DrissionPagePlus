@@ -898,6 +898,16 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 ​	返回当前标签页序号。
 
+### create_tab
+
+​	create_tab(url: str = '') -> None
+
+​	新建并定位到一个标签页,该标签页在最后面。
+
+​	参数说明：
+
+- url - 新标签页跳转到的网址
+
 ### close_current_tab
 
 ​	close_current_tab() -> None
@@ -935,10 +945,13 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 - loc_or_ele - 查找iframe元素的条件，可接收iframe序号(0开始)、id或name、控制字符串、loc参数、WebElement对象、DriverElement对象，传入'main'跳到最高层，传入'parent'跳到上一层。
 
 ​	示例：
-- to_iframe('@id:iframe_id')
-- to_iframe(iframe_element)
-- to_iframe(0)
-- to_iframe('iframe_name')
+- to_iframe('tag:iframe')    - 通过传入iframe的查询字符串定位
+- to_iframe('iframe_id')     - 通过iframe的id属性定位
+- to_iframe('iframe_name')   - 通过iframe的name属性定位
+- to_iframe(iframe_element)  - 通过传入元素对象定位
+- to_iframe(0)               - 通过iframe的序号定位
+- to_iframe('main')          - 跳到最高层
+- to_iframe('parent')        - 跳到上一层
 
 ### scroll_to_see
 
