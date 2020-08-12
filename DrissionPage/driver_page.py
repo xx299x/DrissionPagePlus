@@ -220,21 +220,31 @@ class DriverPage(object):
         """
         return self.driver.execute_script(script)
 
-    def get_tabs_sum(self) -> int:
+	@property
+    def tabs_conut(self) -> int:
         """返回标签页数量"""
         try:
             return len(self.driver.window_handles)
         except:
             return 0
 
-    def get_tab_num(self) -> int:
+	@property
+    def tab_handles(self) -> list:
+    	"""返回所有标签页handle列表"""
+    	return self.driver.window_handles
+
+	@property
+    def current_tab_num(self) -> int:
         """返回当前标签页序号"""
-        handle = self.driver.current_window_handle
-        handle_list = self.driver.window_handles
-        return handle_list.index(handle)
+        return self.driver.window_handles.index(self.driver.current_window_handle)
+
+	@property
+    def current_tab_handle(safe) -> str:
+    	"""返回当前标签页handle"""
+    	return self.driver.current_window_handle
 
     def create_tab(self, url: str = '') -> None:
-        """新建并定位到一个标签页,该标签页在最后面
+        """新建并定位到一个标签页,该标签页在最后面  \n
         :param url: 新标签页跳转到的网址
         :return: None
         """
@@ -245,42 +255,50 @@ class DriverPage(object):
     def close_current_tab(self) -> None:
         """关闭当前标签页"""
         self.driver.close()
-        if self.get_tabs_sum():
+        if self.tabs_conut:
             self.to_tab(0)
 
-    def close_other_tabs(self, index: int = None) -> None:
-        """关闭序号以外标签页，没有传入序号代表保留当前页            \n
-        :param index: 要保留的标签页序号，第一个为0，最后为-1
+    def close_other_tabs(self, num_or_handle: Union[int, str, None] = None) -> None:
+        """关闭传入的标签页以外标签页，默认保留当前页                                \n
+        :param num_or_handle: 要保留的标签页序号或handle，序号第一个为0，最后为-1
         :return: None
         """
         tabs = self.driver.window_handles  # 获得所有标签页权柄
-        page_handle = tabs[index]
+        if num_or_handle is None:
+        	page_handle = self.current_tab_handle
+        elif isinstance(num_or_handle, int):
+        	page_handle = tabs[num_or_handle]
+        elif isinstance(num_or_handle, str):
+        	page_handle = num_or_handle
+        else:
+        	raise TypeError('Argument num_or_handle must be int or str.')
+
         for i in tabs:  # 遍历所有标签页，关闭非保留的
             if i != page_handle:
                 self.driver.switch_to.window(i)
-                self.close_current_tab()
+                self.driver.close()
         self.driver.switch_to.window(page_handle)  # 把权柄定位回保留的页面
 
-    def to_tab(self, index: int = 0) -> None:
-        """跳转到第几个标签页                              \n
-        :param index: 标签页序号，第一个为0，最后为-1
+    def to_tab(self, num_or_handle: Union[int, str] = 0) -> None:
+        """跳转到标签页                                                         \n
+        :param num_or_handle: 标签页序号或handle字符串，序号第一个为0，最后为-1
         :return: None
         """
-        tabs = self.driver.window_handles  # 获得所有标签页权柄
-        self.driver.switch_to.window(tabs[index])
+        tab = self.driver.window_handles[num_or_handle]	if isinstance(num_or_handle, int) else num_or_handle
+        self.driver.switch_to.window(tab)
 
     def to_iframe(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> None:
-        """跳转到iframe                                                                          \n
-        可接收iframe序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，  \n
-        传入'main'跳到最高层，传入'parent'跳到上一层                                               \n
-        示例：                                                                                   \n
-            to_iframe('tag:iframe')    - 通过传入iframe的查询字符串定位                            \n
-            to_iframe('iframe_id')     - 通过iframe的id属性定位                                   \n
-            to_iframe('iframe_name')   - 通过iframe的name属性定位                                 \n
-            to_iframe(iframe_element)  - 通过传入元素对象定位                                      \n
-            to_iframe(0)               - 通过iframe的序号定位                                     \n
-            to_iframe('main')          - 跳到最高层                                               \n
-            to_iframe('parent')        - 跳到上一层                                               \n
+        """跳转到iframe                                                                       \n
+        可接收iframe序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，   \n
+        传入'main'跳到最高层，传入'parent'跳到上一层                                              \n
+        示例：                                                                                \n
+            to_iframe('tag:iframe')    - 通过传入iframe的查询字符串定位                          \n
+            to_iframe('iframe_id')     - 通过iframe的id属性定位                                \n
+            to_iframe('iframe_name')   - 通过iframe的name属性定位                              \n
+            to_iframe(iframe_element)  - 通过传入元素对象定位                                   \n
+            to_iframe(0)               - 通过iframe的序号定位                                  \n
+            to_iframe('main')          - 跳到最高层                                           \n
+            to_iframe('parent')        - 跳到上一层                                           \n
         :param loc_or_ele: iframe的定位信息
         :return: None
         """
