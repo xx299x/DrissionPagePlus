@@ -177,9 +177,9 @@ If you only use session mode, you can skip this section.
 
 There are three ways to configure the path:
 
--Write two paths to system variables.
--Pass in the path manually when using it.
--Write the path to the ini file of this library (recommended).
+- Write two paths to system variables.
+- Pass in the path manually when using it.
+- Write the path to the ini file of this library (recommended).
 
 If you choose the third method, please run these lines of code before using the library for the first time, and record these two paths in the ini file.
 
@@ -217,9 +217,9 @@ cache_path # Cache path
 
 Tips：
 
--Different projects may require different versions of chrome and chromedriver. You can also save multiple ini files to use as needed.
--It is recommended to use the green version of chrome, and manually set the path to avoid browser upgrades that do not match the chromedriver version.
--It is recommended to set debugger_address when debugging a project, and use a manually opened browser to debug, saving time and effort.
+- Different projects may require different versions of chrome and chromedriver. You can also save multiple ini files to use as needed.
+- It is recommended to use the green version of chrome, and manually set the path to avoid browser upgrades that do not match the chromedriver version.
+- It is recommended to set debugger_address when debugging a project, and use a manually opened browser to debug, saving time and effort.
 
 
 
