@@ -4,10 +4,10 @@
 # Introduction
 ***
 
-DrissionPage, the combination of driver and session, is a python-based Web automation operation integration tool.
-It realizes the seamless switching between selenium and requests.
-Therefore, the convenience of selenium and the high efficiency of requests can be balanced.
-It uses POM mode to encapsulate common methods of page elements, which is very suitable for automatic operation function expansion.
+DrissionPage, the combination of driver and session, is a python-based Web automation operation integration tool.  
+It realizes the seamless switching between selenium and requests.  
+Therefore, the convenience of selenium and the high efficiency of requests can be balanced.  
+It uses POM mode to encapsulate common methods of page elements, which is very suitable for automatic operation function expansion.  
 What's even better is that its usage is very concise and user-friendly, with a small amount of code and friendly to novices.  
 
 **Project address：**
@@ -811,7 +811,7 @@ Parameter Description:
   - page.ele('@class:ele_class')                      - Return the first class element containing ele_class
   - page.ele('@name=ele_name')                    - Return the first element whose name is equal to ele_name
   - page.ele('@placeholder')                            - Return the first element with placeholder attribute
-  - page.ele('tag:p')                                          - Return the first <p> element
+  - page.ele('tag:p')                                          - Return the first p element
   - page.ele('tag:div@class:ele_class')            - Return the first class div element with ele_class
   - page.ele('tag:div@class=ele_class')           - Return the first div element whose class is equal to ele_class
   - page.ele('tag:div@text():some_text')           - Returns the first div element whose text contains some_text
