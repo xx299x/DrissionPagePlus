@@ -907,9 +907,13 @@ The following methods and attributes only take effect in driver mode, and will a
 
 ### check_page()
 
-​	check_page() -> bool
+​	check_page(by_requests: bool = False) -> Union[bool, None]
 
-​	After the subclass is derived, it is used to check whether the domain name meets expectations, and the function is implemented by the subclass.
+​	In d mode, check whether the web page meets expectations. The response status is checked by default, and can be overloaded to achieve targeted checks.
+
+​	Parameter Description:
+
+- by_requests  - 强制使用内置response进行检查
 
 ### run_script()
 
