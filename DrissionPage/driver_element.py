@@ -126,7 +126,11 @@ class DriverElement(DrissionElement):
     @property
     def shadow_root(self):
         e = self.run_script('return arguments[0].shadowRoot')
-        return ShadowRootElement(e, self) if e else None
+        if e:
+            from shadow_root_element import ShadowRootElement
+            return ShadowRootElement(e, self)
+        else:
+            return None
 
     @property
     def parent(self):
@@ -448,37 +452,6 @@ class DriverElement(DrissionElement):
         """鼠标悬停"""
         from selenium.webdriver import ActionChains
         ActionChains(self._driver).move_to_element(self.inner_ele).perform()
-
-
-class ShadowRootElement(DrissionElement):
-    def __init__(self, inner_ele: WebElement, parent_ele: DriverElement):
-        super().__init__(inner_ele)
-        self.parent_ele = parent_ele
-
-    def ele(self, loc: Union[tuple, str], mode: str = None, show_errmsg: bool = True):
-        pass
-
-    def eles(self, loc: Union[tuple, str], show_errmsg: bool = True):
-        pass
-
-    def attr(self, attr: str):
-        return self.html if attr == 'innerHTML' else None
-
-    def run_script(self, script: str, *args) -> Any:
-        """执行js代码，传入自己为第一个参数  \n
-        :param script: js文本
-        :param args: 传入的参数
-        :return: js执行结果
-        """
-        return self.inner_ele.parent.execute_script(script, self.inner_ele, *args)
-
-    @property
-    def html(self):
-        return unescape(self.attr('innerHTML')).replace('\xa0', ' ')
-
-    @property
-    def parent(self) -> DriverElement:
-        return self.parent_ele
 
 
 def execute_driver_find(page_or_ele: Union[WebElement, WebDriver],
