@@ -127,7 +127,7 @@ class DriverElement(DrissionElement):
     def shadow_root(self):
         e = self.run_script('return arguments[0].shadowRoot')
         if e:
-            from shadow_root_element import ShadowRootElement
+            from .shadow_root_element import ShadowRootElement
             return ShadowRootElement(e, self)
         else:
             return None
