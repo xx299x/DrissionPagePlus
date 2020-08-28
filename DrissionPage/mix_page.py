@@ -11,6 +11,7 @@ from requests_html import HTMLSession, Element
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
+from .config import DriverOptions
 from .drission import Drission
 from .driver_element import DriverElement
 from .driver_page import DriverPage
@@ -32,16 +33,23 @@ class MixPage(Null, SessionPage, DriverPage):
     这些功能由DriverPage和SessionPage类实现。
     """
 
-    def __init__(self, drission: Union[Drission, str] = None, mode: str = 'd', timeout: float = 10):
-        """初始化函数                                                              \n
+    def __init__(self,
+                 drission: Union[Drission, str] = None,
+                 mode: str = 'd',
+                 timeout: float = 10,
+                 driver_options: Union[dict, DriverOptions] = None,
+                 session_options: dict = None):
+        """初始化函数                                                                         \n
         :param drission: 整合了driver和session的类，传入's'或'd'时快速配置相应模式
         :param mode: 默认使用selenium的d模式
+        :param driver_options: 浏览器设置，没有传入drission参数时会用这个设置新建Drission对象
+        :param session_options: requests设置，没有传入drission参数时会用这个设置新建Drission对象
         """
         super().__init__()
         if drission in ['s', 'd', 'S', 'D']:
             mode = drission.lower()
             drission = None
-        self._drission = drission or Drission()
+        self._drission = drission or Drission(driver_options, session_options)
         self._session = None
         self._driver = None
         self._url = None
