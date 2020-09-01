@@ -9,7 +9,7 @@ from pathlib import Path
 from random import randint
 from re import search as re_SEARCH
 from re import sub as re_SUB
-from time import time
+from time import time, sleep
 from typing import Union, List
 from urllib.parse import urlparse, quote
 
@@ -142,15 +142,41 @@ class SessionPage(object):
             raise TypeError('Type of loc_or_str can only be tuple or str.')
         return self.ele(loc_or_str, mode='all', show_errmsg=True)
 
+    def _try_to_get(self,
+                    to_url: str,
+                    times: int = 0,
+                    interval: float = 1,
+                    show_errmsg: bool = False,
+                    **kwargs) -> HTMLResponse:
+        """尝试连接，重试若干次
+        :param to_url: 要访问的url
+        :param times: 重试次数
+        :param interval: 重试间隔（秒）
+        :param show_errmsg: 是否抛出异常
+        :param kwargs: 连接参数
+        :return: HTMLResponse对象
+        """
+        r = self._make_response(to_url, show_errmsg=show_errmsg, **kwargs)[0]
+        while times and (not r or r.content == b''):
+            print('重试', to_url)
+            sleep(interval)
+            r = self._make_response(to_url, show_errmsg=show_errmsg, **kwargs)[0]
+            times -= 1
+        return r
+
     def get(self,
             url: str,
             go_anyway: bool = False,
             show_errmsg: bool = False,
+            retry: int = 0,
+            interval: float = 1,
             **kwargs) -> Union[bool, None]:
         """用get方式跳转到url                                 \n
         :param url: 目标url
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
         :param kwargs: 连接参数
         :return: url是否可用
         """
@@ -158,7 +184,7 @@ class SessionPage(object):
         if not url or (not go_anyway and self.url == to_url):
             return
         self._url = to_url
-        self._response = self._make_response(to_url, show_errmsg=show_errmsg, **kwargs)[0]
+        self._response = self._try_to_get(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
         if self._response is None:
             self._url_available = False
         else:

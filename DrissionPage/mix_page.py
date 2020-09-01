@@ -236,19 +236,27 @@ class MixPage(Null, SessionPage, DriverPage):
 
     # ----------------以下为共用函数-----------------------
 
-    def get(self, url: str, go_anyway=False, show_errmsg: bool = False, **kwargs) -> Union[bool, None]:
+    def get(self,
+            url: str,
+            go_anyway=False,
+            show_errmsg: bool = False,
+            retry: int = 0,
+            interval: float = 1,
+            **kwargs) -> Union[bool, None]:
         """跳转到一个url                                         \n
         跳转前先同步cookies，跳转后判断目标url是否可用
         :param url: 目标url
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
         :param kwargs: 连接参数，s模式专用
         :return: url是否可用
         """
         if self._mode == 'd':
-            return super(SessionPage, self).get(url, go_anyway, show_errmsg)
+            return super(SessionPage, self).get(url, go_anyway, show_errmsg, retry, interval)
         elif self._mode == 's':
-            return super().get(url, go_anyway, show_errmsg, **kwargs)
+            return super().get(url, go_anyway, show_errmsg, retry, interval, **kwargs)
 
     def ele(self,
             loc_or_ele: Union[tuple, str, DriverElement, SessionElement, Element, WebElement],
