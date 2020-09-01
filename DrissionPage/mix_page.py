@@ -235,12 +235,30 @@ class MixPage(Null, SessionPage, DriverPage):
         return super().chrome_downloading(path)
 
     # ----------------以下为共用函数-----------------------
+    def _try_to_get(self,
+                    to_url: str,
+                    times: int = 0,
+                    interval: float = 1,
+                    show_errmsg: bool = False,
+                    **kwargs):
+        """尝试连接，重试若干次                            \n
+        :param to_url: 要访问的url
+        :param times: 重试次数
+        :param interval: 重试间隔（秒）
+        :param show_errmsg: 是否抛出异常
+        :param kwargs: 连接参数
+        :return: s模式为HTMLResponse对象，d模式为bool
+        """
+        if self._mode == 'd':
+            return super(SessionPage, self)._try_to_get(to_url, times, interval, show_errmsg)
+        elif self._mode == 's':
+            return super()._try_to_get(to_url, times, interval, show_errmsg, **kwargs)
 
     def get(self,
             url: str,
             go_anyway=False,
             show_errmsg: bool = False,
-            retry: int = 0,
+            retry: int = 2,
             interval: float = 1,
             **kwargs) -> Union[bool, None]:
         """跳转到一个url                                         \n

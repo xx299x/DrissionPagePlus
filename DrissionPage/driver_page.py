@@ -65,12 +65,12 @@ class DriverPage(object):
                     times: int = 0,
                     interval: float = 1,
                     show_errmsg: bool = False, ):
-        """
+        """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
         :param show_errmsg: 是否抛出异常
-        :return:
+        :return: 是否成功
         """
         self.driver.get(to_url)
         is_ok = self.check_page()

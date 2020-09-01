@@ -148,7 +148,7 @@ class SessionPage(object):
                     interval: float = 1,
                     show_errmsg: bool = False,
                     **kwargs) -> HTMLResponse:
-        """尝试连接，重试若干次
+        """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
