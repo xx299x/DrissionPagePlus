@@ -100,6 +100,27 @@ class ShadowRootElement(DrissionElement):
         except:
             return False
 
+    def _find_eles_by_text(self, text: str, mode: str = 'single', match: str = 'exact'):
+        eles = self.run_script('return arguments[0].querySelectorAll("*")')
+        from .driver_element import DriverElement
+        results = []
+        for ele in eles:
+            txt = self.driver.execute_script(
+                'if(arguments[0].firstChild!=null){return arguments[0].firstChild.nodeValue}', ele)
+            if match == 'exact':
+                if text == txt:
+                    if mode == 'single':
+                        return DriverElement(ele)
+                    elif mode == 'all':
+                        results.append(DriverElement(ele))
+            elif match == 'fuzzy':
+                if txt and text in txt:
+                    if mode == 'single':
+                        return DriverElement(ele)
+                    elif mode == 'all':
+                        results.append(DriverElement(ele))
+        return None if mode == 'single' else results
+
 
 def get_css_from_str(loc: str) -> tuple:
     """处理元素查找语句                                              \n
