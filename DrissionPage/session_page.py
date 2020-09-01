@@ -247,31 +247,29 @@ class SessionPage(object):
                 raise ConnectionError(f'Status code: {r.status_code}.')
             return False, f'Status code: {r.status_code}.'
         # -------------------获取文件名-------------------
-        # header里有文件名，则使用它，否则在url里截取，但不能保证url包含文件名
-        if 'Content-disposition' in r.headers:
+        if 'Content-disposition' in r.headers:  # header里有文件名，则使用它
             file_name = r.headers['Content-disposition'].split('"')[1].encode('ISO-8859-1').decode('utf-8')
-        elif os_PATH.basename(file_url):
+        elif os_PATH.basename(file_url):  # 在url里获取文件名
             file_name = os_PATH.basename(file_url).split("?")[0]
-        else:
+        else:  # 找不到则用时间和随机数生成文件名
             file_name = f'untitled_{time()}_{randint(0, 100)}'
-
-        file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()
+        file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()  # 去除非法字符
+        # -------------------重命名文件名-------------------
         if rename:  # 重命名文件，不改变扩展名
             rename = re_SUB(r'[\\/*:|<>?"]', '', rename).strip()
             ext_name = file_name.split('.')[-1]
-            if rename.lower().endswith(f'.{ext_name}'.lower()) or ext_name == file_name:
+            if '.' in rename or ext_name == file_name:
                 full_name = rename
             else:
                 full_name = f'{rename}.{ext_name}'
         else:
             full_name = file_name
-
+        # -------------------生成路径-------------------
         goal_Path = Path(goal_path)
         goal_path = ''
         for key, i in enumerate(goal_Path.parts):  # 去除路径中的非法字符
             goal_path += goal_Path.drive if key == 0 and goal_Path.drive else re_SUB(r'[*:|<>?"]', '', i).strip()
             goal_path += '\\' if i != '\\' and key < len(goal_Path.parts) - 1 else ''
-
         goal_Path = Path(goal_path)
         goal_Path.mkdir(parents=True, exist_ok=True)
         goal_path = goal_Path.absolute()
@@ -287,8 +285,8 @@ class SessionPage(object):
                 full_path = Path(f'{goal_path}\\{full_name}')
             else:
                 raise ValueError("Argument file_exists can only be 'skip', 'overwrite', 'rename'.")
-
-        if show_msg:  # 打印要下载的文件
+        # -------------------打印要下载的文件-------------------
+        if show_msg:
             print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
             print(f'Downloading to: {goal_path}')
 
@@ -317,9 +315,8 @@ class SessionPage(object):
             else:
                 download_status, info = True, 'Success.'
         finally:
-            # 删除下载出错文件
             if not download_status and full_path.exists():
-                full_path.unlink()
+                full_path.unlink()  # 删除下载出错文件
             r.close()
         # -------------------显示并返回值-------------------
         if show_msg:
