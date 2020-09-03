@@ -180,7 +180,7 @@ class SessionPage(object):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        to_url = quote(url, safe='/:&?=%;#@')
+        to_url = quote(url, safe='/:&?=%;#@+')
         if not url or (not go_anyway and self.url == to_url):
             return
         self._url = to_url
@@ -366,7 +366,7 @@ class SessionPage(object):
         """
         if mode not in ['get', 'post']:
             raise ValueError("Argument mode can only be 'get' or 'post'.")
-        url = quote(url, safe='/:&?=%;#@')
+        url = quote(url, safe='/:&?=%;#@+')
 
         # 设置referer和host值
         kwargs_set = set(x.lower() for x in kwargs)
