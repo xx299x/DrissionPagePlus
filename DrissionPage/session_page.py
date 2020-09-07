@@ -190,13 +190,6 @@ class SessionPage(object):
         if self._response is None:
             self._url_available = False
         else:
-            stream = tuple(x for x in kwargs if x.lower() == 'stream')
-            if (not stream or not kwargs[stream[0]]) and not self.session.stream:
-                try:
-                    self._response.html.encoding = self._response.encoding  # 修复requests_html丢失编码方式的bug
-                except:
-                    pass
-
             if self._response.ok:
                 self._url_available = True
             else:
@@ -227,11 +220,6 @@ class SessionPage(object):
         if self._response is None:
             self._url_available = False
         else:
-            try:
-                self._response.html.encoding = self._response.encoding  # 修复requests_html丢失编码方式的bug
-            except:
-                pass
-
             if self._response.ok:
                 self._url_available = True
             else:
@@ -403,25 +391,22 @@ class SessionPage(object):
             headers = dict(r.headers)
             content_type = tuple(x for x in headers if x.lower() == 'content-type')
             stream = tuple(x for x in kwargs if x.lower() == 'stream')
+            not_stream = (not stream or not kwargs[stream[0]]) and not self.session.stream
             charset = None
             if not content_type or 'charset' not in headers[content_type[0]].lower():
-                if (not stream or not kwargs[stream[0]]) and not self.session.stream:
-                    # ========================
-                    re_result = None
-                    for chunk in r.iter_content(chunk_size=512):
-                        re_result = re_SEARCH(r'<meta.*?charset=[ \'"]*([^"\' />]+).*?>', chunk.decode())
-                        break
-                    # ========================
-                    # re_result = re_SEARCH(r'<meta.*?charset=[ \'"]*([^"\' />]+).*?>', r.text)
+                if not_stream:
+                    re_result = re_SEARCH(r'<meta.*?charset=[ \'"]*([^"\' />]+).*?>',
+                                          r.iter_content(chunk_size=512).__next__().decode())
                     try:
                         charset = re_result.group(1)
                     except:
                         charset = r.apparent_encoding
             else:
                 charset = headers[content_type[0]].split('=')[1]
-            # 避免存在退格符导致乱码或解析出错
-            if (not stream or not kwargs[stream[0]]) and not self.session.stream:
-                r._content = r.content.replace(b'\x08', b'\\b')
+
+            if not_stream:  # 加载网页时修复编码
+                r._content = r.content.replace(b'\x08', b'\\b')  # 避免存在退格符导致乱码或解析出错
+                r.html.encoding = r.encoding  # 修复requests_html丢失编码方式的bug
             if charset:
                 r.encoding = charset
             return r, 'Success'
