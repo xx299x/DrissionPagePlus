@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   session_page.py
 """
+import re
 from os import path as os_PATH
 from pathlib import Path
 from random import randint
@@ -11,6 +12,7 @@ from re import search as re_SEARCH
 from re import sub as re_SUB
 from time import time, sleep
 from typing import Union, List
+from urllib import parse
 from urllib.parse import urlparse, quote
 
 from requests_html import HTMLSession, HTMLResponse, Element
@@ -264,14 +266,24 @@ class SessionPage(object):
             if show_errmsg:
                 raise ConnectionError(f'Status code: {r.status_code}.')
             return False, f'Status code: {r.status_code}.'
+
         # -------------------获取文件名-------------------
-        if 'Content-disposition' in r.headers:  # header里有文件名，则使用它
-            file_name = r.headers['Content-disposition'].split('"')[1].encode('ISO-8859-1').decode('utf-8')
-        elif os_PATH.basename(file_url):  # 在url里获取文件名
+        file_name = ''
+        content_disposition = tuple(x for x in r.headers if x.lower() == 'content-disposition')
+        if content_disposition:  # header里有文件名，则使用它
+            file_name = r.headers[content_disposition[0]].encode('ISO-8859-1').decode('utf-8')
+            file_name = re.search(r'filename *= *"?([^";]+)', file_name)
+            if file_name:
+                file_name = file_name.group(1)
+            if file_name[0] == file_name[-1] == "'":
+                file_name = file_name.strip("'")
+        if not file_name and os_PATH.basename(file_url):  # 在url里获取文件名
             file_name = os_PATH.basename(file_url).split("?")[0]
-        else:  # 找不到则用时间和随机数生成文件名
+        if not file_name:  # 找不到则用时间和随机数生成文件名
             file_name = f'untitled_{time()}_{randint(0, 100)}'
         file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()  # 去除非法字符
+        file_name = parse.unquote(file_name)
+
         # -------------------重命名文件名-------------------
         if rename:  # 重命名文件，不改变扩展名
             rename = re_SUB(r'[\\/*:|<>?"]', '', rename).strip()
@@ -282,6 +294,7 @@ class SessionPage(object):
                 full_name = f'{rename}.{ext_name}'
         else:
             full_name = file_name
+
         # -------------------生成路径-------------------
         goal_Path = Path(goal_path)
         goal_path = ''
@@ -303,6 +316,7 @@ class SessionPage(object):
                 full_path = Path(f'{goal_path}\\{full_name}')
             else:
                 raise ValueError("Argument file_exists can only be 'skip', 'overwrite', 'rename'.")
+
         # -------------------打印要下载的文件-------------------
         if show_msg:
             print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
@@ -336,6 +350,7 @@ class SessionPage(object):
             if not download_status and full_path.exists():
                 full_path.unlink()  # 删除下载出错文件
             r.close()
+
         # -------------------显示并返回值-------------------
         if show_msg:
             print(info)
