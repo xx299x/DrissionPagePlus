@@ -324,7 +324,8 @@ class SessionPage(object):
 
         # -------------------开始下载-------------------
         # 获取远程文件大小
-        file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else None
+        content_length = tuple(x for x in r.headers if x.lower() == 'content-length')
+        file_size = int(r.headers[content_length]) if content_length else None
         downloaded_size, download_status = 0, False  # 已下载文件大小和下载状态
         try:
             with open(str(full_path), 'wb') as tmpFile:
