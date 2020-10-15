@@ -235,6 +235,7 @@ class SessionPage(object):
                  goal_path: str = None,
                  rename: str = None,
                  file_exists: str = 'rename',
+                 post_data: dict = None,
                  show_msg: bool = False,
                  show_errmsg: bool = False,
                  **kwargs) -> tuple:
@@ -257,7 +258,10 @@ class SessionPage(object):
         if 'timeout' not in kwargs:
             kwargs['timeout'] = 20
 
-        r, info = self._make_response(file_url, mode='get', show_errmsg=show_errmsg, **kwargs)
+        if not post_data:
+            r, info = self._make_response(file_url, mode='get', show_errmsg=show_errmsg, **kwargs)
+        else:
+            r, info = self._make_response(file_url, mode='post', data=post_data, show_errmsg=show_errmsg, **kwargs)
         if r is None:
             if show_msg:
                 print(info)
