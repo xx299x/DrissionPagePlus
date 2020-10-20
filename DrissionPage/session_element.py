@@ -37,6 +37,11 @@ class SessionElement(DrissionElement):
         return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
     @property
+    def texts(self) -> List[str]:
+        # TODO: 待补充
+        return []
+
+    @property
     def html(self) -> str:
         """返回元素innerHTML文本"""
         html = unescape(self._inner_ele.html).replace('\xa0', ' ')
