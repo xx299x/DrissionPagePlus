@@ -36,8 +36,7 @@ class SessionElement(DrissionElement):
         """返回元素内所有文本"""
         return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
-    @property
-    def texts(self) -> List[str]:
+    def texts(self, text_node_only: bool = False) -> List[str]:
         # TODO: 待补充
         return []
 

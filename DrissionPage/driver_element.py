@@ -61,9 +61,11 @@ class DriverElement(DrissionElement):
         """返回元素内所有文本"""
         return unescape(self.attr('innerText')).replace('\xa0', ' ')
 
-    @property
-    def texts(self) -> List[str]:
+    def texts(self, text_node_only: bool = False) -> List[str]:
         """返回元素内文本节点列表"""
+        s = '' if text_node_only else '''else if(childs[i].nodeType === Node.ELEMENT_NODE){
+                    texts.push(childs[i].innerText)
+                }'''
         js = '''
         function e(el) {
             if (!(el instanceof Element)) return;
@@ -73,7 +75,7 @@ class DriverElement(DrissionElement):
             for(var i = 0; i <childs.length ; i++) {
                 if(childs[i].nodeType === Node.TEXT_NODE){
                     texts.push(childs[i].nodeValue)
-                }   
+                }''' + s + '''
             } 
             return texts;
         }
