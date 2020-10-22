@@ -246,9 +246,11 @@ def execute_session_find(page_or_ele: BaseParser,
     try:
         ele = None
         if loc_by == 'xpath':
-            if 'PyQuery' in str(type(page_or_ele.element)):  # 从页面查找
+            if 'PyQuery' in str(type(page_or_ele.element)) or '()' in loc_str.split('[')[0]:
+                # 从页面查找。后面的条件是处理./node()、./text()等xpath语句时用的
                 ele = page_or_ele.xpath(loc_str)
-            elif 'HtmlElement' in str(type(page_or_ele.element)):  # 从元素查找
+            elif 'HtmlElement' in str(type(page_or_ele.element)):
+                # 从元素查找。Q_Q忘记了为什么要这样区分
                 elements = page_or_ele.element.xpath(loc_str)
                 ele = [Element(element=e, url=page_or_ele.url) for e in elements]
         else:  # 用css selector获取
@@ -257,7 +259,7 @@ def execute_session_find(page_or_ele: BaseParser,
         if mode == 'single':
             return SessionElement(ele[0]) if ele else None
         elif mode == 'all':
-            return [SessionElement(e) for e in ele]
+            return [SessionElement(e) if isinstance(e, Element) else e for e in ele]
     except:
         if show_errmsg:
             print('Element(s) not found.', loc)
