@@ -257,7 +257,8 @@ def execute_session_find(page_or_ele: BaseParser,
             ele = page_or_ele.find(loc_str)
 
         if mode == 'single':
-            return SessionElement(ele[0]) if ele else None
+            ele = ele[0] if ele else None
+            return SessionElement(ele) if isinstance(ele, Element) else ele
         elif mode == 'all':
             return [SessionElement(e) if isinstance(e, Element) else e for e in ele]
     except:
