@@ -164,6 +164,7 @@ class SessionElement(DrissionElement):
         loc_or_str = loc_or_str[0], loc_str
 
         return execute_session_find(self.inner_ele, loc_or_str, mode, show_errmsg)
+        # return execute_session_find(self, loc_or_str, mode, show_errmsg)
 
     def eles(self, loc_or_str: Union[tuple, str], show_errmsg: bool = False):
         """返回当前元素下级所有符合条件的子元素                                                           \n
@@ -224,6 +225,10 @@ class SessionElement(DrissionElement):
                 return ' '.join(self._inner_ele.attrs['class'])
             elif attr == 'text':
                 return self.text
+            elif attr == 'outerHTML':
+                return self.inner_ele.html
+            elif attr == 'innerHTML':
+                return self.html
             else:
                 return self._inner_ele.attrs[attr]
         except:
@@ -231,6 +236,7 @@ class SessionElement(DrissionElement):
 
 
 def execute_session_find(page_or_ele: BaseParser,
+                         # def execute_session_find(page_or_ele,
                          loc: tuple,
                          mode: str = 'single',
                          show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement]]:
@@ -249,18 +255,32 @@ def execute_session_find(page_or_ele: BaseParser,
     try:
         ele = None
         if loc_by == 'xpath':
+            print(loc_str)
+            print(type(page_or_ele))
             if 'PyQuery' in str(type(page_or_ele.element)):
-                # or '()' in loc_str.split('[')[0]\
-                # or loc_str.split('/')[-1].startswith('@'):
-                # 从页面查找。第二个条件处理./node()、./text()等xpath语句，第三个条件处理获取属性的语句
+                # from DrissionPage import MixPage
+                # if isinstance(page_or_ele, MixPage):
+                # 从页面查找。
                 ele = page_or_ele.xpath(loc_str)
+                # ele = page_or_ele.response.html.xpath(loc_str)
             elif 'HtmlElement' in str(type(page_or_ele.element)):
-                # 从元素查找。Q_Q忘记了为什么要这样区分
-                elements = page_or_ele.element.xpath(loc_str)
-                ele = [Element(element=e, url=page_or_ele.url) for e in elements]
-                if not ele:
+                # elif isinstance(page_or_ele, SessionElement):
+                # 从元素查找。这样区分是为了能找到上级元素
+                try:
+                    elements = page_or_ele.element.xpath(loc_str)
+                    # elements = page_or_ele.inner_ele.element.xpath(loc_str)
+                    ele = [Element(element=e, url=page_or_ele.url) for e in elements]
+                    # ele = [Element(element=e, url=page_or_ele.inner_ele.url) for e in elements]
+                    # ele = page_or_ele.xpath(loc_str)
+                    # print(ele)
+                except AttributeError:
+                    # print('c')
+                    # loc_str=f'{page_or_ele.xpath}{loc_str.lstrip(".")}'
+                    # print(loc_str)
+                    # ele = page_or_ele.inner_ele.xpath(loc_str)
                     ele = page_or_ele.xpath(loc_str)
         else:  # 用css selector获取
+            # pass
             ele = page_or_ele.find(loc_str)
 
         if mode == 'single':

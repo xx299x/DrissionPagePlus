@@ -114,6 +114,7 @@ class SessionPage(object):
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, SessionElement, Element.')
         return execute_session_find(self.response.html, loc_or_ele, mode, show_errmsg)
+        # return execute_session_find(self, loc_or_ele, mode, show_errmsg)
 
     def eles(self, loc_or_str: Union[tuple, str], show_errmsg: bool = False) -> List[SessionElement]:
         """返回页面中所有符合条件的元素                                                                    \n
