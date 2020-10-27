@@ -37,8 +37,11 @@ class SessionElement(DrissionElement):
         return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
     def texts(self, text_node_only: bool = False) -> List[str]:
-        # TODO: 待补充
-        return []
+        nodes = self.eles('xpath:./*/node()')
+        if text_node_only:
+            return [x for x in nodes if isinstance(x, str)]
+        else:
+            return [x if isinstance(x, str) else x.text for x in nodes]
 
     @property
     def html(self) -> str:
@@ -246,13 +249,17 @@ def execute_session_find(page_or_ele: BaseParser,
     try:
         ele = None
         if loc_by == 'xpath':
-            if 'PyQuery' in str(type(page_or_ele.element)) or '()' in loc_str.split('[')[0]:
-                # 从页面查找。后面的条件是处理./node()、./text()等xpath语句时用的
+            if 'PyQuery' in str(type(page_or_ele.element)):
+                # or '()' in loc_str.split('[')[0]\
+                # or loc_str.split('/')[-1].startswith('@'):
+                # 从页面查找。第二个条件处理./node()、./text()等xpath语句，第三个条件处理获取属性的语句
                 ele = page_or_ele.xpath(loc_str)
             elif 'HtmlElement' in str(type(page_or_ele.element)):
                 # 从元素查找。Q_Q忘记了为什么要这样区分
                 elements = page_or_ele.element.xpath(loc_str)
                 ele = [Element(element=e, url=page_or_ele.url) for e in elements]
+                if not ele:
+                    ele = page_or_ele.xpath(loc_str)
         else:  # 用css selector获取
             ele = page_or_ele.find(loc_str)
 
