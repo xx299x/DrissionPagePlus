@@ -255,32 +255,17 @@ def execute_session_find(page_or_ele: BaseParser,
     try:
         ele = None
         if loc_by == 'xpath':
-            print(loc_str)
-            print(type(page_or_ele))
             if 'PyQuery' in str(type(page_or_ele.element)):
-                # from DrissionPage import MixPage
-                # if isinstance(page_or_ele, MixPage):
                 # 从页面查找。
                 ele = page_or_ele.xpath(loc_str)
-                # ele = page_or_ele.response.html.xpath(loc_str)
             elif 'HtmlElement' in str(type(page_or_ele.element)):
-                # elif isinstance(page_or_ele, SessionElement):
                 # 从元素查找。这样区分是为了能找到上级元素
                 try:
                     elements = page_or_ele.element.xpath(loc_str)
-                    # elements = page_or_ele.inner_ele.element.xpath(loc_str)
                     ele = [Element(element=e, url=page_or_ele.url) for e in elements]
-                    # ele = [Element(element=e, url=page_or_ele.inner_ele.url) for e in elements]
-                    # ele = page_or_ele.xpath(loc_str)
-                    # print(ele)
                 except AttributeError:
-                    # print('c')
-                    # loc_str=f'{page_or_ele.xpath}{loc_str.lstrip(".")}'
-                    # print(loc_str)
-                    # ele = page_or_ele.inner_ele.xpath(loc_str)
                     ele = page_or_ele.xpath(loc_str)
         else:  # 用css selector获取
-            # pass
             ele = page_or_ele.find(loc_str)
 
         if mode == 'single':
