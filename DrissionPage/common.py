@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   common.py
 """
+import time
 from abc import abstractmethod
 from pathlib import Path
 from re import split as re_SPLIT
@@ -11,7 +12,9 @@ from shutil import rmtree
 from typing import Union
 
 from requests_html import Element
+from selenium.common.exceptions import TimeoutException, InvalidSelectorException
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.wait import WebDriverWait
 
 
 class DrissionElement(object):
@@ -71,6 +74,30 @@ class DrissionElement(object):
     # @abstractmethod
     # def attr(self, attr: str):
     #     pass
+
+
+class WebDriverWaitPlus(WebDriverWait):
+    """重写until方法，使其在接收到InvalidSelectorException异常时跳出"""
+
+    def until(self, method, message=''):
+        screen = None
+        stacktrace = None
+
+        end_time = time.time() + self._timeout
+        while True:
+            try:
+                value = method(self._driver)
+                if value:
+                    return value
+            except self._ignored_exceptions as exc:
+                if isinstance(exc, InvalidSelectorException):
+                    raise exc
+                screen = getattr(exc, 'screen', None)
+                stacktrace = getattr(exc, 'stacktrace', None)
+            time.sleep(self._poll)
+            if time.time() > end_time:
+                break
+        raise TimeoutException(message, screen, stacktrace)
 
 
 def get_loc_from_str(loc: str) -> tuple:
