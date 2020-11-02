@@ -244,10 +244,12 @@ class DriverElement(DrissionElement):
             raise ValueError('Argument loc_or_str can only be tuple or str.')
 
         if loc_or_str[0] == 'xpath':
+            # 处理语句最前面的(
+            bracket, loc_str = ('(', loc_or_str[1][1:]) if loc_or_str[1].startswith('(') else ('', loc_or_str[1])
             # 确保查询语句最前面是.
-            loc_str = loc_or_str[1] if loc_or_str[1].startswith(('.', '/')) else f'.//{loc_or_str[1]}'
+            loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
             loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
-            loc_or_str = loc_or_str[0], loc_str
+            loc_or_str = loc_or_str[0], f'{bracket}{loc_str}'
         elif loc_or_str[0] == 'css selector':
             if loc_or_str[1].lstrip().startswith('>'):
                 loc_or_str = loc_or_str[0], f'{self.css_path}{loc_or_str[1]}'
@@ -494,18 +496,15 @@ def execute_driver_find(page_or_ele: Union[WebElement, WebDriver],
     mode = mode or 'single'
     if mode not in ['single', 'all']:
         raise ValueError("Argument mode can only be 'single' or 'all'.")
-    if loc[0] == 'xpath':
-        pass
-    else:
-        try:
-            wait = WebDriverWait(page_or_ele, timeout=timeout)
-            if mode == 'single':
-                return DriverElement(wait.until(ec.presence_of_element_located(loc)))
-            elif mode == 'all':
-                eles = wait.until(ec.presence_of_all_elements_located(loc))
-                return [DriverElement(ele) for ele in eles]
-        except:
-            if show_errmsg:
-                print('Element(s) not found.', loc)
-                raise
-            return [] if mode == 'all' else None
+    try:
+        wait = WebDriverWait(page_or_ele, timeout=timeout)
+        if mode == 'single':
+            return DriverElement(wait.until(ec.presence_of_element_located(loc)))
+        elif mode == 'all':
+            eles = wait.until(ec.presence_of_all_elements_located(loc))
+            return [DriverElement(ele) for ele in eles]
+    except:
+        if show_errmsg:
+            print('Element(s) not found.', loc)
+            raise
+        return [] if mode == 'all' else None
