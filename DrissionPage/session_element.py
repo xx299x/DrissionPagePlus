@@ -155,7 +155,8 @@ class SessionElement(DrissionElement):
 
         loc_str = None
         if loc_or_str[0] == 'xpath':
-            bracket, loc_str = ('(', loc_or_str[1][1:]) if loc_or_str[1].startswith('(') else ('', loc_or_str[1])
+            brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
+            bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
             loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
             loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
             loc_str = f'{bracket}{loc_str}'
@@ -166,7 +167,6 @@ class SessionElement(DrissionElement):
         loc_or_str = loc_or_str[0], loc_str
 
         return execute_session_find(self.inner_ele, loc_or_str, mode, show_errmsg)
-        # return execute_session_find(self, loc_or_str, mode, show_errmsg)
 
     def eles(self, loc_or_str: Union[tuple, str], show_errmsg: bool = False):
         """返回当前元素下级所有符合条件的子元素                                                           \n
@@ -238,10 +238,9 @@ class SessionElement(DrissionElement):
 
 
 def execute_session_find(page_or_ele: BaseParser,
-                         # def execute_session_find(page_or_ele,
                          loc: tuple,
                          mode: str = 'single',
-                         show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement]]:
+                         show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str]]:
     """执行session模式元素的查找                           \n
     页面查找元素及元素查找下级元素皆使用此方法                \n
     :param page_or_ele: request_html的页面或元素对象
