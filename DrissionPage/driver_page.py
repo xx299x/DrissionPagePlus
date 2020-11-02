@@ -138,13 +138,10 @@ class DriverPage(object):
         :param show_errmsg: 出现异常时是否打印信息
         :return: DriverElement对象
         """
-        if isinstance(loc_or_ele, str):
-            loc_or_ele = get_loc_from_str(loc_or_ele)
-            if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith('/'):
-                loc_or_ele = 'xpath', f'//{loc_or_ele[1]}'
-        elif isinstance(loc_or_ele, tuple) and len(loc_or_ele) == 2:
-            if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith('/'):
-                loc_or_ele = 'xpath', f'//{loc_or_ele[1]}'
+        if isinstance(loc_or_ele, (str, tuple)):
+            loc_or_ele = get_loc_from_str(loc_or_ele) if isinstance(loc_or_ele, str) else loc_or_ele
+            if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
+                loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
         elif isinstance(loc_or_ele, DriverElement):
             return loc_or_ele
         elif isinstance(loc_or_ele, WebElement):
