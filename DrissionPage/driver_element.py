@@ -4,17 +4,18 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
+import re
 from html import unescape
 from pathlib import Path
 from time import sleep
 from typing import Union, List, Any
 
+from selenium.common.exceptions import InvalidSelectorException, TimeoutException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.wait import WebDriverWait
 
-from .common import DrissionElement, get_loc_from_str, get_available_file_name
+from .common import DrissionElement, get_loc_from_str, get_available_file_name, WebDriverWaitPlus
 
 
 class DriverElement(DrissionElement):
@@ -63,25 +64,11 @@ class DriverElement(DrissionElement):
 
     def texts(self, text_node_only: bool = False) -> List[str]:
         """返回元素内文本节点列表"""
-        s = '' if text_node_only else '''else if(childs[i].nodeType === Node.ELEMENT_NODE){
-                    texts.push(childs[i].innerText)
-                }'''
-        js = '''
-        function e(el) {
-            if (!(el instanceof Element)) return;
-            var texts = new Array();
-            var childs = el.childNodes;
-
-            for(var i = 0; i <childs.length ; i++) {
-                if(childs[i].nodeType === Node.TEXT_NODE){
-                    texts.push(childs[i].nodeValue)
-                }''' + s + '''
-            } 
-            return texts;
-        }
-        return e(arguments[0]);
-        '''
-        return self.run_script(js)
+        if text_node_only:
+            return self.eles('xpath:./text()')
+        else:
+            nodes = self.eles('xpath:./node()')
+            return list(map(lambda x: x if isinstance(x, str) else x.text, nodes))
 
     @property
     def html(self) -> str:
@@ -178,21 +165,33 @@ class DriverElement(DrissionElement):
         loc = 'xpath', f'.{"/.." * num}'
         return self.ele(loc, timeout=0.01, show_errmsg=False)
 
-    def nexts(self, num: int = 1):
-        """返回后面第num个兄弟元素      \n
-        :param num: 后面第几个兄弟元素
-        :return: DriverElement对象
+    def nexts(self, num: int = 1, mode: str = 'ele'):
+        """返回后面第num个兄弟节点或元素       \n
+        :param num: 后面第几个兄弟节点或元素
+        :param mode: 匹配元素还是节点
+        :return: DriverElement对象或字符串
         """
-        loc = 'xpath', f'./following-sibling::*[{num}]'
-        return self.ele(loc, timeout=0.1, show_errmsg=False)
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        else:
+            raise ValueError("Argument mode can only be 'node' or 'ele'.")
+        return self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
 
-    def prevs(self, num: int = 1):
-        """返回前面第num个兄弟元素        \n
-        :param num: 前面第几个兄弟元素
-        :return: DriverElement对象
+    def prevs(self, num: int = 1, mode: str = 'ele'):
+        """返回前面第num个兄弟节点或元素        \n
+        :param num: 前面第几个兄弟节点或元素
+        :param mode: 匹配元素还是节点
+        :return: DriverElement对象或字符串
         """
-        loc = 'xpath', f'./preceding-sibling::*[{num}]'
-        return self.ele(loc, timeout=0.01, show_errmsg=False)
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        else:
+            raise ValueError("Argument mode can only be 'node' or 'ele'.")
+        return self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.01, show_errmsg=False)
 
     def attr(self, attr: str) -> str:
         """获取属性值            \n
@@ -245,7 +244,8 @@ class DriverElement(DrissionElement):
 
         if loc_or_str[0] == 'xpath':
             # 处理语句最前面的(
-            bracket, loc_str = ('(', loc_or_str[1][1:]) if loc_or_str[1].startswith('(') else ('', loc_or_str[1])
+            brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
+            bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
             # 确保查询语句最前面是.
             loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
             loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
@@ -479,14 +479,14 @@ class DriverElement(DrissionElement):
         ActionChains(self._driver).move_to_element(self.inner_ele).perform()
 
 
-def execute_driver_find(page_or_ele: Union[WebElement, WebDriver],
+def execute_driver_find(ele_or_driver: Union[WebElement, WebDriver],
                         loc: tuple,
                         mode: str = 'single',
                         show_errmsg: bool = False,
-                        timeout: float = 10) -> Union[DriverElement, List[DriverElement]]:
+                        timeout: float = 10) -> Union[DriverElement, List[DriverElement or str]]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
-    :param page_or_ele: WebDriver对象或WebElement元素对象
+    :param ele_or_driver: WebDriver对象或WebElement元素对象
     :param loc: 元素定位元组
     :param mode: 'single' 或 'all'，对应获取第一个或全部
     :param show_errmsg: 出现异常时是否显示错误信息
@@ -496,15 +496,82 @@ def execute_driver_find(page_or_ele: Union[WebElement, WebDriver],
     mode = mode or 'single'
     if mode not in ['single', 'all']:
         raise ValueError("Argument mode can only be 'single' or 'all'.")
+
     try:
-        wait = WebDriverWait(page_or_ele, timeout=timeout)
+        wait = WebDriverWaitPlus(ele_or_driver, timeout=timeout)
         if mode == 'single':
             return DriverElement(wait.until(ec.presence_of_element_located(loc)))
         elif mode == 'all':
             eles = wait.until(ec.presence_of_all_elements_located(loc))
             return [DriverElement(ele) for ele in eles]
-    except:
+    except InvalidSelectorException as e:
+        if loc[0] == 'xpath' and 'It should be an element.' in str(e):
+            return _get_elements(ele_or_driver, loc[1], mode)
+        else:
+            if show_errmsg:
+                print('Query statement error.', loc)
+                raise e
+            else:
+                return [] if mode == 'all' else None
+    except TimeoutException:
         if show_errmsg:
             print('Element(s) not found.', loc)
             raise
         return [] if mode == 'all' else None
+
+
+def _get_elements(
+        ele_or_driver: Union[WebDriver, WebElement],
+        xpath: str = None,
+        mode='all') -> Union[str, DriverElement, None, List[str or DriverElement]]:
+    """使用js通过xpath获取元素或文本、属性值。                          \n
+    因selenium不支持获取属性或文本的xpath语句，故使用此方法。             \n
+    :param ele_or_driver: selenium的driver或元素对象
+    :param xpath: xpath语句
+    :param mode: 'all' 或 'single‘
+    :return: single模式返回元素或字符串，all模式返回它们组成的列表
+    """
+    driver, the_node = (ele_or_driver, 'document') if isinstance(ele_or_driver, WebDriver) \
+        else (ele_or_driver.parent, ele_or_driver)
+
+    def get_nodes(node=None, xpath_txt=None, type_txt='7'):
+        node_txt = 'document' if not node or node == 'document' else 'arguments[0]'
+        for_txt = ''
+        if type_txt == '9':
+            return_txt = '''
+            if(e.singleNodeValue.constructor.name=="Text"){return e.singleNodeValue.data;}
+            else if(e.singleNodeValue.constructor.name=="Attr"){return e.singleNodeValue.nodeValue;}
+            else{return e.singleNodeValue;}
+            '''
+        elif type_txt == '2':
+            return_txt = 'return e.stringValue;'
+        elif type_txt == '1':
+            return_txt = 'return e.numberValue;'
+        elif type_txt == '7':
+            for_txt = """
+            var a=new Array();
+            for(var i = 0; i <e.snapshotLength ; i++){
+                if(e.snapshotItem(i).constructor.name=="Text"){a.push(e.snapshotItem(i).data);}
+                else if(e.snapshotItem(i).constructor.name=="Attr"){a.push(e.snapshotItem(i).nodeValue);}
+                else{a.push(e.snapshotItem(i));}
+            }
+            """
+            return_txt = 'return a;'
+        else:
+            return_txt = 'return e.singleNodeValue;'
+        js = """
+        var e=document.evaluate('""" + xpath_txt + """', """ + node_txt + """, null, """ + type_txt + """, null);
+        """ + for_txt + """
+        """ + return_txt + """
+        """
+        return driver.execute_script(js, node)
+
+    if mode == 'single':
+        try:
+            e = get_nodes(the_node, xpath_txt=xpath, type_txt='9')
+            return DriverElement(e) if isinstance(e, WebElement) else e
+        except:
+            return None
+    elif mode == 'all':
+        e = get_nodes(the_node, xpath_txt=xpath)
+        return list(map(lambda x: DriverElement(x) if isinstance(x, WebElement) else x, e))
