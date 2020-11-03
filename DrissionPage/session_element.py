@@ -6,7 +6,7 @@
 """
 import re
 from html import unescape
-from typing import Union, List
+from typing import Union, List, Tuple
 
 from requests_html import Element, BaseParser
 
@@ -120,7 +120,7 @@ class SessionElement(DrissionElement):
         """
         return self.ele(f'xpath:./preceding-sibling::*[{num}]')
 
-    def ele(self, loc_or_str: Union[tuple, str], mode: str = None, show_errmsg: bool = False):
+    def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, show_errmsg: bool = False):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
@@ -146,12 +146,15 @@ class SessionElement(DrissionElement):
         :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象
         """
-        if isinstance(loc_or_str, str):
-            loc_or_str = get_loc_from_str(loc_or_str)
-        elif isinstance(loc_or_str, tuple) and len(loc_or_str) == 2:
-            loc_or_str = translate_loc_to_xpath(loc_or_str)
+        if isinstance(loc_or_str, (str, tuple)):
+            if isinstance(loc_or_str, str):
+                loc_or_str = get_loc_from_str(loc_or_str)
+            else:
+                if len(loc_or_str) != 2:
+                    raise ValueError("Len of loc_or_str must be 2 when it's a tuple.")
+                loc_or_str = translate_loc_to_xpath(loc_or_str)
         else:
-            raise TypeError('Type of loc_or_str can only be tuple or str.')
+            raise ValueError('Argument loc_or_str can only be tuple or str.')
 
         loc_str = None
         if loc_or_str[0] == 'xpath':
@@ -168,7 +171,7 @@ class SessionElement(DrissionElement):
 
         return execute_session_find(self.inner_ele, loc_or_str, mode, show_errmsg)
 
-    def eles(self, loc_or_str: Union[tuple, str], show_errmsg: bool = False):
+    def eles(self, loc_or_str: Union[Tuple[str, str], str], show_errmsg: bool = False):
         """返回当前元素下级所有符合条件的子元素                                                           \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
@@ -193,8 +196,6 @@ class SessionElement(DrissionElement):
         :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象组成的列表
         """
-        if not isinstance(loc_or_str, tuple) and not isinstance(loc_or_str, str):
-            raise TypeError('Type of loc_or_str can only be tuple or str.')
         return self.ele(loc_or_str, mode='all', show_errmsg=show_errmsg)
 
     def attr(self, attr: str) -> Union[str, None]:
@@ -238,7 +239,7 @@ class SessionElement(DrissionElement):
 
 
 def execute_session_find(page_or_ele: BaseParser,
-                         loc: tuple,
+                         loc: Tuple[str, str],
                          mode: str = 'single',
                          show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str]]:
     """执行session模式元素的查找                           \n
