@@ -111,6 +111,7 @@ class SessionElement(DrissionElement):
         :param num: 后面第几个兄弟元素
         :return: SessionElement对象
         """
+        # TODO: 增加获取node
         return self.ele(f'xpath:./following-sibling::*[{num}]')
 
     def prevs(self, num: int = 1):
@@ -118,6 +119,7 @@ class SessionElement(DrissionElement):
         :param num: 前面第几个兄弟元素
         :return: SessionElement对象
         """
+        # TODO: 增加获取node
         return self.ele(f'xpath:./preceding-sibling::*[{num}]')
 
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, show_errmsg: bool = False):
@@ -274,6 +276,7 @@ def execute_session_find(page_or_ele: BaseParser,
             ele = ele[0] if ele else None
             return SessionElement(ele) if isinstance(ele, Element) else ele
         elif mode == 'all':
+            ele = filter(lambda x: x != '\n', ele)  # 去除元素间换行符
             return [SessionElement(e) if isinstance(e, Element) else e for e in ele]
     except:
         if show_errmsg:

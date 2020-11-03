@@ -177,7 +177,13 @@ class DriverElement(DrissionElement):
             node_txt = 'node()'
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
-        return self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+
+        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+        while e == '\n':
+            num += 1
+            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+
+        return e
 
     def prevs(self, num: int = 1, mode: str = 'ele'):
         """返回前面第num个兄弟节点或元素        \n
@@ -191,7 +197,13 @@ class DriverElement(DrissionElement):
             node_txt = 'node()'
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
-        return self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.01, show_errmsg=False)
+
+        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+        while e == '\n':
+            num += 1
+            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+
+        return e
 
     def attr(self, attr: str) -> str:
         """获取属性值            \n
@@ -585,4 +597,5 @@ class ElementsByXpath(object):
 
         elif self.mode == 'all':
             e = get_nodes(the_node, xpath_txt=self.xpath)
+            e = filter(lambda x: x != '\n', e)  # 去除元素间换行符
             return list(map(lambda x: DriverElement(x, self.timeout) if isinstance(x, WebElement) else x, e))
