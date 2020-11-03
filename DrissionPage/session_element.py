@@ -37,11 +37,10 @@ class SessionElement(DrissionElement):
         return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
     def texts(self, text_node_only: bool = False) -> List[str]:
-        nodes = self.eles('xpath:./*/node()')
         if text_node_only:
-            return [x for x in nodes if isinstance(x, str)]
+            return self.eles('xpath:./*/text()')
         else:
-            return [x if isinstance(x, str) else x.text for x in nodes]
+            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./*/node()')]
 
     @property
     def html(self) -> str:
@@ -274,9 +273,10 @@ def execute_session_find(page_or_ele: BaseParser,
 
         if mode == 'single':
             ele = ele[0] if ele else None
-            return SessionElement(ele) if isinstance(ele, Element) else ele
+            return SessionElement(ele) if isinstance(ele, Element) else unescape(ele).replace('\xa0', ' ')
         elif mode == 'all':
             ele = filter(lambda x: x != '\n', ele)  # 去除元素间换行符
+            ele = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, ele)  # 替换空格
             return [SessionElement(e) if isinstance(e, Element) else e for e in ele]
     except:
         if show_errmsg:

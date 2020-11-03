@@ -591,11 +591,12 @@ class ElementsByXpath(object):
         if self.mode == 'single':
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
-                return DriverElement(e, self.timeout) if isinstance(e, WebElement) else e
+                return DriverElement(e, self.timeout) if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' ')
             except JavascriptException:  # 找不到目标时
                 return None
 
         elif self.mode == 'all':
             e = get_nodes(the_node, xpath_txt=self.xpath)
             e = filter(lambda x: x != '\n', e)  # 去除元素间换行符
+            e = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, e)  # 替换空格
             return list(map(lambda x: DriverElement(x, self.timeout) if isinstance(x, WebElement) else x, e))
