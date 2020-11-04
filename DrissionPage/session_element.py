@@ -8,28 +8,33 @@ import re
 from html import unescape
 from typing import Union, List, Tuple
 
-from requests_html import Element, BaseParser
+from lxml import etree
+from lxml.etree import _Element
 
 from .common import DrissionElement, get_loc_from_str, translate_loc_to_xpath
+
+
+# from lxml.html import HtmlElement
+# from requests_html import Element, BaseParser
 
 
 class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个Element对象，并封装了常用功能"""
 
-    def __init__(self, ele: Element):
+    def __init__(self, ele: _Element):
         super().__init__(ele)
 
-    def __repr__(self):
-        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
-        return f'<SessionElement {self.tag} {" ".join(attrs)}>'
+    # def __repr__(self):
+    #     attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+    #     return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    @property
-    def attrs(self) -> dict:
-        """返回元素所有属性及值"""
-        attrs = dict()
-        for attr in self.inner_ele.attrs:
-            attrs[attr] = self.attr(attr)
-        return attrs
+    # @property
+    # def attrs(self) -> dict:
+    #     """返回元素所有属性及值"""
+    #     attrs = dict()
+    #     for attr in self.inner_ele.attrs:
+    #         attrs[attr] = self.attr(attr)
+    #     return attrs
 
     @property
     def text(self) -> str:
@@ -45,42 +50,45 @@ class SessionElement(DrissionElement):
     @property
     def html(self) -> str:
         """返回元素innerHTML文本"""
-        html = unescape(self._inner_ele.html).replace('\xa0', ' ')
+        # ee=self.ele('xpath:./*')
+        html = unescape(etree.tostring(self._inner_ele).decode()).replace('\xa0', ' ')
+        # html = unescape(self._inner_ele.html).replace('\xa0', ' ')
         r = re.match(r'<.*?>(.*)</.*?>', html, flags=re.DOTALL)
         return None if not r else r.group(1)
+        # return html
 
     @property
     def tag(self) -> str:
         """返回元素类型"""
         return self._inner_ele.tag
 
-    @property
-    def css_path(self) -> str:
-        """返回css path路径"""
-        return self._get_ele_path('css')
+    # @property
+    # def css_path(self) -> str:
+    #     """返回css path路径"""
+    #     return self._get_ele_path('css')
 
-    @property
-    def xpath(self) -> str:
-        """返回xpath路径"""
-        return self._get_ele_path('xpath')
+    # @property
+    # def xpath(self) -> str:
+    #     """返回xpath路径"""
+    #     return self._get_ele_path('xpath')
 
-    def _get_ele_path(self, mode):
-        """获取css路径或xpath路径"""
-        path_str = ''
-        ele = self
-        while ele:
-            ele_id = ele.attr('id')
-            if ele_id:
-                return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
-            else:
-                if mode == 'css':
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
-                    path_str = f'>:nth-child({brothers + 1}){path_str}'
-                else:
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
-                    path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
-                ele = ele.parent
-        return path_str[1:] if mode == 'css' else path_str
+    # def _get_ele_path(self, mode):
+    #     """获取css路径或xpath路径"""
+    #     path_str = ''
+    #     ele = self
+    #     while ele:
+    #         ele_id = ele.attr('id')
+    #         if ele_id:
+    #             return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
+    #         else:
+    #             if mode == 'css':
+    #                 brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
+    #                 path_str = f'>:nth-child({brothers + 1}){path_str}'
+    #             else:
+    #                 brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
+    #                 path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
+    #             ele = ele.parent
+    #     return path_str[1:] if mode == 'css' else path_str
 
     @property
     def parent(self):
@@ -199,47 +207,47 @@ class SessionElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all', show_errmsg=show_errmsg)
 
-    def attr(self, attr: str) -> Union[str, None]:
-        """返回属性值                           \n
-        :param attr: 属性名
-        :return: 属性值文本，没有该属性返回None
-        """
-        try:
-            if attr == 'href':
-                # 如直接获取attr只能获取相对地址
-                link = self._inner_ele.attrs['href']
-                if link.lower().startswith(('javascript:', 'mailto:')):
-                    return link
-                elif link.startswith('#'):
-                    if '#' in self.inner_ele.url:
-                        return re.sub(r'#.*', link, self.inner_ele.url)
-                    else:
-                        return f'{self.inner_ele.url}{link}'
-                elif link.startswith('?'):  # 避免当相对URL以?开头时requests-html丢失参数的bug
-                    if '?' in self.inner_ele.url:
-                        return re.sub(r'\?.*', link, self.inner_ele.url)
-                    else:
-                        return f'{self.inner_ele.url}{link}'
-                else:
-                    for link in self._inner_ele.absolute_links:
-                        return link
-            elif attr == 'src':
-                return self._inner_ele._make_absolute(self._inner_ele.attrs['src'])
-            elif attr == 'class':
-                return ' '.join(self._inner_ele.attrs['class'])
-            elif attr == 'text':
-                return self.text
-            elif attr == 'outerHTML':
-                return self.inner_ele.html
-            elif attr == 'innerHTML':
-                return self.html
-            else:
-                return self._inner_ele.attrs[attr]
-        except:
-            return None
+    # def attr(self, attr: str) -> Union[str, None]:
+    #     """返回属性值                           \n
+    #     :param attr: 属性名
+    #     :return: 属性值文本，没有该属性返回None
+    #     """
+    #     try:
+    #         if attr == 'href':
+    #             # 如直接获取attr只能获取相对地址
+    #             link = self._inner_ele.attrs['href']
+    #             if link.lower().startswith(('javascript:', 'mailto:')):
+    #                 return link
+    #             elif link.startswith('#'):
+    #                 if '#' in self.inner_ele.url:
+    #                     return re.sub(r'#.*', link, self.inner_ele.url)
+    #                 else:
+    #                     return f'{self.inner_ele.url}{link}'
+    #             elif link.startswith('?'):  # 避免当相对URL以?开头时requests-html丢失参数的bug
+    #                 if '?' in self.inner_ele.url:
+    #                     return re.sub(r'\?.*', link, self.inner_ele.url)
+    #                 else:
+    #                     return f'{self.inner_ele.url}{link}'
+    #             else:
+    #                 for link in self._inner_ele.absolute_links:
+    #                     return link
+    #         elif attr == 'src':
+    #             return self._inner_ele._make_absolute(self._inner_ele.attrs['src'])
+    #         elif attr == 'class':
+    #             return ' '.join(self._inner_ele.attrs['class'])
+    #         elif attr == 'text':
+    #             return self.text
+    #         elif attr == 'outerHTML':
+    #             return self.inner_ele.html
+    #         elif attr == 'innerHTML':
+    #             return self.html
+    #         else:
+    #             return self._inner_ele.attrs[attr]
+    #     except:
+    #         return None
 
 
-def execute_session_find(page_or_ele: BaseParser,
+def execute_session_find(page_or_ele: _Element,
                          loc: Tuple[str, str],
                          mode: str = 'single',
                          show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str]]:
@@ -254,32 +262,47 @@ def execute_session_find(page_or_ele: BaseParser,
     mode = mode or 'single'
     if mode not in ['single', 'all']:
         raise ValueError("Argument mode can only be 'single' or 'all'.")
+
     loc_by, loc_str = loc
+    # print(loc)
+    # ele = page_or_ele.xpath(loc_str)
+    # print(ele)
     try:
-        ele = None
+        # ele = None
         if loc_by == 'xpath':
-            if 'PyQuery' in str(type(page_or_ele.element)):
-                # 从页面查找。
-                ele = page_or_ele.xpath(loc_str)
-            elif 'HtmlElement' in str(type(page_or_ele.element)):
-                # 从元素查找。这样区分是为了能找到上级元素
-                try:
-                    elements = page_or_ele.element.xpath(loc_str)
-                    ele = [Element(element=e, url=page_or_ele.url) for e in elements]
-                except AttributeError:
-                    ele = page_or_ele.xpath(loc_str)
+            ele = page_or_ele.xpath(loc_str)
+            # if 'PyQuery' in str(type(page_or_ele.element)):
+            #     # 从页面查找。
+            #     ele = page_or_ele.xpath(loc_str)
+            # elif 'HtmlElement' in str(type(page_or_ele.element)):
+            #     # 从元素查找。这样区分是为了能找到上级元素
+            #     try:
+            #         elements = page_or_ele.element.xpath(loc_str)
+            #         ele = [Element(element=e, url=page_or_ele.url) for e in elements]
+            #     except AttributeError:
+            #         ele = page_or_ele.xpath(loc_str)
         else:  # 用css selector获取
-            ele = page_or_ele.find(loc_str)
+            ele = page_or_ele.cssselect(loc_str)
 
         if mode == 'single':
             ele = ele[0] if ele else None
-            return SessionElement(ele) if isinstance(ele, Element) else unescape(ele).replace('\xa0', ' ')
+            return SessionElement(ele) if isinstance(ele, _Element) else unescape(ele).replace('\xa0', ' ')
         elif mode == 'all':
             ele = filter(lambda x: x != '\n', ele)  # 去除元素间换行符
             ele = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, ele)  # 替换空格
-            return [SessionElement(e) if isinstance(e, Element) else e for e in ele]
+            return [SessionElement(e) if isinstance(e, _Element) else e for e in ele]
     except:
         if show_errmsg:
             print('Element(s) not found.', loc)
             raise
         return [] if mode == 'all' else None
+
+
+def get_HtmlElement(html: str) -> _Element:
+    # html = f'<drission_root>{html}</drission_root>'
+    ele_or_page = etree.HTML(html)
+    # html = etree.tostring(ele_or_page).decode()
+    # if str(html).startswith('<html><body>') and str(html).endswith('</body></html>'):
+    #     html = etree.tostring(ele_or_page)[12:-14].decode()
+    #     ele_or_page = etree.fromstring(html)
+    return ele_or_page

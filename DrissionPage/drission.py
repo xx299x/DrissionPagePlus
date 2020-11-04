@@ -8,7 +8,7 @@ from typing import Union
 from urllib.parse import urlparse
 
 from requests import Session
-from requests_html import HTMLSession
+# from requests_html import HTMLSession
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -23,12 +23,12 @@ class Drission(object):
 
     def __init__(self,
                  driver_or_options: Union[WebDriver, dict, Options] = None,
-                 session_or_options: Union[Session, HTMLSession, dict] = None,
+                 session_or_options: Union[Session, dict] = None,
                  ini_path: str = None,
                  proxy: dict = None):
         """初始化，可接收现成的WebDriver和Session对象，或接收它们的配置信息          \n
         :param driver_or_options: driver对象或chrome设置，Options类或设置字典
-        :param session_or_options: session、HTMLSession对象或session设置
+        :param session_or_options: Session对象设置
         :param ini_path: ini文件路径
         :param proxy: 代理设置
         """
@@ -36,15 +36,15 @@ class Drission(object):
         self._driver = None
         self._driver_path = 'chromedriver'
         self._proxy = proxy
-        if isinstance(session_or_options, HTMLSession):
+        if isinstance(session_or_options, Session):
             self._session = session_or_options
-        elif isinstance(session_or_options, Session):
-            self._session = HTMLSession()
-            for key in session_or_options.__dict__:  # session对象强制升级为子类HTMLSession对象
-                if key != 'hooks':
-                    self._session.__dict__[key] = session_or_options.__dict__[key]
-                else:
-                    self._session.hooks['response'].extend(session_or_options.hooks['response'])
+        # elif isinstance(session_or_options, Session):
+        #     self._session = HTMLSession()
+        #     for key in session_or_options.__dict__:  # session对象强制升级为子类HTMLSession对象
+        #         if key != 'hooks':
+        #             self._session.__dict__[key] = session_or_options.__dict__[key]
+        #         else:
+        #             self._session.hooks['response'].extend(session_or_options.hooks['response'])
         else:
             if session_or_options is None:
                 self._session_options = OptionsManager(ini_path).get_option('session_options')
@@ -64,10 +64,10 @@ class Drission(object):
                     self._driver_path = self._driver_options['driver_path']
 
     @property
-    def session(self) -> HTMLSession:
+    def session(self) -> Session:
         """返回HTMLSession对象，如为None则按配置信息创建"""
         if self._session is None:
-            self._session = HTMLSession()
+            self._session = Session()
             attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
                      'cert', 'adapters', 'stream', 'trust_env', 'max_redirects']
             for i in attrs:

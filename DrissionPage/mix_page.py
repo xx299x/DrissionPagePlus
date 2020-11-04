@@ -6,8 +6,8 @@
 """
 from typing import Union, List, Tuple
 
-from requests import Response
-from requests_html import HTMLSession, Element
+from requests import Response, Session
+# from requests_html import HTMLSession, Element
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -127,7 +127,7 @@ class MixPage(Null, SessionPage, DriverPage):
         return self._drission.driver
 
     @property
-    def session(self) -> HTMLSession:
+    def session(self) -> Session:
         """返回session对象，如没有则创建            \n
         :return: HTMLSession对象
         """
@@ -279,7 +279,7 @@ class MixPage(Null, SessionPage, DriverPage):
             return super().get(url, go_anyway, show_errmsg, retry, interval, **kwargs)
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, Element, WebElement],
+            loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
             mode: str = None,
             timeout: float = None,
             show_errmsg: bool = False) -> Union[DriverElement, SessionElement, str]:

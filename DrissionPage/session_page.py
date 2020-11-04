@@ -15,17 +15,18 @@ from typing import Union, List, Tuple
 from urllib import parse
 from urllib.parse import urlparse, quote
 
-from requests_html import HTMLSession, HTMLResponse, Element
+# from requests_html import HTMLSession, HTMLResponse, Element
+from requests import Session, Response
 
 from .common import get_loc_from_str, translate_loc_to_xpath, get_available_file_name
 from .config import OptionsManager
-from .session_element import SessionElement, execute_session_find
+from .session_element import SessionElement, execute_session_find, get_HtmlElement
 
 
 class SessionPage(object):
     """SessionPage封装了页面操作的常用功能，使用requests_html来获取、解析网页。"""
 
-    def __init__(self, session: HTMLSession, timeout: float = 10):
+    def __init__(self, session: Session, timeout: float = 10):
         """初始化函数"""
         self._session = session
         self.timeout = timeout
@@ -34,12 +35,12 @@ class SessionPage(object):
         self._response = None
 
     @property
-    def session(self) -> HTMLSession:
+    def session(self) -> Session:
         """返回session对象"""
         return self._session
 
     @property
-    def response(self) -> HTMLResponse:
+    def response(self) -> Response:
         """返回访问url得到的response对象"""
         return self._response
 
@@ -66,10 +67,10 @@ class SessionPage(object):
     @property
     def html(self) -> str:
         """返回页面html文本"""
-        return self.response.html.html
+        return self.response.text
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, SessionElement, Element],
+            loc_or_ele: Union[Tuple[str, str], str, SessionElement],  # , Element
             mode: str = None,
             show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str], str, None]:
         """返回页面中符合条件的元素，默认返回第一个                                                          \n
@@ -112,13 +113,13 @@ class SessionPage(object):
         elif isinstance(loc_or_ele, SessionElement):
             return loc_or_ele
 
-        elif isinstance(loc_or_ele, Element):
-            return SessionElement(loc_or_ele)
+        # elif isinstance(loc_or_ele, Element):
+        #     return SessionElement(loc_or_ele)
 
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, SessionElement, Element.')
 
-        return execute_session_find(self.response.html, loc_or_ele, mode, show_errmsg)
+        return execute_session_find(get_HtmlElement(self.response.text), loc_or_ele, mode, show_errmsg)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
@@ -156,7 +157,7 @@ class SessionPage(object):
                     times: int = 0,
                     interval: float = 1,
                     show_errmsg: bool = False,
-                    **kwargs) -> HTMLResponse:
+                    **kwargs) -> Response:
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
@@ -434,7 +435,7 @@ class SessionPage(object):
 
             if not_stream:  # 加载网页时修复编码
                 r._content = r.content.replace(b'\x08', b'\\b')  # 避免存在退格符导致乱码或解析出错
-                r.html.encoding = r.encoding  # 修复requests_html丢失编码方式的bug
+                # r.html.encoding = r.encoding  # 修复requests_html丢失编码方式的bug
             if charset:
                 r.encoding = charset
             return r, 'Success'
