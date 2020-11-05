@@ -113,21 +113,45 @@ class SessionElement(DrissionElement):
         """
         return self.ele(f'xpath:..{"/.." * (num - 1)}')
 
-    def nexts(self, num: int = 1):
+    def nexts(self, num: int = 1, mode: str = 'ele'):
         """返回后面第num个兄弟元素      \n
         :param num: 后面第几个兄弟元素
+        :param mode: 匹配元素还是节点
         :return: SessionElement对象
         """
-        # TODO: 增加获取node
-        return self.ele(f'xpath:./following-sibling::*[{num}]')
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        else:
+            raise ValueError("Argument mode can only be 'node' or 'ele'.")
 
-    def prevs(self, num: int = 1):
+        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', show_errmsg=False)
+        while e == '\n':
+            num += 1
+            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', show_errmsg=False)
+
+        return e
+
+    def prevs(self, num: int = 1, mode: str = 'ele'):
         """返回前面第num个兄弟元素        \n
         :param num: 前面第几个兄弟元素
+        :param mode: 匹配元素还是节点
         :return: SessionElement对象
         """
-        # TODO: 增加获取node
-        return self.ele(f'xpath:./preceding-sibling::*[{num}]')
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        else:
+            raise ValueError("Argument mode can only be 'node' or 'ele'.")
+
+        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', show_errmsg=False)
+        while e == '\n':
+            num += 1
+            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', show_errmsg=False)
+
+        return e
 
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, show_errmsg: bool = False):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
@@ -207,44 +231,45 @@ class SessionElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all', show_errmsg=show_errmsg)
 
-    # def attr(self, attr: str) -> Union[str, None]:
-    #     """返回属性值                           \n
-    #     :param attr: 属性名
-    #     :return: 属性值文本，没有该属性返回None
-    #     """
-    #     try:
-    #         if attr == 'href':
-    #             # 如直接获取attr只能获取相对地址
-    #             link = self._inner_ele.attrs['href']
-    #             if link.lower().startswith(('javascript:', 'mailto:')):
-    #                 return link
-    #             elif link.startswith('#'):
-    #                 if '#' in self.inner_ele.url:
-    #                     return re.sub(r'#.*', link, self.inner_ele.url)
-    #                 else:
-    #                     return f'{self.inner_ele.url}{link}'
-    #             elif link.startswith('?'):  # 避免当相对URL以?开头时requests-html丢失参数的bug
-    #                 if '?' in self.inner_ele.url:
-    #                     return re.sub(r'\?.*', link, self.inner_ele.url)
-    #                 else:
-    #                     return f'{self.inner_ele.url}{link}'
-    #             else:
-    #                 for link in self._inner_ele.absolute_links:
-    #                     return link
-    #         elif attr == 'src':
-    #             return self._inner_ele._make_absolute(self._inner_ele.attrs['src'])
-    #         elif attr == 'class':
-    #             return ' '.join(self._inner_ele.attrs['class'])
-    #         elif attr == 'text':
-    #             return self.text
-    #         elif attr == 'outerHTML':
-    #             return self.inner_ele.html
-    #         elif attr == 'innerHTML':
-    #             return self.html
-    #         else:
-    #             return self._inner_ele.attrs[attr]
-    #     except:
-    #         return None
+    def attr(self, attr: str) -> Union[str, None]:
+        """返回属性值                           \n
+        :param attr: 属性名
+        :return: 属性值文本，没有该属性返回None
+        """
+        try:
+
+            if attr == 'href':
+                # 如直接获取attr只能获取相对地址
+                link = self.inner_ele.get('href')
+                if link.lower().startswith(('javascript:', 'mailto:')):
+                    return link
+                elif link.startswith('#'):
+                    if '#' in self.url:
+                        return re.sub(r'#.*', link, self.url)
+                    else:
+                        return f'{self.url}{link}'
+            #     elif link.startswith('?'):  # 避免当相对URL以?开头时requests-html丢失参数的bug
+            #         if '?' in self.inner_ele.url:
+            #             return re.sub(r'\?.*', link, self.inner_ele.url)
+            #         else:
+            #             return f'{self.inner_ele.url}{link}'
+            #     else:
+            #         for link in self._inner_ele.absolute_links:
+            #             return link
+            # elif attr == 'src':
+            #     return self._inner_ele._make_absolute(self._inner_ele.attrs['src'])
+            # elif attr == 'class':
+            #     return ' '.join(self._inner_ele.attrs['class'])
+            # elif attr == 'text':
+            #     return self.text
+            # elif attr == 'outerHTML':
+            #     return self.inner_ele.html
+            # elif attr == 'innerHTML':
+            #     return self.html
+            else:
+                return self.inner_ele.get(attr)
+        except:
+            return None
 
 
 def execute_session_find(page_or_ele: _Element,

@@ -204,7 +204,7 @@ class SessionPage(object):
                 self._url_available = True
             else:
                 if show_errmsg:
-                    raise ConnectionError(f'Status code: {self._response.status_code}.')
+                    raise ConnectionError(f'{to_url}\nStatus code: {self._response.status_code}.')
                 self._url_available = False
         return self._url_available
 
@@ -433,9 +433,10 @@ class SessionPage(object):
             else:
                 charset = headers[content_type[0]].split('=')[1]
 
+            if charset:
+                r.encoding = charset
+
             if not_stream:  # 加载网页时修复编码
                 r._content = r.content.replace(b'\x08', b'\\b')  # 避免存在退格符导致乱码或解析出错
                 # r.html.encoding = r.encoding  # 修复requests_html丢失编码方式的bug
-            if charset:
-                r.encoding = charset
             return r, 'Success'
