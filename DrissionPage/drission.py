@@ -8,7 +8,6 @@ from typing import Union
 from urllib.parse import urlparse
 
 from requests import Session
-# from requests_html import HTMLSession
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -38,13 +37,6 @@ class Drission(object):
         self._proxy = proxy
         if isinstance(session_or_options, Session):
             self._session = session_or_options
-        # elif isinstance(session_or_options, Session):
-        #     self._session = HTMLSession()
-        #     for key in session_or_options.__dict__:  # session对象强制升级为子类HTMLSession对象
-        #         if key != 'hooks':
-        #             self._session.__dict__[key] = session_or_options.__dict__[key]
-        #         else:
-        #             self._session.hooks['response'].extend(session_or_options.hooks['response'])
         else:
             if session_or_options is None:
                 self._session_options = OptionsManager(ini_path).get_option('session_options')
