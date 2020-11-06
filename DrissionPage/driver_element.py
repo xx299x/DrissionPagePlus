@@ -22,19 +22,13 @@ from .common import DrissionElement, get_loc_from_str, get_available_file_name, 
 class DriverElement(DrissionElement):
     """driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能"""
 
-    def __init__(self, ele: WebElement, timeout: float = 10):
-        super().__init__(ele)
+    def __init__(self, ele: WebElement, page, timeout: float = 10):
+        super().__init__(ele, page)
         self.timeout = timeout
-        self._driver = ele.parent
 
     def __repr__(self):
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<DriverElement {self.tag} {" ".join(attrs)}>'
-
-    @property
-    def driver(self) -> WebDriver:
-        """返回控制元素的WebDriver对象"""
-        return self._driver
 
     @property
     def attrs(self) -> dict:
@@ -261,16 +255,18 @@ class DriverElement(DrissionElement):
             # 处理语句最前面的(
             brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
             bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
+
             # 确保查询语句最前面是.
             loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
             loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
             loc_or_str = loc_or_str[0], f'{bracket}{loc_str}'
+
         elif loc_or_str[0] == 'css selector':
             if loc_or_str[1].lstrip().startswith('>'):
                 loc_or_str = loc_or_str[0], f'{self.css_path}{loc_or_str[1]}'
 
         timeout = timeout or self.timeout
-        return execute_driver_find(self.inner_ele, loc_or_str, mode, show_errmsg, timeout)
+        return execute_driver_find(self, loc_or_str, mode, show_errmsg, timeout)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
@@ -473,7 +469,7 @@ class DriverElement(DrissionElement):
 
         from selenium.webdriver import ActionChains
         from random import randint
-        actions = ActionChains(self.driver)
+        actions = ActionChains(self.page.driver)
         actions.click_and_hold(self.inner_ele)
         loc1 = self.location
         for x, y in points:  # 逐个访问要经过的点
@@ -489,17 +485,17 @@ class DriverElement(DrissionElement):
     def hover(self) -> None:
         """鼠标悬停"""
         from selenium.webdriver import ActionChains
-        ActionChains(self._driver).move_to_element(self.inner_ele).perform()
+        ActionChains(self.page.driver).move_to_element(self.inner_ele).perform()
 
 
-def execute_driver_find(ele_or_driver: Union[WebElement, WebDriver],
+def execute_driver_find(page_or_ele,
                         loc: Tuple[str, str],
                         mode: str = 'single',
                         show_errmsg: bool = False,
                         timeout: float = 10) -> Union[DriverElement, List[DriverElement or str]]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
-    :param ele_or_driver: WebDriver对象或WebElement元素对象
+    :param page_or_ele: DriverPage对象或DriverElement对象
     :param loc: 元素定位元组
     :param mode: 'single' 或 'all'，对应获取第一个或全部
     :param show_errmsg: 出现异常时是否显示错误信息
@@ -510,16 +506,23 @@ def execute_driver_find(ele_or_driver: Union[WebElement, WebDriver],
     if mode not in ['single', 'all']:
         raise ValueError("Argument mode can only be 'single' or 'all'.")
 
+    if isinstance(page_or_ele, DriverElement):
+        page = page_or_ele.page
+        driver = page_or_ele.inner_ele
+    else:  # 传入的是DriverPage对象
+        page = page_or_ele
+        driver = page_or_ele.driver
+
     try:
-        wait = WebDriverWait(ele_or_driver, timeout=timeout)
+        wait = WebDriverWait(driver, timeout=timeout)
         if loc[0] == 'xpath':
-            return wait.until(ElementsByXpath(ele_or_driver, loc[1], mode, timeout))
+            return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
         else:
             if mode == 'single':
-                return DriverElement(wait.until(ec.presence_of_element_located(loc)), timeout)
+                return DriverElement(wait.until(ec.presence_of_element_located(loc)), page, timeout)
             elif mode == 'all':
                 eles = wait.until(ec.presence_of_all_elements_located(loc))
-                return [DriverElement(ele, timeout) for ele in eles]
+                return [DriverElement(ele, page, timeout) for ele in eles]
 
     except InvalidElementStateException:
         raise ValueError('Query statement error.', loc)
@@ -534,19 +537,20 @@ def execute_driver_find(ele_or_driver: Union[WebElement, WebDriver],
 class ElementsByXpath(object):
     """用js通过xpath获取元素、节点或属性，与WebDriverWait配合使用"""
 
-    def __init__(self,
-                 ele_or_driver: Union[WebDriver, WebElement],
-                 xpath: str = None,
-                 mode: str = 'all',
-                 timeout: float = 10):
-        self.ele_or_driver = ele_or_driver
+    def __init__(self, page, xpath: str = None, mode: str = 'all', timeout: float = 10):
+        """
+        :param page: DrissionPage对象
+        :param xpath: xpath文本
+        :param mode: 'all' 或 'single'
+        :param timeout: 超时时间
+        """
+        self.page = page
         self.xpath = xpath
         self.mode = mode
         self.timeout = timeout
 
-    def __call__(self,
-                 ele_or_driver: Union[WebDriver, WebElement],
-                 ) -> Union[str, DriverElement, None, List[str or DriverElement]]:
+    def __call__(self, ele_or_driver: Union[WebDriver, WebElement]) \
+            -> Union[str, DriverElement, None, List[str or DriverElement]]:
         driver, the_node = (ele_or_driver, 'document') if isinstance(ele_or_driver, WebDriver) \
             else (ele_or_driver.parent, ele_or_driver)
 
@@ -559,17 +563,17 @@ class ElementsByXpath(object):
             """
             node_txt = 'document' if not node or node == 'document' else 'arguments[0]'
             for_txt = ''
-            if type_txt == '9':  # 获取第一个元素、节点或属性
+
+            # 获取第一个元素、节点或属性
+            if type_txt == '9':
                 return_txt = '''
                     if(e.singleNodeValue.constructor.name=="Text"){return e.singleNodeValue.data;}
                     else if(e.singleNodeValue.constructor.name=="Attr"){return e.singleNodeValue.nodeValue;}
                     else{return e.singleNodeValue;}
                     '''
-            elif type_txt == '2':
-                return_txt = 'return e.stringValue;'
-            elif type_txt == '1':
-                return_txt = 'return e.numberValue;'
-            elif type_txt == '7':  # 按顺序获取所有元素、节点或属性
+
+            # 按顺序获取所有元素、节点或属性
+            elif type_txt == '7':
                 for_txt = """
                     var a=new Array();
                     for(var i = 0; i <e.snapshotLength ; i++){
@@ -579,6 +583,10 @@ class ElementsByXpath(object):
                     }
                     """
                 return_txt = 'return a;'
+            elif type_txt == '2':
+                return_txt = 'return e.stringValue;'
+            elif type_txt == '1':
+                return_txt = 'return e.numberValue;'
             else:
                 return_txt = 'return e.singleNodeValue;'
             js = """
@@ -591,12 +599,20 @@ class ElementsByXpath(object):
         if self.mode == 'single':
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
-                return DriverElement(e, self.timeout) if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' ')
-            except JavascriptException:  # 找不到目标时
+                return DriverElement(e, self.page, self.timeout) \
+                    if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' ')
+
+            # 找不到目标时
+            except JavascriptException:
                 return None
 
         elif self.mode == 'all':
             e = get_nodes(the_node, xpath_txt=self.xpath)
-            e = filter(lambda x: x != '\n', e)  # 去除元素间换行符
-            e = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, e)  # 替换空格
-            return list(map(lambda x: DriverElement(x, self.timeout) if isinstance(x, WebElement) else x, e))
+
+            # 去除元素间换行符
+            e = filter(lambda x: x != '\n', e)
+
+            # 替换空格
+            e = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, e)
+
+            return list(map(lambda x: DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement) else x, e))
