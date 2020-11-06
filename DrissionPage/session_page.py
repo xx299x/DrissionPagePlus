@@ -12,15 +12,13 @@ from re import search as re_SEARCH
 from re import sub as re_SUB
 from time import time, sleep
 from typing import Union, List, Tuple
-from urllib import parse
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse, quote, unquote
 
-# from requests_html import HTMLSession, HTMLResponse, Element
 from requests import Session, Response
 
 from .common import get_loc_from_str, translate_loc_to_xpath, get_available_file_name
 from .config import OptionsManager
-from .session_element import SessionElement, execute_session_find, get_HtmlElement
+from .session_element import SessionElement, execute_session_find
 
 
 class SessionPage(object):
@@ -113,13 +111,10 @@ class SessionPage(object):
         elif isinstance(loc_or_ele, SessionElement):
             return loc_or_ele
 
-        # elif isinstance(loc_or_ele, Element):
-        #     return SessionElement(loc_or_ele)
-
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, SessionElement, Element.')
 
-        return execute_session_find(get_HtmlElement(self.response.text), loc_or_ele, mode, show_errmsg)
+        return execute_session_find(self, loc_or_ele, mode, show_errmsg)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
@@ -295,7 +290,7 @@ class SessionPage(object):
         if not file_name:  # 找不到则用时间和随机数生成文件名
             file_name = f'untitled_{time()}_{randint(0, 100)}'
         file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()  # 去除非法字符
-        file_name = parse.unquote(file_name)
+        file_name = unquote(file_name)
 
         # -------------------重命名文件名-------------------
         if rename:  # 重命名文件，不改变扩展名
@@ -433,10 +428,10 @@ class SessionPage(object):
             else:
                 charset = headers[content_type[0]].split('=')[1]
 
-            if charset:
+            if charset:  # 指定网页编码
                 r.encoding = charset
 
-            if not_stream:  # 加载网页时修复编码
-                r._content = r.content.replace(b'\x08', b'\\b')  # 避免存在退格符导致乱码或解析出错
-                # r.html.encoding = r.encoding  # 修复requests_html丢失编码方式的bug
+            if not_stream:  # 避免存在退格符导致乱码或解析出错
+                r._content = r.content.replace(b'\x08', b'\\b')
+
             return r, 'Success'
