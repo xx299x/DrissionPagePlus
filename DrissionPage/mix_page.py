@@ -7,7 +7,6 @@
 from typing import Union, List, Tuple
 
 from requests import Response, Session
-# from requests_html import HTMLSession, Element
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
