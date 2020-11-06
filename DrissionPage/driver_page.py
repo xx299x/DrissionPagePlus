@@ -138,6 +138,7 @@ class DriverPage(object):
         :param show_errmsg: 出现异常时是否打印信息
         :return: DriverElement对象
         """
+        # 接收到字符串或元组，获取定位loc元组
         if isinstance(loc_or_ele, (str, tuple)):
             if isinstance(loc_or_ele, str):
                 loc_or_ele = get_loc_from_str(loc_or_ele)
@@ -145,20 +146,24 @@ class DriverPage(object):
                 if len(loc_or_ele) != 2:
                     raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
                 loc_or_ele = translate_loc_to_xpath(loc_or_ele)
+
             if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
                 loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
 
+        # 接收到DriverElement对象直接返回
         elif isinstance(loc_or_ele, DriverElement):
             return loc_or_ele
 
+        # 接收到WebElement对象打包成DriverElement对象返回
         elif isinstance(loc_or_ele, WebElement):
-            return DriverElement(loc_or_ele, self.timeout)
+            return DriverElement(loc_or_ele, self, self.timeout)
 
+        # 接收到的类型不正确，抛出异常
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, DriverElement, DriverElement.')
 
         timeout = timeout or self.timeout
-        return execute_driver_find(self.driver, loc_or_ele, mode, show_errmsg, timeout)
+        return execute_driver_find(self, loc_or_ele, mode, show_errmsg, timeout)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
