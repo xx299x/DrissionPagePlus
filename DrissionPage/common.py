@@ -10,20 +10,19 @@ from re import split as re_SPLIT
 from shutil import rmtree
 from typing import Union
 
-from lxml.etree import _Element
-# from lxml.html import HtmlElement
-# from requests_html import Element
+from lxml.html import HtmlElement
 from selenium.webdriver.remote.webelement import WebElement
 
 
 class DrissionElement(object):
     """SessionElement和DriverElement的基类"""
 
-    def __init__(self, ele: Union[WebElement, _Element]):
+    def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
         self._inner_ele = ele
+        self.page = page
 
     @property
-    def inner_ele(self) -> Union[WebElement, _Element]:
+    def inner_ele(self) -> Union[WebElement, HtmlElement]:
         return self._inner_ele
 
     @property
