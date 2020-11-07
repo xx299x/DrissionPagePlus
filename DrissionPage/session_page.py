@@ -68,9 +68,8 @@ class SessionPage(object):
         return self.response.text
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, SessionElement],  # , Element
-            mode: str = None,
-            show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str], str, None]:
+            loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+            mode: str = None) -> Union[SessionElement, List[SessionElement or str], str, None]:
         """返回页面中符合条件的元素，默认返回第一个                                                          \n
         示例：                                                                                           \n
         - 接收到元素对象时：                                                                              \n
@@ -95,7 +94,6 @@ class SessionPage(object):
             page.ele('css:div.ele_class')                - 返回第一个符合css selector的元素                 \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
-        :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象
         """
         if isinstance(loc_or_ele, (str, tuple)):
@@ -114,11 +112,10 @@ class SessionPage(object):
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, SessionElement, Element.')
 
-        return execute_session_find(self, loc_or_ele, mode, show_errmsg)
+        return execute_session_find(self, loc_or_ele, mode)
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             show_errmsg: bool = False) -> List[SessionElement or str]:
+             loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement or str]:
         """返回页面中所有符合条件的元素                                                                    \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
@@ -140,12 +137,11 @@ class SessionPage(object):
             page.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的元素                        \n
             page.eles('css:div.ele_class')                - 返回所有符合css selector的元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象组成的列表
         """
         if not isinstance(loc_or_str, (tuple, str)):
             raise TypeError('Type of loc_or_str can only be tuple or str.')
-        return self.ele(loc_or_str, mode='all', show_errmsg=True)
+        return self.ele(loc_or_str, mode='all')
 
     def _try_to_get(self,
                     to_url: str,
