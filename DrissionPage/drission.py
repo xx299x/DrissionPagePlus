@@ -57,7 +57,7 @@ class Drission(object):
 
     @property
     def session(self) -> Session:
-        """返回HTMLSession对象，如为None则按配置信息创建"""
+        """返回Session对象，如为None则按配置信息创建"""
         if self._session is None:
             self._session = Session()
             attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',

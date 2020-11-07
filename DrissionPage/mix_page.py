@@ -26,7 +26,7 @@ class Null(object):
 
 
 class MixPage(Null, SessionPage, DriverPage):
-    """MixPage整合了DriverPage和SessionPage，
+    """MixPage整合了DriverPage和SessionPage，封装了对页面的操作，
     可在selenium（d模式）和requests（s模式）间无缝切换。
     切换的时候会自动同步cookies。
     获取信息功能为两种模式共有，操作页面元素功能只有d模式有。
@@ -49,18 +49,20 @@ class MixPage(Null, SessionPage, DriverPage):
         if drission in ['s', 'd', 'S', 'D']:
             mode = drission.lower()
             drission = None
+
         self._drission = drission or Drission(driver_options, session_options)
-        self._session = None
-        self._driver = None
         self._url = None
         self._response = None
         self.timeout = timeout
         self._url_available = None
         self._mode = mode
+
         if mode == 's':
+            self._driver = None
             self._session = True
         elif mode == 'd':
             self._driver = True
+            self._session = None
         else:
             raise ValueError("Argument mode can only be 'd' or 's'.")
 
@@ -79,9 +81,7 @@ class MixPage(Null, SessionPage, DriverPage):
 
     @property
     def mode(self) -> str:
-        """返回当前模式，'s'或'd'        \n
-        :return: 's' 或 'd'
-        """
+        """返回当前模式，'s'或'd' """
         return self._mode
 
     def change_mode(self, mode: str = None, go: bool = True) -> None:
@@ -131,7 +131,7 @@ class MixPage(Null, SessionPage, DriverPage):
     @property
     def session(self) -> Session:
         """返回session对象，如没有则创建            \n
-        :return: HTMLSession对象
+        :return: Session对象
         """
         return self._drission.session
 
@@ -252,7 +252,7 @@ class MixPage(Null, SessionPage, DriverPage):
         :param interval: 重试间隔（秒）
         :param show_errmsg: 是否抛出异常
         :param kwargs: 连接参数
-        :return: s模式为HTMLResponse对象，d模式为bool
+        :return: s模式为Response对象，d模式为bool
         """
         if self._mode == 'd':
             return super(SessionPage, self)._try_to_get(to_url, times, interval, show_errmsg)
