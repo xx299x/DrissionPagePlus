@@ -9,21 +9,24 @@ from html import unescape
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, urljoin, urlunparse
 
-from lxml.etree import tostring, HTML
-from lxml.html import HtmlElement
+from cssselect import SelectorSyntaxError
+from lxml.etree import tostring, HTML, _Element, XPathEvalError
 
 from .common import DrissionElement, get_loc_from_str, translate_loc_to_xpath
 
 
 class SessionElement(DrissionElement):
-    """session模式的元素对象，包装了一个Element对象，并封装了常用功能"""
+    """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
-    def __init__(self, ele: HtmlElement, page=None):
+    def __init__(self, ele: _Element, page=None):
         super().__init__(ele, page)
 
     def __repr__(self):
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
+
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str], mode: str = 'single'):
+        return self.ele(loc_or_str, mode)
 
     @property
     def attrs(self) -> dict:
@@ -116,10 +119,10 @@ class SessionElement(DrissionElement):
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
 
-        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', show_errmsg=False)
+        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]')
         while e == '\n':
             num += 1
-            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', show_errmsg=False)
+            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]')
 
         return e
 
@@ -136,18 +139,18 @@ class SessionElement(DrissionElement):
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
 
-        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', show_errmsg=False)
+        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]')
         while e == '\n':
             num += 1
-            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', show_errmsg=False)
+            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]')
 
         return e
 
-    def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, show_errmsg: bool = False):
-        """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
+    def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
+        """返回当前元素下级符合条件的子元素，默认返回第一个                                                   \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                       \n
+            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                        \n
             其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                          \n
@@ -166,7 +169,6 @@ class SessionElement(DrissionElement):
             ele.ele('css:div.ele_class')                - 返回第一个符合css selector的子元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
-        :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象
         """
         if isinstance(loc_or_str, (str, tuple)):
@@ -186,6 +188,7 @@ class SessionElement(DrissionElement):
             loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
             loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
             loc_str = f'{bracket}{loc_str}'
+
         else:  # css selector
             if loc_or_str[1][0].startswith('>'):
                 loc_str = f'{self.css_path}{loc_or_str[1]}'
@@ -194,9 +197,9 @@ class SessionElement(DrissionElement):
                 loc_str = loc_or_str[1]
 
         loc_or_str = loc_or_str[0], loc_str
-        return execute_session_find(element, loc_or_str, mode, show_errmsg)
+        return execute_session_find(element, loc_or_str, mode)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str], show_errmsg: bool = False):
+    def eles(self, loc_or_str: Union[Tuple[str, str], str]):
         """返回当前元素下级所有符合条件的子元素                                                           \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
@@ -218,10 +221,9 @@ class SessionElement(DrissionElement):
             ele.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的子元素                        \n
             ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param show_errmsg: 出现异常时是否打印信息
         :return: SessionElement对象组成的列表
         """
-        return self.ele(loc_or_str, mode='all', show_errmsg=show_errmsg)
+        return self.ele(loc_or_str, mode='all')
 
     def attr(self, attr: str) -> Union[str, None]:
         """返回属性值                           \n
@@ -279,19 +281,17 @@ class SessionElement(DrissionElement):
 
 def execute_session_find(page_or_ele,
                          loc: Tuple[str, str],
-                         mode: str = 'single',
-                         show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement or str]]:
+                         mode: str = 'single', ) -> Union[SessionElement, List[SessionElement or str], None]:
     """执行session模式元素的查找                              \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: SessionPage对象或SessionElement对象
     :param loc: 元素定位元组
     :param mode: 'single' 或 'all'，对应获取第一个或全部
-    :param show_errmsg: 出现异常时是否显示错误信息
     :return: 返回SessionElement元素或列表
     """
     mode = mode or 'single'
     if mode not in ['single', 'all']:
-        raise ValueError("Argument mode can only be 'single' or 'all'.")
+        raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
     if isinstance(page_or_ele, SessionElement):
         page = page_or_ele.page
@@ -301,25 +301,35 @@ def execute_session_find(page_or_ele,
         page_or_ele = get_HtmlElement(page_or_ele.response.text)
 
     try:
+        # 用lxml内置方法获取lxml的元素对象列表
         if loc[0] == 'xpath':
             ele = page_or_ele.xpath(loc[1])
         else:  # 用css selector获取
             ele = page_or_ele.cssselect(loc[1])
 
+        # 把lxml元素对象包装成SessionElement对象并按需要返回第一个或全部
         if mode == 'single':
             ele = ele[0] if ele else None
-            return SessionElement(ele, page) if isinstance(ele, HtmlElement) else unescape(ele).replace('\xa0', ' ')
+            if isinstance(ele, _Element):
+                return SessionElement(ele, page)
+            elif isinstance(ele, str):
+                return unescape(ele).replace('\xa0', ' ')
+            else:
+                return None
         elif mode == 'all':
-            ele = filter(lambda x: x != '\n', ele)  # 去除元素间换行符
-            ele = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, ele)  # 替换空格
-            return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele]
-    except:
-        if show_errmsg:
-            print('Element(s) not found.', loc)
-            raise
-        return [] if mode == 'all' else None
+            # 去除元素间换行符
+            ele = filter(lambda x: x != '\n', ele)
+            # 处理空格
+            ele = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, ele)
+            return [SessionElement(e, page) if isinstance(e, _Element) else e for e in ele]
+
+    except XPathEvalError:
+        raise SyntaxError('Invalid xpath syntax.', loc)
+
+    except SelectorSyntaxError:
+        raise SyntaxError('Invalid css selector syntax.', loc)
 
 
-def get_HtmlElement(html: str) -> HtmlElement:
-    """从html文本生成元素对象"""
+def get_HtmlElement(html: str) -> _Element:
+    """从html文本生成lxml的元素对象"""
     return HTML(html)
