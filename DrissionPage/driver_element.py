@@ -22,13 +22,19 @@ from .common import DrissionElement, get_loc_from_str, get_available_file_name, 
 class DriverElement(DrissionElement):
     """driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能"""
 
-    def __init__(self, ele: WebElement, page, timeout: float = 10):
+    def __init__(self, ele: WebElement, page=None, timeout: float = 10):
         super().__init__(ele, page)
         self.timeout = timeout
 
     def __repr__(self):
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<DriverElement {self.tag} {" ".join(attrs)}>'
+
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str],
+                 mode: str = 'single',
+                 timeout: float = None):
+        return self.ele(loc_or_str, mode, timeout or self.timeout)
 
     @property
     def attrs(self) -> dict:
@@ -157,7 +163,7 @@ class DriverElement(DrissionElement):
         :return: DriverElement对象
         """
         loc = 'xpath', f'.{"/.." * num}'
-        return self.ele(loc, timeout=0.01, show_errmsg=False)
+        return self.ele(loc, timeout=0.01)
 
     def nexts(self, num: int = 1, mode: str = 'ele'):
         """返回后面第num个兄弟节点或元素       \n
@@ -172,10 +178,10 @@ class DriverElement(DrissionElement):
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
 
-        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1)
         while e == '\n':
             num += 1
-            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]', timeout=0.1)
 
         return e
 
@@ -192,10 +198,10 @@ class DriverElement(DrissionElement):
         else:
             raise ValueError("Argument mode can only be 'node' or 'ele'.")
 
-        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1)
         while e == '\n':
             num += 1
-            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1, show_errmsg=False)
+            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]', timeout=0.1)
 
         return e
 
@@ -213,8 +219,7 @@ class DriverElement(DrissionElement):
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             mode: str = None,
-            timeout: float = None,
-            show_errmsg: bool = False):
+            timeout: float = None):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
@@ -238,7 +243,6 @@ class DriverElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 查找元素超时时间
-        :param show_errmsg: 出现异常时是否打印信息
         :return: DriverElement对象
         """
         if isinstance(loc_or_str, (str, tuple)):
@@ -266,12 +270,11 @@ class DriverElement(DrissionElement):
                 loc_or_str = loc_or_str[0], f'{self.css_path}{loc_or_str[1]}'
 
         timeout = timeout or self.timeout
-        return execute_driver_find(self, loc_or_str, mode, show_errmsg, timeout)
+        return execute_driver_find(self, loc_or_str, mode, timeout)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None,
-             show_errmsg: bool = False):
+             timeout: float = None):
         """返回当前元素下级所有符合条件的子元素                                                             \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
@@ -294,10 +297,9 @@ class DriverElement(DrissionElement):
             ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
-        :param show_errmsg: 出现异常时是否打印信息
         :return: DriverElement对象组成的列表
         """
-        return self.ele(loc_or_str, mode='all', show_errmsg=show_errmsg, timeout=timeout)
+        return self.ele(loc_or_str, mode='all', timeout=timeout)
 
     # -----------------以下为driver独占-------------------
     def click(self, by_js=None) -> bool:
@@ -411,7 +413,8 @@ class DriverElement(DrissionElement):
         try:
             ele.select_by_visible_text(text)
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
 
     def set_attr(self, attr: str, value: str) -> bool:
@@ -449,7 +452,7 @@ class DriverElement(DrissionElement):
         :param shake: 是否随机抖动
         :return: 是否拖拽成功
         """
-        # x, y：目标坐标点
+        # x, y：目标点坐标
         if isinstance(ele_or_loc, (DriverElement, WebElement)):
             target_x = ele_or_loc.location['x'] + ele_or_loc.size['width'] // 2
             target_y = ele_or_loc.location['y'] + ele_or_loc.size['height'] // 2
@@ -491,20 +494,18 @@ class DriverElement(DrissionElement):
 def execute_driver_find(page_or_ele,
                         loc: Tuple[str, str],
                         mode: str = 'single',
-                        show_errmsg: bool = False,
                         timeout: float = 10) -> Union[DriverElement, List[DriverElement or str]]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: DriverPage对象或DriverElement对象
     :param loc: 元素定位元组
     :param mode: 'single' 或 'all'，对应获取第一个或全部
-    :param show_errmsg: 出现异常时是否显示错误信息
     :param timeout: 查找元素超时时间
     :return: 返回DriverElement元素或它们组成的列表
     """
     mode = mode or 'single'
     if mode not in ['single', 'all']:
-        raise ValueError("Argument mode can only be 'single' or 'all'.")
+        raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
     if isinstance(page_or_ele, DriverElement):
         page = page_or_ele.page
@@ -524,14 +525,11 @@ def execute_driver_find(page_or_ele,
                 eles = wait.until(ec.presence_of_all_elements_located(loc))
                 return [DriverElement(ele, page, timeout) for ele in eles]
 
-    except InvalidElementStateException:
-        raise ValueError('Query statement error.', loc)
-
     except TimeoutException:
-        if show_errmsg:
-            print('Element(s) not found.', loc)
-            raise
         return [] if mode == 'all' else None
+
+    except InvalidElementStateException:
+        raise ValueError('Invalid query syntax.', loc)
 
 
 class ElementsByXpath(object):
@@ -559,7 +557,7 @@ class ElementsByXpath(object):
             :param node: 'document' 或 元素对象
             :param xpath_txt: xpath语句
             :param type_txt: resultType,参考https://developer.mozilla.org/zh-CN/docs/Web/API/Document/evaluate
-            :return:
+            :return: 元素对象或属性、文本字符串
             """
             node_txt = 'document' if not node or node == 'document' else 'arguments[0]'
             for_txt = ''
@@ -583,12 +581,14 @@ class ElementsByXpath(object):
                     }
                     """
                 return_txt = 'return a;'
+
             elif type_txt == '2':
                 return_txt = 'return e.stringValue;'
             elif type_txt == '1':
                 return_txt = 'return e.numberValue;'
             else:
                 return_txt = 'return e.singleNodeValue;'
+
             js = """
                 var e=document.evaluate('""" + xpath_txt + """', """ + node_txt + """, null, """ + type_txt + """, null);
                 """ + for_txt + """
