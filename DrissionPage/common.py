@@ -10,19 +10,19 @@ from re import split as re_SPLIT
 from shutil import rmtree
 from typing import Union
 
-from lxml.html import HtmlElement
+from lxml.etree import _Element
 from selenium.webdriver.remote.webelement import WebElement
 
 
 class DrissionElement(object):
     """SessionElement和DriverElement的基类"""
 
-    def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
+    def __init__(self, ele: Union[WebElement, _Element], page=None):
         self._inner_ele = ele
         self.page = page
 
     @property
-    def inner_ele(self) -> Union[WebElement, HtmlElement]:
+    def inner_ele(self) -> Union[WebElement, _Element]:
         return self._inner_ele
 
     @property
@@ -62,11 +62,11 @@ class DrissionElement(object):
     #     return
 
     @abstractmethod
-    def ele(self, loc: Union[tuple, str], mode: str = None, show_errmsg: bool = True):
+    def ele(self, loc: Union[tuple, str], mode: str = None):
         pass
 
     @abstractmethod
-    def eles(self, loc: Union[tuple, str], show_errmsg: bool = True):
+    def eles(self, loc: Union[tuple, str]):
         pass
 
     # @abstractmethod
@@ -75,22 +75,22 @@ class DrissionElement(object):
 
 
 def get_loc_from_str(loc: str) -> tuple:
-    """处理元素查找语句                                               \n
-    查找方式：属性、tag name及属性、文本、xpath、css selector           \n
-    =表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
+    """处理元素查找语句                                                \n
+    查找方式：属性、tag name及属性、文本、xpath、css selector            \n
+    =表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串             \n
     示例：                                                            \n
         @class:ele_class - class含有ele_class的元素                    \n
         @class=ele_class - class等于ele_class的元素                    \n
         @class - 带class属性的元素                                     \n
-        tag:div - div元素                                              \n
+        tag:div - div元素                                             \n
         tag:div@class:ele_class - class含有ele_class的div元素          \n
-        tag:div@class=ele_class - class等于ele_class的div元素           \n
-        tag:div@text():search_text - 文本含有search_text的div元素        \n
-        tag:div@text()=search_text - 文本等于search_text的div元素        \n
-        text:search_text - 文本含有search_text的元素                     \n
-        text=search_text - 文本等于search_text的元素                     \n
-        xpath://div[@class="ele_class"]                                 \n
-        css:div.ele_class                                               \n
+        tag:div@class=ele_class - class等于ele_class的div元素          \n
+        tag:div@text():search_text - 文本含有search_text的div元素       \n
+        tag:div@text()=search_text - 文本等于search_text的div元素       \n
+        text:search_text - 文本含有search_text的元素                    \n
+        text=search_text - 文本等于search_text的元素                    \n
+        xpath://div[@class="ele_class"]                               \n
+        css:div.ele_class                                             \n
     """
     loc_by = 'xpath'
     if loc.startswith('@'):  # 根据属性查找
