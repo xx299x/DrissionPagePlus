@@ -231,23 +231,18 @@ class SessionElement(DrissionElement):
         :return: 属性值文本，没有该属性返回None
         """
         try:
+            # 获取href属性时返回绝对url
             if attr == 'href':
-                # 如直接获取attr只能获取相对地址
                 link = self.inner_ele.get('href')
+
+                # 若链接为js或邮件，直接返回
                 if link.lower().startswith(('javascript:', 'mailto:')):
                     return link
-                elif link.startswith('#'):
-                    if '#' in self.page.url:
-                        return re.sub(r'#.*', link, self.page.url)
-                    else:
-                        return f'{self.page.url}{link}'
-                elif link.startswith('?'):  # 避免当相对url以?开头时丢失参数的bug TODO:测试是否还存在
-                    if '?' in self.page.url:
-                        return re.sub(r'\?.*', link, self.page.url)
-                    else:
-                        return f'{self.page.url}{link}'
+
+                # 其它情况直接返回绝对url
                 else:
                     return self._make_absolute(link)
+
             elif attr == 'src':
                 return self._make_absolute(self.inner_ele.get('src'))
             elif attr == 'text':
@@ -293,12 +288,13 @@ def execute_session_find(page_or_ele,
     if mode not in ['single', 'all']:
         raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
+    # 根据传入对象类型获取页面对象和lxml元素对象
     if isinstance(page_or_ele, SessionElement):
         page = page_or_ele.page
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = get_HtmlElement(page_or_ele.response.text)
+        page_or_ele = HTML(page_or_ele.response.text)
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
@@ -328,8 +324,3 @@ def execute_session_find(page_or_ele,
 
     except SelectorSyntaxError:
         raise SyntaxError('Invalid css selector syntax.', loc)
-
-
-def get_HtmlElement(html: str) -> _Element:
-    """从html文本生成lxml的元素对象"""
-    return HTML(html)
