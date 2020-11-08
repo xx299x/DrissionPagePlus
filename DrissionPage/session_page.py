@@ -22,7 +22,7 @@ from .session_element import SessionElement, execute_session_find
 
 
 class SessionPage(object):
-    """SessionPage封装了页面操作的常用功能，使用requests_html来获取、解析网页。"""
+    """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
     def __init__(self, session: Session, timeout: float = 10):
         """初始化函数"""
@@ -262,10 +262,12 @@ class SessionPage(object):
             r, info = self._make_response(file_url, mode='get', show_errmsg=show_errmsg, **kwargs)
         else:
             r, info = self._make_response(file_url, mode='post', data=post_data, show_errmsg=show_errmsg, **kwargs)
+
         if r is None:
             if show_msg:
                 print(info)
             return False, info
+
         if not r.ok:
             if show_errmsg:
                 raise ConnectionError(f'Status code: {r.status_code}.')
@@ -274,15 +276,19 @@ class SessionPage(object):
         # -------------------获取文件名-------------------
         file_name = ''
         content_disposition = tuple(x for x in r.headers if x.lower() == 'content-disposition')
-        if content_disposition:  # header里有文件名，则使用它
+
+        # header里有文件名，则使用它
+        if content_disposition:
             file_name = r.headers[content_disposition[0]].encode('ISO-8859-1').decode('utf-8')
             file_name = re.search(r'filename *= *"?([^";]+)', file_name)
             if file_name:
                 file_name = file_name.group(1)
             if file_name[0] == file_name[-1] == "'":
                 file_name = file_name.strip("'")
+
         if not file_name and os_PATH.basename(file_url):  # 在url里获取文件名
             file_name = os_PATH.basename(file_url).split("?")[0]
+
         if not file_name:  # 找不到则用时间和随机数生成文件名
             file_name = f'untitled_{time()}_{randint(0, 100)}'
         file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()  # 去除非法字符
