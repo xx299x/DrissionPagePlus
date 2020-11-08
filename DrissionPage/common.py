@@ -93,14 +93,18 @@ def get_loc_from_str(loc: str) -> tuple:
         css:div.ele_class                                             \n
     """
     loc_by = 'xpath'
-    if loc.startswith('@'):  # 根据属性查找
+
+    # 根据属性查找
+    if loc.startswith('@'):
         r = re_SPLIT(r'([:=])', loc[1:], maxsplit=1)
         if len(r) == 3:
             mode = 'exact' if r[1] == '=' else 'fuzzy'
             loc_str = _make_xpath_str('*', f'@{r[0]}', r[2], mode)
         else:
             loc_str = f'//*[@{loc[1:]}]'
-    elif loc.startswith(('tag=', 'tag:')):  # 根据tag name查找
+
+    # 根据tag name查找
+    elif loc.startswith(('tag=', 'tag:')):
         if '@' not in loc[4:]:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
@@ -112,22 +116,31 @@ def get_loc_from_str(loc: str) -> tuple:
                 loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
             else:
                 loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
-    elif loc.startswith(('text=', 'text:')):  # 根据文本查找
+
+    # 根据文本查找
+    elif loc.startswith(('text=', 'text:')):
         if len(loc) > 5:
             mode = 'exact' if loc[4] == '=' else 'fuzzy'
             loc_str = _make_xpath_str('*', 'text()', loc[5:], mode)
         else:
             loc_str = '//*[not(text())]'
-    elif loc.startswith(('xpath=', 'xpath:')):  # 用xpath查找
+
+    # 用xpath查找
+    elif loc.startswith(('xpath=', 'xpath:')):
         loc_str = loc[6:]
-    elif loc.startswith(('css=', 'css:')):  # 用css selector查找
+
+    # 用css selector查找
+    elif loc.startswith(('css=', 'css:')):
         loc_by = 'css selector'
         loc_str = loc[4:]
+
+    # 根据文本模糊查找
     else:
         if loc:
             loc_str = _make_xpath_str('*', 'text()', loc, 'fuzzy')
         else:
             loc_str = '//*[not(text())]'
+
     return loc_by, loc_str
 
 
@@ -140,10 +153,13 @@ def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
     :return: xpath字符串
     """
     tag_name = '' if tag == '*' else f'name()="{tag}" and '
+
     if mode == 'exact':
         return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
+
     elif mode == 'fuzzy':
         return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
+
     else:
         raise ValueError("Argument mode can only be 'exact' or 'fuzzy'.")
 
@@ -156,10 +172,13 @@ def _make_search_str(search_str: str) -> str:
     parts = search_str.split('"')
     parts_num = len(parts)
     search_str = 'concat('
+
     for key, i in enumerate(parts):
         search_str += f'"{i}"'
         search_str += ',' + '\'"\',' if key < parts_num - 1 else ''
+
     search_str += ',"")'
+
     return search_str
 
 
@@ -170,23 +189,32 @@ def translate_loc_to_xpath(loc: tuple) -> tuple:
     """
     loc_by = 'xpath'
     loc_str = None
+
     if loc[0] == 'xpath':
         loc_str = loc[1]
+
     elif loc[0] == 'css selector':
         loc_by = 'css selector'
         loc_str = loc[1]
+
     elif loc[0] == 'id':
         loc_str = f'//*[@id="{loc[1]}"]'
+
     elif loc[0] == 'class name':
         loc_str = f'//*[@class="{loc[1]}"]'
+
     elif loc[0] == 'link text':
         loc_str = f'//a[text()="{loc[1]}"]'
+
     elif loc[0] == 'name':
         loc_str = f'//*[@name="{loc[1]}"]'
+
     elif loc[0] == 'tag name':
         loc_str = f'//{loc[1]}'
+
     elif loc[0] == 'partial link text':
         loc_str = f'//a[contains(text(),"{loc[1]}")]'
+
     return loc_by, loc_str
 
 
@@ -198,16 +226,20 @@ def get_available_file_name(folder_path: str, file_name: str) -> str:
     """
     folder_path = Path(folder_path).absolute()
     file_Path = folder_path.joinpath(file_name)
+
     while file_Path.exists():
         ext_name = file_Path.suffix
         base_name = file_Path.stem
         num = base_name.split(' ')[-1]
+
         if num[0] == '(' and num[-1] == ')' and num[1:-1].isdigit():
             num = int(num[1:-1])
             file_name = f'{base_name.replace(f"({num})", "", -1)}({num + 1}){ext_name}'
         else:
             file_name = f'{base_name} (1){ext_name}'
+
         file_Path = folder_path.joinpath(file_name)
+
     return file_name
 
 
@@ -219,6 +251,7 @@ def clean_folder(folder_path: str, ignore: list = None) -> None:
     """
     ignore = [] if not ignore else ignore
     p = Path(folder_path)
+
     for f in p.iterdir():
         if f.name not in ignore:
             if f.is_file():
