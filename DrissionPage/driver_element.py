@@ -53,10 +53,7 @@ class DriverElement(DrissionElement):
         names+=")"
         return names;  
         '''
-        attrs = dict()
-        for attr in eval(self.run_script(js)):
-            attrs[attr] = self.attr(attr)
-        return attrs
+        return {attr: self.attr(attr) for attr in eval(self.run_script(js))}
 
     @property
     def text(self) -> str:
