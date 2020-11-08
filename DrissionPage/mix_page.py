@@ -66,6 +66,12 @@ class MixPage(Null, SessionPage, DriverPage):
         else:
             raise ValueError("Argument mode can only be 'd' or 's'.")
 
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
+                 mode: str = 'single',
+                 timeout: float = None):
+        return self.ele(loc_or_str, mode, timeout or self.timeout)
+
     @property
     def url(self) -> Union[str, None]:
         """返回当前url"""
@@ -130,9 +136,7 @@ class MixPage(Null, SessionPage, DriverPage):
 
     @property
     def session(self) -> Session:
-        """返回session对象，如没有则创建            \n
-        :return: Session对象
-        """
+        """返回Session对象，如没有则创建"""
         return self._drission.session
 
     @property
@@ -161,8 +165,8 @@ class MixPage(Null, SessionPage, DriverPage):
         :param url: 目标域
         :return: None
         """
-        u = url or self._session_url
-        self._drission.cookies_to_driver(u)
+        url = url or self._session_url
+        self._drission.cookies_to_driver(url)
 
     def check_page(self, by_requests: bool = False) -> Union[bool, None]:
         """d模式时检查网页是否符合预期                \n
