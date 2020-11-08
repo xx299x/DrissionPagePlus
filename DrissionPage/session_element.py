@@ -39,6 +39,10 @@ class SessionElement(DrissionElement):
         return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
     def texts(self, text_node_only: bool = False) -> List[str]:
+        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
+        :param text_node_only: 是否只返回文本节点
+        :return: 文本列表
+        """
         if text_node_only:
             return self.eles('xpath:./*/text()')
         else:
@@ -66,24 +70,6 @@ class SessionElement(DrissionElement):
         """返回xpath路径"""
         return self._get_ele_path('xpath')
 
-    def _get_ele_path(self, mode):
-        """获取css路径或xpath路径"""
-        path_str = ''
-        ele = self
-        while ele:
-            ele_id = ele.attr('id')
-            if ele_id:
-                return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
-            else:
-                if mode == 'css':
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
-                    path_str = f'>:nth-child({brothers + 1}){path_str}'
-                else:
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
-                    path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
-                ele = ele.parent
-        return path_str[1:] if mode == 'css' else path_str
-
     @property
     def parent(self):
         """返回父级元素"""
@@ -92,59 +78,35 @@ class SessionElement(DrissionElement):
     @property
     def next(self):
         """返回后一个兄弟元素"""
-        return self.nexts()
+        return self._get_brother(1, 'ele', 'next')
 
     @property
     def prev(self):
         """返回前一个兄弟元素"""
-        return self.prevs()
+        return self._get_brother(1, 'ele', 'prev')
 
     def parents(self, num: int = 1):
-        """返回上面第num级父元素                                                         \n
+        """返回上面第num级父元素                                         \n
         :param num: 第几级父元素
         :return: SessionElement对象
         """
         return self.ele(f'xpath:..{"/.." * (num - 1)}')
 
     def nexts(self, num: int = 1, mode: str = 'ele'):
-        """返回后面第num个兄弟元素      \n
-        :param num: 后面第几个兄弟元素
-        :param mode: 匹配元素还是节点
+        """返回后面第num个兄弟元素或节点                                  \n
+        :param num: 后面第几个兄弟元素或节点
+        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: SessionElement对象
         """
-        if mode == 'ele':
-            node_txt = '*'
-        elif mode == 'node':
-            node_txt = 'node()'
-        else:
-            raise ValueError("Argument mode can only be 'node' or 'ele'.")
-
-        e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]')
-        while e == '\n':
-            num += 1
-            e = self.ele(f'xpath:./following-sibling::{node_txt}[{num}]')
-
-        return e
+        return self._get_brother(num, mode, 'next')
 
     def prevs(self, num: int = 1, mode: str = 'ele'):
-        """返回前面第num个兄弟元素        \n
-        :param num: 前面第几个兄弟元素
-        :param mode: 匹配元素还是节点
+        """返回前面第num个兄弟元素或节点                                  \n
+        :param num: 前面第几个兄弟元素或节点
+        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: SessionElement对象
         """
-        if mode == 'ele':
-            node_txt = '*'
-        elif mode == 'node':
-            node_txt = 'node()'
-        else:
-            raise ValueError("Argument mode can only be 'node' or 'ele'.")
-
-        e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]')
-        while e == '\n':
-            num += 1
-            e = self.ele(f'xpath:./preceding-sibling::{node_txt}[{num}]')
-
-        return e
+        return self._get_brother(num, mode, 'prev')
 
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                   \n
@@ -256,6 +218,7 @@ class SessionElement(DrissionElement):
         except:
             return None
 
+    # -----------------私有函数-------------------
     def _make_absolute(self, link):
         """生成绝对url"""
         parsed = urlparse(link)._asdict()
@@ -272,6 +235,59 @@ class SessionElement(DrissionElement):
 
         # 绝对路径且不缺协议，直接返回
         return link
+
+    def _get_ele_path(self, mode) -> str:
+        """获取css路径或xpath路径"""
+        path_str = ''
+        ele = self
+        while ele:
+            ele_id = ele.attr('id')
+            if ele_id:
+                return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
+            else:
+                if mode == 'css':
+                    brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
+                    path_str = f'>:nth-child({brothers + 1}){path_str}'
+                else:
+                    brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
+                    path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
+                ele = ele.parent
+        return path_str[1:] if mode == 'css' else path_str
+
+    def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
+        """返回前面第num个兄弟元素或节点                                     \n
+        :param num: 前面第几个兄弟元素或节点
+        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+        :param direction: 'next' 或 'prev'，查找的方向
+        :return: DriverElement对象或字符串
+        """
+        # 查找节点的类型
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        elif mode == 'text':
+            node_txt = 'text()'
+        else:
+            raise ValueError(f"Argument mode can only be 'node' ,'ele' or 'text', not '{mode}'.")
+
+        # 查找节点的方向
+        if direction == 'next':
+            direction_txt = 'following'
+        elif direction == 'prev':
+            direction_txt = 'preceding'
+        else:
+            raise ValueError(f"Argument direction can only be 'next' or 'prev', not '{direction}'.")
+
+        # 获取节点
+        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]')
+
+        # 跳过元素间的换行符
+        while ele_or_node == '\n':
+            num += 1
+            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]')
+
+        return ele_or_node
 
 
 def execute_session_find(page_or_ele,
