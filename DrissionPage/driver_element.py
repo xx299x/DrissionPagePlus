@@ -118,7 +118,7 @@ class DriverElement(DrissionElement):
         :return: DriverElement对象
         """
         loc = 'xpath', f'.{"/.." * num}'
-        return self.ele(loc, timeout=0.01)
+        return self.ele(loc, timeout=0.1)
 
     def nexts(self, num: int = 1, mode: str = 'ele'):
         """返回后面第num个兄弟元素或节点                                   \n
