@@ -23,6 +23,7 @@ class OptionsManager(object):
         self.path = path or Path(__file__).parent / 'configs.ini'
         self._conf = ConfigParser()
         self._conf.read(self.path, encoding='utf-8')
+
         if 'global_tmp_path' not in self.get_option('paths') or not self.get_value('paths', 'global_tmp_path'):
             global_tmp_path = str((Path(__file__).parent / 'tmp').absolute())
             Path(global_tmp_path).mkdir(parents=True, exist_ok=True)
@@ -49,11 +50,13 @@ class OptionsManager(object):
         """
         items = self._conf.items(section)
         option = dict()
+
         for j in items:
             try:
                 option[j[0]] = eval(self._conf.get(section, j[0]).replace('\\', '\\\\'))
             except:
                 option[j[0]] = self._conf.get(section, j[0])
+
         return option
 
     def set_item(self, section: str, item: str, value: Any):
@@ -83,6 +86,7 @@ class DriverOptions(Options):
         """
         super().__init__()
         self._driver_path = None
+
         if read_file:
             options_dict = OptionsManager().get_option('chrome_options')
             paths_dict = OptionsManager().get_option('paths')
@@ -123,11 +127,14 @@ class DriverOptions(Options):
         :return: 当前对象
         """
         del_list = []
+
         for argument in self._arguments:
             if argument.startswith(value):
                 del_list.append(argument)
+
         for del_arg in del_list:
             self._arguments.remove(del_arg)
+
         return self
 
     def remove_experimental_option(self, key: str):
@@ -137,6 +144,7 @@ class DriverOptions(Options):
         """
         if key in self._experimental_options:
             self._experimental_options.pop(key)
+
         return self
 
     def remove_all_extensions(self):
@@ -154,9 +162,11 @@ class DriverOptions(Options):
         :return: 当前对象
         """
         self.remove_argument(arg)
+
         if value:
             arg_str = arg if isinstance(value, bool) else f'{arg}={value}'
             self.add_argument(arg_str)
+
         return self
 
     def set_headless(self, on_off: bool = True):
