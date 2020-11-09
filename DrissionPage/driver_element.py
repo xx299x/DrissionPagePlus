@@ -90,14 +90,6 @@ class DriverElement(DrissionElement):
         return self._get_ele_path('xpath')
 
     @property
-    def shadow_root(self):
-        """返回当前元素的shadow_root元素路径"""
-        shadow = self.run_script('return arguments[0].shadowRoot')
-        if shadow:
-            from .shadow_root_element import ShadowRootElement
-            return ShadowRootElement(shadow, self)
-
-    @property
     def parent(self):
         """返回父级元素"""
         return self.parents()
@@ -141,10 +133,7 @@ class DriverElement(DrissionElement):
         :param attr: 属性名
         :return: 属性值文本
         """
-        if attr == 'text':
-            return self.text
-        else:
-            return self.inner_ele.get_attribute(attr)
+        return self.text if attr == 'text' else self.inner_ele.get_attribute(attr)
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -200,6 +189,7 @@ class DriverElement(DrissionElement):
                 loc_or_str = loc_or_str[0], f'{self.css_path}{loc_or_str[1]}'
 
         timeout = timeout or self.timeout
+
         return execute_driver_find(self, loc_or_str, mode, timeout)
 
     def eles(self,
@@ -232,6 +222,46 @@ class DriverElement(DrissionElement):
         return self.ele(loc_or_str, mode='all', timeout=timeout)
 
     # -----------------以下为driver独占-------------------
+
+    @property
+    def size(self) -> dict:
+        """返回元素宽和高"""
+        return self.inner_ele.size
+
+    @property
+    def location(self) -> dict:
+        """返回元素左上角坐标"""
+        return self.inner_ele.location
+
+    @property
+    def shadow_root(self):
+        """返回当前元素的shadow_root元素对象"""
+        shadow = self.run_script('return arguments[0].shadowRoot')
+        if shadow:
+            from .shadow_root_element import ShadowRootElement
+            return ShadowRootElement(shadow, self)
+
+    @property
+    def before(self) -> str:
+        """返回当前元素的::before伪元素内容"""
+        return self.get_style_property('content', 'before')
+
+    @property
+    def after(self) -> str:
+        """返回当前元素的::after伪元素内容"""
+        return self.get_style_property('content', 'after')
+
+    def get_style_property(self, style: str, pseudo_ele: str = None) -> str:
+        """返回元素样式属性值
+        :param style: 样式属性名称
+        :param pseudo_ele: 伪元素名称
+        :return: 样式属性的值
+        """
+        pseudo_ele = f', "::{pseudo_ele}"' if pseudo_ele else ''
+        r = self.run_script(f'return window.getComputedStyle(arguments[0]{pseudo_ele}).getPropertyValue("{style}");')
+
+        return None if r == 'none' else r
+
     def click(self, by_js=None) -> bool:
         """点击元素                                                                      \n
         尝试点击10次，若都失败就改用js点击                                                  \n
@@ -245,10 +275,12 @@ class DriverElement(DrissionElement):
                     return True
                 except:
                     sleep(0.2)
+
         # 若点击失败，用js方式点击
         if by_js is not False:
             self.run_script('arguments[0].click()')
             return True
+
         return False
 
     def input(self, value, clear: bool = True) -> bool:
@@ -303,16 +335,6 @@ class DriverElement(DrissionElement):
         except:
             return False
 
-    @property
-    def size(self) -> dict:
-        """返回元素宽和高"""
-        return self.inner_ele.size
-
-    @property
-    def location(self) -> dict:
-        """返回元素左上角坐标"""
-        return self.inner_ele.location
-
     def screenshot(self, path: str, filename: str = None) -> str:
         """对元素进行截图                                          \n
         :param path: 保存路径
@@ -323,14 +345,17 @@ class DriverElement(DrissionElement):
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
         name = get_available_file_name(str(path), f'{name}.png')
+
         # 等待元素加载完成
         if self.tag == 'img':
             js = 'return arguments[0].complete && typeof arguments[0].naturalWidth != "undefined" ' \
                  '&& arguments[0].naturalWidth > 0'
             while not self.run_script(js):
                 pass
+
         img_path = f'{path}\\{name}'
         self.inner_ele.screenshot(img_path)
+
         return img_path
 
     def select(self, text: str) -> bool:
@@ -340,6 +365,7 @@ class DriverElement(DrissionElement):
         """
         from selenium.webdriver.support.select import Select
         ele = Select(self.inner_ele)
+
         try:
             ele.select_by_visible_text(text)
             return True
