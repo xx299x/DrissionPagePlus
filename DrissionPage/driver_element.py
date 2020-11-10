@@ -68,7 +68,7 @@ class DriverElement(DrissionElement):
         if text_node_only:
             return self.eles('xpath:./text()')
         else:
-            return list(map(lambda x: x if isinstance(x, str) else x.text, self.eles('xpath:./node()')))
+            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./node()')]
 
     @property
     def html(self) -> str:
@@ -139,13 +139,13 @@ class DriverElement(DrissionElement):
             loc_or_str: Union[Tuple[str, str], str],
             mode: str = None,
             timeout: float = None):
-        """返回当前元素下级符合条件的子元素，默认返回第一个                                                 \n
-        示例：                                                                                           \n
+        """返回当前元素下级符合条件的子元素，默认返回第一个                                                   \n
+        示例：                                                                                            \n
         - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                       \n
+            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                        \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                          \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
             ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素              \n
             ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                \n
             ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素               \n
@@ -196,12 +196,12 @@ class DriverElement(DrissionElement):
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None):
         """返回当前元素下级所有符合条件的子元素                                                             \n
-        示例：                                                                                          \n
-        - 用loc元组查找：                                                                                \n
-            ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                     \n
-        - 用查询字符串查找：                                                                              \n
+        示例：                                                                                           \n
+        - 用loc元组查找：                                                                                 \n
+            ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                      \n
+        - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                       \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                         \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
             ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素              \n
             ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                \n
             ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素               \n
@@ -348,8 +348,8 @@ class DriverElement(DrissionElement):
 
         # 等待元素加载完成
         if self.tag == 'img':
-            js = 'return arguments[0].complete && typeof arguments[0].naturalWidth != "undefined" ' \
-                 '&& arguments[0].naturalWidth > 0'
+            js = ('return arguments[0].complete && typeof arguments[0].naturalWidth != "undefined" '
+                  '&& arguments[0].naturalWidth > 0')
             while not self.run_script(js):
                 pass
 
@@ -587,8 +587,8 @@ class ElementsByXpath(object):
 
     def __call__(self, ele_or_driver: Union[WebDriver, WebElement]) \
             -> Union[str, DriverElement, None, List[str or DriverElement]]:
-        driver, the_node = (ele_or_driver, 'document') if isinstance(ele_or_driver, WebDriver) \
-            else (ele_or_driver.parent, ele_or_driver)
+        driver, the_node = ((ele_or_driver, 'document') if isinstance(ele_or_driver, WebDriver)
+                            else (ele_or_driver.parent, ele_or_driver))
 
         def get_nodes(node=None, xpath_txt=None, type_txt='7'):
             """用js通过xpath获取元素、节点或属性
@@ -628,7 +628,7 @@ class ElementsByXpath(object):
                 return_txt = 'return e.singleNodeValue;'
 
             js = """
-                var e=document.evaluate('""" + xpath_txt + """', """ + node_txt + """, null, """ + type_txt + """, null);
+                var e=document.evaluate('""" + xpath_txt + """', """ + node_txt + """, null, """ + type_txt + """,null);
                 """ + for_txt + """
                 """ + return_txt + """
                 """
@@ -637,8 +637,8 @@ class ElementsByXpath(object):
         if self.mode == 'single':
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
-                return DriverElement(e, self.page, self.timeout) \
-                    if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' ')
+                return (DriverElement(e, self.page, self.timeout)
+                        if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' '))
 
             # 找不到目标时
             except JavascriptException:
@@ -647,10 +647,7 @@ class ElementsByXpath(object):
         elif self.mode == 'all':
             e = get_nodes(the_node, xpath_txt=self.xpath)
 
-            # 去除元素间换行符
-            e = filter(lambda x: x != '\n', e)
+            # 去除元素间换行符并替换空格
+            e = (unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x for x in e if x != '\n')
 
-            # 替换空格
-            e = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, e)
-
-            return list(map(lambda x: DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement) else x, e))
+            return [DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement) else x for x in e]

@@ -409,10 +409,12 @@ class SessionPage(object):
                 r = self.session.get(url, **kwargs)
             elif mode == 'post':
                 r = self.session.post(url, data=data, **kwargs)
+
         except Exception as e:
             if show_errmsg:
                 raise e
             return None, e
+
         else:
             headers = dict(r.headers)
             content_type = tuple(x for x in headers if x.lower() == 'content-type')

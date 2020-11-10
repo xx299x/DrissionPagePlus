@@ -192,31 +192,36 @@ class SessionElement(DrissionElement):
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
-        try:
-            # 获取href属性时返回绝对url
-            if attr == 'href':
-                link = self.inner_ele.get('href')
+        # try:
+        # 获取href属性时返回绝对url
+        if attr == 'href':
+            link = self.inner_ele.get('href')
 
-                # 若链接为js或邮件，直接返回
-                if link.lower().startswith(('javascript:', 'mailto:')):
-                    return link
+            # 若链接为js或邮件，直接返回
+            if link.lower().startswith(('javascript:', 'mailto:')):
+                return link
 
-                # 其它情况直接返回绝对url
-                else:
-                    return self._make_absolute(link)
-
-            elif attr == 'src':
-                return self._make_absolute(self.inner_ele.get('src'))
-            elif attr == 'text':
-                return self.text
-            elif attr == 'outerHTML':
-                return unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
-            elif attr == 'innerHTML':
-                return self.html
+            # 其它情况直接返回绝对url
             else:
-                return self.inner_ele.get(attr)
-        except:
-            return None
+                return self._make_absolute(link)
+
+        elif attr == 'src':
+            return self._make_absolute(self.inner_ele.get('src'))
+
+        elif attr == 'text':
+            return self.text
+
+        elif attr == 'outerHTML':
+            return unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
+
+        elif attr == 'innerHTML':
+            return self.html
+
+        else:
+            return self.inner_ele.get(attr)
+
+        # except:
+        #     return None
 
     # -----------------私有函数-------------------
     def _make_absolute(self, link):
@@ -240,18 +245,23 @@ class SessionElement(DrissionElement):
         """获取css路径或xpath路径"""
         path_str = ''
         ele = self
+
         while ele:
             ele_id = ele.attr('id')
+
             if ele_id:
                 return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
             else:
+
                 if mode == 'css':
                     brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
                     path_str = f'>:nth-child({brothers + 1}){path_str}'
                 else:
                     brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
                     path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
+
                 ele = ele.parent
+
         return path_str[1:] if mode == 'css' else path_str
 
     def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
@@ -316,23 +326,23 @@ def execute_session_find(page_or_ele,
         # 用lxml内置方法获取lxml的元素对象列表
         if loc[0] == 'xpath':
             ele = page_or_ele.xpath(loc[1])
-        else:  # 用css selector获取
+        else:  # 用css selector获取元素对象列表
             ele = page_or_ele.cssselect(loc[1])
 
         # 把lxml元素对象包装成SessionElement对象并按需要返回第一个或全部
         if mode == 'single':
             ele = ele[0] if ele else None
+
             if isinstance(ele, _Element):
                 return SessionElement(ele, page)
             elif isinstance(ele, str):
                 return unescape(ele).replace('\xa0', ' ')
             else:
                 return None
+
         elif mode == 'all':
-            # 去除元素间换行符
-            ele = filter(lambda x: x != '\n', ele)
-            # 处理空格
-            ele = map(lambda x: unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x, ele)
+            # 去除元素间换行符并替换空格
+            ele = (unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x for x in ele if x != '\n')
             return [SessionElement(e, page) if isinstance(e, _Element) else e for e in ele]
 
     except XPathEvalError:
