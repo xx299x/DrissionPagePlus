@@ -5,7 +5,7 @@
 DrissionPage，即driver和session的合体，是个基于python的Web自动化操作集成工具。  
 它实现了selenium和requests之间的无缝切换。  
 因此可以兼顾selenium的便利性和requests的高效率。  
-集成了页面常用功能，两种模式系统一致的API，使用便捷。
+它集成了页面常用功能，两种模式系统一致的API，使用便捷。
 它用POM模式封装了页面元素常用的方法，很适合自动化操作功能扩展。  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。  
 
@@ -32,6 +32,7 @@ DrissionPage，即driver和session的合体，是个基于python的Web自动化�
 ***
 
 - 允许在selenium和requests间无缝切换，共享session。  
+- 兼容selenium代码，易于迁移。
 - 使用POM模式封装常用方法，便于扩展。
 - 两种模式提供统一的操作方法，使用体验一致。    
 - 人性化的页面元素操作方法，减轻页面分析工作量和编码量。  
@@ -391,6 +392,32 @@ element.location  # 元素位置
 
 
 
+## 与selenium代码对接
+
+DrissionPage代码可与selenium代码无缝拼接，既可直接使用selenium的WebDriver对象，也可到处自身的WebDriver给selenium代码使用。使已有项目的迁移非常方便。
+
+### selenium转DrissionPage
+
+```python
+driver = webdriver.Chrome()
+driver.get('https://www.baidu.com')
+
+page = MixPage(Drission(driver))  # 把driver传递给Drission，创建MixPage对象
+print(page.title)  # 打印结果：百度一下，你就知道
+```
+
+### DrissionPage转selenium
+
+```python
+page = MixPage()
+page.get('https://www.baidu.com')
+
+driver = page.driver  # 从MixPage对象中获取WebDriver对象
+print(driver.title)  # 打印结果：百度一下，你就知道
+```
+
+
+
 ## Chrome快捷设置
 
 chrome的配置很繁琐，为简化使用，本库提供了常用配置的设置方法。
@@ -708,8 +735,8 @@ Drission类用于管理WebDriver对象和Session对象，是驱动器的角色�
 参数说明：
 
 - copy_user_agent: bool  - 是否复制user_agent到session
-- driver: WebDriver           - WebDriver对象，复制cookies
-- session: Session            - Session对象，接收cookies
+- driver: WebDriver           - 复制cookies的WebDriver对象
+- session: Session            - 接收cookies的Session对象
 
 返回: None
 
@@ -722,8 +749,8 @@ Drission类用于管理WebDriver对象和Session对象，是驱动器的角色�
 参数说明：
 
 - url: str                       - cookies的域
-- driver: WebDriver     - WebDriver对象，接收cookies
-- session: Session      - Session对象，复制cookies
+- driver: WebDriver     - 接收cookies的WebDriver对象
+- session: Session      - 复制cookies的Session对象
 
 返回: None
 
@@ -776,25 +803,25 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 参数说明：
 
-- drission: Drission  - Drission对象，如没传入则创建一个。传入's'或'd'时快速配置相应模式
-- mode: str              - 模式，可选'd'或's'，默认为'd'
-- timeout: float        - 超时时间，driver模式查找元素时间及session模式连接时间
+- drission: Drission  - Drission对象，如没传入则创建一个。传入 's' 或 'd' 时快速配置相应模式
+- mode: str              - 模式，可选 'd' 或 's'，默认为'd'
+- timeout: float        - 超时时间，driver模式为查找元素时间，session模式为连接等待时间
 
 
 
 ### url  
 
-返回当前访问的url。
+返回MixPage对象当前访问的url。
 
-返回: 
+返回: str
 
 
 
 ### mode
 
-返回当前模式（'s'或'd'）。
+返回当前模式（ 's' 或 'd' ）。
 
-返回: 
+返回: str
 
 
 
@@ -802,7 +829,7 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 返回当前使用的Dirssion对象。
 
-返回: 
+返回: Drission
 
 
 
@@ -810,7 +837,7 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 返回driver对象，如没有则创建，调用时会切换到driver模式。
 
-返回: 
+返回: WebDriver
 
 
 
@@ -818,15 +845,15 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 返回session对象，如没有则创建。
 
-返回: 
+返回: Session
 
 
 
 ### response
 
-返回Response对象，调用时会切换到session模式。
+返回s模式获取到的Response对象，调用时会切换到s模式。
 
-返回: 
+返回: Response
 
 
 
@@ -834,7 +861,7 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 返回cookies，从当前模式获取。
 
-返回: 
+返回: [dict, list]
 
 
 
@@ -842,52 +869,40 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 返回页面html文本。
 
-返回: 
+返回: str
 
 
 
 ### title
 
-返回页面title文本。
+返回页面title。
 
-返回: 
+返回: str
+
+
+
+### url_available
+
+返回当前url有效性。
+
+返回: bool
 
 
 
 ### change_mode()
 
-change_mode(mode: str = None, go: bool = True) -> None
-
-切换模式，可指定目标模式，若目标模式与当前模式一致，则直接返回。
+切换模式，'d' 或 's'。切换时会把当前模式的cookies复制到目标模式。
 
 参数说明：
 
-- mode  - 指定目标模式，'d'或's'。
-- go       - 切换模式后是否跳转到当前url
+- mode: str  - 指定目标模式，'d' 或 's'。
+- go: bool    - 切换模式后是否跳转到当前url
 
-返回: 
-
-
-
-### get()
-
-get(url: str, go_anyway=False, **kwargs) -> Union[bool, None]
-
-跳转到一个url，跳转前先同步cookies，跳转后返回目标url是否可用。
-
-参数说明：
-
-- url                - 目标url
-- go_anyway  - 是否强制跳转。若目标url和当前url一致，默认不跳转。
-- kwargs         - 用于session模式时访问参数。
-
-返回: 
+返回: None
 
 
 
 ### ele()
-
-ele(loc_or_ele: Union[tuple, str, DriverElement, SessionElement], mode: str = None, timeout: float = None, show_errmsg: bool = False) -> Union[DriverElement, SessionElement]
 
 返回页面中符合条件的元素，默认返回第一个。  
 ​如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
@@ -895,10 +910,9 @@ ele(loc_or_ele: Union[tuple, str, DriverElement, SessionElement], mode: str = No
 
 参数说明：
 
-- loc_or_str        - 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-- mode               - 'single' 或 'all‘，对应查找一个或全部
-- timeout            - 查找元素超时时间，driver模式下有效
-- show_errmsg  - 出现异常时是否抛出及显示
+- loc_or_str: [Tuple[str, str], str, DriverElement, SessionElement, WebElement]  - 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+- mode: str                  - 'single' 或 'all‘，对应查找一个或全部
+- timeout: float            - 查找元素超时时间，driver模式下有效
 
 示例：
 
@@ -928,88 +942,96 @@ ele(loc_or_ele: Union[tuple, str, DriverElement, SessionElement], mode: str = No
   - page.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素
   - page.ele('css:div.ele_class')                         - 返回第一个符合css selector的元素
 
-返回: 
+返回: [DriverElement, SessionElement, str]  - 元素对象或属性、文本节点文本
 
 
 
 ### eles()
 
-eles(loc_or_str: Union[tuple, str], timeout: float = None, show_errmsg: bool = False) -> List[DriverElement]
-
 根据查询参数获取符合条件的元素列表。查询参数使用方法和ele方法一致。
 
 参数说明：
 
-- loc_or_str        - 查询条件参数
-- timeout            - 查找元素超时时间，driver模式下有效
-- show_errmsg  - 出现异常时是否抛出及显示
+- loc_or_str: [Tuple[str, str], str]        - 查询条件参数
+- timeout: float                                  - 查找元素超时时间，driver模式下有效
 
-返回: 
+返回: [List[DriverElement or str], List[SessionElement or str]]  - 元素对象或属性、文本节点文本组成的列表
 
 
 
 ### cookies_to_session()
 
-cookies_to_session(copy_user_agent: bool = False) -> None
-
-手动把cookies从driver复制到session。
+从WebDriver对象复制cookies到Session对象。
 
 参数说明：
 
-- copy_user_agent  - 是否同时复制user agent
+- copy_user_agent:bool  - 是否同时复制user agent
 
-返回: 
+返回: None
 
 
 
 ### cookies_to_driver()
 
-cookies_to_driver(url=None) -> None
-
-手动把cookies从session复制到driver。
+从Session对象复制cookies到WebDriver对象。
 
 参数说明：
 
-- url  - cookies的域或url
+- url:str  - cookies的域或url
 
-返回: 
+返回: None
+
+
+
+### get()
+
+跳转到一个url，跳转前先同步cookies，跳转后返回目标url是否可用。
+
+参数说明：
+
+- url: str                      - 目标url
+- go_anyway: bool     - 是否强制跳转。若目标url和当前url一致，默认不跳转。
+- show_errmsg: bool  - 是否显示和抛出异常
+- retry: int                    - 连接出错时重试次数
+- interval: float             -  重试间隔（秒）
+- **kwargs                   - 用于requests的连接参数
+
+返回: [bool, None]  - url是否可用
 
 
 
 ### post()
 
-post(url: str, params: dict = None, data: dict = None, go_anyway: bool = False, **kwargs) -> Union[bool, None]
-
 以post方式跳转，调用时自动切换到session模式。
 
 参数说明：
 
-- url - 目标url
-- parame        - url参数
-- data             - 提交的数据
-- go_anyway  - 是否强制跳转。若目标url和当前url一致，默认不跳转。
-- kwargs         - headers等访问参数
+- url:str                        - 目标url
+- data: dict                  - 提交的数据
+- go_anyway: bool     - 是否强制跳转。若目标url和当前url一致，默认不跳转。
+- show_errmsg: bool  - 是否显示和抛出异常
+- **kwargs                   - 用于requests的连接参数
 
-返回: 
+返回: [bool, None]  - url是否可用
 
 
 
 ### download()
 
-download(file_url: str, goal_path: str = None, rename: str = None, file_exists: str = 'rename', show_msg: bool = False, **kwargs) -> tuple
-
 下载一个文件，返回是否成功和下载信息字符串。改方法会自动避免和目标路径现有文件重名。
 
 参数说明：
 
-- file_url - 文件URL
-- goal_path   - 存放路径，默认为ini文件中指定的临时文件夹
-- rename       - 重命名文件，不改变扩展名
-- file_exists   - 若存在同名文件，可选择'rename', 'overwrite', 'skip'方式处理
-- show_msg  - 是否显示下载信息
-- kwargs        - 用于requests的连接参数
+- file_url: str              - 文件url
+- goal_path: str         - 存放路径，默认为ini文件中指定的临时文件夹
+- rename: str             - 重命名文件，不改变扩展名
+- file_exists: str         - 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
+- post_data: dict        - post方式时提交的数据
+- show_msg: bool      - 是否显示下载信息
+- show_errmsg: bool  - 是否显示和抛出异常
+- **kwargs                  - 用于requests的连接参数
 
-返回: 
+返回: Tuple[bool, str]  - 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
 
 
 
@@ -1021,7 +1043,7 @@ download(file_url: str, goal_path: str = None, rename: str = None, file_exists: 
 
 返回标签页数量。
 
-返回: 
+返回: int
 
 
 
@@ -1029,7 +1051,7 @@ download(file_url: str, goal_path: str = None, rename: str = None, file_exists: 
 
 返回所有标签页handle列表。
 
-返回: 
+返回: list
 
 
 
@@ -1037,7 +1059,7 @@ download(file_url: str, goal_path: str = None, rename: str = None, file_exists: 
 
 返回当前标签页序号。
 
-返回: 
+返回: int
 
 
 
@@ -1045,50 +1067,56 @@ download(file_url: str, goal_path: str = None, rename: str = None, file_exists: 
 
 返回当前标签页handle。
 
-返回: 
+返回: str
+
+
+
+### wait_ele()
+
+等待元素从dom删除、显示、隐藏
+
+参数说明：
+
+- loc_or_ele: [str, tuple, DriverElement, WebElement]  - 元素查找方式，与ele()相同
+- mode: str                    - 等待方式，可选：'del', 'display', 'hidden'
+- timeout: float              - 等待超时时间
 
 
 
 ### check_page()
 
-check_page(by_requests: bool = False) -> Union[bool, None]
-
 d模式时检查网页是否符合预期。默认由response状态检查，可重载实现针对性检查。
 
 参数说明：
 
-- by_requests  - 强制使用内置response进行检查
+- by_requests:bool  - 强制使用内置response进行检查
 
-返回: 
+返回: [bool, None]  - bool为是否可用，None为未知
 
 
 
 ### run_script()
 
-run_script(script: str, *args) -> Any
-
 执行JavaScript代码。
 
 参数说明：
 
-- script  - JavaScript代码文本
-- args  - 传入的参数
+- script: str  - JavaScript代码文本
+- *args        - 传入的参数
 
-返回: 
+返回: Any
 
 
 
 ### create_tab()
 
-create_tab(url: str = '') -> None
-
 新建并定位到一个标签页,该标签页在最后面。
 
 参数说明：
 
-- url  - 新标签页跳转到的网址
+- url:str  - 新标签页跳转到的网址
 
-返回: 
+返回: None
 
 
 
@@ -1098,7 +1126,7 @@ close_current_tab() -> None
 
 关闭当前标签页。
 
-返回: 
+返回: None
 
 
 
@@ -1112,7 +1140,7 @@ close_other_tabs(num_or_handle: Union[int, str, None] = None) -> None
 
 - num_or_handle  - 要保留的标签页序号或handle，序号第一个为0，最后为-1
 
-返回: 
+返回: None
 
 
 
@@ -1126,7 +1154,7 @@ to_tab(num_or_handle: Union[int, str] = 0) -> None
 
 - num_or_handle  - 标签页序号或handle字符串，序号第一个为0，最后为-1
 
-返回: 
+返回: None
 
 
 
@@ -1149,7 +1177,7 @@ to_iframe(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 
 - to_iframe('main')                  - 跳到最高层
 - to_iframe('parent')                - 跳到上一层
 
-返回: 
+返回: None
 
 
 
@@ -1163,7 +1191,7 @@ scroll_to_see(loc_or_ele: Union[str, tuple, WebElement, DriverElement]) -> None
 
 - loc_or_ele  - 查找iframe元素的条件，和ele()方法的查找条件一致。
 
-返回: 
+返回: None
 
 
 
@@ -1178,7 +1206,7 @@ scroll_to(mode: str = 'bottom', pixel: int = 300) -> None
 - mode  - 滚动的方向，top、bottom、rightmost、leftmost、up、down、left、right
 - pixel    - 滚动的像素
 
-返回: 
+返回: None
 
 
 
@@ -1188,7 +1216,7 @@ refresh() -> None
 
 刷新页面。
 
-返回: 
+返回: None
 
 
 
@@ -1198,7 +1226,7 @@ back() -> None
 
 页面后退。
 
-返回: 
+返回: None
 
 
 
@@ -1213,7 +1241,7 @@ set_window_size(x: int = None, y: int = None) -> None
 - x  - 目标宽度
 - y  - 目标高度
 
-返回: 
+返回: None
 
 
 
@@ -1228,7 +1256,7 @@ screenshot(path: str, filename: str = None) -> str
 - path         - 截图保存路径，默认为ini文件中指定的临时文件夹
 - filename  - 截图文件名，默认为页面title为文件名
 
-返回: 
+返回: str
 
 
 
@@ -1279,7 +1307,7 @@ close_driver() -> None
 
 
 
-### DriverElement类
+## DriverElement类
 
 class DriverElement(ele: WebElement, timeout: float = 10)
 

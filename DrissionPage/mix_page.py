@@ -90,6 +90,39 @@ class MixPage(Null, SessionPage, DriverPage):
         """返回当前模式，'s'或'd' """
         return self._mode
 
+    @property
+    def drission(self) -> Drission:
+        """返回当前使用的Dirssion对象"""
+        return self._drission
+
+    @property
+    def driver(self) -> WebDriver:
+        """返回driver对象，如没有则创建              \n
+        每次访问时切换到d模式，用于独有函数及外部调用
+        :return: WebDriver对象
+        """
+        self.change_mode('d')
+        return self._drission.driver
+
+    @property
+    def session(self) -> Session:
+        """返回Session对象，如没有则创建"""
+        return self._drission.session
+
+    @property
+    def response(self) -> Response:
+        """返回s模式获取到的Response对象，切换到s模式"""
+        self.change_mode('s')
+        return self._response
+
+    @property
+    def cookies(self) -> Union[dict, list]:
+        """返回cookies"""
+        if self._mode == 's':
+            return super().cookies
+        elif self._mode == 'd':
+            return super(SessionPage, self).cookies
+
     def change_mode(self, mode: str = None, go: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
         切换时会把当前模式的cookies复制到目标模式                 \n
@@ -119,39 +152,6 @@ class MixPage(Null, SessionPage, DriverPage):
                 self.cookies_to_session()
                 if go and self._drission.driver.current_url.startswith('http'):
                     self.get(self._drission.driver.current_url)
-
-    @property
-    def drission(self) -> Drission:
-        """返回当前使用的Dirssion对象"""
-        return self._drission
-
-    @property
-    def driver(self) -> WebDriver:
-        """返回driver对象，如没有则创建              \n
-        每次访问时切换到d模式，用于独有函数及外部调用
-        :return: WebDriver对象
-        """
-        self.change_mode('d')
-        return self._drission.driver
-
-    @property
-    def session(self) -> Session:
-        """返回Session对象，如没有则创建"""
-        return self._drission.session
-
-    @property
-    def response(self) -> Response:
-        """返回response对象，切换到s模式"""
-        self.change_mode('s')
-        return self._response
-
-    @property
-    def cookies(self) -> Union[dict, list]:
-        """返回cookies"""
-        if self._mode == 's':
-            return super().cookies
-        elif self._mode == 'd':
-            return super(SessionPage, self).cookies
 
     def cookies_to_session(self, copy_user_agent: bool = False) -> None:
         """从driver复制cookies到session                  \n
@@ -193,7 +193,7 @@ class MixPage(Null, SessionPage, DriverPage):
              **kwargs) -> Union[bool, None]:
         """用post方式跳转到url，会切换到s模式                        \n
         :param url: 目标url
-        :param data: 提交的数据
+        :param data: post方式时提交的数据
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param kwargs: 连接参数
@@ -210,11 +210,11 @@ class MixPage(Null, SessionPage, DriverPage):
                  post_data: dict = None,
                  show_msg: bool = False,
                  show_errmsg: bool = False,
-                 **kwargs) -> tuple:
+                 **kwargs) -> Tuple[bool, str]:
         """下载一个文件                                                                      \n
         d模式下下载前先同步cookies                                                            \n
         :param file_url: 文件url
-        :param goal_path: 存放路径
+        :param goal_path: 存放路径，默认为ini文件中指定的临时文件夹
         :param rename: 重命名文件，可不写扩展名
         :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
         :param post_data: post方式的数据
@@ -314,7 +314,7 @@ class MixPage(Null, SessionPage, DriverPage):
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 查找元素超时时间，d模式专用
-        :return: 元素对象，d模式为DriverElement，s模式为SessionElement
+        :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
             return super().ele(loc_or_ele, mode=mode)
@@ -347,7 +347,7 @@ class MixPage(Null, SessionPage, DriverPage):
             page.eles('css:div.ele_class')                - 返回所有符合css selector的元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
-        :return: 元素对象组成的列表，d模式下由DriverElement组成，s模式下由SessionElement组成
+        :return: 元素对象或属性、文本节点文本组成的列表
         """
         if self._mode == 's':
             return super().eles(loc_or_str)

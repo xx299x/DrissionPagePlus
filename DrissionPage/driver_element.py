@@ -251,13 +251,14 @@ class DriverElement(DrissionElement):
         """返回当前元素的::after伪元素内容"""
         return self.get_style_property('content', 'after')
 
-    def get_style_property(self, style: str, pseudo_ele: str = None) -> str:
+    def get_style_property(self, style: str, pseudo_ele: str = '') -> str:
         """返回元素样式属性值
         :param style: 样式属性名称
         :param pseudo_ele: 伪元素名称
         :return: 样式属性的值
         """
-        pseudo_ele = f', "::{pseudo_ele}"' if pseudo_ele else ''
+        if pseudo_ele:
+            pseudo_ele = f', "{pseudo_ele}"' if pseudo_ele.startswith(':') else f', "::{pseudo_ele}"'
         r = self.run_script(f'return window.getComputedStyle(arguments[0]{pseudo_ele}).getPropertyValue("{style}");')
 
         return None if r == 'none' else r
