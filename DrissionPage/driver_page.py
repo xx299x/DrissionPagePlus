@@ -60,11 +60,11 @@ class DriverPage(object):
         """返回网页title"""
         return self.driver.title
 
-    def _try_to_get(self,
-                    to_url: str,
-                    times: int = 0,
-                    interval: float = 1,
-                    show_errmsg: bool = False, ):
+    def _try_to_connect(self,
+                        to_url: str,
+                        times: int = 0,
+                        interval: float = 1,
+                        show_errmsg: bool = False, ):
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
@@ -102,7 +102,7 @@ class DriverPage(object):
         if not url or (not go_anyway and self.url == to_url):
             return
         self._url = to_url
-        self._url_available = self._try_to_get(to_url, times=retry, interval=interval, show_errmsg=show_errmsg)
+        self._url_available = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg)
         return self._url_available
 
     def ele(self,
@@ -302,7 +302,7 @@ class DriverPage(object):
         if self.tabs_count:
             self.to_tab(0)
 
-    def close_other_tabs(self, num_or_handle: Union[int, str, None] = None) -> None:
+    def close_other_tabs(self, num_or_handle: Union[int, str] = None) -> None:
         """关闭传入的标签页以外标签页，默认保留当前页                                \n
         :param num_or_handle: 要保留的标签页序号或handle，序号第一个为0，最后为-1
         :return: None
