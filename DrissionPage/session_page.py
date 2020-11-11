@@ -70,7 +70,7 @@ class SessionPage(object):
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
             mode: str = None) -> Union[SessionElement, List[SessionElement or str], str, None]:
-        """返回页面中符合条件的元素，默认返回第一个                                                          \n
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
         示例：                                                                                           \n
         - 接收到元素对象时：                                                                              \n
             返回SessionElement对象                                                                        \n
@@ -78,7 +78,7 @@ class SessionPage(object):
             ele.ele((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                       \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                        \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                          \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
             page.ele('@class:ele_class')                 - 返回第一个class含有ele_class的元素              \n
             page.ele('@name=ele_name')                   - 返回第一个name等于ele_name的元素                \n
             page.ele('@placeholder')                     - 返回第一个带placeholder属性的元素               \n
@@ -116,13 +116,13 @@ class SessionPage(object):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement or str]:
-        """返回页面中所有符合条件的元素                                                                    \n
+        """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
             page.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的元素                     \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                       \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                         \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                       \n
             page.eles('@class:ele_class')                 - 返回所有class含有ele_class的元素              \n
             page.eles('@name=ele_name')                   - 返回所有name等于ele_name的元素                \n
             page.eles('@placeholder')                     - 返回所有带placeholder属性的元素               \n
@@ -143,27 +143,31 @@ class SessionPage(object):
             raise TypeError('Type of loc_or_str can only be tuple or str.')
         return self.ele(loc_or_str, mode='all')
 
-    def _try_to_get(self,
-                    to_url: str,
-                    times: int = 0,
-                    interval: float = 1,
-                    show_errmsg: bool = False,
-                    **kwargs) -> Response:
+    def _try_to_connect(self,
+                        to_url: str,
+                        times: int = 0,
+                        interval: float = 1,
+                        mode: str = 'get',
+                        data: dict = None,
+                        show_errmsg: bool = False,
+                        **kwargs) -> Response:
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
+        :param mode: 连接方式，'get' 或 'post'
+        :param data: post方式提交的数据
         :param show_errmsg: 是否抛出异常
         :param kwargs: 连接参数
         :return: HTMLResponse对象
         """
-        r = self._make_response(to_url, show_errmsg=show_errmsg, **kwargs)[0]
+        r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
         while times and (not r or r.content == b''):
             if r is not None and r.status_code in (403, 404):
                 break
             print('重试', to_url)
             sleep(interval)
-            r = self._make_response(to_url, show_errmsg=show_errmsg, **kwargs)[0]
+            r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
             times -= 1
         return r
 
@@ -184,10 +188,13 @@ class SessionPage(object):
         :return: url是否可用
         """
         to_url = quote(url, safe='/:&?=%;#@+')
+
         if not url or (not go_anyway and self.url == to_url):
             return
+
         self._url = to_url
-        self._response = self._try_to_get(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
+        self._response = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
+
         if self._response is None:
             self._url_available = False
         else:
@@ -197,6 +204,7 @@ class SessionPage(object):
                 if show_errmsg:
                     raise ConnectionError(f'{to_url}\nStatus code: {self._response.status_code}.')
                 self._url_available = False
+
         return self._url_available
 
     def post(self,
@@ -204,20 +212,27 @@ class SessionPage(object):
              data: dict = None,
              go_anyway: bool = True,
              show_errmsg: bool = False,
+             retry: int = 0,
+             interval: float = 1,
              **kwargs) -> Union[bool, None]:
         """用post方式跳转到url                                 \n
         :param url: 目标url
         :param data: 提交的数据
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
         :param kwargs: 连接参数
         :return: url是否可用
         """
         to_url = quote(url, safe='/:&?=%;#@')
+
         if not url or (not go_anyway and self._url == to_url):
             return
+
         self._url = to_url
-        self._response = self._make_response(to_url, mode='post', data=data, show_errmsg=show_errmsg, **kwargs)[0]
+        self._response = self._try_to_connect(to_url, retry, interval, 'post', data, show_errmsg, **kwargs)
+
         if self._response is None:
             self._url_available = False
         else:
@@ -227,6 +242,7 @@ class SessionPage(object):
                 if show_errmsg:
                     raise ConnectionError(f'Status code: {self._response.status_code}.')
                 self._url_available = False
+
         return self._url_available
 
     def download(self,
