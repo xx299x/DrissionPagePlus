@@ -123,6 +123,22 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).cookies
 
+    @property
+    def html(self) -> str:
+        """返回页面html文本"""
+        if self._mode == 's':
+            return super().html
+        elif self._mode == 'd':
+            return super(SessionPage, self).html
+
+    @property
+    def title(self) -> str:
+        """返回网页title"""
+        if self._mode == 's':
+            return super().title
+        elif self._mode == 'd':
+            return super(SessionPage, self).title
+
     def change_mode(self, mode: str = None, go: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
         切换时会把当前模式的cookies复制到目标模式                 \n
@@ -190,17 +206,21 @@ class MixPage(Null, SessionPage, DriverPage):
              data: dict = None,
              go_anyway: bool = False,
              show_errmsg: bool = False,
+             retry: int = 2,
+             interval: float = 1,
              **kwargs) -> Union[bool, None]:
         """用post方式跳转到url，会切换到s模式                        \n
         :param url: 目标url
         :param data: post方式时提交的数据
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
         :param kwargs: 连接参数
         :return: url是否可用
         """
         self.change_mode('s', go=False)
-        return super().post(url, data, go_anyway, show_errmsg, **kwargs)
+        return super().post(url, data, go_anyway, show_errmsg, retry, interval, **kwargs)
 
     def download(self,
                  file_url: str,
@@ -244,12 +264,14 @@ class MixPage(Null, SessionPage, DriverPage):
         return super().chrome_downloading(path)
 
     # ----------------以下为共用函数-----------------------
-    def _try_to_get(self,
-                    to_url: str,
-                    times: int = 0,
-                    interval: float = 1,
-                    show_errmsg: bool = False,
-                    **kwargs):
+    def _try_to_connect(self,
+                        to_url: str,
+                        times: int = 0,
+                        interval: float = 1,
+                        mode: str = 'get',
+                        data: dict = None,
+                        show_errmsg: bool = False,
+                        **kwargs):
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
@@ -259,9 +281,9 @@ class MixPage(Null, SessionPage, DriverPage):
         :return: s模式为Response对象，d模式为bool
         """
         if self._mode == 'd':
-            return super(SessionPage, self)._try_to_get(to_url, times, interval, show_errmsg)
+            return super(SessionPage, self)._try_to_connect(to_url, times, interval, show_errmsg)
         elif self._mode == 's':
-            return super()._try_to_get(to_url, times, interval, show_errmsg, **kwargs)
+            return super()._try_to_connect(to_url, times, interval, mode, data, show_errmsg, **kwargs)
 
     def get(self,
             url: str,
@@ -289,15 +311,15 @@ class MixPage(Null, SessionPage, DriverPage):
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
             mode: str = None,
             timeout: float = None) -> Union[DriverElement, SessionElement, str]:
-        """返回页面中符合条件的元素，默认返回第一个                                                          \n
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
         示例：                                                                                           \n
         - 接收到元素对象时：                                                                              \n
             返回元素对象对象                                                                              \n
         - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                       \n
+            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                        \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                          \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
             page.ele('@class:ele_class')                 - 返回第一个class含有ele_class的元素              \n
             page.ele('@name=ele_name')                   - 返回第一个name等于ele_name的元素                \n
             page.ele('@placeholder')                     - 返回第一个带placeholder属性的元素               \n
@@ -325,13 +347,13 @@ class MixPage(Null, SessionPage, DriverPage):
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> Union[List[DriverElement or str], List[SessionElement or str]]:
-        """返回页面中所有符合条件的元素                                                                   \n
+        """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
             page.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的元素                     \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                       \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                         \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                       \n
             page.eles('@class:ele_class')                 - 返回所有class含有ele_class的元素              \n
             page.eles('@name=ele_name')                   - 返回所有name等于ele_name的元素                \n
             page.eles('@placeholder')                     - 返回所有带placeholder属性的元素               \n
@@ -354,31 +376,13 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    @property
-    def html(self) -> str:
-        """返回页面html文本"""
-        if self._mode == 's':
-            return super().html
-        elif self._mode == 'd':
-            return super(SessionPage, self).html
-
-    @property
-    def title(self) -> str:
-        """返回网页title"""
-        if self._mode == 's':
-            return super().title
-        elif self._mode == 'd':
-            return super(SessionPage, self).title
-
     def close_driver(self) -> None:
-        """关闭driver及浏览器，切换到s模式"""
-        self.change_mode('s')
+        """关闭driver及浏览器"""
         self._driver = None
         self.drission.close_driver()
 
     def close_session(self) -> None:
-        """关闭session，切换到d模式"""
-        self.change_mode('d')
+        """关闭session"""
         self._session = None
         self._response = None
         self.drission.close_session()
