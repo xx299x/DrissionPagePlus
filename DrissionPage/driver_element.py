@@ -36,6 +36,17 @@ class DriverElement(DrissionElement):
                  timeout: float = None):
         return self.ele(loc_or_str, mode, timeout or self.timeout)
 
+    # -----------------共有属性-------------------
+    @property
+    def html(self) -> str:
+        """返回元素innerHTML文本"""
+        return unescape(self.attr('innerHTML')).replace('\xa0', ' ')
+
+    @property
+    def tag(self) -> str:
+        """返回元素类型"""
+        return self._inner_ele.tag_name
+
     @property
     def attrs(self) -> dict:
         """返回元素所有属性及值"""
@@ -59,26 +70,6 @@ class DriverElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
         return unescape(self.attr('innerText')).replace('\xa0', ' ')
-
-    def texts(self, text_node_only: bool = False) -> List[str]:
-        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
-        :param text_node_only: 是否只返回文本节点
-        :return: 文本列表
-        """
-        if text_node_only:
-            return self.eles('xpath:./text()')
-        else:
-            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./node()')]
-
-    @property
-    def html(self) -> str:
-        """返回元素innerHTML文本"""
-        return unescape(self.attr('innerHTML')).replace('\xa0', ' ')
-
-    @property
-    def tag(self) -> str:
-        """返回元素类型"""
-        return self._inner_ele.tag_name
 
     @property
     def css_path(self) -> str:
@@ -104,6 +95,46 @@ class DriverElement(DrissionElement):
         """返回前一个兄弟元素"""
         return self._get_brother(1, 'ele', 'prev')
 
+    # -----------------driver独占属性-------------------
+    @property
+    def size(self) -> dict:
+        """返回元素宽和高"""
+        return self.inner_ele.size
+
+    @property
+    def location(self) -> dict:
+        """返回元素左上角坐标"""
+        return self.inner_ele.location
+
+    @property
+    def shadow_root(self):
+        """返回当前元素的shadow_root元素对象"""
+        shadow = self.run_script('return arguments[0].shadowRoot')
+        if shadow:
+            from .shadow_root_element import ShadowRootElement
+            return ShadowRootElement(shadow, self)
+
+    @property
+    def before(self) -> str:
+        """返回当前元素的::before伪元素内容"""
+        return self.get_style_property('content', 'before')
+
+    @property
+    def after(self) -> str:
+        """返回当前元素的::after伪元素内容"""
+        return self.get_style_property('content', 'after')
+
+    # -----------------共有函数-------------------
+    def texts(self, text_node_only: bool = False) -> List[str]:
+        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
+        :param text_node_only: 是否只返回文本节点
+        :return: 文本列表
+        """
+        if text_node_only:
+            return self.eles('xpath:./text()')
+        else:
+            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./node()')]
+
     def parents(self, num: int = 1):
         """返回上面第num级父元素              \n
         :param num: 第几级父元素
@@ -113,7 +144,7 @@ class DriverElement(DrissionElement):
         return self.ele(loc, timeout=0.1)
 
     def nexts(self, num: int = 1, mode: str = 'ele'):
-        """返回后面第num个兄弟元素或节点                                   \n
+        """返回后面第num个兄弟元素或节点文本                                   \n
         :param num: 后面第几个兄弟元素或节点
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: DriverElement对象或字符串
@@ -121,7 +152,7 @@ class DriverElement(DrissionElement):
         return self._get_brother(num, mode, 'next')
 
     def prevs(self, num: int = 1, mode: str = 'ele'):
-        """返回前面第num个兄弟元素或节点                                   \n
+        """返回前面第num个兄弟元素或节点文本                                   \n
         :param num: 前面第几个兄弟元素或节点
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: DriverElement对象或字符串
@@ -139,7 +170,7 @@ class DriverElement(DrissionElement):
             loc_or_str: Union[Tuple[str, str], str],
             mode: str = None,
             timeout: float = None):
-        """返回当前元素下级符合条件的子元素，默认返回第一个                                                   \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                    \n
         示例：                                                                                            \n
         - 用loc元组查找：                                                                                 \n
             ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
@@ -195,7 +226,7 @@ class DriverElement(DrissionElement):
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None):
-        """返回当前元素下级所有符合条件的子元素                                                             \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                               \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
             ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                      \n
@@ -221,35 +252,7 @@ class DriverElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all', timeout=timeout)
 
-    # -----------------以下为driver独占-------------------
-
-    @property
-    def size(self) -> dict:
-        """返回元素宽和高"""
-        return self.inner_ele.size
-
-    @property
-    def location(self) -> dict:
-        """返回元素左上角坐标"""
-        return self.inner_ele.location
-
-    @property
-    def shadow_root(self):
-        """返回当前元素的shadow_root元素对象"""
-        shadow = self.run_script('return arguments[0].shadowRoot')
-        if shadow:
-            from .shadow_root_element import ShadowRootElement
-            return ShadowRootElement(shadow, self)
-
-    @property
-    def before(self) -> str:
-        """返回当前元素的::before伪元素内容"""
-        return self.get_style_property('content', 'before')
-
-    @property
-    def after(self) -> str:
-        """返回当前元素的::after伪元素内容"""
-        return self.get_style_property('content', 'after')
+    # -----------------driver独占函数-------------------
 
     def get_style_property(self, style: str, pseudo_ele: str = '') -> str:
         """返回元素样式属性值
@@ -284,7 +287,7 @@ class DriverElement(DrissionElement):
 
         return False
 
-    def input(self, value, clear: bool = True) -> bool:
+    def input(self, value: str, clear: bool = True) -> bool:
         """输入文本                          \n
         :param value: 文本值
         :param clear: 输入前是否清空文本框
@@ -329,7 +332,7 @@ class DriverElement(DrissionElement):
         return self.inner_ele.is_displayed()
 
     def is_valid(self) -> bool:
-        """用于判断元素是否还能用，应对页面跳转元素不能用的情况"""
+        """用于判断元素是否还在DOM内，应对页面跳转元素不能用的情况"""
         try:
             self.is_enabled()
             return True

@@ -29,26 +29,6 @@ class SessionElement(DrissionElement):
         return self.ele(loc_or_str, mode)
 
     @property
-    def attrs(self) -> dict:
-        """返回元素所有属性及值"""
-        return {attr: self.attr(attr) for attr, val in self.inner_ele.items()}
-
-    @property
-    def text(self) -> str:
-        """返回元素内所有文本"""
-        return unescape(self._inner_ele.text).replace('\xa0', ' ')
-
-    def texts(self, text_node_only: bool = False) -> List[str]:
-        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
-        :param text_node_only: 是否只返回文本节点
-        :return: 文本列表
-        """
-        if text_node_only:
-            return self.eles('xpath:./*/text()')
-        else:
-            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./*/node()')]
-
-    @property
     def html(self) -> str:
         """返回元素innerHTML文本"""
         html = unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
@@ -59,6 +39,16 @@ class SessionElement(DrissionElement):
     def tag(self) -> str:
         """返回元素类型"""
         return self._inner_ele.tag
+
+    @property
+    def attrs(self) -> dict:
+        """返回元素所有属性及值"""
+        return {attr: self.attr(attr) for attr, val in self.inner_ele.items()}
+
+    @property
+    def text(self) -> str:
+        """返回元素内所有文本"""
+        return unescape(self._inner_ele.text).replace('\xa0', ' ')
 
     @property
     def css_path(self) -> str:
@@ -85,6 +75,16 @@ class SessionElement(DrissionElement):
         """返回前一个兄弟元素"""
         return self._get_brother(1, 'ele', 'prev')
 
+    def texts(self, text_node_only: bool = False) -> List[str]:
+        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
+        :param text_node_only: 是否只返回文本节点
+        :return: 文本列表
+        """
+        if text_node_only:
+            return self.eles('xpath:./*/text()')
+        else:
+            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./*/node()')]
+
     def parents(self, num: int = 1):
         """返回上面第num级父元素                                         \n
         :param num: 第几级父元素
@@ -108,14 +108,46 @@ class SessionElement(DrissionElement):
         """
         return self._get_brother(num, mode, 'prev')
 
+    def attr(self, attr: str) -> Union[str, None]:
+        """返回属性值                           \n
+        :param attr: 属性名
+        :return: 属性值文本，没有该属性返回None
+        """
+        # 获取href属性时返回绝对url
+        if attr == 'href':
+            link = self.inner_ele.get('href')
+
+            # 若链接为js或邮件，直接返回
+            if link.lower().startswith(('javascript:', 'mailto:')):
+                return link
+
+            # 其它情况直接返回绝对url
+            else:
+                return self._make_absolute(link)
+
+        elif attr == 'src':
+            return self._make_absolute(self.inner_ele.get('src'))
+
+        elif attr == 'text':
+            return self.text
+
+        elif attr == 'outerHTML':
+            return unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
+
+        elif attr == 'innerHTML':
+            return self.html
+
+        else:
+            return self.inner_ele.get(attr)
+
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
-        """返回当前元素下级符合条件的子元素，默认返回第一个                                                   \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                    \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
             ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                        \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                          \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                         \n
             ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素              \n
             ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                \n
             ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素               \n
@@ -162,13 +194,13 @@ class SessionElement(DrissionElement):
         return execute_session_find(element, loc_or_str, mode)
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str]):
-        """返回当前元素下级所有符合条件的子元素                                                           \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                              \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
             ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、xpath、css selector                                       \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                         \n
+            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
             ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素              \n
             ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                \n
             ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素               \n
@@ -186,42 +218,6 @@ class SessionElement(DrissionElement):
         :return: SessionElement对象组成的列表
         """
         return self.ele(loc_or_str, mode='all')
-
-    def attr(self, attr: str) -> Union[str, None]:
-        """返回属性值                           \n
-        :param attr: 属性名
-        :return: 属性值文本，没有该属性返回None
-        """
-        # try:
-        # 获取href属性时返回绝对url
-        if attr == 'href':
-            link = self.inner_ele.get('href')
-
-            # 若链接为js或邮件，直接返回
-            if link.lower().startswith(('javascript:', 'mailto:')):
-                return link
-
-            # 其它情况直接返回绝对url
-            else:
-                return self._make_absolute(link)
-
-        elif attr == 'src':
-            return self._make_absolute(self.inner_ele.get('src'))
-
-        elif attr == 'text':
-            return self.text
-
-        elif attr == 'outerHTML':
-            return unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
-
-        elif attr == 'innerHTML':
-            return self.html
-
-        else:
-            return self.inner_ele.get(attr)
-
-        # except:
-        #     return None
 
     # -----------------私有函数-------------------
     def _make_absolute(self, link):
