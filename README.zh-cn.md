@@ -18,11 +18,19 @@ DrissionPage，即driver和session的合体，是个基于python的Web自动化�
 
 **联系邮箱：** g1879@qq.com
 
-# 背景
+# 理念及背景
 
 ***
 
-爬虫面对须要登录的网站，要分析数据包、JS源码，构造复杂的请求，往往还要应付验证码、JS混淆、签名参数等反爬手段，门槛较高。获取数据时，若数据是由JS计算生成的，还须重现计算过程，体验不好，开发效率不高。  
+## 理念
+
+**简洁、易用 、可扩展**
+
+
+
+## 背景
+
+requests爬虫面对要登录的网站时，要分析数据包、JS源码，构造复杂的请求，往往还要应付验证码、JS混淆、签名参数等反爬手段，门槛较高。若数据是由JS计算生成的，还须重现计算过程，体验不好，开发效率不高。  
 使用selenium，可以很大程度上绕过这些坑，但selenium效率不高。因此，这个库将selenium和requests合而为一，不同须要时切换相应模式，并提供一种人性化的使用方法，提高开发和运行效率。  
 除了合并两者，本库还以网页为单位封装了常用功能，简化了selenium的操作和语句，在用于网页自动化操作时，减少考虑细节，专注功能实现，使用更方便。  
 一切从简，尽量提供简单直接的使用方法，对新手更友好。
@@ -31,79 +39,15 @@ DrissionPage，即driver和session的合体，是个基于python的Web自动化�
 
 ***
 
+- 以简洁的代码为第一追求。
 - 允许在selenium和requests间无缝切换，共享session。  
-- 兼容selenium代码，易于迁移。
-- 使用POM模式封装常用方法，便于扩展。
-- 两种模式提供统一的操作方法，使用体验一致。    
-- 人性化的页面元素操作方法，减轻页面分析工作量和编码量。  
-- 对某些常用功能（如点击）作了优化，更符合实际使用需要。  
+- 两种模式提供一致的API，使用体验一致。
+- 人性化的页面元素操作方式，减轻页面分析工作量和编码量。
+- 对常用功能作了整合和优化，更符合实际使用需要。
+- 兼容selenium代码，便于项目迁移。
+- 使用POM模式封装，便于扩展。
+- 统一的文件下载方法，弥补浏览器下载的不足。  
 - 简易的配置方法，摆脱繁琐的浏览器配置。
-
-# 理念
-
-***
-
-## 简洁、易用 、可扩展
-
-- DrissionPage以简洁的代码为第一追求，对selenium冗长的语句做了精简，并完全保留了其功能。
-- DrissionPage封装了许多常用功能，使用更便捷。
-- DrissionPage的核心是个页面类，可直接派生子类页面，适应各种场景须要。
-- 简易的浏览器配置方法，摆脱繁琐的设置。
-
-以下代码实现一模一样的功能，对比两者的代码量：
-
-1. 用显性等待方式查找所有文本包含some text的元素
-
-```python
-# selenium:
-element = WebDriverWait(driver).until(ec.presence_of_all_elements_located((By.XPATH, '//*[contains(text(), "some text")]')))
-
-# DrissionPage:
-element = page('some text')
-```
-
-2. 跳转到第一个标签页
-
-```python
-# selenium
-driver.switch_to.window(driver.window_handles[0])
-
-# DrissionPage
-page.to_tab(0)
-```
-
-3. 拖拽一个元素
-
-```python
-# selenium
-ActionChains(driver).drag_and_drop(ele1, ele2).perform()
-
-# DrissionPage
-ele1.drag_to(ele2)
-```
-
-4. 滚动窗口到底部（保持水平滚动条不变）
-
-```python
-# selenium
-driver.execute_script("window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight);")
-
-# DrissionPage
-page.scroll_to('bottom')
-```
-
-5. 设置headless模式
-
-```python
-# selenium
-options = webdriver.ChromeOptions()
-options.add_argument("--headless")
-
-# DrissionPage
-set_headless()
-```
-
-
 
 # 项目结构
 
@@ -115,7 +59,170 @@ set_headless()
 
 ***
 
-例：用selenium登录网站，然后切换到requests读取网页。
+## 与selenium代码对比
+
+以下代码实现一模一样的功能，对比两者的代码量：
+
+- 用显性等待方式查找所有文本包含some text的元素
+
+```python
+# 使用selenium：
+element = WebDriverWait(driver).until(ec.presence_of_all_elements_located((By.XPATH, '//*[contains(text(), "some text")]')))
+
+# 使用DrissionPage：
+element = page('some text')
+```
+
+
+
+-  跳转到第一个标签页
+
+```python
+# 使用selenium：
+driver.switch_to.window(driver.window_handles[0])
+
+# 使用DrissionPage：
+page.to_tab(0)
+```
+
+
+
+- 按文本选择下拉列表
+
+```python
+# 使用selenium：
+from selenium.webdriver.support.select import Select
+select_element = Select(element)
+select_element.select_by_visible_text('text')
+
+# 使用DrissionPage：
+element.select('text')
+```
+
+
+
+- 拖拽一个元素
+
+```python
+# 使用selenium：
+ActionChains(driver).drag_and_drop(ele1, ele2).perform()
+
+# 使用DrissionPage：
+ele1.drag_to(ele2)
+```
+
+
+
+- 滚动窗口到底部（保持水平滚动条不变）
+
+```python
+# 使用selenium：
+driver.execute_script("window.scrollTo(document.documentElement.scrollLeft, document.body.scrollHeight);")
+
+# 使用DrissionPage：
+page.scroll_to('bottom')
+```
+
+
+
+- 设置headless模式
+
+```python
+# 使用selenium：
+options = webdriver.ChromeOptions()
+options.add_argument("--headless")
+
+# 使用DrissionPage：
+set_headless()
+```
+
+
+
+- 获取伪元素内容
+
+```python
+# 使用selenium：
+text = webdriver.execute_script('return window.getComputedStyle(arguments[0], "::after").getPropertyValue("content");', element)
+
+# 使用DrissionPage：
+text = element.after
+```
+
+
+
+- 获取shadow-root
+
+```python
+# 使用selenium：
+shadow_element = webdriver.execute_script('return arguments[0].shadowRoot', element)
+
+# 使用DrissionPage：
+shadow_element = element.shadow_root
+```
+
+
+
+- 用xpath获取属性或节点
+
+```python
+# 使用selenium：
+不支持该用法
+
+# 使用DrissionPage：
+class_name = element('xpath://div[@id="div_id"]/@class')
+text = element('xpath://div[@id="div_id"]/text()[2]')
+```
+
+
+
+## 与requests代码对比
+
+以下代码实现一模一样的功能，对比两者的代码量：
+
+- 获取元素内容
+
+```python
+url = 'https://baike.baidu.com/item/python'
+
+# 使用requests：
+from lxml import etree
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36'}
+response = requests.get(url, headers = headers)
+html = etree.HTML(response.text)
+element = html.xpath('//h1')[0]
+title = element.text
+
+# 使用DrissionPage：
+page = MixPage('s')
+page.get(url)
+title = page('tag:h1').text
+```
+
+Tips: DrissionPage自带默认headers
+
+
+
+- 下载文件
+
+```python
+url = 'https://www.baidu.com/img/flexible/logo/pc/result.png'
+save_path = r'C:\download'
+
+# 使用requests：
+r = requests.get(url)
+with open(f'{save_path}\\img.png', 'wb') as fd:
+   for chunk in r.iter_content():
+       fd.write(chunk)
+        
+# 使用DrissionPage：
+page.download(url, save_path, 'img')  # 支持重命名，处理文件名冲突
+```
+
+
+
+## 模式切换
+
+用selenium登录网站，然后切换到requests读取网页。两者会共享登录信息。
 
 ```python
 page = MixPage()  # 创建页面对象，默认driver模式
@@ -136,25 +243,42 @@ print('登录后title：', page.title, '\n')  # 登录后session模式的输出
 
 
 
-例：获取并打印属性
+## 获取并打印元素属性
 
 ```python
+# 接上段代码
 foot = page.ele('@id:footer-left')  # 用id查找元素
 first_col = foot.ele('css:>div')  # 使用css selector在元素的下级中查找元素（第一个）
 lnk = first_col.ele('text:命令学')  # 使用文本内容查找元素
 text = lnk.text  # 获取元素文本
 href = lnk.attr('href')  # 获取元素属性值
 
-print(first_col)
-print(text, href)
+print(text, href, '\n')
+
+# 简洁模式串联查找
+text = page('@id:footer-left')('css:>div')('text:命令学').text
+print(text)
 ```
 
 输出：
 
 ```
-<SessionElement div class='column'>
 Git 命令学习 https://oschina.gitee.io/learn-git-branching/
+
+Git 命令学习
 ```
+
+
+
+## 下载文件
+
+```python
+url = 'https://www.baidu.com/img/flexible/logo/pc/result.png'
+save_path = r'C:\download'
+page.download(url, save_path)
+```
+
+
 
 # 安装
 
@@ -270,32 +394,107 @@ MixPage须接收一个Drission对象并使用其中的driver或session，如没�
 
 Tips: 多页面对象协同工作时，记得手动创建Drission对象并传递给页面对象使用。否则页面对象会各自创建自己的Drission对象，使信息无法传递。
 
-```python
-# 创建MixPage对象的方法
-page = MixPage()  # 自动创建Drission对象，driver模式，建议只在单页面对象情况下使用
-page = MixPage('s')  # 以session模式快速创建，自动创建Drission对象
+### 创建对象
 
-page = MixPage(drission)  # 以传入Drission对象创建
+创建对象方式有3种：简易、传入Drission对象、传入配置。可根据实际需要选择。
+
+```python
+# 简易创建方式，以ini文件默认配置自动创建Drission对象
+page = MixPage()
+page = MixPage('s')
+
+# 以传入Drission对象创建
+page = MixPage(drission)
 page = MixPage(drission, mode='s', timeout=5)  # session模式，等待时间5秒（默认10秒）
 
-# 访问URL
-page.get(url, **kwargs)
+# 以传入配置信息创建
+page = MixPage(driver_options=DriverOption, session_options=SessionOption)  # 默认 d 模式
+```
+
+
+
+### 访问网页
+
+若连接出错，程序会自动重试2次，可指定重试次数和等待间隔。
+
+```python
+# 默认方式
+page.get(url)
 page.post(url, data, **kwargs)  # 只有session模式才有post方法
 
-# 切换模式
-page.change_mode()
+# 指定重试次数和间隔
+page.get(url, retry=5, interval=0.5)
+```
 
-# 操作页面
-print(page.html)  # 页面源代码
-page.run_script(js)  # 运行js语句
+
+
+### 切换模式
+
+在 s 和 d 模式之间切换，切换时会自动同步cookies和正在访问的url
+
+```python
+page.change_mode(go=False)  # go为False表示不跳转url
+```
+
+
+
+### 页面属性
+
+```python
+page.url  # 当前访问的url
+page.mode  # 当前模式
+page.drission  # 当前使用的Dirssion对象
+page.driver  # 当前使用的WebDirver对象
+page.session  # 当前使用的Session对象
+page.cookies  # 获取cookies信息
+page.html  # 页面源代码
+page.title  # 当前页面标题
+
+# d 模式独有：
+page.tabs_count  # 返回标签页数量
+page.tab_handles  # 返回所有标签页handle列表
+page.current_tab_num  # 返回当前标签页序号
+page.current_tab_handle  # 返回当前标签页handle
+```
+
+
+
+### 页面操作
+
+调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见APIs
+
+```python
+page.change_mode()  # 切换模式
+page.cookies_to_session()  # 从WebDriver对象复制cookies到Session对象
+page.cookies_to_driver()  # 从Session对象复制cookies到WebDriver对象
+page.get(url, retry, interval, **kwargs)  # 用get方式访问网页，可指定重试次数及间隔时间
+page.ele(loc_or_ele, timeout)  # 获取符合条件的第一个元素、节点或属性
+page.eles(loc_or_ele, timeout)  # 获取所有符合条件的元素、节点或属性
+page.download(url, save_path, rename, file_exists, **kwargs)  # 下载文件
+page.close_driver()  # 关闭 WebDriver对象
+page.close_session()  # 关闭 Session对象
+
+# s 模式独有：
+page.post(url, data, retry, interval, **kwargs)  # 以post方式访问网页，可指定重试次数及间隔时间
+
+# d 模式独有：
+page.wait_ele(loc_or_ele, mode, timeout)  # 等待元素从dom删除、显示、隐藏
+page.run_script(js, *args)  # 运行js语句
+page.create_tab(url)  # 新建并定位到一个标签页,该标签页在最后面
+page.to_tab(num_or_handle)  # 跳转到标签页
+page.close_current_tab()  # 关闭当前标签页
 page.close_other_tabs(num)  # 关闭其它标签页
 page.to_iframe(iframe)  # 切入iframe
 page.screenshot(path)  # 页面截图
 page.scrool_to_see(element)  # 滚动直到某元素可见
-# 详见APIs...
+page.scroll_to(mode, pixel)  # 按参数指示方式滚动页面，可选滚动方向：'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
+page.refresh()  # 刷新当前页面
+page.back()  # 浏览器后退
+page.et_window_size(x, y)  # 设置浏览器窗口大小，默认最大化
+page.check_page()  # 检测页面是否符合预期
+page.chrome_downloading()  # 获取chrome正在下载的文件列表
+page.process_alert(mode, text)  # 处理提示框
 ```
-
-Tips：调用只属于driver模式的方法，会自动切换到driver模式。
 
 
 
@@ -351,6 +550,9 @@ element.parent  # 父元素
 element.next  # 下一个兄弟元素  
 element.prev  # 上一个兄弟元素  
 
+# 获取shadow-dom，只支持open的shadow-root
+ele1 = element.shadow_root.ele('tag:div')
+
 # 串连查找
 page.ele('@id:ele_id').ele('tag:div').next.ele('some text').eles('tag:a')
 
@@ -361,33 +563,57 @@ ele2 = ele1('tag:li')
 
 
 
-## 元素操作
+## 获取元素属性
 
 ```python
-# 获取元素信息
-element = page.ele('@id:ele_id')
-element = page('@id:ele_id')  # 与上一句效果相同
 element.html  # 返回元素内html
-element.text  # 返回元素内去除html标签后的text值
 element.tag  # 返回元素tag name
+element.text  # 返回元素innerText值
+element.texts()  # 返回元素内所有直接子节点的文本，包括元素和文本节点，可指定只返回文本节点
 element.attrs  # 返回元素所有属性的字典
-element.attr('class')  # 返回元素的class属性
-element.is_valid  # driver模式独有，用于判断元素是否还可用
+element.attr(attr)  # 返回元素指定属性的值
+element.css_path  # 返回元素绝对css路径
+element.xpath  # 返回元素绝对xpath路径
+element.parent  # 返回元素父元素
+element.next  # 返回元素后一个兄弟元素
+element.prev  # 返回元素前一个兄弟元素
+element.parents(num)  # 返回第num级父元素
+element.nexts(num, mode)  # 返回后面第几个元素或节点
+element.prevs(num, mode)  # 返回前面第几个元素或节点
+element.ele(loc_or_str, timeout)  # 返回当前元素下级第一个符合条件的子元素、属性或节点文本
+element.eles(loc_or_str, timeout)  # 返回当前元素下级所有符合条件的子元素、属性或节点文本
 
-# 操作元素
-element.click()  # 点击元素
-element.input(text)  # 输入文字
-element.run_script(js)  # 运行js
-element.submit()  # 提交表单
+# driver模式独有：
+element.before  # 获取伪元素before内容
+element.after  # 获取伪元素after内容
+element.is_valid  # 用于判断元素是否还在dom中
+element.size  # 获取元素大小
+element.location  # 获取元素位置
+element.shadow_root  # 获取元素下的ShadowRoot元素
+element.get_style_property(style, pseudo_ele)  # 获取元素样式属性值，可获取伪元素的
+element.is_selected()  # 返回元素是否被选中
+element.is_enabled()  # 返回元素是否可用
+element.is_displayed()  # 返回元素是否可见
+```
+
+
+
+## 元素操作
+
+元素操作为 d 模式独有，调用以下方法会自动切换到 d 模式。
+
+```python
+element.click(by_js)  # 点击元素，可选择是否用js方式点击
+element.input(value)  # 输入文本
+element.run_script(js)  # 对元素运行JavaScript脚本
+element.submit()  # 提交
 element.clear()  # 清空元素
-element.is_selected()  # 是否被选中
-element.is_enabled()  # 是否可用
-element.is_displayed()  # 是否可见
-element.is_valid()  # 是否有效，用于判断页面跳转导致元素失效的情况
-element.select(text)  # 选中下拉列表选项
-element.set_attr(attr,value)  # 设置元素属性
-element.size  # 元素大小
-element.location  # 元素位置
+element.screenshot(path, filename)  # 对元素截图
+element.select(text)  # 根据文本选择下拉列表
+element.set_attr(attr, value)  # 设置元素属性值
+element.drag(x, y, speed, shake)  # 拖动元素相对距离，可设置速度和是否随机抖动
+element.drag_to(ele_or_loc, speed, shake)  # 拖动元素到另一个元素或某个坐标，可设置速度和是否随机抖动
+element.hover()  # 在元素上悬停鼠标
 ```
 
 
@@ -406,6 +632,8 @@ page = MixPage(Drission(driver))  # 把driver传递给Drission，创建MixPage�
 print(page.title)  # 打印结果：百度一下，你就知道
 ```
 
+
+
 ### DrissionPage转selenium
 
 ```python
@@ -415,6 +643,35 @@ page.get('https://www.baidu.com')
 driver = page.driver  # 从MixPage对象中获取WebDriver对象
 print(driver.title)  # 打印结果：百度一下，你就知道
 ```
+
+
+
+## 下载文件
+
+selenium缺乏对浏览器下载文件的有效管理，难以进行检测下载状态、重命名、失败管理。  
+使用requests下载文件能较好实现以上功能，但代码较为繁琐。  
+因此DrissionPage封装了download方法，整合了两者优点，可从selenium获取登录信息，用requests进行下载。  
+弥补了selenium的不足，使下载简洁高效。
+
+### 功能
+
+- 指定下载路径
+- 重命名文件，可不填写扩展名，程序自动补充
+- 存在同名文件时，可选择重命名、覆盖、跳过等处理方式
+- 显示下载进度
+- 支持post方式
+- 支持自定义连接参数
+
+### 演示
+
+```python
+url = 'https://www.baidu.com/img/flexible/logo/pc/result.png'  # 文件url
+save_path = r'C:\download'  # 存放路径
+
+# 重命名为img.png，存在重名时自动在文件名末尾加上序号，显示下载进度
+page.download(url, save_path, 'img', 'rename', show_msg=True)
+```
+
 
 
 
@@ -441,6 +698,8 @@ set_user_agent(user_agent)  # 设置user agent
 set_proxy(proxy)  # 设置代理地址
 set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_path, cache_path)  # 设置浏览器相关的路径
 ```
+
+
 
 ### 使用方法
 
@@ -522,6 +781,8 @@ headers = {
           }
 ```
 
+
+
 ### OptionsManager对象
 
 OptionsManager对象用于读取、设置和保存配置。
@@ -533,6 +794,8 @@ set_item(section, item, value)  # 设置配置属性
 save()  # 保存配置到默认ini文件
 save('D:\\settings.ini')  # 保存到其它路径
 ```
+
+
 
 ### 使用示例
 
@@ -1010,6 +1273,8 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 - data: dict                  - 提交的数据
 - go_anyway: bool     - 是否强制跳转。若目标url和当前url一致，默认不跳转。
 - show_errmsg: bool  - 是否显示和抛出异常
+- retry: int                    - 连接出错时重试次数
+- interval: float             -  重试间隔（秒）
 - **kwargs                   - 用于requests的连接参数
 
 返回: [bool, None]  - url是否可用
@@ -1073,13 +1338,15 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
 
 ### wait_ele()
 
-等待元素从dom删除、显示、隐藏
+等待元素从dom删除、显示、隐藏。
 
 参数说明：
 
 - loc_or_ele: [str, tuple, DriverElement, WebElement]  - 元素查找方式，与ele()相同
 - mode: str                    - 等待方式，可选：'del', 'display', 'hidden'
 - timeout: float              - 等待超时时间
+
+返回: bool  - 等待是否成功
 
 
 
@@ -1122,8 +1389,6 @@ d模式时检查网页是否符合预期。默认由response状态检查，可�
 
 ### close_current_tab()
 
-close_current_tab() -> None
-
 关闭当前标签页。
 
 返回: None
@@ -1132,13 +1397,11 @@ close_current_tab() -> None
 
 ### close_other_tabs()
 
-close_other_tabs(num_or_handle: Union[int, str, None] = None) -> None
-
 关闭传入的标签页以外标签页，默认保留当前页。
 
 参数说明：
 
-- num_or_handle  - 要保留的标签页序号或handle，序号第一个为0，最后为-1
+- num_or_handle:[int, str]  - 要保留的标签页序号或handle，序号第一个为0，最后为-1
 
 返回: None
 
@@ -1146,13 +1409,11 @@ close_other_tabs(num_or_handle: Union[int, str, None] = None) -> None
 
 ### to_tab()
 
-to_tab(num_or_handle: Union[int, str] = 0) -> None
-
 跳转到标签页。
 
 参数说明：
 
-- num_or_handle  - 标签页序号或handle字符串，序号第一个为0，最后为-1
+- num_or_handle:[int, str]  - 标签页序号或handle字符串，序号第一个为0，最后为-1
 
 返回: None
 
@@ -1160,13 +1421,11 @@ to_tab(num_or_handle: Union[int, str] = 0) -> None
 
 ### to_iframe()
 
-to_iframe(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> None
-
 跳转到iframe，默认跳转到最高层级，兼容selenium原生参数。
 
 参数说明：
 
-- loc_or_ele - 查找iframe元素的条件，可接收iframe序号(0开始)、id或name、查询字符串、loc参数、WebElement对象、DriverElement对象，传入'main'跳到最高层，传入'parent'跳到上一层
+- loc_or_ele:[int, str, tuple, WebElement, DriverElement] - 查找iframe元素的条件，可接收iframe序号(0开始)、id或name、查询字符串、loc参数、WebElement对象、DriverElement对象，传入'main'跳到最高层，传入'parent'跳到上一层
 
 ​	示例：
 - to_iframe('tag:iframe')          - 通过传入iframe的查询字符串定位
@@ -1183,13 +1442,11 @@ to_iframe(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 
 
 ### scroll_to_see()
 
-scroll_to_see(loc_or_ele: Union[str, tuple, WebElement, DriverElement]) -> None
-
 滚动直到元素可见。
 
 参数说明：
 
-- loc_or_ele  - 查找iframe元素的条件，和ele()方法的查找条件一致。
+- loc_or_ele:[str, tuple, WebElement, DriverElement]  - 查找元素的条件，和ele()方法的查找条件一致。
 
 返回: None
 
@@ -1197,22 +1454,18 @@ scroll_to_see(loc_or_ele: Union[str, tuple, WebElement, DriverElement]) -> None
 
 ### scroll_to()
 
-scroll_to(mode: str = 'bottom', pixel: int = 300) -> None
-
 滚动页面，按照参数决定如何滚动。
 
 参数说明：
 
-- mode  - 滚动的方向，top、bottom、rightmost、leftmost、up、down、left、right
-- pixel    - 滚动的像素
+- mode: str  - 滚动的方向，top、bottom、rightmost、leftmost、up、down、left、right
+- pixel: int    - 滚动的像素
 
 返回: None
 
 
 
 ### refresh()
-
-refresh() -> None
 
 刷新页面。
 
@@ -1222,8 +1475,6 @@ refresh() -> None
 
 ### back()
 
-back() -> None
-
 页面后退。
 
 返回: None
@@ -1232,14 +1483,12 @@ back() -> None
 
 ### set_window_size()
 
-set_window_size(x: int = None, y: int = None) -> None
-
 设置窗口大小，默认最大化。
 
 参数说明：
 
-- x  - 目标宽度
-- y  - 目标高度
+- x: int  - 目标宽度
+- y: int  - 目标高度
 
 返回: None
 
@@ -1247,14 +1496,12 @@ set_window_size(x: int = None, y: int = None) -> None
 
 ### screenshot()
 
-screenshot(path: str, filename: str = None) -> str
-
 网页截图，返回截图文件路径。
 
 参数说明：
 
-- path         - 截图保存路径，默认为ini文件中指定的临时文件夹
-- filename  - 截图文件名，默认为页面title为文件名
+- path: str         - 截图保存路径，默认为ini文件中指定的临时文件夹
+- filename: str  - 截图文件名，默认为页面title为文件名
 
 返回: str
 
@@ -1262,46 +1509,40 @@ screenshot(path: str, filename: str = None) -> str
 
 ### chrome_downloading()
 
-chrome_downloading(download_path: str = None) -> list
-
-查看浏览器下载情况。
+返回浏览器下载中的文件列表。
 
 参数说明：
 
-- download_path  - 下载路径，默认为chrome options配置中的下载路径
+- download_path: str  - 下载文件夹路径
 
-返回: 
+返回:list
 
 
 
 ### process_alert()
 
-process_alert(mode: str = 'ok', text: str = None) -> Union[str, None]
-
 处理提示框。
 
 参数说明：
 
-- mode  - 'ok' 或 'cancel'，若输入其它值，不会按按钮但依然返回文本值
-- text     - 处理prompt提示框时可输入文本
+- mode: str  - 'ok' 或 'cancel'，若输入其它值，不会按按钮但依然返回文本值
+- text: str     - 处理prompt提示框时可输入文本
 
-返回: 
+返回: [str, None]  - 提示框内容文本
 
 
 
 ### close_driver()
 
-close_driver() -> None
+关闭driver及浏览器。
 
-关闭driver及浏览器，切换到s模式。
-
-返回: 
+返回: None
 
 
 
 ### close_session()
 
-关闭session，切换到d模式。
+关闭session。
 
 返回: None
 
@@ -1309,16 +1550,15 @@ close_driver() -> None
 
 ## DriverElement类
 
-class DriverElement(ele: WebElement, timeout: float = 10)
+### class DriverElement()
 
 driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能。
 
 参数说明：
 
-- ele - WebElement对象
-- timeout - 查找元素超时时间（每次查找元素时还可单独设置）
-
-返回: 
+- ele: WebElement   - WebElement对象
+- page: DriverPage  - 元素所在的页面对象
+- timeout: float         - 查找元素超时时间（每次查找元素时还可单独设置）
 
 
 
@@ -1326,31 +1566,7 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 被包装的WebElement对象。
 
-返回: 
-
-
-
-### driver
-
-操作元素的WebDriver对象。
-
-返回: 
-
-
-
-### attrs
-
-以字典方式返回元素所有属性及值。
-
-返回: 
-
-
-
-### text
-
-返回元素内的文本。
-
-返回: 
+返回: WebElement
 
 
 
@@ -1358,23 +1574,47 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 返回元素内html文本。
 
-返回: 
+返回: str
 
 
 
 ### tag
 
-返回元素标签名文本。
+返回元素标签名。
 
-返回: 
+返回: str
+
+
+
+### attrs
+
+以字典方式返回元素所有属性及值。
+
+返回: dict
+
+
+
+### text
+
+返回元素内的文本。
+
+返回: str
+
+
+
+### css_path
+
+返回元素css selector绝对路径。
+
+返回: str
 
 
 
 ### xpath
 
-返回元素xpath路径。
+返回元素xpath绝对路径。
 
-返回: 
+返回: str
 
 
 
@@ -1382,7 +1622,7 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 返回父级元素对象。
 
-返回: 
+返回: DriverElement
 
 
 
@@ -1390,7 +1630,7 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 返回下一个兄弟元素对象。
 
-返回: 
+返回: DriverElement
 
 
 
@@ -1398,49 +1638,7 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 返回上一个兄弟元素对象。
 
-返回: 
-
-
-
-### parents()
-
-parents(num: int = 1) -> Union[DriverElement, None]
-
-返回第N层父级元素对象。
-
-参数说明：
-
-- 第几层父元素
-
-返回: 
-
-
-
-### nexts()
-
-nexts(num: int = 1) -> Union[DriverElement, None]
-
-返回后面第N个兄弟元素对象。
-
-参数说明：
-
-- 后面第几个兄弟元素
-
-返回: 
-
-
-
-### prevs()
-
-prevs(num: int = 1) -> Union[DriverElement, None]
-
-返回前面第N个兄弟元素对象。
-
-参数说明：
-
-- 前面第几个兄弟元素
-
-返回: 
+返回: DriverElement
 
 
 
@@ -1448,7 +1646,7 @@ prevs(num: int = 1) -> Union[DriverElement, None]
 
 以字典方式返回元素大小。
 
-返回: 
+返回: dict
 
 
 
@@ -1456,24 +1654,107 @@ prevs(num: int = 1) -> Union[DriverElement, None]
 
 以字典方式放回元素坐标。
 
-返回: 
+返回: dict
+
+
+
+### shadow_root
+
+返回当前元素的shadow_root元素对象
+
+返回: ShadowRoot
+
+
+
+### before
+
+返回当前元素的::before伪元素内容
+
+返回: str
+
+
+
+### after
+
+返回当前元素的::after伪元素内容
+
+返回: str
+
+
+
+### texts()
+
+返回元素内所有直接子节点的文本，包括元素和文本节点
+
+参数说明：
+
+- text_node_only:bool  - 是否只返回文本节点
+
+返回: List[str]
+
+
+
+### parents()
+
+返回第N层父级元素对象。
+
+参数说明：
+
+- num: int  - 第几层父元素
+
+返回: DriverElement
+
+
+
+### nexts()
+
+返回后面第num个兄弟元素或节点文本。
+
+参数说明：
+
+- num: int    - 后面第几个兄弟元素或节点
+- mode: str  - 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+
+返回: [DriverElement, str]
+
+
+
+### prevs()
+
+返回前面第num个兄弟元素或节点文本。
+
+参数说明：
+
+- num: int    - 前面第几个兄弟元素或节点
+- mode: str  - 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+
+返回: [DriverElement, str]
+
+
+
+### attr()
+
+获取元素某个属性的值。
+
+参数说明：
+
+- attr: str  - 属性名称
+
+返回: str
 
 
 
 ### ele()
 
-ele(loc_or_str: Union[tuple, str], mode: str = None, show_errmsg: bool = False, timeout: float = None) -> Union[DriverElement, List[DriverElement], None]
-
-根据查询参数获取元素。  
-​如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
-​如是loc，直接按照内容查询。
+返回当前元素下级符合条件的子元素、属性或节点文本。  
+如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
+如是loc，直接按照内容查询。
 
 参数说明：
 
-- loc_or_str         - 查询条件参数
-- mode               - 查找一个或多个，传入'single'或'all'
-- show_errmsg  - 出现异常时是否抛出及显示
-- timeout            - 查找元素超时时间
+- loc_or_str: [Tuple[str, str], str]         - 元素的定位信息，可以是loc元组，或查询字符串
+- mode: str                                         - 'single' 或 'all'，对应查找一个或全部
+- timeout: float                                   - 查找元素超时时间
 
 示例：
 
@@ -1501,374 +1782,354 @@ ele(loc_or_str: Union[tuple, str], mode: str = None, show_errmsg: bool = False, 
   - ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素
   - ele.ele('css:div.ele_class')                         - 返回第一个符合css selector的元素
 
-返回: 
+返回: [DriverElement, str]
 
 
 
 ### eles()
 
-eles(loc_or_str: Union[tuple, str], show_errmsg: bool = False, timeout: float = None) ->  List[DriverElement]
-
 根据查询参数获取符合条件的元素列表。查询参数使用方法和ele方法一致。
 
 参数说明：
 
-- loc_or_str        - 查询条件参数
-- show_errmsg  - 出现异常时是否抛出及显示
-- timeout            - 查找元素超时时间
+- loc_or_str: [Tuple[str, str], str]        - 查询条件参数
+- timeout: float                                  - 查找元素超时时间
 
-返回: 
-
+返回: List[DriverElement or str]
 
 
-### attr()
 
-attr(attr: str) -> str
+### get_style_property()
 
-获取元素某个属性的值。
+返回元素样式属性值。
 
 参数说明：
 
-- attr  - 属性名称
+- style: str             - 样式属性名称
+- pseudo_ele: str  - 伪元素名称
 
-返回: 
+返回: str
 
 
 
 ### click()
 
-click(by_js=None) -> bool
-
 点击元素，如不成功则用js方式点击，可指定是否用js方式点击。
 
 参数说明：
 
-- by_js  - 是否用js方式点击
+- by_js: bool  - 是否用js方式点击
 
-返回: 
+返回: bool
 
 
 
 ### input()
 
-input(value, clear: bool = True) -> bool
-
-输入文本。
+输入文本，返回是否成功。
 
 参数说明：
 
-- value  - 文本值
-- clear  - 输入前是否清除文本框
+- value: str    - 文本值
+- clear: bool  - 输入前是否清除文本框
 
-返回: 
+返回: bool
 
 
 
 ### run_script()
 
-run_script(script: str, *args) -> Any
-
 执行js代码，传入自己为第一个参数。
 
 参数说明：
 
-- script  - JavaScript文本
-- args  - 传入的参数
+- script: str  - JavaScript文本
+- *args        - 传入的参数
 
-返回: 
+返回: Any
 
 
 
 ### submit()
 
-submit() -> None
-
 提交表单。
 
-返回: 
+返回: None
 
 
 
 ### clear()
 
-clear() -> None
-
 清空文本框。
 
-返回: 
+返回: None
 
 
 
 ### is_selected()
 
-is_selected() -> bool
-
 元素是否被选中。
 
-返回: 
+返回: bool
 
 
 
 ### is_enabled()
 
-is_enabled() -> bool
-
 元素在页面中是否可用。
 
-返回: 
+返回: bool
 
 
 
 ### is_displayed()
 
-is_displayed() -> bool
-
 元素是否可见。
 
-返回: 
+返回: bool
 
 
 
 ### is_valid()
 
-is_valid() -> bool
+元素是否还在DOM内。该方法用于判断页面跳转元素不能用的情况
 
-元素是否有效。该方法用于判断页面跳转元素不能用的情况
-
-返回: 
+返回: bool
 
 
 
 ### screenshot()
 
-screenshot(path: str, filename: str = None) -> str
-
 网页截图，返回截图文件路径。
 
 参数说明：
 
-- path         - 截图保存路径，默认为ini文件中指定的临时文件夹
-- filename  - 截图文件名，默认为页面title为文件名
+- path: str         - 截图保存路径，默认为ini文件中指定的临时文件夹
+- filename: str  - 截图文件名，默认为页面title为文件名
 
-返回: 
+返回: str
 
 
 
 ### select()
 
-select(text: str) -> bool
-
 在下拉列表中选择。
 
 参数说明：
 
-- text  - 选项文本
+- text: str  - 选项文本
 
-返回: 
+返回: bool  - 是否成功
 
 
 
 ### set_attr()
 
-set_attr(attr: str, value: str) -> bool
-
 设置元素属性。
 
 参数说明：
 
-- attr     - 参数名
-- value  - 参数值
+- attr: str     - 参数名
+- value: str  - 参数值
 
-返回: 
+返回: bool  -是否成功
 
 
 
 ### drag()
 
-drag(x: int, y: int, speed: int = 40, shake: bool = True) -> bool
-
 拖拽当前元素一段距离，返回是否拖拽成功。
 
 参数说明：
 
-- x          - 拖拽x方向距离
-- y          - 拖拽y方向距离
-- speed  - 拖拽速度
-- shake  - 是否随机抖动
+- x: int             - 拖拽x方向距离
+- y: int             - 拖拽y方向距离
+- speed: int     - 拖拽速度
+- shake: bool  - 是否随机抖动
 
-返回: 
+返回: bool
 
 
 
 ### drag_to()
 
-drag_to(ele_or_loc: Union[tuple, WebElement, DrissionElement], speed: int = 40, shake: bool = True) -> bool:
-
 拖拽当前元素，目标为另一个元素或坐标元组，返回是否拖拽成功。
 
 参数说明：
 
-- ele_or_loc  - 另一个元素或相对当前位置，坐标为元素中点坐标。
-- speed         - 拖拽速度
-- shake         - 是否随机抖动
+- ele_or_loc[tuple, WebElement, DrissionElement]  - 另一个元素或相对当前位置，坐标为元素中点坐标。
+- speed: int                                                               - 拖拽速度
+- shake: bool                                                            - 是否随机抖动
 
-返回: 
+返回: bool
 
 
 
 ### hover()
 
-在元素上悬停鼠标
+在元素上悬停鼠标。
 
-返回: 
+返回: None
 
 
 
 ## SessionElement类
 
-class SessionElement(ele: Element)
+### class SessionElement()
 
 session模式的元素对象，包装了一个Element对象，并封装了常用功能。
 
 参数说明：
 
-- ele  - requests_html库的Element对象
-
-返回: 
+- ele: _Element           - lxml库的Element对象
+- page: SessionPage  - 元素所在页面对象
 
 
 
 ### inner_ele
 
-​	被包装的Element对象。
+被包装的_Element对象。
 
-返回: 
+返回: _Element
 
 
 
 ### attrs
 
-​	以字典格式返回元素所有属性的名称和值。
+以字典格式返回元素所有属性的名称和值。
 
-返回: 
+返回: dict
 
 
 
 ### text
 
-​	返回元素内的文本。
+返回元素内的文本，即innerText。
 
-返回: 
+返回: str
 
 
 
 ### html
 
-​	返回元素内html文本。
+返回元素内html文本，即innerHTML。
 
-返回: 
+返回: str
 
 
 
 ### tag
 
-​	返回元素标签名文本。
+返回元素标签名。
 
-返回: 
+返回: srt
+
+
+
+### css_path
+
+返回元素css selector绝对路径。
+
+返回: srt
 
 
 
 ### xpath
 
-​	返回元素xpath路径。
+返回元素xpath绝对路径。
 
-返回: 
+返回: srt
 
 
 
 ### parent
 
-​	返回父级元素对象。
+返回父级元素对象。
 
-返回: 
+返回: SessionElement
 
 
 
 ### next
 
-​	返回下一个兄弟元素对象。
+返回下一个兄弟元素对象。
 
-返回: 
+返回: SessionElement
 
 
 
 ### prev 
 
-​	返回上一个兄弟元素对象。
+返回上一个兄弟元素对象。
 
-返回: 
+返回: SessionElement
 
 
 
 ### parents()
 
-​	parents(num: int = 1) -> Union[SessionElement, None]
+返回第N层父级元素对象。
 
-​	返回第N层父级元素对象。
+参数说明：
 
-​	参数说明：
+- num:int  - 第几层父元素
 
-- num  - 第几层父元素
-
-返回: 
+返回: SessionElement
 
 
 
 ### nexts()
 
-​	nexts(num: int = 1) -> Union[SessionElement, None]
+返回后面第num个兄弟元素或节点文本。
 
-​	返回后N个兄弟元素对象。
+参数说明：
 
-​	参数说明：
+- num          - 后面第几个兄弟元素
+- mode: str  - 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
 
-- num  - 后面第几个兄弟元素
-
-返回: 
+返回: [SessionElement, str]
 
 
 
 ### prevs()
 
-​	prevs(num: int = 1) -> Union[SessionElement, None]
+返回前N个兄弟元素对象。
 
-​	返回前N个兄弟元素对象。
+参数说明：
 
-​	参数说明：
+- num          - 前面第几个兄弟元素
+- mode: str  - 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
 
-- num  - 前面第几个兄弟元素
+返回: [SessionElement, str]
 
-返回: 
+
+
+### attr()
+
+获取元素某个属性的值。
+
+参数说明：
+
+- attr: str  - 属性名称
+
+返回: str
 
 
 
 ### ele()
 
-​	ele(loc_or_str: Union[tuple, str], mode: str = None, show_errmsg: bool = False) -> Union[SessionElement, List[SessionElement], None]
+根据查询参数获取元素。  
+如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
+如是loc，直接按照内容查询。
 
-​	根据查询参数获取元素。  
-​	如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
-​	如是loc，直接按照内容查询。
+参数说明：
 
-​	参数说明：
+- loc_or_str:[Tuple[str, str], str]  - 查询条件参数
 
-- loc_or_str        - 查询条件参数
+- mode:str                                 - 查找一个或多个，传入'single'或'all'
 
-- mode               - 查找一个或多个，传入'single'或'all'
 
-- show_errmsg  - 出现异常时是否抛出及显示
-
-​	示例：
+示例：
 
 - 用loc元组查找：
 
@@ -1894,123 +2155,96 @@ session模式的元素对象，包装了一个Element对象，并封装了常用
   - ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素
   - ele.ele('css:div.ele_class')                         - 返回第一个符合css selector的元素
 
-返回: 
+返回: [SessionElement, str]
 
 
 
 ### eles()
 
-eles(loc_or_str: Union[tuple, str], show_errmsg: bool = False) ->  List[SessionElement]
-
 根据查询参数获取符合条件的元素列表。查询参数使用方法和ele方法一致。
 
 参数说明：
 
-- loc_or_str        - 查询条件参数
-- show_errmsg  - 出现异常时是否抛出及显示
+- loc_or_str: [Tuple[str, str], str]        - 查询条件参数
 
-返回: 
-
+返回: List[SessionElement or str]
 
 
-### attr()
-
-attr(attr: str) -> str
-
-获取元素某个属性的值。
-
-参数说明：
-
-- attr  - 属性名称
-
-返回: 
 
 
 
 ## OptionsManager类
 
-class OptionsManager(path: str = None)
+### class OptionsManager()
 
 管理配置文件内容的类。
 
 参数说明：
 
-- path  - ini文件路径，不传入则默认读取当前文件夹下的configs.ini文件
-
-返回: 
+- path:str  - ini文件路径，不传入则默认读取当前文件夹下的configs.ini文件
 
 
 
 ### get_value()
 
-get_value(section: str, item: str) -> Any
-
 获取配置的值。
 
 参数说明：
 
-- section  - 段落名称
-- item       - 配置项名称
+- section: str  - 段落名称
+- item: str       - 配置项名称
 
-返回: 
+返回: Any
 
 
 
 ### get_option()
 
-get_option(section: str) -> dict
-
 以字典的格式返回整个段落的配置信息。
 
 参数说明：
 
-- section  - 段落名称
+- section: str  - 段落名称
 
-返回: 
+返回: dict
 
 
 
 ### set_item()
 
-set_item(section: str, item: str, value: str) -> OptionsManager
-
-设置配置值。
+设置配置值，返回自己，用于链式操作。
 
 参数说明：
 
-- section  - 段落名称
-- item      - 配置项名称
-- value     - 值内容
+- section: str  - 段落名称
+- item: str       - 配置项名称
+- value: Any   - 值内容
 
-返回: 
+返回: OptionsManager  - 返回自己
 
 
 
 ### save()
 
-save(path: str = None) -> OptionsManager
-
-保存设置到文件。
+保存设置到文件，返回自己，用于链式操作。
 
 参数说明：
 
-- path  - ini文件的路径，默认保存到模块文件夹下的
+- path:str  - ini文件的路径，默认保存到模块文件夹下的
 
-返回: 
+返回: OptionsManager  - 返回自己
 
 
 
 ## DriverOptions类
 
-class DriverOptions(read_file=True)
+### class DriverOptions()
 
 chrome浏览器配置类，继承自selenium.webdriver.chrome.options的Options类，增加了删除配置和保存到文件方法。
 
 参数说明：
 
-- read_file  - 布尔型，指定创建时是否从ini文件读取配置信息
-
-返回: 
+- read_file:bool  - 创建时是否从ini文件读取配置信息
 
 
 
@@ -2018,7 +2252,7 @@ chrome浏览器配置类，继承自selenium.webdriver.chrome.options的Options�
 
 chromedriver.exe的路径。
 
-返回: 
+返回: str
 
 
 
@@ -2026,27 +2260,35 @@ chromedriver.exe的路径。
 
 chrome.exe的路径
 
-返回: 
+返回: str
+
+
+
+### save()
+
+保存设置到文件，返回自己，用于链式操作。
+
+参数说明：
+
+- path:str  - ini文件的路径，默认保存到模块文件夹下的
+
+返回: DriverOptions  - 返回自己
 
 
 
 ### remove_argument()
 
-remove_argument(value: str) -> DriverOptions
-
 移除一个设置。
 
 参数说明：
 
-- value  - 要移除的属性值
+- value:str  - 要移除的属性值
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### remove_experimental_option()
-
-remove_experimental_option(key: str) -> DriverOptions
 
 移除一个实验设置，传入key值删除。
 
@@ -2054,149 +2296,117 @@ remove_experimental_option(key: str) -> DriverOptions
 
 - key  - 要移除的实验设置key值
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
-### remove_argument()
-
-remove_argument() -> DriverOptions
+### remove_all_extensions()
 
 移除所有插件，因插件是以整个文件储存，难以移除其中一个，故如须设置则全部移除再重设。
 
-返回: 
-
-
-
-### save()
-
-save(path: str = None) -> DriverOptions
-
-保存设置到文件。
-
-参数说明：
-
-- path  - ini文件的路径，默认保存到模块文件夹下的
-
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_argument()
 
-set_argument(arg: str, value: Union[bool, str]) -> DriverOptions
-
 设置chrome属性，无值的属性可设置开关，有值的属性可设置属性的值。
 
 参数说明：
 
-- arg     - 属性名
-- value  - 属性值，有值的属性传入值，没有的传入bool
+- arg:str               - 属性名
+- value[bool, str]  - 属性值，有值的属性传入值，没有的传入bool
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_headless()
 
-set_headless(on_off: bool = True) -> DriverOptions
-
 打开或关闭无界面模式。
 
 参数说明：
 
-on_off  - 打开或关闭，bool
+on_off: bool  - 打开或关闭
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_no_imgs()
 
-set_no_imgs(on_off: bool = True) -> DriverOptions
-
 是否加载图片。
 
 参数说明：
 
-on_off  - 打开或关闭，bool
+on_off: bool  - 打开或关闭
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_no_js()
 
-set_no_js(on_off: bool = True) -> DriverOptions
-
 是否禁用js。
 
 参数说明：
 
-on_off  - 打开或关闭，bool
+on_off: bool  - 打开或关闭
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_mute()
 
-set_mute(on_off: bool = True) -> DriverOptions
-
 是否静音。
 
 参数说明：
 
-on_off  - 打开或关闭，bool
+on_off: bool  - 打开或关闭
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_user_agent()
 
-set_user_agent(user_agent: str) -> DriverOptions
-
 设置浏览器user agent。
 
 参数说明：
 
-- user_agent  - user agent字符串
+- user_agent:str  - user agent字符串
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_proxy()
 
-set_proxy(proxy: str) -> DriverOptions
-
 设置代理。
 
 参数说明：
 
-- proxy  - 代理地址
+- proxy:str  - 代理地址
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
 ### set_paths()
 
-set_paths(driver_path: str = None, chrome_path: str = None, debugger_address: str = None, download_path: str = None, user_data_path: str = None, cache_path: str = None) -> DriverOptions
-
 设置浏览器相关的路径。
 
-​	参数说明：
+参数说明：
 
-- driver_path              - chromedriver.exe的路径
-- chrome_path           - chrome.exe的路径
-- debugger_address  - 调试浏览器地址，例：127.0.0.1:9222
-- download_path        - 下载文件路径
-- user_data_path        - 用户数据路径
-- cache_path              - 缓存路径
+- driver_path:str              - chromedriver.exe的路径
+- chrome_path:str           - chrome.exe的路径
+- debugger_address:str  - 调试浏览器地址，例：127.0.0.1:9222
+- download_path:str        - 下载文件路径
+- user_data_path:str        - 用户数据路径
+- cache_path:str              - 缓存路径
 
-返回: 
+返回: DriverOptions  - 返回自己
 
 
 
@@ -2206,115 +2416,115 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 ### set_paths()
 
-set_paths(driver_path: str = None, chrome_path: str = None, debugger_address: str = None, global_tmp_path: str = None, download_path: str = None, user_data_path: str = None, cache_path: str = None, check_version: bool = True) -> None
-
 便捷的设置路径方法，把传入的路径保存到默认ini文件，并检查chrome和chromedriver版本是否匹配。
 
 参数说明：
 
-- driver_path　　　　　- chromedriver.exe路径
-- chrome_path　　　  - chrome.exe路径
-- debugger_address　- 调试浏览器地址，例：127.0.0.1:9222
-- download_path        - 下载文件路径
-- global_tmp_path      - 临时文件夹路径
-- user_data_path        - 用户数据路径
-- cache_path               - 缓存路径
-- check_version           - 是否检查chromedriver和chrome是否匹配
+- driver_path:str               - chromedriver.exe路径
+- chrome_path:str           - chrome.exe路径
+- debugger_address:str  - 调试浏览器地址，例：127.0.0.1:9222
+- download_path:str        - 下载文件路径
+- global_tmp_path:str      - 临时文件夹路径
+- user_data_path:str        - 用户数据路径
+- cache_path:str               - 缓存路径
+- check_version:bool        - 是否检查chromedriver和chrome是否匹配
 
-返回: 
+返回: None
 
 
 
 ### set_argument()
 
-set_argument(arg: str, value: Union[bool, str]) -> None
-
 设置属性。若属性无值（如'zh_CN.UTF-8'），value传入bool表示开关；否则value传入str，当value为''或False，删除该属性项。
 
 参数说明：
 
-- arg　　- 属性名
-- value　- 属性值，有值的属性传入值，没有的传入bool
+- arg:str　　         - 属性名
+- value[bool, str]　- 属性值，有值的属性传入值，没有的传入bool
 
-返回: 
+返回: None
 
 
 
 ### set_headless()
 
-set_headless(on_off: bool) -> None
-
 开启或关闭headless模式。
 
 参数说明：
 
-- on_off　- 是否开启headless模式
+- on_off: bool　- 是否开启headless模式
 
-
+返回: None
 
 
 
 ### set_no_imgs()
 
-set_no_imgs(on_off: bool) -> None
-
 开启或关闭图片显示。
 
 参数说明：
 
-- on_off　- 是否开启无图模式
+- on_off: bool　- 是否开启无图模式
 
-
+返回: None
 
 
 
 ### set_no_js()
 
-set_no_js(on_off: bool) -> None
-
 开启或关闭禁用JS模式。
 
 参数说明：
 
-- on_off　- 是否开启禁用JS模式
+- on_off: bool　- 是否开启禁用JS模式
 
-### 
+返回: None
 
-**set_mute**(on_off: bool) -> None
+
+
+### set_mute()
 
 开启或关闭静音模式。
 
 参数说明：
 
-- on_off　- 是否开启静音模式
+- on_off: bool　- 是否开启静音模式
+
+返回: None
 
 
 
-**set_user_agent**(user_agent: str) -> None:
+### set_user_agent()
 
 设置user_agent。
 
 参数说明：
 
-- user_agent　- user_agent值
+- user_agent: str　- user_agent值
+
+返回: None
 
 
 
-**set_proxy**(proxy: str) -> None
+### set_proxy()
 
 设置代理。
 
 参数说明：
 
-- proxy　- 代理值
+- proxy: str　- 代理值
+
+返回: None
 
 
 
-**check_driver_version**(driver_path, chrome_path) -> bool
+### check_driver_version()
 
 检查chrome与chromedriver版本是否匹配。
 
 参数说明：
 
-- driver_path　　- chromedriver.exe路径
-- chrome_path　- chrome.exe路径
+- driver_path: bool　　- chromedriver.exe路径
+- chrome_path: bool　- chrome.exe路径
+
+返回: bool
