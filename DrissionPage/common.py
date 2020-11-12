@@ -184,7 +184,7 @@ def _make_search_str(search_str: str) -> str:
 
 
 def format_html(text: str) -> str:
-    return unescape(text).replace('\xa0', ' ')
+    return unescape(text).replace('\xa0', ' ') if text else text
 
 
 def translate_loc(loc: tuple) -> tuple:
