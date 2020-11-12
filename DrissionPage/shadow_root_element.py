@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from re import split as re_SPLIT
-from typing import Union, Any
+from typing import Union, Any, Tuple
 
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -18,6 +18,19 @@ class ShadowRootElement(DrissionElement):
 
     def __repr__(self):
         return f'<ShadowRootElement in {self.parent_ele} >'
+
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str],
+                 mode: str = 'single',
+                 timeout: float = None):
+        """实现查找元素的简化写法                                     \n
+        例：ele2 = ele1('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all'，对应查找一个或全部
+        :param timeout: 超时时间
+        :return: DriverElement对象
+        """
+        return self.ele(loc_or_str, mode, timeout or self.timeout)
 
     @property
     def driver(self):
@@ -58,7 +71,7 @@ class ShadowRootElement(DrissionElement):
         return self.parent_ele.ele(loc, timeout=0.1)
 
     def ele(self,
-            loc_or_str: Union[tuple, str],
+            loc_or_str: Union[Tuple[str, str], str],
             mode: str = 'single',
             timeout: float = None):
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                  \n
@@ -101,7 +114,7 @@ class ShadowRootElement(DrissionElement):
             return self._find_eles_by_text(loc_or_str[1], loc_or_str[2], loc_or_str[3], mode)
 
     def eles(self,
-             loc_or_str: Union[tuple, str],
+             loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None):
         """返回当前元素下级所有符合条件的子元素                                                            \n
         示例：                                                                                          \n
