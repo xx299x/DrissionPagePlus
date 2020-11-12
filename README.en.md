@@ -215,7 +215,7 @@ with open(f'{save_path}\\img.png','wb') as fd:
        fd.write(chunk)
         
 # Use DrissionPage:
-page.download(url, save_path,'img') # Support renaming and handle file name conflicts
+page.download(url, save_path,'img')  # Support renaming and handle file name conflicts
 ```
 
 
@@ -225,14 +225,14 @@ page.download(url, save_path,'img') # Support renaming and handle file name conf
 Log in to the website with selenium, and then switch to requests to read the web page. Both will share login information.
 
 ```python
-page = MixPage() # Create page object, default driver mode
-page.get('https://gitee.com/profile') # Visit the personal center page (not logged in, redirect to the login page)
+page = MixPage()  # Create page object, default driver mode
+page.get('https://gitee.com/profile')  # Visit the personal center page (not logged in, redirect to the login page)
 
-page.ele('@id:user_login').input('your_user_name') # Use selenium to enter the account password to log in
+page.ele('@id:user_login').input('your_user_name')  # Use selenium to enter the account password to log in
 page.ele('@id:user_password').input('your_password\n')
 
-page.change_mode() # Switch to session mode
-print('Title after login:', page.title,'\n') # session mode output after login
+page.change_mode()  # Switch to session mode
+print('Title after login:', page.title,'\n')  # session mode output after login
 ```
 
 Output:
@@ -247,11 +247,11 @@ Title after login: Personal Information- Code Cloud Gitee.com
 
 ```python
 # Connect the previous code
-foot = page.ele('@id:footer- left') # find element by id
-first_col = foot.ele('css:>div') # Use the css selector to find the element in the lower level of the element (the first one)
-lnk = first_col.ele('text: Command Learning') # Use text content to find elements
-text = lnk.text # Get element text
-href = lnk.attr('href') # Get element attribute value
+foot = page.ele('@id:footer- left')  # find element by id
+first_col = foot.ele('css:>div')  # Use the css selector to find the element in the lower level of the element (the first one)
+lnk = first_col.ele('text: Command Learning')  # Use text content to find elements
+text = lnk.text  # Get element text
+href = lnk.attr('href')  # Get element attribute value
 
 print(text, href,'\n')
 
@@ -318,8 +318,8 @@ If you choose the third method, please run these lines of code before using this
 
 ```python
 from DrissionPage.easy_set import set_paths
-driver_path ='D:\\chrome\\chromedriver.exe' # Your chromedriver.exe path, optional
-chrome_path ='D:\\chrome\\chrome.exe' # Your chrome.exe path, optional
+driver_path ='D:\\chrome\\chromedriver.exe'  # Your chromedriver.exe path, optional
+chrome_path ='D:\\chrome\\chrome.exe'  # Your chrome.exe path, optional
 set_paths(driver_path, chrome_path)
 ```
 
@@ -341,11 +341,11 @@ After passing the check, you can use the driver mode normally.
 In addition to the above two paths, this method can also set the following paths:
 
 ```python
-debugger_address # Debug browser address, such as: 127.0.0.1:9222
-download_path # Download file path
-global_tmp_path # Temporary folder path
-user_data_path # User data path
-cache_path # cache path
+debugger_address  # Debug browser address, such as: 127.0.0.1:9222
+download_path  # Download file path
+global_tmp_path  # Temporary folder path
+user_data_path  # User data path
+cache_path  # cache path
 ```
 
 Tips:
@@ -377,12 +377,12 @@ To manually pass in the configuration:
 # Create with the incoming configuration information (ignore the ini file)
 from DrissionPage.config import DriverOptions
 
-driver_options = DriverOptions() # Create driver configuration object
-driver_options.binary_location ='D:\\chrome\\chrome.exe' # chrome.exe path
+driver_options = DriverOptions()  # Create driver configuration object
+driver_options.binary_location ='D:\\chrome\\chrome.exe'  # chrome.exe path
 session_options = {'headers': {'User- Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)'}}
-driver_path ='D:\\chrome\\chromedriver.exe' # driver_path path
+driver_path ='D:\\chrome\\chromedriver.exe'  # driver_path path
 
-drission = Drission(driver_options, session_options, driver_path) # incoming configuration
+drission = Drission(driver_options, session_options, driver_path)  # incoming configuration
 ```
 
 
@@ -405,10 +405,10 @@ page = MixPage('s')
 
 # Create by passing in the Drission object
 page = MixPage(drission)
-page = MixPage(drission, mode='s', timeout=5) # session mode, waiting time is 5 seconds (default 10 seconds)
+page = MixPage(drission, mode='s', timeout=5)  # session mode, waiting time is 5 seconds (default 10 seconds)
 
 # Create with incoming configuration information
-page = MixPage(driver_options=DriverOption, session_options=SessionOption) # default d mode
+page = MixPage(driver_options=DriverOption, session_options=SessionOption)  # default d mode
 ```
 
 
@@ -420,7 +420,7 @@ If there is an error in the connection, the program will automatically retry twi
 ```python
 # Default mode
 page.get(url)
-page.post(url, data, **kwargs) # Only session mode has post method
+page.post(url, data, **kwargs)  # Only session mode has post method
 
 # Specify the number of retries and interval
 page.get(url, retry=5, interval=0.5)
@@ -433,7 +433,7 @@ page.get(url, retry=5, interval=0.5)
 Switch between s and d modes, the cookies and the URL you are visiting will be automatically synchronized when switching.
 
 ```python
-page.change_mode(go=False) # If go is False, it means that the url is not redirected
+page.change_mode(go=False)  # If go is False, it means that the url is not redirected
 ```
 
 
@@ -441,20 +441,20 @@ page.change_mode(go=False) # If go is False, it means that the url is not redire
 ### Page properties
 
 ```python
-page.url # currently visited url
-page.mode # current mode
-page.drission # Dirssion object currently in use
-page.driver # WebDirver object currently in use
-page.session # Session object currently in use
-page.cookies # Get cookies information
-page.html # Page source code
-page.title # Current page title
+page.url  # currently visited url
+page.mode  # current mode
+page.drission  # Dirssion object currently in use
+page.driver  # WebDirver object currently in use
+page.session  # Session object currently in use
+page.cookies  # Get cookies information
+page.html  # Page source code
+page.title  # Current page title
 
 # d mode unique:
-page.tabs_count # Return the number of tab pages
-page.tab_handles # Return to the handle list of all tabs
-page.current_tab_num # Return the serial number of the current tab page
-page.current_tab_handle # Return to the current tab page handle
+page.tabs_count  # Return the number of tab pages
+page.tab_handles  # Return to the handle list of all tabs
+page.current_tab_num  # Return the serial number of the current tab page
+page.current_tab_handle  # Return to the current tab page handle
 ```
 
 
@@ -464,36 +464,36 @@ page.current_tab_handle # Return to the current tab page handle
 When calling a method that only belongs to d mode, it will automatically switch to d mode. See APIs for detailed usage.
 
 ```python
-page.change_mode() # switch mode
-page.cookies_to_session() # Copy cookies from WebDriver object to Session object
-page.cookies_to_driver() # Copy cookies from Session object to WebDriver object
-page.get(url, retry, interval, **kwargs) # Use get to access the web page, you can specify the number of retries and the interval
-page.ele(loc_or_ele, timeout) # Get the first element, node or attribute that meets the conditions
-page.eles(loc_or_ele, timeout) # Get all eligible elements, nodes or attributes
-page.download(url, save_path, rename, file_exists, **kwargs) # download file
-page.close_driver() # Close the WebDriver object
-page.close_session() # Close the Session object
+page.change_mode()  # switch mode
+page.cookies_to_session()  # Copy cookies from WebDriver object to Session object
+page.cookies_to_driver()  # Copy cookies from Session object to WebDriver object
+page.get(url, retry, interval, **kwargs)  # Use get to access the web page, you can specify the number of retries and the interval
+page.ele(loc_or_ele, timeout)  # Get the first element, node or attribute that meets the conditions
+page.eles(loc_or_ele, timeout)  # Get all eligible elements, nodes or attributes
+page.download(url, save_path, rename, file_exists, **kwargs)  # download file
+page.close_driver()  # Close the WebDriver object
+page.close_session()  # Close the Session object
 
 # s mode unique:
-page.post(url, data, retry, interval, **kwargs) # To access the webpage in post mode, you can specify the number of retries and the interval
+page.post(url, data, retry, interval, **kwargs)  # To access the webpage in post mode, you can specify the number of retries and the interval
 
 # d mode unique:
-page.wait_ele(loc_or_ele, mode, timeout) # Wait for the element to be deleted, displayed, and hidden from the dom
-page.run_script(js, *args) # Run js statement
-page.create_tab(url) # Create and locate a tab page, which is at the end
-page.to_tab(num_or_handle) # Jump to tab page
-page.close_current_tab() # Close the current tab page
-page.close_other_tabs(num) # Close other tabs
-page.to_iframe(iframe) # cut into iframe
-page.screenshot(path) # Page screenshot
-page.scrool_to_see(element) # Scroll until an element is visible
-page.scroll_to(mode, pixel) # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top','bottom','rightmost','leftmost','up','down','left', ' right'
-page.refresh() # refresh the current page
-page.back() # Browser back
-page.et_window_size(x, y) # Set the browser window size, maximize by default
-page.check_page() # Check whether the page meets expectations
-page.chrome_downloading() # Get the list of files that chrome is downloading
-page.process_alert(mode, text) # Process the prompt box
+page.wait_ele(loc_or_ele, mode, timeout)  # Wait for the element to be deleted, displayed, and hidden from the dom
+page.run_script(js, *args)  # Run js statement
+page.create_tab(url)  # Create and locate a tab page, which is at the end
+page.to_tab(num_or_handle)  # Jump to tab page
+page.close_current_tab()  # Close the current tab page
+page.close_other_tabs(num)  # Close other tabs
+page.to_iframe(iframe)  # cut into iframe
+page.screenshot(path)  # Page screenshot
+page.scrool_to_see(element)  # Scroll until an element is visible
+page.scroll_to(mode, pixel)  # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top','bottom','rightmost','leftmost','up','down','left', ' right'
+page.refresh()  # refresh the current page
+page.back()  # Browser back
+page.et_window_size(x, y)  # Set the browser window size, maximize by default
+page.check_page()  # Check whether the page meets expectations
+page.chrome_downloading()  # Get the list of files that chrome is downloading
+page.process_alert(mode, text)  # Process the prompt box
 ```
 
 
@@ -509,26 +509,26 @@ Note: The default element search timeout is 10 seconds, you can also set it as n
 
 ```python
 # Find by attribute
-page.ele('@id:ele_id', timeout = 2) # Find the element whose id is ele_id and set the waiting time for 2 seconds
-page.eles('@class') # Find all elements with class attribute
-page.eles('@class:class_name') # Find all elements that have ele_class in class
-page.eles('@class=class_name') # Find all elements whose class is equal to ele_class
+page.ele('@id:ele_id', timeout = 2)  # Find the element whose id is ele_id and set the waiting time for 2 seconds
+page.eles('@class')  # Find all elements with class attribute
+page.eles('@class:class_name')  # Find all elements that have ele_class in class
+page.eles('@class=class_name')  # Find all elements whose class is equal to ele_class
 
 # Find by tag name
-page.ele('tag:li') # Find the first li element
-page.eles('tag:li') # Find all li elements
+page.ele('tag:li')  # Find the first li element
+page.eles('tag:li')  # Find all li elements
 
 # Find according to tag name and attributes
-page.ele('tag:div@class=div_class') # Find the div element whose class is div_class
-page.ele('tag:div@class:ele_class') # Find div elements whose class contains ele_class
-page.ele('tag:div@class=ele_class') # Find div elements whose class is equal to ele_class
-page.ele('tag:div@text():search_text') # Find div elements whose text contains search_text
-page.ele('tag:div@text()=search_text') # Find the div element whose text is equal to search_text
+page.ele('tag:div@class=div_class')  # Find the div element whose class is div_class
+page.ele('tag:div@class:ele_class')  # Find div elements whose class contains ele_class
+page.ele('tag:div@class=ele_class')  # Find div elements whose class is equal to ele_class
+page.ele('tag:div@text():search_text')  # Find div elements whose text contains search_text
+page.ele('tag:div@text()=search_text')  # Find the div element whose text is equal to search_text
 
 # Find according to text content
-page.ele('search text') # find the element containing the incoming text
-page.eles('text:search text') # If the text starts with @, tag:, css:, xpath:, text:, add text: in front to avoid conflicts
-page.eles('text=search text') # The text is equal to the element of search_text
+page.ele('search text')  # find the element containing the incoming text
+page.eles('text:search text')  # If the text starts with @, tag:, css:, xpath:, text:, add text: in front to avoid conflicts
+page.eles('text=search text')  # The text is equal to the element of search_text
 
 # Find according to xpath or css selector
 page.eles('xpath://div[@class="ele_class"]')
@@ -542,13 +542,13 @@ page.ele(loc2)
 
 # Find lower- level elements
 element = page.ele('@id:ele_id')
-element.ele('@class:class_name') # Find the first element whose class is ele_class at the lower level of element
-element.eles('tag:li') # find all li elements under ele_id
+element.ele('@class:class_name')  # Find the first element whose class is ele_class at the lower level of element
+element.eles('tag:li')  # find all li elements under ele_id
 
 # Find by location
-element.parent # parent element
-element.next # next sibling element
-element.prev # previous sibling element
+element.parent  # parent element
+element.next  # next sibling element
+element.prev  # previous sibling element
 
 # Get shadow- dom, only support open shadow- root
 ele1 = element.shadow_root.ele('tag:div')
@@ -566,35 +566,36 @@ ele2 = ele1('tag:li')
 ## Get element attributes
 
 ```python
-element.html # return element outerHTML
-element.inner_html # Return element innerHTML
-element.tag # return element tag name
-element.text # return element innerText value
-element.texts() # Returns the text of all direct child nodes in the element, including elements and text nodes, you can specify to return only text nodes
-element.attrs # Return a dictionary of all attributes of the element
-element.attr(attr) # Return the value of the specified attribute of the element
-element.css_path # Return the absolute css path of the element
-element.xpath # Return the absolute xpath path of the element
-element.parent # return element parent element
-element.next # Return the next sibling element of the element
-element.prev # Return the previous sibling element of the element
-element.parents(num) # Return the numth parent element
-element.nexts(num, mode) # Return the following elements or nodes
-element.prevs(num, mode) # Return the first few elements or nodes
-element.ele(loc_or_str, timeout) # Return the first sub- element, attribute or node text of the current element that meets the conditions
-element.eles(loc_or_str, timeout) # Return all eligible sub- elements, attributes or node texts of the current element
+element.html  # Return element outerHTML
+element.inner_html  # Return element innerHTML
+element.tag  # Return element tag name
+element.text  # Return element innerText value
+element.link  # Returns absolute href or src value of the element.
+element.texts()  # Returns the text of all direct child nodes in the element, including elements and text nodes, you can specify to return only text nodes
+element.attrs  # Return a dictionary of all attributes of the element
+element.attr(attr)  # Return the value of the specified attribute of the element
+element.css_path  # Return the absolute css path of the element
+element.xpath  # Return the absolute xpath path of the element
+element.parent  # Return element parent element
+element.next  # Return the next sibling element of the element
+element.prev  # Return the previous sibling element of the element
+element.parents(num)  # Return the numth parent element
+element.nexts(num, mode)  # Return the following elements or nodes
+element.prevs(num, mode)  # Return the first few elements or nodes
+element.ele(loc_or_str, timeout)  # Return the first sub- element, attribute or node text of the current element that meets the conditions
+element.eles(loc_or_str, timeout)  # Return all eligible sub- elements, attributes or node texts of the current element
 
-# Driver mode unique:
-element.before # Get pseudo element before content
-element.after # Get pseudo element after content
-element.is_valid # Used to determine whether the element is still in dom
-element.size # Get element size
-element.location # Get element location
-element.shadow_root # Get the ShadowRoot element under the element
-element.get_style_property(style, pseudo_ele) # Get element style attribute value, can get pseudo element
-element.is_selected() # Returns whether the element is selected
-element.is_enabled() # Returns whether the element is available
-element.is_displayed() # Returns whether the element is visible
+# d mode unique:
+element.before  # Get pseudo element before content
+element.after  # Get pseudo element after content
+element.is_valid  # Used to determine whether the element is still in dom
+element.size  # Get element size
+element.location  # Get element location
+element.shadow_root  # Get the ShadowRoot element under the element
+element.get_style_property(style, pseudo_ele)  # Get element style attribute value, can get pseudo element
+element.is_selected()  # Returns whether the element is selected
+element.is_enabled()  # Returns whether the element is available
+element.is_displayed()  # Returns whether the element is visible
 ```
 
 
@@ -604,17 +605,17 @@ element.is_displayed() # Returns whether the element is visible
 Element operation is unique to d mode. Calling the following method will automatically switch to d mode.
 
 ```python
-element.click(by_js) # Click the element, you can choose whether to click with js
-element.input(value) # input text
-element.run_script(js) # Run JavaScript script on the element
-element.submit() # Submit
-element.clear() # Clear the element
-element.screenshot(path, filename) # Take a screenshot of the element
-element.select(text) # Select the drop- down list based on the text
-element.set_attr(attr, value) # Set element attribute value
-element.drag(x, y, speed, shake) # Drag the relative distance of the element, you can set the speed and whether to shake randomly
-element.drag_to(ele_or_loc, speed, shake) # Drag the element to another element or a certain coordinate, you can set the speed and whether to shake randomly
-element.hover() # Hover the mouse over the element
+element.click(by_js)  # Click the element, you can choose whether to click with js
+element.input(value)  # input text
+element.run_script(js)  # Run JavaScript script on the element
+element.submit()  # Submit
+element.clear()  # Clear the element
+element.screenshot(path, filename)  # Take a screenshot of the element
+element.select(text)  # Select the drop- down list based on the text
+element.set_attr(attr, value)  # Set element attribute value
+element.drag(x, y, speed, shake)  # Drag the relative distance of the element, you can set the speed and whether to shake randomly
+element.drag_to(ele_or_loc, speed, shake)  # Drag the element to another element or a certain coordinate, you can set the speed and whether to shake randomly
+element.hover()  # Hover the mouse over the element
 ```
 
 
@@ -629,8 +630,8 @@ The DrissionPage code can be seamlessly spliced ​​with the selenium code, ei
 driver = webdriver.Chrome()
 driver.get('https://www.baidu.com')
 
-page = MixPage(Drission(driver)) # Pass the driver to Drission, create a MixPage object
-print(page.title) # Print result: You will know by clicking on Baidu
+page = MixPage(Drission(driver))  # Pass the driver to Drission, create a MixPage object
+print(page.title)  # Print result: You will know by clicking on Baidu
 ```
 
 
@@ -641,8 +642,8 @@ print(page.title) # Print result: You will know by clicking on Baidu
 page = MixPage()
 page.get('https://www.baidu.com')
 
-driver = page.driver # Get the WebDriver object from the MixPage object
-print(driver.title) # Print results: You will know by clicking on Baidu
+driver = page.driver  # Get the WebDriver object from the MixPage object
+print(driver.title)  # Print results: You will know by clicking on Baidu
 ```
 
 
@@ -666,8 +667,8 @@ To make up for the shortcomings of selenium, make the download simple and effici
 ### Demo
 
 ```python
-url ='https://www.baidu.com/img/flexible/logo/pc/result.png' # file url
-save_path = r'C:\download' # save path
+url ='https://www.baidu.com/img/flexible/logo/pc/result.png'  # file url
+save_path = r'C:\download'  # save path
 
 # Rename to img.png, and automatically add a serial number to the end of the file name when there is a duplicate name to display the download progress
 page.download(url, save_path,'img','rename', show_msg=True)
@@ -685,19 +686,19 @@ The configuration of chrome is very cumbersome. In order to simplify the use, th
 The DriverOptions object inherits from the Options object of selenium.webdriver.chrome.options, and the following methods are added to it:
 
 ```python
-remove_argument(value) # delete an argument value
-remove_experimental_option(key) # delete an experimental_option setting
-remove_all_extensions() # Remove all plugins
-save() # Save the configuration to the default ini file
-save('D:\\settings.ini') # save to other path
-set_argument(arg, value) # set argument attribute
-set_headless(on_off) # Set whether to use no interface mode
-set_no_imgs(on_off) # Set whether to load images
-set_no_js(on_off) # Set whether to disable js
-set_mute(on_off) # Set whether to mute
-set_user_agent(user_agent) # set user agent
-set_proxy(proxy) # set proxy address
-set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_path, cache_path) # Set browser- related paths
+remove_argument(value)  # delete an argument value
+remove_experimental_option(key)  # delete an experimental_option setting
+remove_all_extensions()  # Remove all plugins
+save()  # Save the configuration to the default ini file
+save('D:\\settings.ini')  # save to other path
+set_argument(arg, value)  # set argument attribute
+set_headless(on_off)  # Set whether to use no interface mode
+set_no_imgs(on_off)  # Set whether to load images
+set_no_js(on_off)  # Set whether to disable js
+set_mute(on_off)  # Set whether to mute
+set_user_agent(user_agent)  # set user agent
+set_proxy(proxy)  # set proxy address
+set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_path, cache_path)  # Set browser- related paths
 ```
 
 
@@ -705,16 +706,16 @@ set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_p
 ### Instructions
 
 ```python
-do = DriverOptions(read_file=False) # Create chrome configuration object, not read from ini file
-do.set_headless(False) # show the browser interface
-do.set_no_imgs(True) # Do not load pictures
-do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe') # set path
-do.set_headless(False).set_no_imgs(True) # Support chain operation
+do = DriverOptions(read_file=False)  # Create chrome configuration object, not read from ini file
+do.set_headless(False)  # show the browser interface
+do.set_no_imgs(True)  # Do not load pictures
+do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe')  # set path
+do.set_headless(False).set_no_imgs(True)  # Support chain operation
 
-drission = Drission(driver_options=do) # Create Drission object with configuration object
-page = MixPage(drission) # Create a MixPage object with Drission object
+drission = Drission(driver_options=do)  # Create Drission object with configuration object
+page = MixPage(drission)  # Create a MixPage object with Drission object
 
-do.save() # Save the configuration to the default ini file
+do.save()  # Save the configuration to the default ini file
 ```
 
 
@@ -789,11 +790,11 @@ headers = {
 The OptionsManager object is used to read, set and save the configuration.
 
 ```python
-get_value(section, item) - > str # Get the value of a configuration
-get_option(section) - > dict # Return all attributes of configuration in dictionary format
-set_item(section, item, value) # Set configuration attributes
-save() # Save the configuration to the default ini file
-save('D:\\settings.ini') # save to other path
+get_value(section, item) - > str  # Get the value of a configuration
+get_option(section) - > dict  # Return all attributes of configuration in dictionary format
+set_item(section, item, value)  # Set configuration attributes
+save()  # Save the configuration to the default ini file
+save('D:\\settings.ini')  # save to other path
 ```
 
 
@@ -803,13 +804,13 @@ save('D:\\settings.ini') # save to other path
 ```python
 from DrissionPage.configs import *
 
-options_manager = OptionsManager() # Create OptionsManager object from the default ini file
-options_manager = OptionsManager('D:\\settings.ini') # Create OptionsManager object from other ini files
-driver_path = options_manager.get_value('paths','chromedriver_path') # read path information
-options_manager.save() # Save to the default ini file
-options_manager.save('D:\\settings.ini') # save to other path
+options_manager = OptionsManager()  # Create OptionsManager object from the default ini file
+options_manager = OptionsManager('D:\\settings.ini')  # Create OptionsManager object from other ini files
+driver_path = options_manager.get_value('paths','chromedriver_path')  # read path information
+options_manager.save()  # Save to the default ini file
+options_manager.save('D:\\settings.ini')  # save to other path
 
-drission = Drission(ini_path ='D:\\settings.ini') # Use other ini files to create objects
+drission = Drission(ini_path ='D:\\settings.ini')  # Use other ini files to create objects
 ```
 
 **Note**: If you do not pass in the path when saving, it will be saved to the ini file in the module directory, even if the read is not the default ini file.
@@ -821,14 +822,14 @@ drission = Drission(ini_path ='D:\\settings.ini') # Use other ini files to creat
 Calling the easy_set method will modify the content of the default ini file.
 
 ```python
-set_headless(True) # Turn on headless mode
-set_no_imgs(True) # Turn on no image mode
-set_no_js(True) # Disable JS
-set_mute(True) # Turn on mute mode
-set_user_agent('Mozilla/5.0 (Macintosh; Int......') # set user agent
-set_proxy('127.0.0.1:8888') # set proxy
-set_paths(paths) # See [Initialization] section
-set_argument(arg, value) # Set the attribute. If the attribute has no value (such as'zh_CN.UTF- 8'), the value is bool, which means switch; otherwise, the value is str. When the value is'' or False, delete the attribute item
+set_headless(True)  # Turn on headless mode
+set_no_imgs(True)  # Turn on no image mode
+set_no_js(True)  # Disable JS
+set_mute(True)  # Turn on mute mode
+set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # set user agent
+set_proxy('127.0.0.1:8888')  # set proxy
+set_paths(paths)  # See [Initialization] section
+set_argument(arg, value)  # Set the attribute. If the attribute has no value (such as'zh_CN.UTF- 8'), the value is bool, which means switch; otherwise, the value is str. When the value is'' or False, delete the attribute item
 ```
 
 # POM mode
@@ -850,10 +851,10 @@ class ListPage(MixPage):
     def __init__(self, drission: Drission, url: str = None, **xpaths):
         super().__init__(drission)
         self._url = url
-        self.xpath_column name = xpaths['column name'] # [xpath string, regular expression]
+        self.xpath_column name = xpaths['column name']  # [xpath string, regular expression]
         self.xpath_next page = xpaths['next page']
         self.xpath_lines = xpaths['line']
-        self.xpath_page number = xpaths['page number'] # [xpath string, regular expression]
+        self.xpath_page number = xpaths['page number']  # [xpath string, regular expression]
         self.total pages = self.get_total pages()
         if url:
             self.get(url)
@@ -915,14 +916,14 @@ from DrissionPage.session_page import SessionPage
 from DrissionPage.drission import Drission
 
 session = Drission().session
-page = SessionPage(session) # Pass in Session object
+page = SessionPage(session)  # Pass in Session object
 page.get('http://www.baidu.com')
-print(page.ele('@id:su').text) # Output: Baidu
+print(page.ele('@id:su').text)  # Output: Baidu
 
 driver = Drission().driver
-page = DriverPage(driver) # Pass in Driver object
+page = DriverPage(driver)  # Pass in Driver object
 page.get('http://www.baidu.com')
-print(page.ele('@id:su').text) # Output: Baidu
+print(page.ele('@id:su').text)  # Output: Baidu
 ```
 
 # APIs
@@ -1611,6 +1612,14 @@ Returns: str
 
 
 
+### link
+
+Returns absolute href or src value of the element.
+
+Returns: str
+
+
+
 ### css_path
 
 Returns the absolute path of the element css selector.
@@ -2003,22 +2012,6 @@ Returns: HtmlElement
 
 
 
-### attrs
-
-Returns the names and values of all attributes of the element in dictionary format.
-
-Returns: dict
-
-
-
-### text
-
-Returns the text within the element, namely innerText.
-
-Returns: str
-
-
-
 ### html
 
 Returns the outerHTML text of the element.
@@ -2040,6 +2033,30 @@ Returns: str
 Returns the element tag name.
 
 Returns: srt
+
+
+
+### attrs
+
+Returns the names and values of all attributes of the element in dictionary format.
+
+Returns: dict
+
+
+
+### text
+
+Returns the text within the element, namely innerText.
+
+Returns: str
+
+
+
+### link
+
+Returns absolute href or src value of the element.
+
+Returns: str
 
 
 

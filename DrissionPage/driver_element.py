@@ -32,6 +32,13 @@ class DriverElement(DrissionElement):
                  loc_or_str: Union[Tuple[str, str], str],
                  mode: str = 'single',
                  timeout: float = None):
+        """实现查找元素的简化写法                                     \n
+        例：ele2 = ele1('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all'，对应查找一个或全部
+        :param timeout: 超时时间
+        :return: DriverElement对象
+        """
         return self.ele(loc_or_str, mode, timeout or self.timeout)
 
     # -----------------共有属性-------------------
@@ -73,6 +80,11 @@ class DriverElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
         return self.attr('innerText')
+
+    @property
+    def link(self) -> str:
+        """返回href或src绝对url"""
+        return self.attr('href') or self.attr('src')
 
     @property
     def css_path(self) -> str:
@@ -212,15 +224,6 @@ class DriverElement(DrissionElement):
             raise ValueError('Argument loc_or_str can only be tuple or str.')
 
         loc_str = loc_or_str[1]
-        # if loc_or_str[0] == 'xpath':
-        #     # 处理语句最前面的(
-        #     brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
-        #     bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
-        #
-        #     # 确保查询语句最前面是.
-        #     loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
-        #     loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
-        #     loc_str = f'{bracket}{loc_str}'
 
         if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
             loc_str = f'.{loc_str}'

@@ -26,6 +26,12 @@ class SessionElement(DrissionElement):
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str], mode: str = 'single'):
+        """实现查找元素的简化写法                                     \n
+        例：ele2 = ele1('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all'，对应查找一个或全部
+        :return: SessionElement对象
+        """
         return self.ele(loc_or_str, mode)
 
     @property
@@ -53,7 +59,12 @@ class SessionElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return self._inner_ele.text_content()
+        return str(self._inner_ele.text_content())
+
+    @property
+    def link(self) -> str:
+        """返回href或src绝对url"""
+        return self.attr('href') or self.attr('src')
 
     @property
     def css_path(self) -> str:
@@ -133,8 +144,8 @@ class SessionElement(DrissionElement):
         if attr == 'href':
             link = self.inner_ele.get('href')
 
-            # 若链接为js或邮件，直接返回
-            if link.lower().startswith(('javascript:', 'mailto:')):
+            # 若为链接为None、js或邮件，直接返回
+            if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
 
             # 其它情况直接返回绝对url
@@ -193,12 +204,6 @@ class SessionElement(DrissionElement):
 
         element = self
         loc_str = loc_or_str[1]
-        # if loc_or_str[0] == 'xpath':
-        #     brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
-        #     bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
-        #     loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
-        #     loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
-        #     loc_str = f'{bracket}{loc_str}'
 
         if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
             loc_str = f'.{loc_str}'
@@ -239,8 +244,14 @@ class SessionElement(DrissionElement):
         return self.ele(loc_or_str, mode='all')
 
     # -----------------私有函数-------------------
-    def _make_absolute(self, link):
-        """生成绝对url"""
+    def _make_absolute(self, link) -> str:
+        """获取绝对url
+        :param link: 超链接
+        :return: 绝对链接
+        """
+        if not link:
+            return link
+
         parsed = urlparse(link)._asdict()
 
         # 相对路径，与页面url拼接并返回
@@ -257,7 +268,10 @@ class SessionElement(DrissionElement):
         return link
 
     def _get_ele_path(self, mode) -> str:
-        """获取css路径或xpath路径"""
+        """获取css路径或xpath路径
+        :param mode: 'css' 或 'xpath'
+        :return: css路径或xpath路径
+        """
         path_str = ''
         ele = self
 
