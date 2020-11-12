@@ -4,8 +4,6 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
-import re
-from html import unescape
 from pathlib import Path
 from time import sleep
 from typing import Union, List, Any, Tuple
@@ -16,7 +14,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from .common import DrissionElement, get_loc_from_str, get_available_file_name, translate_loc_to_xpath
+from .common import DrissionElement, str_to_loc, get_available_file_name, translate_loc, format_html
 
 
 class DriverElement(DrissionElement):
@@ -39,8 +37,13 @@ class DriverElement(DrissionElement):
     # -----------------共有属性-------------------
     @property
     def html(self) -> str:
+        """返回元素outerHTML文本"""
+        return self.attr('outerHTML')
+
+    @property
+    def inner_html(self) -> str:
         """返回元素innerHTML文本"""
-        return unescape(self.attr('innerHTML')).replace('\xa0', ' ')
+        return self.attr('innerHTML')
 
     @property
     def tag(self) -> str:
@@ -69,7 +72,7 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return unescape(self.attr('innerText')).replace('\xa0', ' ')
+        return self.attr('innerText')
 
     @property
     def css_path(self) -> str:
@@ -164,7 +167,8 @@ class DriverElement(DrissionElement):
         :param attr: 属性名
         :return: 属性值文本
         """
-        return self.text if attr == 'text' else self.inner_ele.get_attribute(attr)
+        attr = 'innerText' if attr == 'text' else attr
+        return format_html(self.inner_ele.get_attribute(attr))
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -197,29 +201,35 @@ class DriverElement(DrissionElement):
         """
         if isinstance(loc_or_str, (str, tuple)):
             if isinstance(loc_or_str, str):
-                loc_or_str = get_loc_from_str(loc_or_str)
+                loc_or_str = str_to_loc(loc_or_str)
             else:
                 if len(loc_or_str) != 2:
                     raise ValueError("Len of loc_or_str must be 2 when it's a tuple.")
-                loc_or_str = translate_loc_to_xpath(loc_or_str)
+
+                loc_or_str = translate_loc(loc_or_str)
+
         else:
             raise ValueError('Argument loc_or_str can only be tuple or str.')
 
-        if loc_or_str[0] == 'xpath':
-            # 处理语句最前面的(
-            brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
-            bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
+        loc_str = loc_or_str[1]
+        # if loc_or_str[0] == 'xpath':
+        #     # 处理语句最前面的(
+        #     brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
+        #     bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
+        #
+        #     # 确保查询语句最前面是.
+        #     loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
+        #     loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
+        #     loc_str = f'{bracket}{loc_str}'
 
-            # 确保查询语句最前面是.
-            loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
-            loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
-            loc_or_str = loc_or_str[0], f'{bracket}{loc_str}'
+        if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
+            loc_str = f'.{loc_str}'
 
-        elif loc_or_str[0] == 'css selector':
-            if loc_or_str[1].lstrip().startswith('>'):
-                loc_or_str = loc_or_str[0], f'{self.css_path}{loc_or_str[1]}'
+        if loc_or_str[0] == 'css selector' and loc_or_str[1].lstrip().startswith('>'):
+            loc_str = f'{self.css_path}{loc_or_str[1]}'
 
         timeout = timeout or self.timeout
+        loc_or_str = loc_or_str[0], loc_str
 
         return execute_driver_find(self, loc_or_str, mode, timeout)
 
@@ -571,7 +581,7 @@ def execute_driver_find(page_or_ele,
         return [] if mode == 'all' else None
 
     except InvalidElementStateException:
-        raise ValueError('Invalid query syntax.', loc)
+        raise ValueError(f'Invalid query syntax. {loc}')
 
 
 class ElementsByXpath(object):
@@ -641,17 +651,20 @@ class ElementsByXpath(object):
         if self.mode == 'single':
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
-                return (DriverElement(e, self.page, self.timeout)
-                        if isinstance(e, WebElement) else unescape(e).replace('\xa0', ' '))
+                if isinstance(e, WebElement):
+                    return DriverElement(e, self.page, self.timeout)
+                elif isinstance(e, str):
+                    return format_html(e)
+                else:
+                    return e
 
             # 找不到目标时
             except JavascriptException:
                 return None
 
         elif self.mode == 'all':
-            e = get_nodes(the_node, xpath_txt=self.xpath)
-
-            # 去除元素间换行符并替换空格
-            e = (unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x for x in e if x != '\n')
-
-            return [DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement) else x for x in e]
+            # 去除元素间换行符
+            return ([DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement)
+                     else format_html(x)
+                     for x in get_nodes(the_node, xpath_txt=self.xpath)
+                     if x != '\n'])

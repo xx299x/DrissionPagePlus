@@ -5,20 +5,20 @@
 @File    :   session_element.py
 """
 import re
-from html import unescape
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, urljoin, urlunparse
 
 from cssselect import SelectorSyntaxError
-from lxml.etree import tostring, HTML, _Element, XPathEvalError
+from lxml.etree import tostring, XPathEvalError
+from lxml.html import HtmlElement, fromstring
 
-from .common import DrissionElement, get_loc_from_str, translate_loc_to_xpath
+from .common import DrissionElement, str_to_loc, translate_loc, format_html
 
 
 class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
-    def __init__(self, ele: _Element, page=None):
+    def __init__(self, ele: HtmlElement, page=None):
         super().__init__(ele, page)
 
     def __repr__(self):
@@ -30,8 +30,13 @@ class SessionElement(DrissionElement):
 
     @property
     def html(self) -> str:
+        """返回元素outerHTML文本"""
+        return format_html(tostring(self._inner_ele).decode())
+
+    @property
+    def inner_html(self) -> str:
         """返回元素innerHTML文本"""
-        html = unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
+        html = format_html(tostring(self._inner_ele).decode())
         r = re.match(r'<.*?>(.*)</.*?>', html, flags=re.DOTALL)
         return None if not r else r.group(1)
 
@@ -48,7 +53,7 @@ class SessionElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return unescape(self._inner_ele.text).replace('\xa0', ' ')
+        return self._inner_ele.text_content()
 
     @property
     def css_path(self) -> str:
@@ -81,9 +86,20 @@ class SessionElement(DrissionElement):
         :return: 文本列表
         """
         if text_node_only:
-            return self.eles('xpath:./*/text()')
+            return self.eles('xpath:/text()')
         else:
-            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./*/node()')]
+            texts = []
+
+            for node in self.eles('xpath:/node()'):
+                if isinstance(node, str):
+                    text = node
+                else:
+                    text = node.text
+
+                if text:
+                    texts.append(text)
+
+            return texts
 
     def parents(self, num: int = 1):
         """返回上面第num级父元素                                         \n
@@ -128,14 +144,14 @@ class SessionElement(DrissionElement):
         elif attr == 'src':
             return self._make_absolute(self.inner_ele.get('src'))
 
-        elif attr == 'text':
+        elif attr in ['text', 'innerText']:
             return self.text
 
         elif attr == 'outerHTML':
-            return unescape(tostring(self._inner_ele).decode()).replace('\xa0', ' ')
+            return self.html
 
         elif attr == 'innerHTML':
-            return self.html
+            return self.inner_html
 
         else:
             return self.inner_ele.get(attr)
@@ -167,30 +183,33 @@ class SessionElement(DrissionElement):
         """
         if isinstance(loc_or_str, (str, tuple)):
             if isinstance(loc_or_str, str):
-                loc_or_str = get_loc_from_str(loc_or_str)
+                loc_or_str = str_to_loc(loc_or_str)
             else:
                 if len(loc_or_str) != 2:
                     raise ValueError("Len of loc_or_str must be 2 when it's a tuple.")
-                loc_or_str = translate_loc_to_xpath(loc_or_str)
+                loc_or_str = translate_loc(loc_or_str)
         else:
             raise ValueError('Argument loc_or_str can only be tuple or str.')
 
         element = self
-        if loc_or_str[0] == 'xpath':
-            brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
-            bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
-            loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
-            loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
-            loc_str = f'{bracket}{loc_str}'
+        loc_str = loc_or_str[1]
+        # if loc_or_str[0] == 'xpath':
+        #     brackets = len(re.match(r'\(*', loc_or_str[1]).group(0))
+        #     bracket, loc_str = '(' * brackets, loc_or_str[1][brackets:]
+        #     loc_str = loc_str if loc_str.startswith(('.', '/')) else f'.//{loc_str}'
+        #     loc_str = loc_str if loc_str.startswith('.') else f'.{loc_str}'
+        #     loc_str = f'{bracket}{loc_str}'
 
-        else:  # css selector
-            if loc_or_str[1][0].startswith('>'):
-                loc_str = f'{self.css_path}{loc_or_str[1]}'
-                element = self.page
-            else:
-                loc_str = loc_or_str[1]
+        if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
+            loc_str = f'.{loc_str}'
+
+        # 若css以>开头，表示找元素的直接子元素，要用page以绝对路径才能找到
+        if loc_or_str[0] == 'css selector' and loc_or_str[1].lstrip().startswith('>'):
+            loc_str = f'{self.css_path}{loc_or_str[1]}'
+            element = self.page
 
         loc_or_str = loc_or_str[0], loc_str
+
         return execute_session_find(element, loc_or_str, mode)
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str]):
@@ -298,7 +317,7 @@ class SessionElement(DrissionElement):
 
 def execute_session_find(page_or_ele,
                          loc: Tuple[str, str],
-                         mode: str = 'single', ) -> Union[SessionElement, List[SessionElement or str], None]:
+                         mode: str = 'single', ) -> Union[SessionElement, List[SessionElement or str], str, None]:
     """执行session模式元素的查找                              \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: SessionPage对象或SessionElement对象
@@ -316,7 +335,7 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = HTML(page_or_ele.response.text)
+        page_or_ele = fromstring(page_or_ele.html)
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
@@ -329,20 +348,19 @@ def execute_session_find(page_or_ele,
         if mode == 'single':
             ele = ele[0] if ele else None
 
-            if isinstance(ele, _Element):
+            if isinstance(ele, HtmlElement):
                 return SessionElement(ele, page)
             elif isinstance(ele, str):
-                return unescape(ele).replace('\xa0', ' ')
+                return ele
             else:
                 return None
 
         elif mode == 'all':
-            # 去除元素间换行符并替换空格
-            ele = (unescape(x).replace('\xa0', ' ') if isinstance(x, str) else x for x in ele if x != '\n')
-            return [SessionElement(e, page) if isinstance(e, _Element) else e for e in ele]
+            # 去除元素间换行符
+            return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']
 
     except XPathEvalError:
-        raise SyntaxError('Invalid xpath syntax.', loc)
+        raise SyntaxError(f'Invalid xpath syntax. {loc}')
 
     except SelectorSyntaxError:
-        raise SyntaxError('Invalid css selector syntax.', loc)
+        raise SyntaxError(f'Invalid css selector syntax. {loc}')
