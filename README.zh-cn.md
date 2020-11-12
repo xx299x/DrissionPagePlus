@@ -430,7 +430,7 @@ page.get(url, retry=5, interval=0.5)
 
 ### 切换模式
 
-在 s 和 d 模式之间切换，切换时会自动同步cookies和正在访问的url
+在 s 和 d 模式之间切换，切换时会自动同步cookies和正在访问的url。
 
 ```python
 page.change_mode(go=False)  # go为False表示不跳转url
@@ -461,7 +461,7 @@ page.current_tab_handle  # 返回当前标签页handle
 
 ### 页面操作
 
-调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见APIs
+调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见APIs。
 
 ```python
 page.change_mode()  # 切换模式
@@ -566,7 +566,8 @@ ele2 = ele1('tag:li')
 ## 获取元素属性
 
 ```python
-element.html  # 返回元素内html
+element.html  # 返回元素outerHTML
+element.inner_html  # 返回元素innerHTML
 element.tag  # 返回元素tag name
 element.text  # 返回元素innerText值
 element.texts()  # 返回元素内所有直接子节点的文本，包括元素和文本节点，可指定只返回文本节点
@@ -817,7 +818,7 @@ drission = Drission(ini_path = 'D:\\settings.ini')  # 使用其它ini文件创�
 
 ## easy_set方法
 
-​	调用easy_set方法会修改默认ini文件相关内容。
+调用easy_set方法会修改默认ini文件相关内容。
 
 ```python
 set_headless(True)  # 开启headless模式
@@ -1194,7 +1195,7 @@ MixPage封装了页面操作的常用功能，可在driver和session模式间无
   - page.ele('@class:ele_class')                      - 返回第一个class含有ele_class的元素
   - page.ele('@name=ele_name')                    - 返回第一个name等于ele_name的元素
   - page.ele('@placeholder')                            - 返回第一个带placeholder属性的元素
-  - page.ele('tag:p')                                          - 返回第一个<p>元素
+  - page.ele('tag:p')                                          - 返回第一个p元素
   - page.ele('tag:div@class:ele_class')            - 返回第一个class含有ele_class的div元素
   - page.ele('tag:div@class=ele_class')           - 返回第一个class等于ele_class的div元素
   - page.ele('tag:div@text():some_text')           - 返回第一个文本含有some_text的div元素
@@ -1427,7 +1428,7 @@ d模式时检查网页是否符合预期。默认由response状态检查，可�
 
 - loc_or_ele:[int, str, tuple, WebElement, DriverElement] - 查找iframe元素的条件，可接收iframe序号(0开始)、id或name、查询字符串、loc参数、WebElement对象、DriverElement对象，传入'main'跳到最高层，传入'parent'跳到上一层
 
-​	示例：
+示例：
 - to_iframe('tag:iframe')          - 通过传入iframe的查询字符串定位
 - to_iframe('iframe_id')           - 通过iframe的id属性定位
 - to_iframe('iframe_name')     - 通过iframe的name属性定位
@@ -1572,7 +1573,15 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
 
 ### html
 
-返回元素内html文本。
+返回元素outerHTML文本。
+
+返回: str
+
+
+
+### inner_html
+
+返回元素innerHTML文本。
 
 返回: str
 
@@ -1771,7 +1780,7 @@ driver模式的元素对象，包装了一个WebElement对象，并封装了常�
   - ele.ele('@class:ele_class')                      - 返回第一个class含有ele_class的元素
   - ele.ele('@name=ele_name')                    - 返回第一个name等于ele_name的元素
   - ele.ele('@placeholder')                            - 返回第一个带placeholder属性的元素
-  - ele.ele('tag:p')                                          - 返回第一个<p>元素
+  - ele.ele('tag:p')                                          - 返回第一个p元素
   - ele.ele('tag:div@class:ele_class')            - 返回第一个class含有ele_class的div元素
   - ele.ele('tag:div@class=ele_class')           - 返回第一个class等于ele_class的div元素
   - ele.ele('tag:div@text():some_text')           - 返回第一个文本含有some_text的div元素
@@ -1981,16 +1990,16 @@ session模式的元素对象，包装了一个Element对象，并封装了常用
 
 参数说明：
 
-- ele: _Element           - lxml库的Element对象
+- ele: HtmlElement   - lxml库的HtmlElement对象
 - page: SessionPage  - 元素所在页面对象
 
 
 
 ### inner_ele
 
-被包装的_Element对象。
+被包装的HTMLElement对象。
 
-返回: _Element
+返回: HtmlElement
 
 
 
@@ -2012,7 +2021,15 @@ session模式的元素对象，包装了一个Element对象，并封装了常用
 
 ### html
 
-返回元素内html文本，即innerHTML。
+返回元素outerHTML文本。
+
+返回: str
+
+
+
+### inner_html
+
+返回元素innerHTML文本。
 
 返回: str
 
@@ -2133,27 +2150,27 @@ session模式的元素对象，包装了一个Element对象，并封装了常用
 
 - 用loc元组查找：
 
-  - ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素
+- ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素
 
 - 用查询字符串查找：
 
-  属性、tag name和属性、文本、xpath、css selector。
+属性、tag name和属性、文本、xpath、css selector。
 
-  其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串。
+其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串。
 
-  - ele.ele('@class:ele_class')                      - 返回第一个class含有ele_class的元素
-  - ele.ele('@name=ele_name')                    - 返回第一个name等于ele_name的元素
-  - ele.ele('@placeholder')                            - 返回第一个带placeholder属性的元素
-  - ele.ele('tag:p')                                          - 返回第一个<p>元素
-  - ele.ele('tag:div@class:ele_class')            - 返回第一个class含有ele_class的div元素
-  - ele.ele('tag:div@class=ele_class')           - 返回第一个class等于ele_class的div元素
-  - ele.ele('tag:div@text():some_text')           - 返回第一个文本含有some_text的div元素
-  - ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于some_text的div元素
-  - ele.ele('text:some_text')                            - 返回第一个文本含有some_text的元素
-  - ele.ele('some_text')                                   - 返回第一个文本含有some_text的元素（等价于上一行）
-  - ele.ele('text=some_text')                           - 返回第一个文本等于some_text的元素
-  - ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素
-  - ele.ele('css:div.ele_class')                         - 返回第一个符合css selector的元素
+- ele.ele('@class:ele_class')                      - 返回第一个class含有ele_class的元素
+- ele.ele('@name=ele_name')                    - 返回第一个name等于ele_name的元素
+- ele.ele('@placeholder')                            - 返回第一个带placeholder属性的元素
+- ele.ele('tag:p')                                          - 返回第一个p元素
+- ele.ele('tag:div@class:ele_class')            - 返回第一个class含有ele_class的div元素
+- ele.ele('tag:div@class=ele_class')           - 返回第一个class等于ele_class的div元素
+- ele.ele('tag:div@text():some_text')           - 返回第一个文本含有some_text的div元素
+- ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于some_text的div元素
+- ele.ele('text:some_text')                            - 返回第一个文本含有some_text的元素
+- ele.ele('some_text')                                   - 返回第一个文本含有some_text的元素（等价于上一行）
+- ele.ele('text=some_text')                           - 返回第一个文本等于some_text的元素
+- ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素
+- ele.ele('css:div.ele_class')                         - 返回第一个符合css selector的元素
 
 返回: [SessionElement, str]
 
@@ -2294,7 +2311,7 @@ chrome.exe的路径
 
 参数说明：
 
-- key  - 要移除的实验设置key值
+- key:str  - 要移除的实验设置key值
 
 返回: DriverOptions  - 返回自己
 
@@ -2439,8 +2456,8 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- arg:str　　         - 属性名
-- value[bool, str]　- 属性值，有值的属性传入值，没有的传入bool
+- arg:str             - 属性名
+- value[bool, str]  - 属性值，有值的属性传入值，没有的传入bool
 
 返回: None
 
@@ -2452,7 +2469,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- on_off: bool　- 是否开启headless模式
+- on_off: bool  - 是否开启headless模式
 
 返回: None
 
@@ -2464,7 +2481,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- on_off: bool　- 是否开启无图模式
+- on_off: bool  - 是否开启无图模式
 
 返回: None
 
@@ -2476,7 +2493,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- on_off: bool　- 是否开启禁用JS模式
+- on_off: bool  - 是否开启禁用JS模式
 
 返回: None
 
@@ -2488,7 +2505,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- on_off: bool　- 是否开启静音模式
+- on_off: bool  - 是否开启静音模式
 
 返回: None
 
@@ -2500,7 +2517,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- user_agent: str　- user_agent值
+- user_agent: str  - user_agent值
 
 返回: None
 
@@ -2512,7 +2529,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- proxy: str　- 代理值
+- proxy: str  - 代理值
 
 返回: None
 
@@ -2524,7 +2541,7 @@ chrome的配置太难记，所以把常用的配置写成简单的方法，调�
 
 参数说明：
 
-- driver_path: bool　　- chromedriver.exe路径
-- chrome_path: bool　- chrome.exe路径
+- driver_path: bool     - chromedriver.exe路径
+- chrome_path: bool  - chrome.exe路径
 
 返回: bool
