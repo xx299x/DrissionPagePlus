@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-from html import unescape
 from re import split as re_SPLIT
 from typing import Union, Any
 
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import DrissionElement
+from .common import DrissionElement, format_html
 from .driver_element import execute_driver_find
 
 
@@ -31,7 +30,7 @@ class ShadowRootElement(DrissionElement):
 
     @property
     def html(self):
-        return unescape(self.inner_ele.get_attribute('innerHTML')).replace('\xa0', ' ')
+        return format_html(self.inner_ele.get_attribute('innerHTML'))
 
     @property
     def parent(self):
@@ -87,7 +86,7 @@ class ShadowRootElement(DrissionElement):
         :return: DriverElement对象
         """
         if isinstance(loc_or_str, str):
-            loc_or_str = get_css_from_str(loc_or_str)
+            loc_or_str = str_to_css_loc(loc_or_str)
         elif isinstance(loc_or_str, tuple) and len(loc_or_str) == 2:
             if loc_or_str[0] == 'xpath':
                 raise ValueError('不支持xpath')
@@ -189,7 +188,7 @@ class ShadowRootElement(DrissionElement):
         return None if mode == 'single' else results
 
 
-def get_css_from_str(loc: str) -> tuple:
+def str_to_css_loc(loc: str) -> tuple:
     """处理元素查找语句                                                \n
     查找方式：属性、tag name及属性、文本、css selector                   \n
     =表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串             \n
@@ -212,6 +211,7 @@ def get_css_from_str(loc: str) -> tuple:
     # 根据属性查找
     if loc.startswith('@'):
         r = re_SPLIT(r'([:=])', loc[1:], maxsplit=1)
+
         if len(r) == 3:
             mode = '=' if r[1] == '=' else '*='
             loc_str = f'*[{r[0]}{mode}{r[2]}]'
@@ -225,6 +225,7 @@ def get_css_from_str(loc: str) -> tuple:
         else:
             at_lst = loc[4:].split('@', maxsplit=1)
             r = re_SPLIT(r'([:=])', at_lst[1], maxsplit=1)
+
             if len(r) == 3:
                 if r[0] == 'text()':
                     match = 'exact' if r[1] == '=' else 'fuzzy'

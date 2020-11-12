@@ -14,7 +14,7 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import get_loc_from_str, get_available_file_name, translate_loc_to_xpath
+from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 from .driver_element import DriverElement, execute_driver_find
 
 
@@ -43,7 +43,7 @@ class DriverPage(object):
     @property
     def html(self) -> str:
         """返回页面html文本"""
-        return self.driver.find_element_by_xpath("//*").get_attribute("outerHTML")
+        return format_html(self.driver.find_element_by_xpath("//*").get_attribute("outerHTML"))
 
     @property
     def url_available(self) -> bool:
@@ -139,11 +139,11 @@ class DriverPage(object):
         # 接收到字符串或元组，获取定位loc元组
         if isinstance(loc_or_ele, (str, tuple)):
             if isinstance(loc_or_ele, str):
-                loc_or_ele = get_loc_from_str(loc_or_ele)
+                loc_or_ele = str_to_loc(loc_or_ele)
             else:
                 if len(loc_or_ele) != 2:
                     raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
-                loc_or_ele = translate_loc_to_xpath(loc_or_ele)
+                loc_or_ele = translate_loc(loc_or_ele)
 
             if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
                 loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
@@ -219,7 +219,7 @@ class DriverPage(object):
         elif isinstance(loc_or_ele, WebElement):
             is_ele = True
         elif isinstance(loc_or_ele, str):
-            loc_or_ele = get_loc_from_str(loc_or_ele)
+            loc_or_ele = str_to_loc(loc_or_ele)
         elif isinstance(loc_or_ele, tuple):
             pass
         else:

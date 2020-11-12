@@ -16,7 +16,7 @@ from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
 
-from .common import get_loc_from_str, translate_loc_to_xpath, get_available_file_name
+from .common import str_to_loc, translate_loc, get_available_file_name, format_html
 from .config import OptionsManager
 from .session_element import SessionElement, execute_session_find
 
@@ -65,7 +65,7 @@ class SessionPage(object):
     @property
     def html(self) -> str:
         """返回页面html文本"""
-        return self.response.text
+        return format_html(self.response.text)
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
@@ -98,11 +98,12 @@ class SessionPage(object):
         """
         if isinstance(loc_or_ele, (str, tuple)):
             if isinstance(loc_or_ele, str):
-                loc_or_ele = get_loc_from_str(loc_or_ele)
+                loc_or_ele = str_to_loc(loc_or_ele)
             else:
                 if len(loc_or_ele) != 2:
                     raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
-                loc_or_ele = translate_loc_to_xpath(loc_or_ele)
+                loc_or_ele = translate_loc(loc_or_ele)
+
             if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
                 loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
 
