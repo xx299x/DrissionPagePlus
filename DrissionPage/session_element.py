@@ -37,14 +37,13 @@ class SessionElement(DrissionElement):
     @property
     def html(self) -> str:
         """返回元素outerHTML文本"""
-        return format_html(tostring(self._inner_ele).decode())
+        return format_html(tostring(self._inner_ele, method="html").decode())
 
     @property
     def inner_html(self) -> str:
         """返回元素innerHTML文本"""
-        html = format_html(tostring(self._inner_ele).decode())
-        r = re.match(r'<.*?>(.*)</.*?>', html, flags=re.DOTALL)
-        return None if not r else r.group(1)
+        r = re.match(r'<.*?>(.*)</.*?>', self.html, flags=re.DOTALL)
+        return '' if not r else r.group(1)
 
     @property
     def tag(self) -> str:
@@ -355,7 +354,9 @@ def execute_session_find(page_or_ele,
         # 用lxml内置方法获取lxml的元素对象列表
         if loc[0] == 'xpath':
             ele = page_or_ele.xpath(loc[1])
-        else:  # 用css selector获取元素对象列表
+
+        # 用css selector获取元素对象列表
+        else:
             ele = page_or_ele.cssselect(loc[1])
 
         # 把lxml元素对象包装成SessionElement对象并按需要返回第一个或全部
@@ -370,7 +371,6 @@ def execute_session_find(page_or_ele,
                 return None
 
         elif mode == 'all':
-            # 去除元素间换行符
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']
 
     except XPathEvalError:
