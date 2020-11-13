@@ -14,7 +14,7 @@ DrissionPage，即driver和session的合体，是个基于python的Web自动化�
 - https://github.com/g1879/DrissionPage
 - https://gitee.com/g1879/DrissionPage
 
-**示例地址：** [使用DrissionPage爬取常见网站及自动化](https://gitee.com/g1879/DrissionPage-demos)
+**示例地址：** [使用DrissionPage的网页自动化及爬虫示例](https://gitee.com/g1879/DrissionPage-demos)
 
 **联系邮箱：** g1879@qq.com
 
