@@ -651,6 +651,7 @@ class ElementsByXpath(object):
                 """
             return driver.execute_script(js, node)
 
+        # 把lxml元素对象包装成DriverElement对象并按需要返回第一个或全部
         if self.mode == 'single':
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
@@ -666,7 +667,6 @@ class ElementsByXpath(object):
                 return None
 
         elif self.mode == 'all':
-            # 去除元素间换行符
             return ([DriverElement(x, self.page, self.timeout) if isinstance(x, WebElement)
                      else format_html(x)
                      for x in get_nodes(the_node, xpath_txt=self.xpath)
