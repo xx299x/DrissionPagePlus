@@ -172,6 +172,7 @@ class SessionPage(object):
 
             print('重试', to_url)
             sleep(interval)
+
             r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
             times -= 1
 
@@ -248,6 +249,7 @@ class SessionPage(object):
         else:
             if self._response.ok:
                 self._url_available = True
+
             else:
                 if show_errmsg:
                     raise ConnectionError(f'Status code: {self._response.status_code}.')
