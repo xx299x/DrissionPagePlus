@@ -1198,7 +1198,7 @@ MixPage 封装了页面操作的常用功能，可在 driver 和 session 模式�
 ### ele()
 
 返回页面中符合条件的元素，默认返回第一个。  
-​如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用 text 方式查找。  
+​如查询参数是字符串，可选 '@属性名:'、'tag:'、'text:'、'css:'、'xpath:'、'.'、'#' 方式。无控制方式时默认用 text 方式查找。  
 ​如是loc，直接按照内容查询。
 
 参数说明：
@@ -1213,14 +1213,18 @@ MixPage 封装了页面操作的常用功能，可在 driver 和 session 模式�
 
 - 用loc元组查找：
 
-  - ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素
+  - ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为 ele_class 的子元素
 
 - 用查询字符串查找：
 
-  属性、tag name和属性、文本、xpath、css selector。
+  属性、tag name 和属性、文本、xpath、css selector、id、class。
 
-  其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串。
+  @ 表示属性，. 表示 class，# 表示 id，= 表示精确匹配，: 表示模糊匹配，无控制字符串时默认搜索该字符串。
 
+  - page.ele('.ele_class')                                 - 返回第一个 class 为 ele_class 的元素
+  - page.ele('.:ele_class')                                - 返回第一个 class 中含有 ele_class 的元素
+  - page.ele('#ele_id')                                      - 返回第一个 id 为 ele_id 的元素
+  - page.ele('#:ele_id')                                     - 返回第一个 id 中含有 ele_id 的元素
   - page.ele('@class:ele_class')                      - 返回第一个 class 含有 ele_class 的元素
   - page.ele('@name=ele_name')                    - 返回第一个 name 等于 ele_name 的元素
   - page.ele('@placeholder')                            - 返回第一个带 placeholder 属性的元素
@@ -1793,7 +1797,7 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 ### ele()
 
 返回当前元素下级符合条件的子元素、属性或节点文本。  
-如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
+如查询参数是字符串，可选 '@属性名:'、'tag:'、'text:'、'css:'、'xpath:'、'.'、'#' 方式。无控制方式时默认用 text 方式查找。  
 如是loc，直接按照内容查询。
 
 参数说明：
@@ -1806,27 +1810,31 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 
 - 用loc元组查找：
 
-  - ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素
+  - ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为 ele_class 的子元素
 
 - 用查询字符串查找：
 
-  属性、tag name和属性、文本、xpath、css selector。
+  属性、tag name和属性、文本、xpath、css selector、id、class。
 
-  其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串。
+  @ 表示属性，. 表示 class，# 表示 id，= 表示精确匹配，: 表示模糊匹配，无控制字符串时默认搜索该字符串。
 
-  - ele.ele('@class:ele_class')                      - 返回第一个 class 含有e le_class 的元素
-  - ele.ele('@name=ele_name')                    - 返回第一个 name 等于 ele_name 的元素
-  - ele.ele('@placeholder')                            - 返回第一个带 placeholder 属性的元素
-  - ele.ele('tag:p')                                          - 返回第一个 p 元素
-  - ele.ele('tag:div@class:ele_class')            - 返回第一个 class 含有 ele_class 的 div 元素
-  - ele.ele('tag:div@class=ele_class')           - 返回第一个 class 等于 ele_class 的 div 元素
-  - ele.ele('tag:div@text():some_text')           - 返回第一个文本含有 some_text 的 div 元素
-  - ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于 some_tex t的 div 元素
-  - ele.ele('text:some_text')                            - 返回第一个文本含有 some_text 的元素
-  - ele.ele('some_text')                                   - 返回第一个文本含有 some_text 的元素（等价于上一行）
-  - ele.ele('text=some_text')                           - 返回第一个文本等于 some_text 的元素
-  - ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合 xpath 的元素
-  - ele.ele('css:div.ele_class')                         - 返回第一个符合 css selector 的元素
+  - ele.ele('.ele_class')                                 - 返回第一个 class 为 ele_class 的子元素
+  - ele.ele('.:ele_class')                                - 返回第一个 class 中含有 ele_class 的子元素
+  - ele.ele('#ele_id')                                      - 返回第一个 id 为 ele_id 的子元素
+  - ele.ele('#:ele_id')                                     - 返回第一个 id 中含有 ele_id 的子元素
+  - ele.ele('@class:ele_class')                      - 返回第一个 class 含有e le_class 的子元素
+  - ele.ele('@name=ele_name')                    - 返回第一个 name 等于 ele_name 的子元素
+  - ele.ele('@placeholder')                            - 返回第一个带 placeholder 属性的子元素
+  - ele.ele('tag:p')                                          - 返回第一个 p 子元素
+  - ele.ele('tag:div@class:ele_class')            - 返回第一个 class 含有 ele_class 的 div 子元素
+  - ele.ele('tag:div@class=ele_class')           - 返回第一个 class 等于 ele_class 的 div 子元素
+  - ele.ele('tag:div@text():some_text')           - 返回第一个文本含有 some_text 的 div 子元素
+  - ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于 some_tex t的 div 子元素
+  - ele.ele('text:some_text')                            - 返回第一个文本含有 some_text 的子元素
+  - ele.ele('some_text')                                   - 返回第一个文本含有 some_text 的子元素（等价于上一行）
+  - ele.ele('text=some_text')                           - 返回第一个文本等于 some_text 的子元素
+  - ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合 xpath 的子元素
+  - ele.ele('css:div.ele_class')                         - 返回第一个符合 css selector 的子元素
 
 返回: [DriverElement, str]
 
@@ -2181,41 +2189,45 @@ session 模式的元素对象，包装了一个Element对象，并封装了常�
 ### ele()
 
 根据查询参数获取元素。  
-如查询参数是字符串，可选'@属性名:'、'tag:'、'text:'、'css:'、'xpath:'方式。无控制方式时默认用text方式查找。  
+如查询参数是字符串，可选 '@属性名:'、'tag:'、'text:'、'css:'、'xpath:'、'.'、'#' 方式。无控制方式时默认用 text 方式查找。  
 如是loc，直接按照内容查询。
 
 参数说明：
 
 - loc_or_str:[Tuple[str, str], str]  - 查询条件参数
 
-- mode:str                                 - 查找一个或多个，传入'single'或'all'
+- mode:str                                 - 查找一个或多个，传入 'single' 或 'all'
 
 
 示例：
 
 - 用loc元组查找：
 
-- ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素
+- ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为 ele_class 的子元素
 
 - 用查询字符串查找：
 
-属性、tag name和属性、文本、xpath、css selector。
+属性、tag name和属性、文本、xpath、css selector、id、class。
 
-其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串。
+@ 表示属性，. 表示 class，# 表示 id，= 表示精确匹配，: 表示模糊匹配，无控制字符串时默认搜索该字符串。
 
-- ele.ele('@class:ele_class')                      - 返回第一个 class 含有 ele_class 的元素
-- ele.ele('@name=ele_name')                    - 返回第一个 name 等于 ele_name 的元素
-- ele.ele('@placeholder')                            - 返回第一个带 placeholder 属性的元素
-- ele.ele('tag:p')                                          - 返回第一个 p 元素
-- ele.ele('tag:div@class:ele_class')            - 返回第一个 class 含有 ele_class 的div元素
-- ele.ele('tag:div@class=ele_class')           - 返回第一个 class 等于 ele_class 的div元素
-- ele.ele('tag:div@text():some_text')           - 返回第一个文本含有 some_text 的div元素
-- ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于 some_text 的div元素
-- ele.ele('text:some_text')                            - 返回第一个文本含有 some_text 的元素
-- ele.ele('some_text')                                   - 返回第一个文本含有 some_text 的元素（等价于上一行）
-- ele.ele('text=some_text')                           - 返回第一个文本等于 some_text 的元素
-- ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合 xpath 的元素
-- ele.ele('css:div.ele_class')                         - 返回第一个符合 css selector 的元素
+- ele.ele('.ele_class')                                 - 返回第一个 class 为 ele_class 的子元素
+- ele.ele('.:ele_class')                                - 返回第一个 class 中含有 ele_class 的子元素
+- ele.ele('#ele_id')                                      - 返回第一个 id 为 ele_id 的子元素
+- ele.ele('#:ele_id')                                     - 返回第一个 id 中含有 ele_id 的子元素
+- ele.ele('@class:ele_class')                      - 返回第一个 class 含有e le_class 的子元素
+- ele.ele('@name=ele_name')                    - 返回第一个 name 等于 ele_name 的子元素
+- ele.ele('@placeholder')                            - 返回第一个带 placeholder 属性的子元素
+- ele.ele('tag:p')                                          - 返回第一个 p 子元素
+- ele.ele('tag:div@class:ele_class')            - 返回第一个 class 含有 ele_class 的 div 子元素
+- ele.ele('tag:div@class=ele_class')           - 返回第一个 class 等于 ele_class 的 div 子元素
+- ele.ele('tag:div@text():some_text')           - 返回第一个文本含有 some_text 的 div 子元素
+- ele.ele('tag:div@text()=some_text')          - 返回第一个文本等于 some_tex t的 div 子元素
+- ele.ele('text:some_text')                            - 返回第一个文本含有 some_text 的子元素
+- ele.ele('some_text')                                   - 返回第一个文本含有 some_text 的子元素（等价于上一行）
+- ele.ele('text=some_text')                           - 返回第一个文本等于 some_text 的子元素
+- ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合 xpath 的子元素
+- ele.ele('css:div.ele_class')                         - 返回第一个符合 css selector 的子元素
 
 返回: [SessionElement, str]
 
@@ -2244,6 +2256,30 @@ session 模式的元素对象，包装了一个Element对象，并封装了常�
 参数说明：
 
 - path:str  - ini文件路径，不传入则默认读取当前文件夹下的 configs.ini 文件
+
+
+
+### paths
+
+返回 paths 设置信息。
+
+返回: dict
+
+
+
+### chrome_options
+
+返回 chrome 设置信息。
+
+返回: dict
+
+
+
+### session_options
+
+返回 session 设置信息。
+
+返回: dict
 
 
 
@@ -2475,6 +2511,14 @@ on_off: bool  - 打开或关闭
 ## easy_set方法
 
 chrome 的配置太难记，所以把常用的配置写成简单的方法，调用会修改 ini 文件相关内容。
+
+### show_settings()
+
+打印 ini 文件中所有配置信息。
+
+返回: None
+
+
 
 ### set_paths()
 

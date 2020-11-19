@@ -1202,7 +1202,7 @@ Returns: None
 ### ele()
 
 Return the eligible elements on the page, the first one is returned by default.
-If the query parameter is a string, the options of'@attribute name:','tag:','text:','css:', and'xpath:' are available. When there is no control mode, the text mode is used to search by default.
+If the query parameter is a string, the options of '@attribute name:', 'tag:', 'text:', 'css:', 'xpath:', '.', '#' are available. When there is no control mode, the text mode is used to search by default.
 If it is loc, query directly according to the content.
 
 Parameter Description:
@@ -1221,10 +1221,14 @@ Example:
 
 - Find with query string:
 
-  Attributes, tag name and attributes, text, xpath, css selector.
+  Attributes, tag name and attributes, text, xpath, css selector, id, class.
 
-  Among them, @ means attribute, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
+  @ Means attribute,. Means class, # means id, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
 
+  - page.ele('.ele_class')  - returns the first element whose name is equal to ele_name
+  - page.ele('.:ele_class')  - returns the element with ele_class in the first class
+  - page.ele('#ele_id')  - Return the first element with id ele_id
+  - page.ele('#:ele_id')  - Returns the element with ele_id in the first id
   - page.ele('@class:ele_class')  - returns the element with ele_class in the first class
   - page.ele('@name=ele_name')  - returns the first element whose name is equal to ele_name
   - page.ele('@placeholder')  - returns the first element with placeholder attribute
@@ -1797,7 +1801,7 @@ Returns: str
 ### ele()
 
 Returns the sub- elements, attributes or node texts of the current element that meet the conditions.
-If the query parameter is a string, the options of'@attribute name:','tag:','text:','css:', and'xpath:' are available. When there is no control mode, the text mode is used to search by default.
+If the query parameter is a string, the options of '@attribute name:', 'tag:', 'text:', 'css:', 'xpath:', '.', '#' are available. When there is no control mode, the text mode is used to search by default.
 If it is loc, query directly according to the content.
 
 Parameter Description:
@@ -1814,23 +1818,43 @@ Example:
 
 - Find with query string:
 
-  Attributes, tag name and attributes, text, xpath, css selector.
+  Attributes, tag name and attributes, text, xpath, css selector, id, class.
 
-  Among them, @ means attribute, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
+  @ Means attribute,. Means class, # means id, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
 
-  - ele.ele('@class:ele_class')  - returns the first class element that contains ele_class
-  - ele.ele('@name=ele_name')  - returns the first element whose name is equal to ele_name
-  - ele.ele('@placeholder')  - returns the first element with placeholder attribute
-  - ele.ele('tag:p')  - returns the first p element
-  - ele.ele('tag:div@class:ele_class')    - Returns the div element with ele_class in the first class
-  - ele.ele('tag:div@class=ele_class')  - returns the first div element whose class is equal to ele_class
-  - ele.ele('tag:div@text():some_text')  - returns the first div element whose text contains some_text
-  - ele.ele('tag:div@text()=some_text')    - Returns the first div element whose text is equal to some_text
-  - ele.ele('text:some_text')  - returns the first element whose text contains some_text
-  - ele.ele('some_text')  - returns the first text element containing some_text (equivalent to the previous line)
-  - ele.ele('text=some_text')  - returns the first element whose text is equal to some_text
-  - ele.ele('xpath://div[@class="ele_class"]')  - Return the first element that matches xpath
-  - ele.ele('css:div.ele_class')  - returns the first element that matches the css selector
+  - ele.ele('.ele_class')-returns the first child element whose class is ele_class
+
+  - ele.ele('.:ele_class')-returns the child elements of the first class that contain ele_class
+
+  - ele.ele('#ele_id')-returns the first child element with id ele_id
+
+  - ele.ele('#:ele_id')-Returns the child element with ele_id in the first id
+
+  - ele.ele('@class:ele_class')-returns the first class that contains e le_class
+
+  - ele.ele('@name=ele_name')-returns the first child element whose name is equal to ele_name
+
+  - ele.ele('@placeholder')-returns the first child element with placeholder attribute
+
+  - ele.ele('tag:p')-returns the first p child element
+
+  - ele.ele('tag:div@class:ele_class')-returns the first div sub-element that contains ele_class
+
+  - ele.ele('tag:div@class=ele_class')-returns the first div child element whose class is equal to ele_class
+
+  - ele.ele('tag:div@text():some_text')-returns the first div child element whose text contains some_text
+
+  - ele.ele('tag:div@text()=some_text')-returns the first div child element whose text is equal to some_tex t
+
+  - ele.ele('text:some_text')-returns the first child element whose text contains some_text
+
+  - ele.ele('some_text')-returns the first text element with some_text (equivalent to the previous line)
+
+  - ele.ele('text=some_text')-returns the first child element whose text is equal to some_text
+
+  - ele.ele('xpath://div[@class="ele_class"]')-Return the first child element that matches xpath
+
+  - ele.ele('css:div.ele_class')-returns the first child element that matches the css selector
 
 Returns: [DriverElement, str]
 
@@ -2185,7 +2209,7 @@ Returns: str
 ### ele()
 
 Get elements based on query parameters.
-If the query parameter is a string, you can choose the methods of'@attribute name:','tag:','text:','css:', and'xpath:'. When there is no control mode, the text mode is used to search by default.
+If the query parameter is a string, you can choose the methods of '@attribute name:', 'tag:', 'text:', 'css:', 'xpath:', '.', '#'. When there is no control mode, the text mode is used to search by default.
 If it is loc, query directly according to the content.
 
 Parameter Description:
@@ -2203,23 +2227,43 @@ Example:
 
 - Find with query string:
 
-Attributes, tag name and attributes, text, xpath, css selector.
+Attributes, tag name and attributes, text, xpath, css selector, id, class.
 
-Among them, @ means attribute, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
+@ Means attribute,. Means class, # means id, = means exact match,: means fuzzy match, the string is searched by default when there is no control string.
 
-- ele.ele('@class:ele_class')  - return the first class element containing ele_class
-- ele.ele('@name=ele_name')  - returns the first element whose name is equal to ele_name
-- ele.ele('@placeholder')  - returns the first element with placeholder attribute
-- ele.ele('tag:p')  - return the first p element
-- ele.ele('tag:div@class:ele_class')    - Returns the div element with ele_class in the first class
-- ele.ele('tag:div@class=ele_class')  - returns the first div element whose class is equal to ele_class
-- ele.ele('tag:div@text():some_text')  - returns the first div element whose text contains some_text
-- ele.ele('tag:div@text()=some_text')    - Returns the first div element whose text is equal to some_text
-- ele.ele('text:some_text')  - returns the first element whose text contains some_text
-- ele.ele('some_text')  - returns the first element whose text contains some_text (equivalent to the previous line)
-- ele.ele('text=some_text')  - returns the first element whose text is equal to some_text
-- ele.ele('xpath://div[@class="ele_class"]')    - Return the first element that matches xpath
-- ele.ele('css:div.ele_class')  - returns the first element that matches the css selector
+- ele.ele('.ele_class')-returns the first child element whose class is ele_class
+
+- ele.ele('.:ele_class')-returns the child elements of the first class that contain ele_class
+
+- ele.ele('#ele_id')-returns the first child element with id ele_id
+
+- ele.ele('#:ele_id')-Returns the child element with ele_id in the first id
+
+- ele.ele('@class:ele_class')-returns the first class that contains e le_class
+
+- ele.ele('@name=ele_name')-returns the first child element whose name is equal to ele_name
+
+- ele.ele('@placeholder')-returns the first child element with placeholder attribute
+
+- ele.ele('tag:p')-returns the first p child element
+
+- ele.ele('tag:div@class:ele_class')-returns the first div sub-element that contains ele_class
+
+- ele.ele('tag:div@class=ele_class')-returns the first div child element whose class is equal to ele_class
+
+- ele.ele('tag:div@text():some_text')-returns the first div child element whose text contains some_text
+
+- ele.ele('tag:div@text()=some_text')-returns the first div child element whose text is equal to some_tex t
+
+- ele.ele('text:some_text')-returns the first child element whose text contains some_text
+
+- ele.ele('some_text')-returns the first text element with some_text (equivalent to the previous line)
+
+- ele.ele('text=some_text')-returns the first child element whose text is equal to some_text
+
+- ele.ele('xpath://div[@class="ele_class"]')-Return the first child element that matches xpath
+
+- ele.ele('css:div.ele_class')-returns the first child element that matches the css selector
 
 Returns: [SessionElement, str]
 
@@ -2248,6 +2292,30 @@ The class that manages the content of the configuration file.
 Parameter Description:
 
 - path: str  - the path of the ini file, if not passed in, the configs.ini file in the current folder will be read by default
+
+
+
+### paths
+
+Return paths setting information.
+
+Returns: dict
+
+
+
+### chrome_options
+
+Return to chrome setting information.
+
+Returns: dict
+
+
+
+### session_options
+
+Return session setting information.
+
+Returns: dict
 
 
 
@@ -2479,6 +2547,14 @@ Return: DriverOptions    - return self
 ## easy_set method
 
 Chrome's configuration is too difficult to remember, so the commonly used configuration is written as a simple method, and the call will modify the relevant content of the ini file.
+
+### show_settings()
+
+Print all configuration information in the ini file.
+
+Returns: None
+
+
 
 ### set_paths()
 
