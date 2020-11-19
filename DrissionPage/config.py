@@ -30,6 +30,27 @@ class OptionsManager(object):
             self.set_item('paths', 'global_tmp_path', global_tmp_path)
             self.save()
 
+    def __text__(self) -> str:
+        """打印ini文件内容"""
+        return (f"paths:\n"
+                f"{self.get_option('paths')}\n\n"
+                "chrome options:\n"
+                f"{self.get_option('chrome_options')}\n\n"
+                "session options:\n"
+                f"{self.get_option('session_options')}")
+
+    @property
+    def paths(self) -> dict:
+        return self.get_option('paths')
+
+    @property
+    def chrome_options(self) -> dict:
+        return self.get_option('chrome_options')
+
+    @property
+    def session_options(self) -> dict:
+        return self.get_option('session_options')
+
     def get_value(self, section: str, item: str) -> Any:
         """获取配置的值         \n
         :param section: 段名
