@@ -4,11 +4,28 @@
 @Contact :   g1879@qq.com
 @File    :   driver_page.py
 """
+from re import search as RE_SEARCH
+from os import popen
+from pathlib import Path
+from pprint import pprint
 from typing import Union
 
 from selenium import webdriver
 
 from DrissionPage.config import OptionsManager, DriverOptions
+from DrissionPage.session_page import SessionPage
+from DrissionPage.drission import Drission
+
+
+def show_settings() -> None:
+    """打印ini文件内容"""
+    om = OptionsManager()
+    print('paths:')
+    pprint(om.get_option('paths'))
+    print('\nchrome options:')
+    pprint(om.get_option('chrome_options'))
+    print('\nsession options:')
+    pprint(om.get_option('session_options'))
 
 
 def set_paths(driver_path: str = None,
@@ -157,3 +174,46 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
                 '''
         print(info)
         return False
+
+
+def _get_chrome_path() -> str:
+    paths = popen('set path').read().lower()
+    r = RE_SEARCH(r'[^;]*chrome[^;]*', paths)
+
+    if r:
+        path = Path(r.group(0)) if 'chrome.exe' in r.group(0) else Path(r.group(0)) / 'chrome.exe'
+        if path.exists():
+            return str(path)
+
+    paths = paths.split(';')
+
+    for path in paths:
+        path = Path(path) / 'chrome.exe'
+        if path.exists():
+            return str(path)
+
+
+def _get_chrome_version(path: str) -> Union[str, None]:
+    path = path.replace('\\', '\\\\')
+
+    try:
+        version = popen(f'wmic datafile where "name=\'{path}\'" get version').read().lower().split('\n')[2]
+        return version
+    except:
+        return None
+
+
+def _download_driver(version: str) -> bool:
+    page = SessionPage(Drission().session)
+    page.get('http://npm.taobao.org/mirrors/chromedriver')
+
+    if version in page.html:
+        url = f'https://cdn.npm.taobao.org/dist/chromedriver/{version}/chromedriver_win32.zip'
+        result = page.download(url, '.', show_msg=True)
+
+        if result[0]:
+            return result[1]
+    else:
+        pass
+
+    return True
