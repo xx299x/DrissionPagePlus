@@ -10,6 +10,7 @@ from pathlib import Path
 from re import split as re_SPLIT
 from shutil import rmtree
 from typing import Union
+from zipfile import ZipFile
 
 from lxml.html import HtmlElement
 from selenium.webdriver.remote.webelement import WebElement
@@ -102,15 +103,15 @@ def str_to_loc(loc: str) -> tuple:
     # .和#替换为class和id查找
     if loc.startswith('.'):
         if loc.startswith(('.=', '.:',)):
-            loc.replace('.', '@class', 1)
+            loc = loc.replace('.', '@class', 1)
         else:
-            loc.replace('.', '@class=', 1)
+            loc = loc.replace('.', '@class=', 1)
 
     if loc.startswith('#'):
         if loc.startswith(('#=', '#:',)):
-            loc.replace('#', '@id', 1)
+            loc = loc.replace('#', '@id', 1)
         else:
-            loc.replace('#', '@id=', 1)
+            loc = loc.replace('#', '@id=', 1)
 
     # 根据属性查找
     if loc.startswith('@'):
@@ -281,3 +282,12 @@ def clean_folder(folder_path: str, ignore: list = None) -> None:
                 f.unlink()
             elif f.is_dir():
                 rmtree(f, True)
+
+
+def unzip(zip_path: str, to_path: str) -> Union[list, None]:
+    """解压下载的chromedriver.zip文件"""
+    if not zip_path:
+        return
+
+    with ZipFile(zip_path, 'r') as f:
+        return [f.extract(f.namelist()[0], path=to_path)]
