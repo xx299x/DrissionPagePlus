@@ -304,9 +304,8 @@ page.download(url, save_path)
 ```
 pip install DrissionPage
 ```
-Only supports python3.6 and above, and the driver mode currently only supports chrome.
+Only supports python3.6 and above, and the driver mode currently only supports chrome.It has only been tested in the Windows environment.
 To use the driver mode, you must download chrome and **corresponding version** of chromedriver. [[chromedriver download]](https://chromedriver.chromium.org/downloads)
-It has only been tested in the Windows environment.
 
 # Instructions
 
@@ -2546,7 +2545,15 @@ Return: DriverOptions    - return self
 
 ## easy_set method
 
-Chrome's configuration is too difficult to remember, so the commonly used configuration is written as a simple method, and the call will modify the relevant content of the ini file.
+Chrome configuration is too complicated, so the commonly used configuration is written as a simple method, and the related content of the ini file will be modified by calling.
+
+### get_match_driver()
+
+Automatically identify the chrome version and download the matching driver. Get the chrome.exe path recorded in the ini file, if not, get the path in the system variable.
+
+Returns: None
+
+
 
 ### show_settings()
 
