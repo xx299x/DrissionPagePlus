@@ -4,13 +4,13 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
-
+from sys import exit
 from typing import Union
 from urllib.parse import urlparse
 
 from requests import Session
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
@@ -99,7 +99,11 @@ class Drission(object):
             if self._proxy:
                 options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
-            self._driver = webdriver.Chrome(self._driver_path, options=options)
+            try:
+                self._driver = webdriver.Chrome(self._driver_path, options=options)
+            except SessionNotCreatedException:
+                print('Chrome版本与chromedriver版本不匹配，可执行easy_set.get_match_driver()自动下载匹配的版本。')
+                exit(0)
 
             # 反爬设置，似乎没用
             self._driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
