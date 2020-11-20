@@ -108,6 +108,7 @@ def set_headless(on_off: bool = True, ini_path: str = None) -> None:
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
+    on_off = True if on_off else False
     set_argument('--headless', on_off, ini_path)
 
 
@@ -117,6 +118,7 @@ def set_no_imgs(on_off: bool = True, ini_path: str = None) -> None:
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
+    on_off = True if on_off else False
     set_argument('--blink-settings=imagesEnabled=false', on_off, ini_path)
 
 
@@ -126,6 +128,7 @@ def set_no_js(on_off: bool = True, ini_path: str = None) -> None:
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
+    on_off = True if on_off else False
     set_argument('--disable-javascript', on_off, ini_path)
 
 
@@ -135,6 +138,7 @@ def set_mute(on_off: bool = True, ini_path: str = None) -> None:
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
+    on_off = True if on_off else False
     set_argument('--mute-audio', on_off, ini_path)
 
 
@@ -180,7 +184,7 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
         return True
 
     except Exception as e:
-        print(f'出现异常：\n{e}\n，可执行easy_set.get_match_driver()自动下载匹配的版本。\n'
+        print(f'出现异常：\n{e}\n可执行easy_set.get_match_driver()自动下载匹配的版本。\n'
               f'或自行从以下网址下载：https://chromedriver.chromium.org/downloads')
 
         return False
@@ -188,7 +192,11 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
 
 # -------------------------自动识别chrome版本号并下载对应driver------------------------
 def get_match_driver(ini_path: str = None, save_path: str = None) -> None:
-    """自动识别chrome版本并下载匹配的driver"""
+    """自动识别chrome版本并下载匹配的driver             \n
+    :param ini_path: 要读取和修改的ini文件路径
+    :param save_path: chromedriver保存路径
+    :return: None
+    """
     save_path = save_path or str(Path(__file__).parent)
 
     chrome_path = _get_chrome_path(ini_path)
@@ -220,7 +228,10 @@ def get_match_driver(ini_path: str = None, save_path: str = None) -> None:
 
 
 def _get_chrome_path(ini_path: str = None) -> Union[str, None]:
-    """从ini文件或系统变量中获取chrome.exe的路径"""
+    """从ini文件或系统变量中获取chrome.exe的路径    \n
+    :param ini_path: ini文件路径
+    :return: chrome.exe路径
+    """
     # -----------从ini文件中获取--------------
     try:
         path = OptionsManager(ini_path).chrome_options['binary_location']
@@ -253,7 +264,7 @@ def _get_chrome_path(ini_path: str = None) -> Union[str, None]:
 
 
 def _get_chrome_version(path: str) -> Union[str, None]:
-    """根据文件路径获取版本号          \n
+    """根据文件路径获取版本号              \n
     :param path: chrome.exe文件路径
     :return: 版本号
     """
