@@ -18,9 +18,9 @@ from DrissionPage.session_page import SessionPage
 from common import unzip
 
 
-def show_settings() -> None:
+def show_settings(ini_path: str = None) -> None:
     """打印ini文件内容"""
-    om = OptionsManager()
+    om = OptionsManager(ini_path)
     print('paths:')
     pprint(om.get_option('paths'))
     print('\nchrome options:')
