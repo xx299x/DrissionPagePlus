@@ -91,12 +91,16 @@ class OptionsManager(object):
         return self
 
     def save(self, path: str = None):
-        """保存配置文件                                      \n
-        :param path: ini文件的路径，默认保存到模块文件夹下的
+        """保存配置文件                                               \n
+        :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 当前对象
         """
-        path = path or self.path
+        path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
+        path = Path(path or self.path)
+        path = path / 'config.ini' if path.is_dir() else path
+        path = path.absolute()
         self._conf.write(open(path, 'w', encoding='utf-8'))
+
         return self
 
 
@@ -108,6 +112,7 @@ class DriverOptions(Options):
     def __init__(self, read_file: bool = True, ini_path: str = None):
         """初始化，默认从文件读取设置                      \n
         :param read_file: 是否从默认ini文件中读取配置信息
+        :param ini_path: ini文件路径，为None则读取默认ini文件
         """
         super().__init__()
         self._driver_path = None
@@ -135,13 +140,16 @@ class DriverOptions(Options):
         return self.binary_location
 
     def save(self, path: str = None):
-        """保存设置到文件                                     \n
-        :param path: ini文件的路径，默认保存到模块文件夹下的
+        """保存设置到文件                                              \n
+        :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 当前对象
         """
         om = OptionsManager()
         options = _chrome_options_to_dict(self)
-        path = path or self.path
+        path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
+        path = Path(path or self.path)
+        path = path / 'config.ini' if path.is_dir() else path
+        path = path.absolute()
 
         for i in options:
             if i == 'driver_path':
@@ -206,6 +214,7 @@ class DriverOptions(Options):
         :param on_off: 开或关
         :return: 当前对象
         """
+        on_off = True if on_off else False
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off: bool = True):
@@ -213,6 +222,7 @@ class DriverOptions(Options):
         :param on_off: 开或关
         :return: 当前对象
         """
+        on_off = True if on_off else False
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
     def set_no_js(self, on_off: bool = True):
@@ -220,6 +230,7 @@ class DriverOptions(Options):
         :param on_off: 开或关
         :return: 当前对象
         """
+        on_off = True if on_off else False
         return self.set_argument('--disable-javascript', on_off)
 
     def set_mute(self, on_off: bool = True):
@@ -227,6 +238,7 @@ class DriverOptions(Options):
         :param on_off: 开或关
         :return: 当前对象
         """
+        on_off = True if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
     def set_user_agent(self, user_agent: str):
