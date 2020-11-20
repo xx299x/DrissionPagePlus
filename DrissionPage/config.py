@@ -20,7 +20,7 @@ class OptionsManager(object):
         """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建  \n
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
-        self.path = path or Path(__file__).parent / 'configs.ini'
+        self.path = path or str(Path(__file__).parent / 'configs.ini')
         self._conf = ConfigParser()
         self._conf.read(self.path, encoding='utf-8')
 
@@ -95,7 +95,7 @@ class OptionsManager(object):
         :param path: ini文件的路径，默认保存到模块文件夹下的
         :return: 当前对象
         """
-        path = path or Path(__file__).parent / 'configs.ini'
+        path = path or self.path
         self._conf.write(open(path, 'w', encoding='utf-8'))
         return self
 
@@ -105,21 +105,24 @@ class DriverOptions(Options):
     增加了删除配置和保存到文件方法。
     """
 
-    def __init__(self, read_file: bool = True):
+    def __init__(self, read_file: bool = True, ini_path: str = None):
         """初始化，默认从文件读取设置                      \n
         :param read_file: 是否从默认ini文件中读取配置信息
         """
         super().__init__()
         self._driver_path = None
+        self.path = None
 
         if read_file:
-            options_dict = OptionsManager().get_option('chrome_options')
-            paths_dict = OptionsManager().get_option('paths')
+            self.path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            om = OptionsManager(self.path)
+            options_dict = om.chrome_options
+            paths_dict = om.paths
             self._binary_location = options_dict['binary_location'] if 'binary_location' in options_dict else ''
             self._arguments = options_dict['arguments'] if 'arguments' in options_dict else []
             self._extensions = options_dict['extensions'] if 'extensions' in options_dict else []
-            self._experimental_options = options_dict[
-                'experimental_options'] if 'experimental_options' in options_dict else {}
+            self._experimental_options = (options_dict['experimental_options']
+                                          if 'experimental_options' in options_dict else {})
             self._debugger_address = options_dict['debugger_address'] if 'debugger_address' in options_dict else None
             self._driver_path = paths_dict['chromedriver_path'] if 'chromedriver_path' in paths_dict else None
 
@@ -138,12 +141,16 @@ class DriverOptions(Options):
         """
         om = OptionsManager()
         options = _chrome_options_to_dict(self)
+        path = path or self.path
+
         for i in options:
             if i == 'driver_path':
                 om.set_item('paths', 'chromedriver_path', options[i])
             else:
                 om.set_item('chrome_options', i, options[i])
+
         om.save(path)
+
         return self
 
     def remove_argument(self, value: str):
