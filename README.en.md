@@ -80,11 +80,11 @@ The page element class in session mode can obtain element attribute values and s
 
 The following code implements exactly the same function, compare the amount of code between the two:
 
-- Use explicit waiting to find all elements that contain some text
+- Find the first element whose text contains some text with explicit wait
 
 ```python
 # Use selenium:
-element = WebDriverWait(driver).until(ec.presence_of_all_elements_located((By.XPATH,'//*[contains(text(), "some text")]')))
+element = WebDriverWait(driver).until(ec.presence_of_element_located((By.XPATH,'//*[contains(text(), "some text")]')))
 
 # Use DrissionPage:
 element = page('some text')
@@ -179,11 +179,11 @@ shadow_element = element.shadow_root
 
 
 
-- Use xpath to get attributes or nodes
+- Use xpath to get attributes or text nodes directly
 
 ```python
 # Use selenium:
-The usage is not supported
+Quite complicated
 
 # Use DrissionPage:
 class_name = element('xpath://div[@id="div_id"]/@class')
@@ -305,7 +305,8 @@ page.download(url, save_path)
 pip install DrissionPage
 ```
 Only supports python3.6 and above, and the driver mode currently only supports chrome.It has only been tested in the Windows environment.
-To use the driver mode, you must download chrome and **corresponding version** of chromedriver. [[chromedriver download]](https://chromedriver.chromium.org/downloads)
+To use the driver mode, you must download chrome and **corresponding version** of chromedriver. [[chromedriver download]](https://chromedriver.chromium.org/downloads)  
+The get_match_driver() method in the easy_set tool can automatically identify the chrome version and download the matching driver.
 
 # Instructions
 
@@ -314,7 +315,7 @@ To use the driver mode, you must download chrome and **corresponding version** o
 ## Import module
 
 ```python
-from DrissionPage import *
+from DrissionPage import MixPage
 ```
 
 
@@ -325,31 +326,74 @@ If you only use session mode, you can skip this section.
 
 Before using selenium, you must configure the path of chrome.exe and chromedriver.exe and ensure that their versions match.
 
-There are three ways to configure the path:
-- Write two paths to system variables.
-- Manually pass in the path when in use.
-- Write the path to the ini file of this library (recommended).
+There are four ways to configure the path:
+-Use the get_match_driver() method of the easy_set tool (recommended)
+-Write the path to the ini file of this library
+-Write two paths to system variables
+-Manually pass in the path when using
 
-If you choose the third method, please run these lines of code before using this library for the first time and record these two paths in the ini file.
+### Use get_match_driver() method
+
+If you choose the first method, please run the following code before using it for the first time. The program will automatically detect the Chrome version installed on your computer, download the corresponding driver, and record it in the ini file.
+
+```python
+from DrissionPage.easy_set import get_match_driver
+get_match_driver()
+```
+
+Output:
+
+```
+ini文件中chrome.exe路径 D:\Google Chrome\Chrome\chrome.exe 
+
+version 75.0.3770.100 
+
+chromedriver_win32.zip
+Downloading to: D:\python\projects\DrissionPage\DrissionPage
+ 100% Success.
+
+解压路径 D:\python\projects\chromedriver.exe 
+
+正在检测可用性...
+版本匹配，可正常使用。
+```
+
+Then you can start using it.
+
+If you want to specify the save path of the ini file and chromedriver.exe, you can write:
+
+```python
+get_match_driver(ini_path ='ini file path', save_path ='save path')
+```
+
+
+
+### Use set_paths() method
+
+If the previous method fails, you can download chromedriver.exe yourself, and then run the following code to record the path to the ini file.
 
 ```python
 from DrissionPage.easy_set import set_paths
-driver_path ='D:\\chrome\\chromedriver.exe'  # Your chromedriver.exe path, optional
-chrome_path ='D:\\chrome\\chrome.exe'  # Your chrome.exe path, optional
+driver_path ='D:\\chrome\\chromedriver.exe' # Your chromedriver.exe path, if not filled in, it will be searched in system variables
+chrome_path ='D:\\chrome\\chrome.exe' # Your chrome.exe path, if not filled in, it will be searched in system variables
 set_paths(driver_path, chrome_path)
 ```
 
 This method also checks whether the chrome and chromedriver versions match, and displays:
 
 ```
-The version matches and can be used normally.
+正在检测可用性...
+版本匹配，可正常使用。
+```
 
-# Or
+or
 
-Abnormal:
+```
+出现异常：
 Message: session not created: Chrome version must be between 70 and 73
   (Driver info: chromedriver=73.0.3683.68 (47787ec04b6e38e22703e856e101e840b65afe72),platform=Windows NT 10.0.19631 x86_64)
-chromedriver download URL: https://chromedriver.chromium.org/downloads
+可执行easy_set.get_match_driver()自动下载匹配的版本。
+或自行从以下网址下载：https://chromedriver.chromium.org/downloads
 ```
 
 After passing the check, you can use the driver mode normally.
@@ -390,10 +434,9 @@ drission = Drission(ini_path ='D:\\settings.ini')
 drission = Drission(read_file = False)
 ```
 
-To manually pass in the configuration:
+To manually pass in the configuration (ignore the ini file):
 
 ```python
-# Create with the incoming configuration information (ignore the ini file)
 from DrissionPage.config import DriverOptions
 
 # Create a driver configuration object, read_file = False means not to read the ini file
@@ -417,7 +460,7 @@ drission = Drission(driver_options, session_options)
 The MixPage page object encapsulates common web page operations and realizes the switch between driver and session modes.
 MixPage must receive a Drission object and use the driver or session in it. If it is not passed in, MixPage will create a Drission by itself (using the configuration of the default ini file).
 
-Tips: When multiple page objects work together, remember to manually create a Drission object and pass it to the page object for use. Otherwise, the page objects will each create their own Drission objects, making the information unable to pass.
+Tips: When multiple objects work together, you can pass the Drission object in one MixPage to another, so that multiple objects can share login information or operate the same page.
 
 ### Create Object
 
@@ -432,7 +475,7 @@ page = MixPage('s')
 page = MixPage(drission)
 page = MixPage(drission, mode='s', timeout=5)  # session mode, waiting time is 5 seconds (default 10 seconds)
 
-# Create with incoming configuration information
+# Incoming configuration information, MixPage internally creates Drission according to the configuration
 page = MixPage(driver_options=DriverOption, session_options=SessionOption)  # default d mode
 ```
 
@@ -653,7 +696,7 @@ element.hover()  # Hover the mouse over the element
 
 ## Docking with selenium code
 
-The DrissionPage code can be seamlessly spliced ​​with the selenium code, either directly using the selenium WebDriver object, or using its own WebDriver everywhere for the selenium code. Make the migration of existing projects very convenient.
+The DrissionPage code can be seamlessly spliced with the selenium code, either directly using the selenium WebDriver object, or using its own WebDriver everywhere for the selenium code. Make the migration of existing projects very convenient.
 
 ### selenium to DrissionPage
 
@@ -717,19 +760,20 @@ The configuration of chrome is very cumbersome. In order to simplify the use, th
 The DriverOptions object inherits from the Options object of selenium.webdriver.chrome.options, and the following methods are added to it:
 
 ```python
-remove_argument(value)  # delete an argument value
-remove_experimental_option(key)  # delete an experimental_option setting
-remove_all_extensions()  # Remove all plugins
-save()  # Save the configuration to the default ini file
-save('D:\\settings.ini')  # save to other path
-set_argument(arg, value)  # set argument attribute
-set_headless(on_off)  # Set whether to use no interface mode
-set_no_imgs(on_off)  # Set whether to load images
-set_no_js(on_off)  # Set whether to disable js
-set_mute(on_off)  # Set whether to mute
-set_user_agent(user_agent)  # set user agent
-set_proxy(proxy)  # set proxy address
-set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_path, cache_path)  # Set browser- related paths
+options.remove_argument(value) # Remove an argument value
+options.remove_experimental_option(key) # delete an experimental_option setting
+options.remove_all_extensions() # Remove all plugins
+options.save() # Save the currently opened ini file
+options.save('D:\\settings.ini') # Save to the specified path ini file
+options.save('default') # Save the current settings to the default ini file
+options.set_argument(arg, value) # set argument property
+options.set_headless(on_off) # Set whether to use interfaceless mode
+options.set_no_imgs(on_off) # Set whether to load images
+options.set_no_js(on_off) # Set whether to disable js
+options.set_mute(on_off) # Set whether to mute
+options.set_user_agent(user_agent) # set user agent
+options.set_proxy(proxy) # Set proxy address
+options.set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_path, cache_path) # Set browser-related paths
 ```
 
 
@@ -737,16 +781,17 @@ set_paths(driver_path, chrome_path, debugger_address, download_path, user_data_p
 ### Instructions
 
 ```python
-do = DriverOptions(read_file=False)  # Create chrome configuration object, not read from ini file
-do.set_headless(False)  # show the browser interface
-do.set_no_imgs(True)  # Do not load pictures
-do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe')  # set path
-do.set_headless(False).set_no_imgs(True)  # Support chain operation
+do = DriverOptions(read_file=False) # Create chrome configuration object, do not read from ini file
+do.set_headless(False) # show the browser interface
+do.set_no_imgs(True) # Do not load pictures
+do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe') # set path
+do.set_headless(False).set_no_imgs(True) # Support chain operation
 
-drission = Drission(driver_options=do)  # Create Drission object with configuration object
-page = MixPage(drission)  # Create a MixPage object with Drission object
+drission = Drission(driver_options=do) # Create Drission object with configuration object
+page = MixPage(drission) # Create MixPage object with Drission object
 
-do.save()  # Save the configuration to the default ini file
+do.save() # Save the currently opened ini file
+do.save('default') # Save the current settings to the default ini file
 ```
 
 
@@ -821,11 +866,15 @@ headers = {
 The OptionsManager object is used to read, set and save the configuration.
 
 ```python
-get_value(section, item) - > str  # Get the value of a configuration
-get_option(section) - > dict  # Return all attributes of configuration in dictionary format
-set_item(section, item, value)  # Set configuration attributes
-save()  # Save the configuration to the default ini file
-save('D:\\settings.ini')  # save to other path
+manager.paths # Return path settings in dictionary form
+manager.chrome_options # Return chrome settings in dictionary form
+manager.session_options # Return session settings in dictionary form
+manager.get_value(section, item) # Get the value of a configuration
+manager.get_option(section) # Return all attributes of configuration in dictionary format
+manager.set_item(section, item, value) # Set configuration properties
+manager.manager.save() # Save the currently opened ini file
+manager.save('D:\\settings.ini') # Save to the specified path ini file
+manager.save('default') # Save the current settings to the default ini file
 ```
 
 
@@ -835,22 +884,20 @@ save('D:\\settings.ini')  # save to other path
 ```python
 from DrissionPage.configs import *
 
-options_manager = OptionsManager()  # Create OptionsManager object from the default ini file
-options_manager = OptionsManager('D:\\settings.ini')  # Create OptionsManager object from other ini files
-driver_path = options_manager.get_value('paths','chromedriver_path')  # read path information
-options_manager.save()  # Save to the default ini file
-options_manager.save('D:\\settings.ini')  # save to other path
+options_manager = OptionsManager() # Create OptionsManager object from the default ini file
+options_manager = OptionsManager('D:\\settings.ini') # Create OptionsManager object from other ini files
+driver_path = options_manager.get_value('paths','chromedriver_path') # read path information
+options_manager.save() # Save the currently opened ini file
+options_manager.save('D:\\settings.ini') # Save to the specified path ini file
 
-drission = Drission(ini_path ='D:\\settings.ini')  # Use other ini files to create objects
+drission = Drission(ini_path='D:\\settings.ini') # Use the specified ini file to create the object
 ```
-
-**Note**: If you do not pass in the path when saving, it will be saved to the ini file in the module directory, even if the read is not the default ini file.
 
 
 
 ## easy_set method
 
-Calling the easy_set method will modify the content of the default ini file.
+The methods of frequently used settings can be quickly modified. Calling the easy_set method will modify the content of the default ini file.
 
 ```python
 set_headless(True)  # Turn on headless mode
@@ -2363,7 +2410,7 @@ Save the settings to a file and return to yourself for chain operation.
 
 Parameter Description:
 
-- path: str  - the path of the ini file, saved to the module folder by default
+- path: str  - the path of the ini file, pass in 'default' would save to the default ini file
 
 Return: OptionsManager  - return to yourself
 
@@ -2378,6 +2425,7 @@ The Chrome browser configuration class, inherited from the Options class of sele
 Parameter Description:
 
 - read_file: bool  - Whether to read configuration information from the ini file when creating
+- ini_path: str      - ini file path, if it is None, the default ini file will be read
 
 
 
@@ -2403,7 +2451,7 @@ Save the settings to a file and return to yourself for chain operation.
 
 Parameter Description:
 
-- path: str  - the path of the ini file, saved to the module folder by default
+- path: str  - the path of the ini file, pass in 'default' would save to the default ini file
 
 Return: DriverOptions  - return self
 
@@ -2551,6 +2599,12 @@ Chrome configuration is too complicated, so the commonly used configuration is w
 
 Automatically identify the chrome version and download the matching driver. Get the chrome.exe path recorded in the ini file, if not, get the path in the system variable.
 
+Parameter Description:
+
+- ini_path: str-the path of the ini file to be read and modified
+
+- save_path: str-chromedriver save path
+
 Returns: None
 
 
@@ -2559,24 +2613,37 @@ Returns: None
 
 Print all configuration information in the ini file.
 
+Parameter Description:
+
+- ini_path: str-ini file path, if it is None, read the default ini file
+
 Returns: None
 
 
 
 ### set_paths()
 
-Convenient way to set the path, save the incoming path to the default ini file, and check whether the chrome and chromedriver versions match.
+Convenient way to set the path, save the passed path to an ini file, and check whether the chrome and chromedriver versions match.
 
 Parameter Description:
 
-- driver_path: str  - chromedriver.exe path
-- chrome_path: str  - chrome.exe path
-- debugger_address: str  - debug browser address, for example: 127.0.0.1:9222
-- download_path: str  - download file path
-- global_tmp_path: str  - Temporary folder path
-- user_data_path: str  - user data path
-- cache_path: str  - cache path
-- check_version: bool  - whether to check if chromedriver and chrome match
+- driver_path: str-chromedriver.exe path
+
+- chrome_path: str-chrome.exe path
+
+- debugger_address: str-debug browser address, for example: 127.0.0.1:9222
+
+- download_path: str-download file path
+
+- global_tmp_path: str-Temporary folder path
+
+- user_data_path: str-user data path
+
+- cache_path: str-cache path
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
+
+- check_version: bool-whether to check if chromedriver and chrome match
 
 Returns: None
 
@@ -2584,12 +2651,15 @@ Returns: None
 
 ### set_argument()
 
-Set the properties. If the attribute has no value (such as'zh_CN.UTF- 8'), value is passed in bool to indicate switch; otherwise, value is passed in str, and when value is'' or False, delete the attribute item.
+Set the properties. If the attribute has no value (such as'zh_CN.UTF-8' ), value is passed in bool to indicate a switch; otherwise, value is assigned to the attribute. When value is'' or False, delete the attribute item.
 
 Parameter Description:
 
-- arg:str    - Property name
-- value[bool, str]  -  Attribute value, the attribute with value is passed in the value, and the attribute without value is passed in bool
+- arg: str-attribute name
+
+- value: [bool, str]-attribute value, the value attribute is passed in the value, and the non-property is passed in bool
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2601,7 +2671,9 @@ Turn headless mode on or off.
 
 Parameter Description:
 
-- on_off: bool  -  whether to turn on headless mode
+- on_off: bool-whether to turn on headless mode
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2613,7 +2685,9 @@ Turn picture display on or off.
 
 Parameter Description:
 
-- on_off: bool  -  Whether to turn on the no image mode
+- on_off: bool-whether to turn on the no image mode
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2625,7 +2699,9 @@ Turn on or off disable JS mode.
 
 Parameter Description:
 
-- on_off: bool  -  Whether to enable the disable JS mode
+- on_off: bool-whether to enable or disable JS mode
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2637,7 +2713,9 @@ Turn on or off the silent mode.
 
 Parameter Description:
 
-- on_off: bool  -  Whether to turn on silent mode
+- on_off: bool-whether to turn on silent mode
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2649,7 +2727,9 @@ Set user_agent.
 
 Parameter Description:
 
-- user_agent: str  -  user_agent value
+- user_agent: str-user_agent value
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
@@ -2661,7 +2741,9 @@ Set up a proxy.
 
 Parameter Description:
 
-- proxy: str  -  proxy value
+- proxy: str-proxy value
+
+- ini_path: str-ini file path, if it is None, save to the default ini file
 
 Returns: None
 
