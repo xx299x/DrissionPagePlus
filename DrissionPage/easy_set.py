@@ -191,15 +191,19 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
 
 
 # -------------------------自动识别chrome版本号并下载对应driver------------------------
-def get_match_driver(ini_path: str = None, save_path: str = None) -> None:
+def get_match_driver(ini_path: str = None,
+                     save_path: str = None,
+                     chrome_path: str = None) -> None:
     """自动识别chrome版本并下载匹配的driver             \n
     :param ini_path: 要读取和修改的ini文件路径
     :param save_path: chromedriver保存路径
+    :param chrome_path: 指定chrome.exe位置
     :return: None
     """
     save_path = save_path or str(Path(__file__).parent)
 
-    chrome_path = _get_chrome_path(ini_path)
+    chrome_path = chrome_path or _get_chrome_path(ini_path)
+    chrome_path = Path(chrome_path).absolute() if chrome_path else None
     print('chrome.exe路径', chrome_path, '\n')
 
     ver = _get_chrome_version(chrome_path)
@@ -219,7 +223,7 @@ def get_match_driver(ini_path: str = None, save_path: str = None) -> None:
 
     if driver_path:
         Path(zip_path).unlink()
-        set_paths(driver_path=driver_path, ini_path=ini_path, check_version=False)
+        set_paths(driver_path=driver_path, chrome_path=str(chrome_path), ini_path=ini_path, check_version=False)
 
         if not check_driver_version(driver_path, chrome_path):
             print('获取失败，请手动配置。')
