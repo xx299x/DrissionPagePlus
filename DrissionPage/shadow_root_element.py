@@ -74,13 +74,17 @@ class ShadowRootElement(DrissionElement):
             loc_or_str: Union[Tuple[str, str], str],
             mode: str = 'single',
             timeout: float = None):
-        """返回当前元素下级符合条件的子元素，默认返回第一个                                                  \n
+        """返回当前元素下级符合条件的子元素，默认返回第一个                                                    \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
             ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                               \n
-            查找方式：属性、tag name和属性、文本、css selector                                              \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                        \n
+            查找方式：属性、tag name和属性、文本、css selector                                               \n
+            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
+            ele.ele('.ele_class')                       - 返回所有 class 为 ele_class 的子元素             \n
+            ele.ele('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素          \n
+            ele.ele('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                   \n
+            ele.ele('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素                \n
             ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素              \n
             ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                \n
             ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素               \n
@@ -122,7 +126,11 @@ class ShadowRootElement(DrissionElement):
             ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                     \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、css selector                                              \n
-            其中，@表示属性，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串                       \n
+            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
+            ele.eles('.ele_class')                       - 返回所有 class 为 ele_class 的子元素            \n
+            ele.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素         \n
+            ele.eles('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                  \n
+            ele.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素               \n
             ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素              \n
             ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                \n
             ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素               \n
@@ -220,6 +228,19 @@ def str_to_css_loc(loc: str) -> tuple:
         css:div.ele_class                                               \n
     """
     loc_by = 'css selector'
+
+    # .和#替换为class和id查找
+    if loc.startswith('.'):
+        if loc.startswith(('.=', '.:',)):
+            loc = loc.replace('.', '@class', 1)
+        else:
+            loc = loc.replace('.', '@class=', 1)
+
+    if loc.startswith('#'):
+        if loc.startswith(('#=', '#:',)):
+            loc = loc.replace('#', '@id', 1)
+        else:
+            loc = loc.replace('#', '@id=', 1)
 
     # 根据属性查找
     if loc.startswith('@'):
