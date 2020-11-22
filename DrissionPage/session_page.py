@@ -17,7 +17,6 @@ from urllib.parse import urlparse, quote, unquote
 from requests import Session, Response
 
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
-from .config import OptionsManager
 from .session_element import SessionElement, execute_session_find
 
 
@@ -267,7 +266,7 @@ class SessionPage(object):
 
     def download(self,
                  file_url: str,
-                 goal_path: str = None,
+                 goal_path: str,
                  rename: str = None,
                  file_exists: str = 'rename',
                  post_data: dict = None,
@@ -286,20 +285,13 @@ class SessionPage(object):
         :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
         """
         # 生成的response不写入self._response，是临时的
-        goal_path = goal_path or OptionsManager().get_value('paths', 'global_tmp_path')
-
-        if not goal_path:
-            raise IOError('No path specified.')
-
         kwargs['stream'] = True
 
         if 'timeout' not in kwargs:
             kwargs['timeout'] = 20
 
-        if not post_data:
-            r, info = self._make_response(file_url, mode='get', show_errmsg=show_errmsg, **kwargs)
-        else:
-            r, info = self._make_response(file_url, mode='post', data=post_data, show_errmsg=show_errmsg, **kwargs)
+        mode = 'post' if post_data else 'get'
+        r, info = self._make_response(file_url, mode=mode, data=post_data, show_errmsg=show_errmsg, **kwargs)
 
         if r is None:
             if show_msg:
