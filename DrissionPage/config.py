@@ -9,6 +9,8 @@ from configparser import ConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
 from typing import Any, Union
 
+from requests.hooks import default_hooks
+from requests.utils import default_headers
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -20,9 +22,9 @@ class OptionsManager(object):
         """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建  \n
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
-        self.path = path or str(Path(__file__).parent / 'configs.ini')
+        self.ini_path = path or str(Path(__file__).parent / 'configs.ini')
         self._conf = ConfigParser()
-        self._conf.read(self.path, encoding='utf-8')
+        self._conf.read(self.ini_path, encoding='utf-8')
 
         if 'global_tmp_path' not in self.get_option('paths') or not self.get_value('paths', 'global_tmp_path'):
             global_tmp_path = str((Path(__file__).parent / 'tmp').absolute())
@@ -41,14 +43,17 @@ class OptionsManager(object):
 
     @property
     def paths(self) -> dict:
+        """返回paths设置"""
         return self.get_option('paths')
 
     @property
     def chrome_options(self) -> dict:
+        """返回chrome设置"""
         return self.get_option('chrome_options')
 
     @property
     def session_options(self) -> dict:
+        """返回session设置"""
         return self.get_option('session_options')
 
     def get_value(self, section: str, item: str) -> Any:
@@ -96,12 +101,54 @@ class OptionsManager(object):
         :return: 当前对象
         """
         path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
-        path = Path(path or self.path)
+        path = Path(path or self.ini_path)
         path = path / 'config.ini' if path.is_dir() else path
         path = path.absolute()
         self._conf.write(open(path, 'w', encoding='utf-8'))
 
         return self
+
+
+class SessionOptions(object):
+    def __init__(self, read_file: bool = True, ini_path: str = None):
+        """
+        :param read_file:
+        :param ini_path:
+        """
+        self.ini_path = None
+        self._headers = None
+        self._cookies = None
+        self._auth = None
+        self._proxies = None
+        self._hooks = None
+        self._params = None
+        self._verify = None
+        self._cert = None
+        self._adapters = None
+        self._stream = None
+        self._trust_env = None
+        self._max_redirects = None
+
+        if read_file:
+            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            om = OptionsManager(self.ini_path)
+            options_dict = om.session_options
+
+            self._headers = options_dict.get('headers', default_headers())
+            self._cookies = options_dict.get('cookies', {})
+            self._auth = options_dict.get('auth', None)
+            self._proxies = options_dict.get('proxies', {})
+            self._hooks = options_dict.get('hooks', default_hooks())
+            self._params = options_dict.get('params', {})
+            self._verify = options_dict.get('verify', True)
+            self._cert = options_dict.get('cert', None)
+            self._adapters = options_dict.get('adapters', '')  # -------待定---------
+            self._stream = options_dict.get('stream', False)
+            self._trust_env = options_dict.get('trust_env', True)
+            self._max_redirects = options_dict.get('max_redirects', 30)
+
+    def save(self, path: str = None):
+        pass
 
 
 class DriverOptions(Options):
@@ -116,20 +163,18 @@ class DriverOptions(Options):
         """
         super().__init__()
         self._driver_path = None
-        self.path = None
+        self.ini_path = None
 
         if read_file:
-            self.path = ini_path or str(Path(__file__).parent / 'configs.ini')
-            om = OptionsManager(self.path)
+            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            om = OptionsManager(self.ini_path)
             options_dict = om.chrome_options
-            paths_dict = om.paths
-            self._binary_location = options_dict['binary_location'] if 'binary_location' in options_dict else ''
-            self._arguments = options_dict['arguments'] if 'arguments' in options_dict else []
-            self._extensions = options_dict['extensions'] if 'extensions' in options_dict else []
-            self._experimental_options = (options_dict['experimental_options']
-                                          if 'experimental_options' in options_dict else {})
-            self._debugger_address = options_dict['debugger_address'] if 'debugger_address' in options_dict else None
-            self._driver_path = paths_dict['chromedriver_path'] if 'chromedriver_path' in paths_dict else None
+            self._binary_location = options_dict.get('binary_location', '')
+            self._arguments = options_dict.get('arguments', [])
+            self._extensions = options_dict.get('extensions', [])
+            self._experimental_options = options_dict.get('experimental_options', {})
+            self._debugger_address = options_dict.get('debugger_address', None)
+            self._driver_path = om.paths.get('chromedriver_path', None)
 
     @property
     def driver_path(self) -> str:
@@ -147,7 +192,7 @@ class DriverOptions(Options):
         om = OptionsManager()
         options = _chrome_options_to_dict(self)
         path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
-        path = Path(path or self.path)
+        path = Path(path or self.ini_path)
         path = path / 'config.ini' if path.is_dir() else path
         path = path.absolute()
 
@@ -303,43 +348,47 @@ def _dict_to_chrome_options(options: dict) -> Options:
     """
     chrome_options = webdriver.ChromeOptions()
     # 已打开的浏览器路径
-    if 'debugger_address' in options and options['debugger_address']:
+    if options.get('debugger_address', None):
         chrome_options.debugger_address = options['debugger_address']
 
     # 创建新的浏览器
     else:
         # 浏览器的exe文件路径
-        if 'binary_location' in options and options['binary_location']:
+        if options.get('binary_location', None):
             chrome_options.binary_location = options['binary_location']
 
         # 启动参数
         if 'arguments' in options:
             if not isinstance(options['arguments'], list):
                 raise Exception(f'Arguments need list，not {type(options["arguments"])}.')
+
             for arg in options['arguments']:
                 chrome_options.add_argument(arg)
 
         # 加载插件
-        if 'extension_files' in options and options['extension_files']:
+        if options.get('extension_files', None):
             if not isinstance(options['extension_files'], list):
                 raise Exception(f'Extension files need list，not {type(options["extension_files"])}.')
+
             for arg in options['extension_files']:
                 chrome_options.add_extension(arg)
 
         # 扩展设置
-        if 'extensions' in options and options['extensions']:
+        if options.get('extensions', None):
             if not isinstance(options['extensions'], list):
                 raise Exception(f'Extensions need list，not {type(options["extensions"])}.')
+
             for arg in options['extensions']:
                 chrome_options.add_encoded_extension(arg)
 
         # 实验性质的设置参数
-        if 'experimental_options' in options and options['experimental_options']:
+        if options.get('experimental_options', None):
             if not isinstance(options['experimental_options'], dict):
                 raise Exception(f'Experimental options need dict，not {type(options["experimental_options"])}.')
+
             for i in options['experimental_options']:
                 chrome_options.add_experimental_option(i, options['experimental_options'][i])
-        # if 'capabilities' in options and options['capabilities']:
+        # if options.get('capabilities' ,None):
         #     pass  # 未知怎么用
     return chrome_options
 
