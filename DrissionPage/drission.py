@@ -46,7 +46,7 @@ class Drission(object):
 
             # 若接收到配置信息则记录，否则从ini文件读取
             if session_or_options is None:
-                self._session_options = OptionsManager(ini_path).get_option('session_options')
+                self._session_options = OptionsManager(ini_path).session_options
             else:
                 self._session_options = session_or_options
 
@@ -60,14 +60,14 @@ class Drission(object):
             # 若接收到配置信息则记录，否则从ini文件读取
             if driver_or_options is None:
                 om = OptionsManager(ini_path)
-                self._driver_options = om.get_option('chrome_options')
+                self._driver_options = om.chrome_options
 
-                if 'chromedriver_path' in om.get_option('paths') and om.get_option('paths')['chromedriver_path']:
-                    self._driver_path = om.get_option('paths')['chromedriver_path']
+                if om.paths.get('chromedriver_path', None):
+                    self._driver_path = om.paths['chromedriver_path']
             else:
                 self._driver_options = _chrome_options_to_dict(driver_or_options)
 
-                if 'driver_path' in self._driver_options and self._driver_options['driver_path']:
+                if self._driver_options.get('driver_path', None):
                     self._driver_path = self._driver_options['driver_path']
 
     @property
