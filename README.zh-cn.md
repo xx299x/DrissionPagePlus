@@ -362,11 +362,13 @@ Downloading to: D:\python\projects\DrissionPage\DrissionPage
 
 然后就可以开始使用了。
 
-若你想指定 ini 文件及 chromedriver.exe 的保存路径，可以这样写：
+若你想使用指定的 chrome.exe（绿色版），及指定 ini 文件和 chromedriver.exe 的保存路径，可以这样写：
 
 ```python
-get_match_driver(ini_path='ini文件路径', save_path='保存路径')
+get_match_driver(ini_path='ini文件路径', save_path='保存路径', chrome_path='chrome路径')
 ```
+
+Tips：当指定 chrome_path 时，检测成功后程序会把这个路径写进 ini 文件。
 
 
 
