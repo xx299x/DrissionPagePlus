@@ -53,10 +53,7 @@ def set_paths(driver_path: str = None,
     om = OptionsManager(ini_path)
 
     def format_path(path: str) -> str:
-        if not path:
-            return ''
-
-        return str(path).replace('/', '\\')
+        return '' if not path else str(path).replace('/', '\\')
 
     if driver_path is not None:
         om.set_item('paths', 'chromedriver_path', format_path(driver_path))
