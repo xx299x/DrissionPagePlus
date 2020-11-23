@@ -24,7 +24,7 @@ class OptionsManager(object):
         self._conf = ConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 
-        if 'global_tmp_path' not in self.get_option('paths') or not self.get_value('paths', 'global_tmp_path'):
+        if 'global_tmp_path' not in self.paths or not self.get_value('paths', 'global_tmp_path'):
             global_tmp_path = str((Path(__file__).parent / 'tmp').absolute())
             Path(global_tmp_path).mkdir(parents=True, exist_ok=True)
             self.set_item('paths', 'global_tmp_path', global_tmp_path)
@@ -314,9 +314,9 @@ def _dict_to_chrome_options(options: dict) -> Options:
             chrome_options.binary_location = options['binary_location']
 
         # 启动参数
-        if 'arguments' in options:
+        if options.get('arguments', None):
             if not isinstance(options['arguments'], list):
-                raise Exception(f'Arguments need list，not {type(options["arguments"])}.')
+                raise Exception(f"Arguments need list，not {type(options['arguments'])}.")
 
             for arg in options['arguments']:
                 chrome_options.add_argument(arg)
