@@ -696,6 +696,43 @@ element.hover()  # Hover the mouse over the element
 
 
 
+## shadow-dom operation
+
+Supports obtaining shadow-root and internal elements. The obtained shadow-root element type is ShadowRootElement. The usage is similar to normal elements, but the function is simplified.
+
+**note:**
+
+- Only open shadow-root can be obtained
+
+- Find shadow-root internal elements cannot use xpath method
+
+Get the shadow-root element attached to the ordinary element
+
+```python
+shadow_root_element = element.shadow_root # element is an ordinary element containing shadow-root
+```
+
+Properties and methods
+
+```python
+shadow_root_element.tag # return'shadow-root'
+shadow_root_element.html # html content
+shadow_root_element.parent # parent element
+shadow_root_element.next # Next sibling element
+
+shadow_root_element.parents(num) # Get upward num parent elements
+shadow_root_element.nexts(num) # Get backward num sibling elements
+shadow_root_element.ele(loc_or_str) # Get the first eligible internal element
+shadow_root_element.eles(loc_or_str) # Get all eligible internal elements
+shadow_root_element.run_scrpit(js_text) # Run js script
+shadow_root_element.is_enabled() # Returns whether the element is available
+shadow_root_element.is_valid() # Returns whether the element is still in dom
+```
+
+**Tips:** The elements obtained by the above attributes or methods are ordinary DriverElement. For usage, please refer to the above.
+
+
+
 ## Docking with selenium code
 
 The DrissionPage code can be seamlessly spliced with the selenium code, either directly using the selenium WebDriver object, or using its own WebDriver everywhere for the selenium code. Make the migration of existing projects very convenient.
@@ -2328,6 +2365,134 @@ Parameter Description:
 Returns: List[SessionElement or str]
 
 
+
+## ShadowRootElement class
+
+### class ShadowRootElement()
+
+The shadow-root element within the element.
+
+Parameter Description:
+
+- inner_ele: WebElement-the shadow-root element obtained by selenium
+
+- parent_ele: DriverElement-the element to which the shadow-root is attached
+
+- timeout: float-timeout
+
+
+
+### tag
+
+Element tag name.
+
+Returns: the'shadow-root' string.
+
+
+
+### html
+
+Internal html text.
+
+Returns: str
+
+
+
+### parent
+
+The parent element on which the shadow-root depends.
+
+Returns: DriverElement
+
+
+
+### next
+
+Return the next sibling element.
+
+Returns: DriverElement
+
+
+
+### parents()
+
+Return the parent element at level num above
+
+Parameter Description:
+
+- num: int-which level of parent element
+
+Returns: DriverElement
+
+
+
+### nexts()
+
+Return the next num sibling element
+
+Parameter Description:
+
+- num: int-which sibling element
+
+Returns: DriverElement
+
+
+
+### ele()
+
+Returns the first child element that meets the criteria.
+
+Parameter Description:
+
+- loc_or_str: Union[Tuple[str, str], str]-element positioning conditions
+
+- mode: str-'single' or'all', corresponding to get one and all
+
+- timeout: float-timeout
+
+Returns: DriverElement-the first element that meets the conditions
+
+
+
+### eles()
+
+Return all sub-elements that meet the criteria.
+
+Parameter Description:
+
+- loc_or_str: Union[Tuple[str, str], str]-element positioning conditions
+
+- timeout: float-timeout
+
+Returns: List[DriverElement]-a list of all eligible elements
+
+
+
+### run_script()
+
+Execute js code on the element.
+
+Parameter Description:
+
+- scrpit: str-js code
+
+- *args-the object passed in
+
+
+
+### is_enabled()
+
+Returns whether the element is available.
+
+Returns: bool
+
+
+
+### is_valid()
+
+Returns whether the element is still in the dom.
+
+Returns: bool
 
 
 

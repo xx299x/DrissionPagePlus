@@ -696,6 +696,41 @@ element.hover()  # 在元素上悬停鼠标
 
 
 
+## shadow-dom 操作
+
+支持获取 shadow-root 及内部元素，获取到的 shadow-root 元素类型为 ShadowRootElement，用法和正常元素类似，但功能有所简化。
+
+**注意：**
+
+- 只能获取 open 的 shadow-root
+- 查找 shadow-root 内部元素不能使用 xpath 方式
+
+获取依附在普通元素内的 shadow-root 元素
+```python
+shadow_root_element = element.shadow_root  # element 为含有 shadow-root 的普通元素
+```
+
+属性及方法
+
+```python
+shadow_root_element.tag  # 返回 'shadow-root'
+shadow_root_element.html  # html 内容
+shadow_root_element.parent  # 父元素
+shadow_root_element.next  # 下一个兄弟元素
+
+shadow_root_element.parents(num)  # 获取向上 num 级父元素
+shadow_root_element.nexts(num)  # 获取向后 num 个兄弟元素
+shadow_root_element.ele(loc_or_str)  # 获取第一个符合条件的内部元素
+shadow_root_element.eles(loc_or_str)  # 获取全部符合条件的内部元素
+shadow_root_element.run_scrpit(js_text)  # 运行 js 脚本
+shadow_root_element.is_enabled()  # 返回元素是否可用
+shadow_root_element.is_valid()  # 返回元素是否还在 dom 内
+```
+
+**Tips：**以上属性或方法获取到的元素是普通的 DriverElement，用法参考上文所述。
+
+
+
 ## 与 selenium 代码对接
 
 DrissionPage 代码可与 selenium 代码无缝拼接，既可直接使用 selenium 的 WebDriver 对象，也可到处自身的 WebDriver 给 selenium 代码使用。使已有项目的迁移非常方便。
@@ -2294,6 +2329,128 @@ session 模式的元素对象，包装了一个Element对象，并封装了常�
 返回： List[SessionElement or str]
 
 
+
+## ShadowRootElement 类
+
+### class ShadowRootElement()
+
+元素内 shadow-root 元素。
+
+参数说明：
+
+- inner_ele: WebElement        - selenium 获取到的 shadow-root 元素
+- parent_ele: DriverElement    - shadow-root 所依附的元素
+- timeout: float                         - 超时时间
+
+
+
+### tag
+
+元素标签名。
+
+返回：'shadow-root' 字符串。
+
+
+
+### html
+
+内部html文本。
+
+返回：str
+
+
+
+### parent
+
+shadow-root 所依赖的父元素。
+
+返回：DriverElement
+
+
+
+### next
+
+返回后一个兄弟元素。
+
+返回：DriverElement
+
+
+
+### parents()
+
+返回上面第 num 级父元素
+
+参数说明：
+
+- num: int  - 第几层父元素
+
+返回：DriverElement
+
+
+
+### nexts()
+
+返回后面第 num 个兄弟元素
+
+参数说明：
+
+- num: int  - 第几个兄弟元素
+
+返回：DriverElement
+
+
+
+### ele()
+
+返回第一个符合条件的子元素。
+
+参数说明：
+
+- loc_or_str: Union[Tuple[str, str], str]  - 元素定位条件
+- mode: str                                           - 'single' 或 'all'，对应获取一个和全部
+- timeout: float                                      - 超时时间
+
+返回：DriverElement  - 第一个符合条件的元素
+
+
+
+### eles()
+
+返回所有符合条件的子元素。
+
+参数说明：
+
+- loc_or_str: Union[Tuple[str, str], str]  - 元素定位条件
+- timeout: float                                     - 超时时间
+
+返回：List[DriverElement]  - 所有符合条件的元素组成的列表
+
+
+
+### run_script()
+
+对元素执行 js 代码。
+
+参数说明：
+
+- scrpit: str    - js 代码
+- *args          - 传入的对象
+
+
+
+### is_enabled()
+
+返回元素是否可用。
+
+返回：bool
+
+
+
+### is_valid()
+
+返回元素是否仍在 dom 内。
+
+返回：bool
 
 
 
