@@ -9,8 +9,6 @@ from configparser import ConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
 from typing import Any, Union
 
-from requests.hooks import default_hooks
-from requests.utils import default_headers
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -107,48 +105,6 @@ class OptionsManager(object):
         self._conf.write(open(path, 'w', encoding='utf-8'))
 
         return self
-
-
-class SessionOptions(object):
-    def __init__(self, read_file: bool = True, ini_path: str = None):
-        """
-        :param read_file:
-        :param ini_path:
-        """
-        self.ini_path = None
-        self._headers = None
-        self._cookies = None
-        self._auth = None
-        self._proxies = None
-        self._hooks = None
-        self._params = None
-        self._verify = None
-        self._cert = None
-        self._adapters = None
-        self._stream = None
-        self._trust_env = None
-        self._max_redirects = None
-
-        if read_file:
-            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
-            om = OptionsManager(self.ini_path)
-            options_dict = om.session_options
-
-            self._headers = options_dict.get('headers', default_headers())
-            self._cookies = options_dict.get('cookies', {})
-            self._auth = options_dict.get('auth', None)
-            self._proxies = options_dict.get('proxies', {})
-            self._hooks = options_dict.get('hooks', default_hooks())
-            self._params = options_dict.get('params', {})
-            self._verify = options_dict.get('verify', True)
-            self._cert = options_dict.get('cert', None)
-            self._adapters = options_dict.get('adapters', '')  # -------待定---------
-            self._stream = options_dict.get('stream', False)
-            self._trust_env = options_dict.get('trust_env', True)
-            self._max_redirects = options_dict.get('max_redirects', 30)
-
-    def save(self, path: str = None):
-        pass
 
 
 class DriverOptions(Options):
