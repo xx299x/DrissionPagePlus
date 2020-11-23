@@ -689,6 +689,7 @@ element.clear()  # Clear the element
 element.screenshot(path, filename)  # Take a screenshot of the element
 element.select(text)  # Select the drop- down list based on the text
 element.set_attr(attr, value)  # Set element attribute value
+element.remove_attr(attr)  # remove a element attribute
 element.drag(x, y, speed, shake)  # Drag the relative distance of the element, you can set the speed and whether to shake randomly
 element.drag_to(ele_or_loc, speed, shake)  # Drag the element to another element or a certain coordinate, you can set the speed and whether to shake randomly
 element.hover()  # Hover the mouse over the element
@@ -2090,6 +2091,18 @@ Parameter Description:
 
 - attr: str  - parameter name
 - value: str  - parameter value
+
+Returns: bool  - whether it was successful
+
+
+
+### remove_attr()
+
+Remove element attributes.
+
+Parameter Description:
+
+- attr: str     -parameter name
 
 Returns: bool  - whether it was successful
 

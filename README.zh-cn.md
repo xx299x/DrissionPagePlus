@@ -689,6 +689,7 @@ element.clear()  # 清空元素
 element.screenshot(path, filename)  # 对元素截图
 element.select(text)  # 根据文本选择下拉列表
 element.set_attr(attr, value)  # 设置元素属性值
+element.remove_attr(attr)  # 删除属性
 element.drag(x, y, speed, shake)  # 拖动元素相对距离，可设置速度和是否随机抖动
 element.drag_to(ele_or_loc, speed, shake)  # 拖动元素到另一个元素或某个坐标，可设置速度和是否随机抖动
 element.hover()  # 在元素上悬停鼠标
@@ -2070,6 +2071,18 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 
 - attr: str     - 参数名
 - value: str  - 参数值
+
+返回： bool  -是否成功
+
+
+
+### remove_attr()
+
+删除元素属性。
+
+参数说明：
+
+- attr: str     - 参数名
 
 返回： bool  -是否成功
 

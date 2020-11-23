@@ -407,9 +407,19 @@ class DriverElement(DrissionElement):
         try:
             self.run_script(f"arguments[0].{attr} = '{value}';")
             return True
-        except Exception as e:
-            print(e)
+        except:
             return False
+
+    def remove_attr(self, attr: str) -> bool:
+        """设置元素属性          \n
+        :param attr: 属性名
+        :return: 是否设置成功
+        """
+        try:
+            self.run_script(f'arguments[0].removeAttribute("{attr}");')
+            return True
+        except:
+            raise False
 
     def drag(self, x: int, y: int, speed: int = 40, shake: bool = True) -> bool:
         """拖拽当前元素到相对位置                   \n
