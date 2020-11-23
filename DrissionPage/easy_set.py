@@ -53,8 +53,7 @@ def set_paths(driver_path: str = None,
     om = OptionsManager(ini_path)
 
     def format_path(path: str) -> str:
-        if isinstance(path, str):
-            return path.replace('/', '\\')
+        return str(path).replace('/', '\\')
 
     if driver_path is not None:
         om.set_item('paths', 'chromedriver_path', format_path(driver_path))
@@ -169,7 +168,7 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
     print('正在检测可用性...')
     om = OptionsManager()
     driver_path = driver_path or om.get_value('paths', 'chromedriver_path') or 'chromedriver'
-    chrome_path = chrome_path or om.get_value('chrome_options', 'binary_location')
+    chrome_path = str(chrome_path or om.get_value('chrome_options', 'binary_location'))
     do = DriverOptions(read_file=False)
     do.add_argument('--headless')
 
