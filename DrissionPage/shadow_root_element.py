@@ -5,16 +5,15 @@ from typing import Union, Any, Tuple
 
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import DrissionElement, format_html
-from .driver_element import execute_driver_find
+from .common import format_html, DrissionElement
+from .driver_element import execute_driver_find, DriverElement
 
 
 class ShadowRootElement(DrissionElement):
-    def __init__(self, inner_ele: WebElement, parent_ele, timeout: float = 10):
-        super().__init__(inner_ele)
+    def __init__(self, inner_ele: WebElement, parent_ele: DriverElement, timeout: float = 10):
+        super().__init__(inner_ele, parent_ele.page)
         self.parent_ele = parent_ele
         self.timeout = timeout
-        self._driver = inner_ele.parent
 
     def __repr__(self):
         return f'<ShadowRootElement in {self.parent_ele} >'
@@ -33,20 +32,18 @@ class ShadowRootElement(DrissionElement):
         return self.ele(loc_or_str, mode, timeout or self.timeout)
 
     @property
-    def driver(self):
-        """返回控制元素的WebDriver对象"""
-        return self._driver
-
-    @property
     def tag(self):
+        """元素标签名"""
         return 'shadow-root'
 
     @property
     def html(self):
+        """内部html文本"""
         return format_html(self.inner_ele.get_attribute('innerHTML'))
 
     @property
     def parent(self):
+        """shadow-root所依赖的父元素"""
         return self.parent_ele
 
     def parents(self, num: int = 1):
@@ -113,7 +110,7 @@ class ShadowRootElement(DrissionElement):
         timeout = timeout or self.timeout
 
         if loc_or_str[0] == 'css selector':
-            return execute_driver_find(self.inner_ele, loc_or_str, mode, timeout)
+            return execute_driver_find(self, loc_or_str, mode, timeout)
         elif loc_or_str[0] == 'text':
             return self._find_eles_by_text(loc_or_str[1], loc_or_str[2], loc_or_str[3], mode)
 
@@ -179,53 +176,58 @@ class ShadowRootElement(DrissionElement):
         """
         # 获取所有元素
         eles = self.run_script('return arguments[0].querySelectorAll("*")')
-        from .driver_element import DriverElement
         results = []
 
         # 遍历所有元素，找到符合条件的
         for ele in eles:
             if tag and tag != ele.tag_name:
                 continue
-            txt = self.driver.execute_script(
+
+            txt = self.page.driver.execute_script(
                 'if(arguments[0].firstChild!=null){return arguments[0].firstChild.nodeValue}', ele)
             txt = txt or ''
 
             # 匹配没有文本的元素或精确匹配
             if text == '' or match == 'exact':
                 if text == txt:
+
                     if mode == 'single':
-                        return DriverElement(ele)
+                        return DriverElement(ele, self.page, self.timeout)
                     elif mode == 'all':
-                        results.append(DriverElement(ele))
+                        results.append(DriverElement(ele, self.page, self.timeout))
 
             # 模糊匹配
             elif match == 'fuzzy':
                 if text in txt:
+
                     if mode == 'single':
-                        return DriverElement(ele)
+                        return DriverElement(ele, self.page, self.timeout)
                     elif mode == 'all':
-                        results.append(DriverElement(ele))
+                        results.append(DriverElement(ele, self.page, self.timeout))
 
         return None if mode == 'single' else results
 
 
 def str_to_css_loc(loc: str) -> tuple:
-    """处理元素查找语句                                                \n
-    查找方式：属性、tag name及属性、文本、css selector                   \n
-    =表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串             \n
-    =表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串             \n
-    示例：                                                            \n
-        @class:ele_class - class含有ele_class的元素                    \n
-        @class=ele_class - class等于ele_class的元素                    \n
-        @class - 带class属性的元素                                     \n
-        tag:div - div元素                                              \n
-        tag:div@class:ele_class - class含有ele_class的div元素           \n
-        tag:div@class=ele_class - class等于ele_class的div元素           \n
-        tag:div@text():search_text - 文本含有search_text的div元素        \n
-        tag:div@text()=search_text - 文本等于search_text的div元素        \n
-        text:search_text - 文本含有search_text的元素                     \n
-        text=search_text - 文本等于search_text的元素                     \n
-        css:div.ele_class                                               \n
+    """处理元素查找语句                                                                              \n
+    查找方式：属性、tag name及属性、文本、css selector                                                \n
+    @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
+    示例：                                                                                          \n
+        .ele_class                  - class为ele_class的元素                                        \n
+        .:ele_class                 - class含有ele_class的元素                                      \n
+        #ele_id                     - id为ele_id的元素                                              \n
+        #:ele_id                    - id含有ele_id的元素                                            \n
+        @class:ele_class            - class含有ele_class的元素                                      \n
+        @class=ele_class            - class等于ele_class的元素                                      \n
+        @class                      - 带class属性的元素                                             \n
+        tag:div                     - div元素                                                      \n
+        tag:div@class:ele_class     - class含有ele_class的div元素                                   \n
+        tag:div@class=ele_class     - class等于ele_class的div元素                                   \n
+        tag:div@text():search_text  - 文本含有search_text的div元素                                  \n
+        tag:div@text()=search_text  - 文本等于search_text的div元素                                  \n
+        text:search_text            - 文本含有search_text的元素                                     \n
+        text=search_text            - 文本等于search_text的元素                                     \n
+        css:div.ele_class           - 符合css selector的元素                                       \n
     """
     loc_by = 'css selector'
 
@@ -256,6 +258,7 @@ def str_to_css_loc(loc: str) -> tuple:
     elif loc.startswith(('tag=', 'tag:')):
         if '@' not in loc[4:]:
             loc_str = f'{loc[4:]}'
+
         else:
             at_lst = loc[4:].split('@', maxsplit=1)
             r = re_SPLIT(r'([:=])', at_lst[1], maxsplit=1)
