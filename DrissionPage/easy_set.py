@@ -212,7 +212,7 @@ def get_match_driver(ini_path: str = None,
     zip_path = _download_driver(ver, save_path)
 
     if not zip_path:
-        print('没有对应版本的driver。')
+        print('没有找到对应版本的driver。')
 
     try:
         driver_path = unzip(zip_path, save_path)[0]
@@ -244,7 +244,7 @@ def _get_chrome_path(ini_path: str = None) -> Union[str, None]:
 
     if path and Path(path).is_file():
         print('ini文件中', end='')
-        return path
+        return str(path)
 
     # -----------从系统路径中获取--------------
     paths = popen('set path').read().lower()
@@ -275,7 +275,7 @@ def _get_chrome_version(path: str) -> Union[str, None]:
     if not path:
         return
 
-    path = path.replace('\\', '\\\\')
+    path = str(path).replace('\\', '\\\\')
 
     try:
         return (popen(f'wmic datafile where "name=\'{path}\'" get version').read()
