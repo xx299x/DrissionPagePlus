@@ -734,9 +734,9 @@ shadow_root_element.is_valid() # Returns whether the element is still in dom
 
 
 
-## Docking with selenium code
+## Splicing with selenium or requests code
 
-The DrissionPage code can be seamlessly spliced with the selenium code, either directly using the selenium WebDriver object, or using its own WebDriver everywhere for the selenium code. Make the migration of existing projects very convenient.
+DrissionPage code can be seamlessly spliced with selenium and requests code. You can use Selenium's WebDriver object directly, or you can export your own WebDriver to selenium code. The Session object of requests can also be passed directly. Make the migration of existing projects very convenient.
 
 ### selenium to DrissionPage
 
@@ -745,10 +745,9 @@ driver = webdriver.Chrome()
 driver.get('https://www.baidu.com')
 
 page = MixPage(Drission(driver))  # Pass the driver to Drission, create a MixPage object
-print(page.title)  # Print result: You will know by clicking on Baidu
+print(page.title)  # Print result: 百度一下，你就知道
+element = driver.find_element_by_xpath('//div') # Use selenium native functions
 ```
-
-
 
 ### DrissionPage to selenium
 
@@ -757,7 +756,26 @@ page = MixPage()
 page.get('https://www.baidu.com')
 
 driver = page.driver  # Get the WebDriver object from the MixPage object
-print(driver.title)  # Print results: You will know by clicking on Baidu
+print(driver.title)  # Print results: 百度一下，你就知道
+```
+
+### requests  to  DrissionPage
+
+``` python
+session = requets.Session()
+drission = Drission(session_or_options=session)
+page = MixPage(drission, mode='s')
+
+page.get('https://www.baidu.com')
+```
+
+### DrissionPage  to  requests
+
+```python
+page = MixPage('s')
+session = page.session
+
+response = session.get('https://www.baidu.com')
 ```
 
 
