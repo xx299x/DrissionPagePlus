@@ -405,7 +405,7 @@ In addition to the above two paths, this method can also set the following paths
 ```python
 debugger_address  # Debug browser address, such as: 127.0.0.1:9222
 download_path  # Download file path
-global_tmp_path  # Temporary folder path
+tmp_path  # Temporary folder path
 user_data_path  # User data path
 cache_path  # cache path
 ```
@@ -869,7 +869,7 @@ The ini file has three parts by default: paths, chrome_options, and session_opti
 ; chromedriver.exe path
 chromedriver_path =
 ; Temporary folder path, used to save screenshots, file downloads, etc.
-global_tmp_path =
+tmp_path =
 
 [chrome_options]
 ; The address and port of the opened browser, such as 127.0.0.1:9222
@@ -2833,7 +2833,7 @@ Parameter Description:
 
 - download_path: str-download file path
 
-- global_tmp_path: str-Temporary folder path
+- tmp_path: str-Temporary folder path
 
 - user_data_path: str-user data path
 

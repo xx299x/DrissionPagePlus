@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 """
-配置文件
+管理配置的类
 @Author  :   g1879
 @Contact :   g1879@qq.com
 @File    :   config.py
@@ -28,10 +28,10 @@ class OptionsManager(object):
         self._chrome_options = None
         self._session_options = None
 
-        if 'global_tmp_path' not in self.paths or not self.get_value('paths', 'global_tmp_path'):
-            global_tmp_path = str((Path(__file__).parent / 'tmp').absolute())
-            Path(global_tmp_path).mkdir(parents=True, exist_ok=True)
-            self.set_item('paths', 'global_tmp_path', global_tmp_path)
+        if 'tmp_path' not in self.paths or not self.get_value('paths', 'tmp_path'):
+            tmp_path = str((Path(__file__).parent / 'tmp').absolute())
+            Path(tmp_path).mkdir(parents=True, exist_ok=True)
+            self.set_item('paths', 'tmp_path', tmp_path)
             self.save(self.ini_path)
 
     def __text__(self) -> str:
@@ -128,9 +128,9 @@ class OptionsManager(object):
 
 class SessionOptions(object):
     def __init__(self, read_file: bool = True, ini_path: str = None):
-        """
-        :param read_file:
-        :param ini_path:
+        """requests的Session对象配置类             \n
+        :param read_file: 是否从文件读取配置
+        :param ini_path: ini文件路径
         """
         self.ini_path = None
         self._headers = None
@@ -187,115 +187,168 @@ class SessionOptions(object):
             if options_dict.get('max_redirects', None) is not None:
                 self._headers = options_dict['max_redirects']
 
-            # self._cookies = options_dict.get('cookies', None)
-            # self._auth = options_dict.get('auth', None)
-            # self._proxies = options_dict.get('proxies', None)
-            # self._hooks = options_dict.get('hooks', None)
-            # self._params = options_dict.get('params', None)
-            # self._verify = options_dict.get('verify', True)
-            # self._cert = options_dict.get('cert', None)
-            # self._adapters = options_dict.get('adapters', None)
-            # self._stream = options_dict.get('stream', None)
-            # self._trust_env = options_dict.get('trust_env', True)
-            # self._max_redirects = options_dict.get('max_redirects', None)
-
     @property
     def headers(self) -> dict:
+        """返回headers设置信息"""
         return self._headers
 
     @property
     def cookies(self) -> dict:
+        """返回cookies设置信息"""
         return self._cookies
 
     @property
     def auth(self) -> tuple:
+        """返回auth设置信息"""
         return self._auth
 
     @property
     def proxies(self) -> dict:
+        """返回proxies设置信息"""
         return self._proxies
 
     @property
     def hooks(self) -> dict:
+        """返回hooks设置信息"""
         return self._hooks
 
     @property
     def params(self) -> dict:
+        """返回params设置信息"""
         return self._params
 
     @property
     def verify(self) -> bool:
+        """返回verify设置信息"""
         return self._verify
 
     @property
     def cert(self) -> Union[str, tuple]:
+        """返回cert设置信息"""
         return self._cert
 
     @property
     def adapters(self):
+        """返回adapters设置信息"""
         return self._adapters
 
     @property
     def stream(self) -> bool:
+        """返回stream设置信息"""
         return self._stream
 
     @property
     def trust_env(self) -> bool:
+        """返回trust_env设置信息"""
         return self._trust_env
 
     @property
     def max_redirects(self) -> int:
+        """返回max_redirects设置信息"""
         return self._max_redirects
 
     @headers.setter
     def headers(self, headers: dict) -> None:
+        """设置headers参数           \n
+        :param headers: 参数值
+        :return: None
+        """
         self._headers = {key.lower(): headers[key] for key in headers}
 
     @cookies.setter
     def cookies(self, cookies: dict) -> None:
+        """设置cookies参数           \n
+        :param cookies: 参数值
+        :return: None
+        """
         self._cookies = cookies
 
     @auth.setter
     def auth(self, auth: tuple) -> None:
+        """设置auth参数           \n
+        :param auth: 参数值
+        :return: None
+        """
         self._auth = auth
 
     @proxies.setter
     def proxies(self, proxies: dict) -> None:
+        """设置proxies参数           \n
+        :param proxies: 参数值
+        :return: None
+        """
         self._proxies = proxies
 
     @hooks.setter
     def hooks(self, hooks: dict) -> None:
+        """设置hooks参数           \n
+        :param hooks: 参数值
+        :return: None
+        """
         self._hooks = hooks
 
     @params.setter
     def params(self, params: dict) -> None:
+        """设置params参数           \n
+        :param params: 参数值
+        :return: None
+        """
         self._params = params
 
     @verify.setter
     def verify(self, verify: bool) -> None:
+        """设置verify参数           \n
+        :param verify: 参数值
+        :return: None
+        """
         self._verify = verify
 
     @cert.setter
     def cert(self, cert: Union[str, tuple]) -> None:
+        """设置cert参数           \n
+        :param cert: 参数值
+        :return: None
+        """
         self._cert = cert
 
     @adapters.setter
     def adapters(self, adapters) -> None:
+        """设置           \n
+        :param adapters: 参数值
+        :return: None
+        """
         self._adapters = adapters
 
     @stream.setter
     def stream(self, stream: bool) -> None:
+        """设置stream参数           \n
+        :param stream: 参数值
+        :return: None
+        """
         self._stream = stream
 
     @trust_env.setter
     def trust_env(self, trust_env: bool) -> None:
+        """设置trust_env参数           \n
+        :param trust_env: 参数值
+        :return: None
+        """
         self._trust_env = trust_env
 
     @max_redirects.setter
     def max_redirects(self, max_redirects: int) -> None:
+        """设置max_redirects参数          \n
+        :param max_redirects: 参数值
+        :return: None
+        """
         self._max_redirects = max_redirects
 
     def set_header(self, attr: str, value: str):
+        """设置header中一个项          \n
+        :param attr: 设置名称
+        :param value: 设置值
+        :return: 返回当前对象
+        """
         if self._headers is None:
             self._headers = {}
 
@@ -303,6 +356,10 @@ class SessionOptions(object):
         return self
 
     def remove_header(self, attr: str):
+        """从headers中删除一个设置     \n
+        :param attr: 要删除的设置
+        :return: 返回当前对象
+        """
         if self._headers is None:
             return self
 
@@ -315,7 +372,7 @@ class SessionOptions(object):
     def save(self, path: str = None):
         """保存设置到文件                                              \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
-        :return: 当前对象
+        :return: 返回当前对象
         """
         if path == 'default':
             path = (Path(__file__).parent / 'configs.ini').absolute()
@@ -633,7 +690,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
         if val is not None:
             re_dict[attr] = val
 
-    # cert属性默认值为None，未免无法区分是否被设置，主动赋值
+    # cert属性默认值为None，未免无法区分是否被设置，故主动赋值
     re_dict['cert'] = options.__getattribute__('_cert')
 
     return re_dict

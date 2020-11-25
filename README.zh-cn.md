@@ -407,7 +407,7 @@ Message: session not created: Chrome version must be between 70 and 73
 ```python
 debugger_address  # 调试浏览器地址，如：127.0.0.1:9222
 download_path  # 下载文件路径
-global_tmp_path  # 临时文件夹路径
+tmp_path  # 临时文件夹路径
 user_data_path # 用户数据路径
 cache_path # 缓存路径
 ```
@@ -887,7 +887,7 @@ ini 文件默认拥有三部分配置：paths、chrome_options、session_options
 ; chromedriver.exe路径
 chromedriver_path =
 ; 临时文件夹路径，用于保存截图、文件下载等
-global_tmp_path =
+tmp_path =
 
 [chrome_options]
 ; 已打开的浏览器地址和端口，如127.0.0.1:9222
@@ -2802,15 +2802,15 @@ chrome 配置太复杂，所以把常用的配置写成简单的方法，调用�
 
 参数说明：
 
-- driver_path: str               - chromedriver.exe 路径
-- chrome_path: str           - chrome.exe 路径
+- driver_path: str       - chromedriver.exe 路径
+- chrome_path: str       - chrome.exe 路径
 - debugger_address: str  - 调试浏览器地址，例：127.0.0.1:9222
-- download_path: str        - 下载文件路径
-- global_tmp_path: str      - 临时文件夹路径
-- user_data_path: str        - 用户数据路径
-- cache_path: str              - 缓存路径
-- ini_path: str                    - ini 文件路径，为 None 则保存到默认 ini 文件
-- check_version: bool       - 是否检查 chromedriver 和 chrome 是否匹配
+- download_path: str     - 下载文件路径
+- tmp_path: str          - 临时文件夹路径
+- user_data_path: str    - 用户数据路径
+- cache_path: str        - 缓存路径
+- ini_path: str          - ini 文件路径，为 None 则保存到默认 ini 文件
+- check_version: bool    - 是否检查 chromedriver 和 chrome 是否匹配
 
 返回： None
 

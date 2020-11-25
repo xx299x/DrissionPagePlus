@@ -55,7 +55,7 @@ class Drission(object):
         # ------------------处理driver options----------------------
         if driver_or_options is None:
             self._driver_options = om.chrome_options
-            self._driver_options['driver_path'] = om.paths.get('chromedriver_path', None)
+            self._driver_options['driver_path'] = om.get_value('paths', 'chromedriver_path')
 
         else:
             # 若接收到WebDriver对象，直接记录
