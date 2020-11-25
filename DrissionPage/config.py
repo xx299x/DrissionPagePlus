@@ -24,11 +24,15 @@ class OptionsManager(object):
         self._conf = ConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 
+        self._paths = None
+        self._chrome_options = None
+        self._session_options = None
+
         if 'global_tmp_path' not in self.paths or not self.get_value('paths', 'global_tmp_path'):
             global_tmp_path = str((Path(__file__).parent / 'tmp').absolute())
             Path(global_tmp_path).mkdir(parents=True, exist_ok=True)
             self.set_item('paths', 'global_tmp_path', global_tmp_path)
-            self.save()
+            self.save(self.ini_path)
 
     def __text__(self) -> str:
         """打印ini文件内容"""
@@ -42,17 +46,26 @@ class OptionsManager(object):
     @property
     def paths(self) -> dict:
         """返回paths设置"""
-        return self.get_option('paths')
+        if self._paths is None:
+            self._paths = self.get_option('paths')
+
+        return self._paths
 
     @property
     def chrome_options(self) -> dict:
         """返回chrome设置"""
-        return self.get_option('chrome_options')
+        if self._chrome_options is None:
+            self._chrome_options = self.get_option('chrome_options')
+
+        return self._chrome_options
 
     @property
     def session_options(self) -> dict:
         """返回session设置"""
-        return self.get_option('session_options')
+        if self._session_options is None:
+            self._session_options = self.get_option('session_options')
+
+        return self._session_options
 
     def get_value(self, section: str, item: str) -> Any:
         """获取配置的值         \n
@@ -62,7 +75,7 @@ class OptionsManager(object):
         """
         try:
             return eval(self._conf.get(section, item))
-        except SyntaxError:
+        except (SyntaxError, NameError):
             return self._conf.get(section, item)
         except NoSectionError and NoOptionError:
             return None
@@ -91,6 +104,7 @@ class OptionsManager(object):
         :return: 当前对象
         """
         self._conf.set(section, item, str(value))
+        self.__setattr__(f'_{section}', None)
         return self
 
     def save(self, path: str = None):
@@ -98,13 +112,236 @@ class OptionsManager(object):
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 当前对象
         """
-        path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
-        path = Path(path or self.ini_path)
+        if path == 'default':
+            path = (Path(__file__).parent / 'configs.ini').absolute()
+        elif path is None:
+            path = Path(self.ini_path).absolute()
+        else:
+            path = Path(path).absolute()
+
         path = path / 'config.ini' if path.is_dir() else path
-        path = path.absolute()
-        self._conf.write(open(path, 'w', encoding='utf-8'))
+
+        self._conf.write(open(str(path), 'w', encoding='utf-8'))
 
         return self
+
+
+class SessionOptions(object):
+    def __init__(self, read_file: bool = True, ini_path: str = None):
+        """
+        :param read_file:
+        :param ini_path:
+        """
+        self.ini_path = None
+        self._headers = None
+        self._cookies = None
+        self._auth = None
+        self._proxies = None
+        self._hooks = None
+        self._params = None
+        self._verify = None
+        self._cert = None
+        self._adapters = None
+        self._stream = None
+        self._trust_env = None
+        self._max_redirects = None
+
+        if read_file:
+            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            om = OptionsManager(self.ini_path)
+            options_dict = om.session_options
+
+            if options_dict.get('headers', None) is not None:
+                self._headers = {key.lower(): options_dict['headers'][key] for key in options_dict['headers']}
+
+            if options_dict.get('cookies', None) is not None:
+                self._headers = options_dict['cookies']
+
+            if options_dict.get('auth', None) is not None:
+                self._headers = options_dict['auth']
+
+            if options_dict.get('proxies', None) is not None:
+                self._headers = options_dict['proxies']
+
+            if options_dict.get('hooks', None) is not None:
+                self._headers = options_dict['hooks']
+
+            if options_dict.get('params', None) is not None:
+                self._headers = options_dict['params']
+
+            if options_dict.get('verify', None) is not None:
+                self._headers = options_dict['verify']
+
+            if options_dict.get('cert', None) is not None:
+                self._headers = options_dict['cert']
+
+            if options_dict.get('adapters', None) is not None:
+                self._headers = options_dict['adapters']
+
+            if options_dict.get('stream', None) is not None:
+                self._headers = options_dict['stream']
+
+            if options_dict.get('trust_env', None) is not None:
+                self._headers = options_dict['trust_env']
+
+            if options_dict.get('max_redirects', None) is not None:
+                self._headers = options_dict['max_redirects']
+
+            # self._cookies = options_dict.get('cookies', None)
+            # self._auth = options_dict.get('auth', None)
+            # self._proxies = options_dict.get('proxies', None)
+            # self._hooks = options_dict.get('hooks', None)
+            # self._params = options_dict.get('params', None)
+            # self._verify = options_dict.get('verify', True)
+            # self._cert = options_dict.get('cert', None)
+            # self._adapters = options_dict.get('adapters', None)
+            # self._stream = options_dict.get('stream', None)
+            # self._trust_env = options_dict.get('trust_env', True)
+            # self._max_redirects = options_dict.get('max_redirects', None)
+
+    @property
+    def headers(self) -> dict:
+        return self._headers
+
+    @property
+    def cookies(self) -> dict:
+        return self._cookies
+
+    @property
+    def auth(self) -> tuple:
+        return self._auth
+
+    @property
+    def proxies(self) -> dict:
+        return self._proxies
+
+    @property
+    def hooks(self) -> dict:
+        return self._hooks
+
+    @property
+    def params(self) -> dict:
+        return self._params
+
+    @property
+    def verify(self) -> bool:
+        return self._verify
+
+    @property
+    def cert(self) -> Union[str, tuple]:
+        return self._cert
+
+    @property
+    def adapters(self):
+        return self._adapters
+
+    @property
+    def stream(self) -> bool:
+        return self._stream
+
+    @property
+    def trust_env(self) -> bool:
+        return self._trust_env
+
+    @property
+    def max_redirects(self) -> int:
+        return self._max_redirects
+
+    @headers.setter
+    def headers(self, headers: dict) -> None:
+        self._headers = {key.lower(): headers[key] for key in headers}
+
+    @cookies.setter
+    def cookies(self, cookies: dict) -> None:
+        self._cookies = cookies
+
+    @auth.setter
+    def auth(self, auth: tuple) -> None:
+        self._auth = auth
+
+    @proxies.setter
+    def proxies(self, proxies: dict) -> None:
+        self._proxies = proxies
+
+    @hooks.setter
+    def hooks(self, hooks: dict) -> None:
+        self._hooks = hooks
+
+    @params.setter
+    def params(self, params: dict) -> None:
+        self._params = params
+
+    @verify.setter
+    def verify(self, verify: bool) -> None:
+        self._verify = verify
+
+    @cert.setter
+    def cert(self, cert: Union[str, tuple]) -> None:
+        self._cert = cert
+
+    @adapters.setter
+    def adapters(self, adapters) -> None:
+        self._adapters = adapters
+
+    @stream.setter
+    def stream(self, stream: bool) -> None:
+        self._stream = stream
+
+    @trust_env.setter
+    def trust_env(self, trust_env: bool) -> None:
+        self._trust_env = trust_env
+
+    @max_redirects.setter
+    def max_redirects(self, max_redirects: int) -> None:
+        self._max_redirects = max_redirects
+
+    def set_header(self, attr: str, value: str):
+        if self._headers is None:
+            self._headers = {}
+
+        self._headers[attr.lower()] = value
+        return self
+
+    def remove_header(self, attr: str):
+        if self._headers is None:
+            return self
+
+        attr = attr.lower()
+        if attr in self._headers:
+            self._headers.pop(attr)
+
+        return self
+
+    def save(self, path: str = None):
+        """保存设置到文件                                              \n
+        :param path: ini文件的路径，传入 'default' 保存到默认ini文件
+        :return: 当前对象
+        """
+        if path == 'default':
+            path = (Path(__file__).parent / 'configs.ini').absolute()
+        elif path is None:
+            path = Path(self.ini_path).absolute()
+        else:
+            path = Path(path).absolute()
+
+        path = path / 'config.ini' if path.is_dir() else path
+
+        if path.exists():
+            om = OptionsManager(path)
+        else:
+            om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
+
+        options = _session_options_to_dict(self)
+
+        for i in options:
+            om.set_item('session_options', i, options[i])
+
+        om.save(str(path))
+
+        return self
+
+    def as_dict(self) -> dict:
+        return _session_options_to_dict(self)
 
 
 class DriverOptions(Options):
@@ -125,6 +362,7 @@ class DriverOptions(Options):
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.chrome_options
+
             self._binary_location = options_dict.get('binary_location', '')
             self._arguments = options_dict.get('arguments', [])
             self._extensions = options_dict.get('extensions', [])
@@ -145,12 +383,21 @@ class DriverOptions(Options):
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 当前对象
         """
-        om = OptionsManager()
-        options = _chrome_options_to_dict(self)
-        path = Path(__file__).parent / 'configs.ini' if path == 'default' else path
-        path = Path(path or self.ini_path)
+        if path == 'default':
+            path = (Path(__file__).parent / 'configs.ini').absolute()
+        elif path is None:
+            path = Path(self.ini_path).absolute()
+        else:
+            path = Path(path).absolute()
+
         path = path / 'config.ini' if path.is_dir() else path
-        path = path.absolute()
+
+        if path.exists():
+            om = OptionsManager(path)
+        else:
+            om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
+
+        options = self.as_dict()
 
         for i in options:
             if i == 'driver_path':
@@ -158,7 +405,7 @@ class DriverOptions(Options):
             else:
                 om.set_item('chrome_options', i, options[i])
 
-        om.save(path)
+        om.save(str(path))
 
         return self
 
@@ -296,6 +543,9 @@ class DriverOptions(Options):
 
         return self
 
+    def as_dict(self) -> dict:
+        return _chrome_options_to_dict(self)
+
 
 def _dict_to_chrome_options(options: dict) -> Options:
     """从传入的字典获取浏览器设置，返回ChromeOptions对象  \n
@@ -349,25 +599,41 @@ def _dict_to_chrome_options(options: dict) -> Options:
     return chrome_options
 
 
-def _chrome_options_to_dict(options: Union[dict, DriverOptions, None]) -> Union[dict, None]:
+def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None]) -> Union[dict, None]:
     """把chrome配置对象转换为字典                             \n
     :param options: chrome配置对象，字典或DriverOptions对象
     :return: 配置字典
     """
-    if options is None or isinstance(options, dict):
+    if isinstance(options, (dict, type(None))):
         return options
 
     re_dict = dict()
-    re_dict['debugger_address'] = options.debugger_address
-    re_dict['binary_location'] = options.binary_location
-    re_dict['debugger_address'] = options.debugger_address
-    re_dict['arguments'] = options.arguments
-    re_dict['extensions'] = options.extensions
-    re_dict['experimental_options'] = options.experimental_options
+    attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path']
 
-    try:
-        re_dict['driver_path'] = options.driver_path
-    except:
-        re_dict['driver_path'] = None
-    # re_dict['capabilities'] = options.capabilities
+    for attr in attrs:
+        re_dict[attr] = options.__getattribute__(f'_{attr}')
+
+    return re_dict
+
+
+def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]:
+    """把session配置对象装换为字典                 \n
+    :param options: session配置对象或字典
+    :return: 配置字典
+    """
+    if isinstance(options, (dict, type(None))):
+        return options
+
+    re_dict = dict()
+    attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
+             'adapters', 'stream', 'trust_env', 'max_redirects']
+
+    for attr in attrs:
+        val = options.__getattribute__(f'_{attr}')
+        if val is not None:
+            re_dict[attr] = val
+
+    # cert属性默认值为None，未免无法区分是否被设置，主动赋值
+    re_dict['cert'] = options.__getattribute__('_cert')
+
     return re_dict

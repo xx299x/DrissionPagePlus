@@ -10,7 +10,7 @@ from requests import Response, Session
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .config import DriverOptions
+from .config import DriverOptions, SessionOptions
 from .drission import Drission
 from .driver_element import DriverElement
 from .driver_page import DriverPage
@@ -38,7 +38,7 @@ class MixPage(Null, SessionPage, DriverPage):
                  mode: str = 'd',
                  timeout: float = 10,
                  driver_options: Union[dict, DriverOptions] = None,
-                 session_options: dict = None):
+                 session_options: Union[dict, SessionOptions] = None):
         """初始化函数                                                                         \n
         :param drission: Drission对象，传入's'或'd'可自动创建Drission对象
         :param mode: 'd' 或 's'，即driver模式和session模式

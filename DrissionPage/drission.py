@@ -15,15 +15,16 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
 
-from .config import OptionsManager, _dict_to_chrome_options, _chrome_options_to_dict
+from .config import (OptionsManager, _dict_to_chrome_options, _session_options_to_dict,
+                     SessionOptions, DriverOptions, _chrome_options_to_dict)
 
 
 class Drission(object):
     """Drission类用于管理WebDriver对象和Session对象，是驱动器的角色"""
 
     def __init__(self,
-                 driver_or_options: Union[WebDriver, dict, Options] = None,
-                 session_or_options: Union[Session, dict] = None,
+                 driver_or_options: Union[WebDriver, dict, Options, DriverOptions] = None,
+                 session_or_options: Union[Session, dict, SessionOptions] = None,
                  ini_path: str = None,
                  proxy: dict = None):
         """初始化，可接收现成的WebDriver和Session对象，或接收它们的配置信息生成对象       \n
@@ -37,6 +38,7 @@ class Drission(object):
         self._driver_path = 'chromedriver'
         self._proxy = proxy
 
+        # ------------------处理session options----------------------
         # 若接收到Session对象，直接记录
         if isinstance(session_or_options, Session):
             self._session = session_or_options
@@ -48,8 +50,9 @@ class Drission(object):
             if session_or_options is None:
                 self._session_options = OptionsManager(ini_path).session_options
             else:
-                self._session_options = session_or_options
+                self._session_options = _session_options_to_dict(session_or_options)
 
+        # ------------------处理driver options----------------------
         # 若接收到WebDriver对象，直接记录
         if isinstance(driver_or_options, WebDriver):
             self._driver = driver_or_options
@@ -80,7 +83,7 @@ class Drission(object):
 
             for i in attrs:
                 if i in self._session_options:
-                    exec(f'self._session.{i} = self._session_options["{i}"]')
+                    self._session.__setattr__(i, self._session_options[i])
 
             if self._proxy:
                 self._session.proxies = self._proxy
