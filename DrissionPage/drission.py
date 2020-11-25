@@ -15,8 +15,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
 
-from .config import (OptionsManager, _dict_to_chrome_options, _session_options_to_dict,
-                     SessionOptions, DriverOptions, _chrome_options_to_dict)
+from .config import (_dict_to_chrome_options, _session_options_to_dict,
+                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager)
 
 
 class Drission(object):
@@ -35,43 +35,36 @@ class Drission(object):
         """
         self._session = None
         self._driver = None
-        self._driver_path = 'chromedriver'
         self._proxy = proxy
 
+        om = OptionsManager(ini_path) if session_or_options is None or driver_or_options is None else None
+
         # ------------------处理session options----------------------
-        # 若接收到Session对象，直接记录
-        if isinstance(session_or_options, Session):
-            self._session = session_or_options
+        if session_or_options is None:
+            self._session_options = om.session_options
 
-        # 否则记录其配置信息
         else:
+            # 若接收到Session对象，直接记录
+            if isinstance(session_or_options, Session):
+                self._session = session_or_options
 
-            # 若接收到配置信息则记录，否则从ini文件读取
-            if session_or_options is None:
-                self._session_options = OptionsManager(ini_path).session_options
+            # 否则记录其配置信息
             else:
                 self._session_options = _session_options_to_dict(session_or_options)
 
         # ------------------处理driver options----------------------
-        # 若接收到WebDriver对象，直接记录
-        if isinstance(driver_or_options, WebDriver):
-            self._driver = driver_or_options
+        if driver_or_options is None:
+            self._driver_options = om.chrome_options
+            self._driver_options['driver_path'] = om.paths.get('chromedriver_path', None)
 
-        # 否则记录其配置信息
         else:
+            # 若接收到WebDriver对象，直接记录
+            if isinstance(driver_or_options, WebDriver):
+                self._driver = driver_or_options
 
-            # 若接收到配置信息则记录，否则从ini文件读取
-            if driver_or_options is None:
-                om = OptionsManager(ini_path)
-                self._driver_options = om.chrome_options
-
-                if om.paths.get('chromedriver_path', None):
-                    self._driver_path = om.paths['chromedriver_path']
+            # 否则记录其配置信息
             else:
                 self._driver_options = _chrome_options_to_dict(driver_or_options)
-
-                if self._driver_options.get('driver_path', None):
-                    self._driver_path = self._driver_options['driver_path']
 
     @property
     def session(self) -> Session:
@@ -102,8 +95,10 @@ class Drission(object):
             if self._proxy:
                 options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
+            driver_path = self._driver_options.get('driver_path', None) or 'chromedriver'
+
             try:
-                self._driver = webdriver.Chrome(self._driver_path, options=options)
+                self._driver = webdriver.Chrome(driver_path, options=options)
             except SessionNotCreatedException:
                 print('Chrome版本与chromedriver版本不匹配，可执行easy_set.get_match_driver()自动下载匹配的版本。')
                 exit(0)
@@ -130,12 +125,12 @@ class Drission(object):
         return self._session_options
 
     @session_options.setter
-    def session_options(self, value: dict) -> None:
-        """设置session配置
-        :param value: session配置字典
+    def session_options(self, options: Union[dict, SessionOptions]) -> None:
+        """设置session配置                  \n
+        :param options: session配置字典
         :return: None
         """
-        self._session_options = value
+        self._session_options = _session_options_to_dict(options)
 
     @property
     def proxy(self) -> Union[None, dict]:
