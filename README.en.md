@@ -1074,7 +1074,7 @@ The Drission class is used to manage WebDriver objects and Session objects, and 
 
 Parameter Description:
 
-- driver_or_options: [WebDriver, dict, Options]  - WebDriver object or chrome configuration parameters.
+- driver_or_options: [WebDriver, dict, Options, DriverOptions]  - WebDriver object or chrome configuration parameters.
 - session_or_options: [Session, dict]  - Session object configuration parameters
 - ini_path: str  - ini file path, the default is the ini file under the DrissionPage folder
 - proxy: dict  - proxy settings

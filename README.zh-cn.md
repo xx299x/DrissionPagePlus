@@ -1090,10 +1090,10 @@ Drission 类用于管理 WebDriver 对象和 Session 对象，是驱动器的角
 
 参数说明：
 
-- driver_or_options: [WebDriver, dict, Options]     - WebDriver 对象或 chrome 配置参数。
-- session_or_options: [Session, dict]                    - Session 对象配置参数
-- ini_path: str                                                        - ini 文件路径，默认为 DrissionPage 文件夹下的ini文件
-- proxy: dict                                                          - 代理设置
+- driver_or_options: [WebDriver, dict, Options, DriverOptions]     - WebDriver 对象或 chrome 配置参数。
+- session_or_options: [Session, dict]                                            - Session 对象配置参数
+- ini_path: str                                                                                 - ini 文件路径，默认为 DrissionPage 文件夹下的ini文件
+- proxy: dict                                                                                   - 代理设置
 
 
 
