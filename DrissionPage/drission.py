@@ -70,13 +70,7 @@ class Drission(object):
     def session(self) -> Session:
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
-            self._session = Session()
-            attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
-                     'cert', 'adapters', 'stream', 'trust_env', 'max_redirects']
-
-            for i in attrs:
-                if i in self._session_options:
-                    self._session.__setattr__(i, self._session_options[i])
+            self._set_session(self._session_options)
 
             if self._proxy:
                 self._session.proxies = self._proxy
@@ -131,6 +125,7 @@ class Drission(object):
         :return: None
         """
         self._session_options = _session_options_to_dict(options)
+        self._set_session(self._session_options)
 
     @property
     def proxy(self) -> Union[None, dict]:
@@ -158,6 +153,17 @@ class Drission(object):
 
             for cookie in cookies:
                 self._ensure_add_cookie(cookie)
+
+    def _set_session(self, data: dict) -> None:
+        if self._session is None:
+            self._session = Session()
+
+        attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
+                 'cert', 'adapters', 'stream', 'trust_env', 'max_redirects']
+
+        for i in attrs:
+            if i in data:
+                self._session.__setattr__(i, data[i])
 
     def cookies_to_session(self, copy_user_agent: bool = False,
                            driver: WebDriver = None,
