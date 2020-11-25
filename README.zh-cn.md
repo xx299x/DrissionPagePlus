@@ -827,7 +827,7 @@ page.download(url, save_path, 'img', 'rename', show_msg=True)
 
 
 
-## Chrome 快捷设置
+## Chrome 设置
 
 chrome 的配置很繁琐，为简化使用，本库提供了常用配置的设置方法。
 
@@ -869,6 +869,22 @@ page = MixPage(drission)  # 用Drission对象创建 MixPage 对象
 do.save()  # 保存当前打开的 ini 文件
 do.save('default')  # 保存当前设置到默认 ini 文件
 ```
+
+
+
+## Session 设置
+
+
+
+### SessionOPtions 对象
+
+SessionOptions 对象用于管理 Session 的配置信息。它创建时默认读取默认 ini 文件配置信息，也可手动设置所需信息。
+
+
+
+### 使用方法
+
+
 
 
 
@@ -971,9 +987,11 @@ drission = Drission(ini_path='D:\\settings.ini')  # 使用指定 ini 文件创�
 
 ## easy_set 方法
 
-可快速地修改常用设置的方法，调用 easy_set 方法会修改默认 ini 文件相关内容。
+可快速地修改常用设置的方法。全部用于 driver 模式的设置。调用 easy_set 方法会修改默认 ini 文件相关内容。
 
 ```python
+get_match_driver()  # 识别chrome版本并自动下载匹配的chromedriver.exe
+show_settings()  # 打印所有设置
 set_headless(True)  # 开启 headless 模式
 set_no_imgs(True)  # 开启无图模式
 set_no_js(True)  # 禁用 JS
@@ -982,6 +1000,7 @@ set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # 设置 user agent
 set_proxy('127.0.0.1:8888')  # 设置代理
 set_paths(paths)  # 见 [初始化] 一节
 set_argument(arg, value)  # 设置属性，若属性无值（如'zh_CN.UTF-8'），value 为 bool 表示开关；否则value为str，当 value为''或 False，删除该属性项
+check_driver_version()  # 检查chrome和chromedriver版本是否匹配
 ```
 
 # POM 模式

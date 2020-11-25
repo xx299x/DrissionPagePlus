@@ -955,17 +955,20 @@ drission = Drission(ini_path='D:\\settings.ini') # Use the specified ini file to
 
 ## easy_set method
 
-The methods of frequently used settings can be quickly modified. Calling the easy_set method will modify the content of the default ini file.
+Methods to quickly modify common settings. All for driver mode settings. Calling the easy_set method will modify the content of the default ini file.
 
 ```python
-set_headless(True)  # Turn on headless mode
-set_no_imgs(True)  # Turn on no image mode
-set_no_js(True)  # Disable JS
-set_mute(True)  # Turn on mute mode
-set_user_agent('Mozilla/5.0 (Macintosh; Int......')  # set user agent
-set_proxy('127.0.0.1:8888')  # set proxy
-set_paths(paths)  # See [Initialization] section
-set_argument(arg, value)  # Set the attribute. If the attribute has no value (such as'zh_CN.UTF- 8'), the value is bool, which means switch; otherwise, the value is str. When the value is'' or False, delete the attribute item
+get_match_driver() # Identify the chrome version and automatically download the matching chromedriver.exe
+show_settings() # Print all settings
+set_headless(True) # Turn on headless mode
+set_no_imgs(True) # Turn on no image mode
+set_no_js(True) # Disable JS
+set_mute(True) # Turn on mute mode
+set_user_agent('Mozilla/5.0 (Macintosh; Int......') # set user agent
+set_proxy('127.0.0.1:8888') # set proxy
+set_paths(paths) # See [Initialization] section
+set_argument(arg, value) # Set the attribute. If the attribute has no value (such as'zh_CN.UTF-8'), the value is bool to indicate the switch; otherwise, the value is str. When the value is'' or False, delete the attribute item
+check_driver_version() # Check if chrome and chromedriver versions match
 ```
 
 # POM mode
