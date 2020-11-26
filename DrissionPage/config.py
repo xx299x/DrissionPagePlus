@@ -155,37 +155,37 @@ class SessionOptions(object):
                 self._headers = {key.lower(): options_dict['headers'][key] for key in options_dict['headers']}
 
             if options_dict.get('cookies', None) is not None:
-                self._headers = options_dict['cookies']
+                self._cookies = options_dict['cookies']
 
             if options_dict.get('auth', None) is not None:
-                self._headers = options_dict['auth']
+                self._auth = options_dict['auth']
 
             if options_dict.get('proxies', None) is not None:
-                self._headers = options_dict['proxies']
+                self._proxies = options_dict['proxies']
 
             if options_dict.get('hooks', None) is not None:
-                self._headers = options_dict['hooks']
+                self._hooks = options_dict['hooks']
 
             if options_dict.get('params', None) is not None:
-                self._headers = options_dict['params']
+                self._params = options_dict['params']
 
             if options_dict.get('verify', None) is not None:
-                self._headers = options_dict['verify']
+                self._verify = options_dict['verify']
 
             if options_dict.get('cert', None) is not None:
-                self._headers = options_dict['cert']
+                self._cert = options_dict['cert']
 
             if options_dict.get('adapters', None) is not None:
-                self._headers = options_dict['adapters']
+                self._adapters = options_dict['adapters']
 
             if options_dict.get('stream', None) is not None:
-                self._headers = options_dict['stream']
+                self._stream = options_dict['stream']
 
             if options_dict.get('trust_env', None) is not None:
-                self._headers = options_dict['trust_env']
+                self._trust_env = options_dict['trust_env']
 
             if options_dict.get('max_redirects', None) is not None:
-                self._headers = options_dict['max_redirects']
+                self._max_redirects = options_dict['max_redirects']
 
     @property
     def headers(self) -> dict:
