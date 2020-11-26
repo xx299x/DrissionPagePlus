@@ -108,8 +108,8 @@ class SessionPage(object):
 
                 loc_or_ele = translate_loc(loc_or_ele)
 
-            if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
-                loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
+            # if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
+            #     loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
 
         elif isinstance(loc_or_ele, SessionElement):
             return loc_or_ele
