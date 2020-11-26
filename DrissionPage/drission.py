@@ -9,6 +9,7 @@ from typing import Union
 from urllib.parse import urlparse
 
 from requests import Session
+from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options
@@ -158,8 +159,18 @@ class Drission(object):
         if self._session is None:
             self._session = Session()
 
-        attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
+        attrs = ['headers', 'auth', 'proxies', 'hooks', 'params', 'verify',
                  'cert', 'adapters', 'stream', 'trust_env', 'max_redirects']
+
+        if 'cookies' in data:
+            if isinstance(data['cookies'], (list, tuple)):
+                pass
+                # for cookie in data['cookies']:
+                #     kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value')}
+                #     self._session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+            elif isinstance(data['cookies'], RequestsCookieJar):
+                for cookie in data['cookies']:
+                    self._session.cookies.set_cookie(cookie)
 
         for i in attrs:
             if i in data:
