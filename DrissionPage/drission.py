@@ -17,7 +17,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
-                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager)
+                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookie_to_dict)
 
 
 class Drission(object):
@@ -160,14 +160,14 @@ class Drission(object):
             self._session = Session()
 
         attrs = ['headers', 'auth', 'proxies', 'hooks', 'params', 'verify',
-                 'cert', 'adapters', 'stream', 'trust_env', 'max_redirects']
+                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
 
         if 'cookies' in data:
             if isinstance(data['cookies'], (list, tuple)):
-                pass
-                # for cookie in data['cookies']:
-                #     kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value')}
-                #     self._session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+                for cookie in data['cookies']:
+                    kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value')}
+                    self._session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+
             elif isinstance(data['cookies'], RequestsCookieJar):
                 for cookie in data['cookies']:
                     self._session.cookies.set_cookie(cookie)
@@ -212,11 +212,7 @@ class Drission(object):
 
         # 翻译cookies
         for i in [x for x in session.cookies if domain in x.domain]:
-            cookie_data = {'name': i.name, 'value': str(i.value), 'path': i.path, 'domain': i.domain}
-
-            if i.expires:
-                cookie_data['expiry'] = i.expires
-
+            cookie_data = _cookie_to_dict(i)
             self._ensure_add_cookie(cookie_data, driver=driver)
 
     def _ensure_add_cookie(self, cookie, override_domain=None, driver=None) -> None:
