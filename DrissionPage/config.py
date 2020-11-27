@@ -6,9 +6,11 @@
 @File    :   config.py
 """
 from configparser import ConfigParser, NoSectionError, NoOptionError
+from http.cookiejar import Cookie
 from pathlib import Path
 from typing import Any, Union
 
+from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -175,8 +177,8 @@ class SessionOptions(object):
             if options_dict.get('cert', None) is not None:
                 self._cert = options_dict['cert']
 
-            if options_dict.get('adapters', None) is not None:
-                self._adapters = options_dict['adapters']
+            # if options_dict.get('adapters', None) is not None:
+            #     self._adapters = options_dict['adapters']
 
             if options_dict.get('stream', None) is not None:
                 self._stream = options_dict['stream']
@@ -682,8 +684,15 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
         return options
 
     re_dict = dict()
-    attrs = ['headers', 'cookies', 'auth', 'proxies', 'hooks', 'params', 'verify',
-             'adapters', 'stream', 'trust_env', 'max_redirects']
+    attrs = ['headers', 'auth', 'proxies', 'hooks', 'params', 'verify',
+             'stream', 'trust_env', 'max_redirects']  # 'adapters',
+
+    val = options.__getattribute__(f'_cookies')
+    if val is not None:
+        if isinstance(val, (list, tuple)):
+            re_dict['cookies'] = val
+        elif isinstance(val, RequestsCookieJar):
+            re_dict['cookies'] = [_cookie_to_dict(cookie) for cookie in val]
 
     for attr in attrs:
         val = options.__getattribute__(f'_{attr}')
@@ -694,3 +703,13 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     re_dict['cert'] = options.__getattribute__('_cert')
 
     return re_dict
+
+
+def _cookie_to_dict(cookie: Cookie) -> dict:
+    # TODO: 其它值？
+    cookie_dict = {'name': cookie.name, 'value': str(cookie.value), 'path': cookie.path, 'domain': cookie.domain}
+
+    if cookie.expires:
+        cookie_dict['expiry'] = cookie.expires
+
+    return cookie_dict
