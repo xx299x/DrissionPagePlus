@@ -192,11 +192,15 @@ class SessionOptions(object):
     @property
     def headers(self) -> dict:
         """返回headers设置信息"""
+        if self._headers is None:
+            self._headers = {}
         return self._headers
 
     @property
-    def cookies(self) -> dict:
+    def cookies(self) -> list:
         """返回cookies设置信息"""
+        if self._cookies is None:
+            self._cookies = []
         return self._cookies
 
     @property
@@ -207,16 +211,22 @@ class SessionOptions(object):
     @property
     def proxies(self) -> dict:
         """返回proxies设置信息"""
+        if self._proxies is None:
+            self._proxies = {}
         return self._proxies
 
     @property
     def hooks(self) -> dict:
         """返回hooks设置信息"""
+        if self._hooks is None:
+            self._hooks = {}
         return self._hooks
 
     @property
     def params(self) -> dict:
         """返回params设置信息"""
+        if self._params is None:
+            self._params = {}
         return self._params
 
     @property
@@ -258,7 +268,7 @@ class SessionOptions(object):
         self._headers = {key.lower(): headers[key] for key in headers}
 
     @cookies.setter
-    def cookies(self, cookies: dict) -> None:
+    def cookies(self, cookies: Union[list, tuple]) -> None:
         """设置cookies参数           \n
         :param cookies: 参数值
         :return: None
@@ -370,6 +380,16 @@ class SessionOptions(object):
             self._headers.pop(attr)
 
         return self
+
+    def add_cookie(self, cookie):
+        pass
+
+    def remove_cookie(self, name: str):
+        pass
+
+    def clear_cookies(self):
+        """清空cookies"""
+        self.cookies = None
 
     def save(self, path: str = None):
         """保存设置到文件                                              \n
@@ -684,8 +704,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
         return options
 
     re_dict = dict()
-    attrs = ['headers', 'auth', 'proxies', 'hooks', 'params', 'verify',
-             'stream', 'trust_env', 'max_redirects']  # 'adapters',
+    attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env', 'max_redirects']  # 'adapters',
 
     val = options.__getattribute__(f'_cookies')
     if val is not None:
@@ -701,6 +720,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
 
     # cert属性默认值为None，未免无法区分是否被设置，故主动赋值
     re_dict['cert'] = options.__getattribute__('_cert')
+    re_dict['auth'] = options.__getattribute__('_auth')
 
     return re_dict
 
