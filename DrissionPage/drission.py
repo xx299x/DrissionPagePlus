@@ -155,6 +155,30 @@ class Drission(object):
             for cookie in cookies:
                 self._ensure_add_cookie(cookie)
 
+    def set_cookies(self,
+                    cookies: Union[RequestsCookieJar, list, tuple],
+                    set_session: bool = False,
+                    set_driver: bool = False):
+        if isinstance(cookies, (list, tuple, RequestsCookieJar)):
+            cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
+        else:
+            raise TypeError
+
+        if set_session:
+            pass
+
+        if set_driver:
+            pass
+
+    def add_cookie(self):
+        pass
+
+    def remove_cookie(self):
+        pass
+
+    def clear_cookies(self):
+        pass
+
     def _set_session(self, data: dict) -> None:
         if self._session is None:
             self._session = Session()

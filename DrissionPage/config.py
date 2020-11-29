@@ -726,10 +726,15 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
 
 
 def _cookie_to_dict(cookie: Cookie) -> dict:
-    # TODO: 其它值？
-    cookie_dict = {'name': cookie.name, 'value': str(cookie.value), 'path': cookie.path, 'domain': cookie.domain}
+    # cookie_dict = {'name': cookie.name, 'value': str(cookie.value), 'path': cookie.path, 'domain': cookie.domain}
 
-    if cookie.expires:
-        cookie_dict['expiry'] = cookie.expires
+    # if cookie.expires:
+    #     cookie_dict['expiry'] = cookie.expires
 
-    return cookie_dict
+    # return cookie_dict
+    if isinstance(cookie, Cookie):
+        return cookie.__dict__
+    elif isinstance(cookie, dict):
+        return cookie
+    else:
+        raise TypeError
