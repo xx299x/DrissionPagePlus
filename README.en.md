@@ -547,6 +547,7 @@ page.current_tab_handle  # Return to the current tab page handle
 When calling a method that only belongs to d mode, it will automatically switch to d mode. See APIs for detailed usage.
 
 ```python
+page.get_cookies() # Get cookies, which can be returned by list or dict
 page.change_mode()  # Switch mode, it will automatically copy cookies
 page.cookies_to_session()  # Copy cookies from WebDriver object to Session object
 page.cookies_to_driver()  # Copy cookies from Session object to WebDriver object
@@ -887,7 +888,10 @@ options.set_paths(driver_path, chrome_path, debugger_address, download_path, use
 ### Instructions
 
 ```python
-do = DriverOptions(read_file=False) # Create chrome configuration object, do not read from ini file
+do = DriverOptions() # read the default ini file to create a DriverOptions object
+do = DriverOptions('D:\\settings.ini') # read the specified ini file to create a DriverOptions object
+do = DriverOptions(read_file=False) # Do not read the ini file, create an empty DriverOptions object
+
 do.set_headless(False) # show the browser interface
 do.set_no_imgs(True) # Do not load pictures
 do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe') # set path
@@ -1338,6 +1342,16 @@ Returns: str
 Returns the validity of the current url.
 
 Returns: bool
+
+
+
+### get_cookies()
+
+Return cookies.
+
+Parameter Description:
+
+- as_dict: bool-Whether to return as dict, the default is to return complete cookies as list
 
 
 

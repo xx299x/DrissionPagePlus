@@ -16,6 +16,7 @@ from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
 
+from .config import _cookie_to_dict
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
 from .session_element import SessionElement, execute_session_find
 
@@ -54,17 +55,24 @@ class SessionPage(object):
     @property
     def cookies(self) -> dict:
         """返回session的cookies"""
-        return self.session.cookies.get_dict()
+        return self.get_cookies(True)
 
     @property
     def title(self) -> str:
         """返回网页title"""
-        return self.ele(('css selector', 'title')).text
+        return self.ele('tag:title').text
 
     @property
     def html(self) -> str:
         """返回页面html文本"""
         return format_html(self.response.text)
+
+    def get_cookies(self, as_dict: bool = False) -> Union[dict, list]:
+        """返回session的cookies"""
+        if as_dict:
+            return self.session.cookies.get_dict()
+        else:
+            return [_cookie_to_dict(cookie) for cookie in self.session.cookies]
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],

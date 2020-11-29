@@ -19,6 +19,8 @@ DrissionPage，即 driver 和 session 的合体。
 
 **联系邮箱：** g1879@qq.com
 
+**交流QQ群：**897838127
+
 # 理念及背景
 
 ***
@@ -549,6 +551,7 @@ page.current_tab_handle  # 返回当前标签页 handle
 调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见 APIs。
 
 ```python
+page.get_cookies()  # 获取 cookies，可以 list 或 dict 方式返回
 page.change_mode()  # 切换模式，会自动复制 cookies
 page.cookies_to_session()  # 从 WebDriver 对象复制 cookies 到 Session 对象
 page.cookies_to_driver()  # 从 Session 对象复制 cookies 到 WebDriver 对象
@@ -888,7 +891,10 @@ options.set_paths(driver_path, chrome_path, debugger_address, download_path, use
 ### 使用方法
 
 ```python
-do = DriverOptions(read_file=False)  # 创建chrome配置对象，不从 ini 文件读取
+do = DriverOptions()  # 读取默认 ini 文件创建 DriverOptions 对象
+do = DriverOptions('D:\\settings.ini')  # 读取指定 ini 文件创建 DriverOptions 对象
+do = DriverOptions(read_file=False)  # 不读取 ini 文件，创建空的 DriverOptions 对象
+
 do.set_headless(False)  # 显示浏览器界面
 do.set_no_imgs(True)  # 不加载图片
 do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe')  # 设置路径
@@ -1353,6 +1359,16 @@ MixPage 封装了页面操作的常用功能，可在 driver 和 session 模式�
 返回当前 url 有效性。
 
 返回： bool
+
+
+
+### get_cookies()
+
+返回 cookies。
+
+参数说明：
+
+- as_dict: bool  - 是否以 dict 方式返回，默认以 list 返回完整的 cookies
 
 
 

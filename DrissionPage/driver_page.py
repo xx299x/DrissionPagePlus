@@ -53,12 +53,19 @@ class DriverPage(object):
     @property
     def cookies(self) -> list:
         """返回当前网站cookies"""
-        return self.driver.get_cookies()
+        return self.get_cookies(True)
 
     @property
     def title(self) -> str:
         """返回网页title"""
         return self.driver.title
+
+    def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
+        """返回当前网站cookies"""
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in self.driver.get_cookies()}
+        else:
+            return self.driver.get_cookies()
 
     def _try_to_connect(self,
                         to_url: str,

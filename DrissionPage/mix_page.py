@@ -139,6 +139,13 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).title
 
+    def get_cookies(self, as_dict: bool = False) -> Union[dict, list]:
+        """返回cookies"""
+        if self._mode == 's':
+            return super().get_cookies(as_dict)
+        elif self._mode == 'd':
+            return super(SessionPage, self).get_cookies(as_dict)
+
     def change_mode(self, mode: str = None, go: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
         切换时会把当前模式的cookies复制到目标模式                 \n
