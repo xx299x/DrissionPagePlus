@@ -418,6 +418,12 @@ Tips:
 
 
 
+### Other methods
+
+If you don't want to use the ini file (for example, when you want to package the project), you can write the above two paths in the system path, or fill in the program. See the next section for the use of the latter.
+
+
+
 ## Create drive object Drission
 
 The creation step is not necessary. If you want to get started quickly, you can skip this section. The MixPage object will automatically create the object.
@@ -451,16 +457,21 @@ do.set_paths(chrome_path ='D:\\chrome\\chrome.exe',
 # Settings for s mode
 session_options = {'headers': {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)'}}
 
+# Proxy settings, optional
+proxy = {'http': '127.0.0.1:1080','https': '127.0.0.1:1080'}
+
 # Incoming configuration, driver_options and session_options are optional, you need to use the corresponding mode to pass in
-drission = Drission(driver_options, session_options)
+drission = Drission(driver_options, session_options, proxy=proxy)
 ```
+
+The usage of DriverOptions and SessionOptions is detailed below.
 
 
 
 ## Use page object MixPage
 
 The MixPage page object encapsulates common web page operations and realizes the switch between driver and session modes.
-MixPage must receive a Drission object and use the driver or session in it. If it is not passed in, MixPage will create a Drission by itself (using the configuration of the default ini file).
+MixPage must control a Drission object and use its driver or session. If it is not passed in, MixPage will create one by itself (using the incoming configuration information or reading from the default ini file).
 
 Tips: When multiple objects work together, you can pass the Drission object in one MixPage to another, so that multiple objects can share login information or operate the same page.
 
@@ -485,8 +496,6 @@ page = MixPage(driver_options=DriverOption, session_options=SessionOption)  # de
 
 ### visit website
 
-If there is an error in the connection, the program will automatically retry twice. The number of retries and the waiting interval can be specified.
-
 ```python
 # Default mode
 page.get(url)
@@ -495,6 +504,8 @@ page.post(url, data, **kwargs)  # Only session mode has post method
 # Specify the number of retries and interval
 page.get(url, retry=5, interval=0.5)
 ```
+
+Tips: If there is an error in the connection, the program will automatically retry twice. The number of retries and the waiting interval can be specified.
 
 
 
@@ -505,6 +516,8 @@ Switch between s and d modes, the cookies and the URL you are visiting will be a
 ```python
 page.change_mode(go=False)  # If go is False, it means that the url is not redirected
 ```
+
+Tips: When using a method unique to a certain mode, it will automatically jump to that mode.
 
 
 
@@ -534,7 +547,7 @@ page.current_tab_handle  # Return to the current tab page handle
 When calling a method that only belongs to d mode, it will automatically switch to d mode. See APIs for detailed usage.
 
 ```python
-page.change_mode()  # switch mode
+page.change_mode()  # Switch mode, it will automatically copy cookies
 page.cookies_to_session()  # Copy cookies from WebDriver object to Session object
 page.cookies_to_driver()  # Copy cookies from Session object to WebDriver object
 page.get(url, retry, interval, **kwargs)  # Use get to access the web page, you can specify the number of retries and the interval
@@ -577,11 +590,9 @@ page.eles() and element.eles() search and return a list of all elements that mee
 
 Description:
 
-- The element search timeout is 10 seconds by default, you can also set it as needed.
-
-- In the following search statement, the colon: indicates a fuzzy match, and the equal sign = indicates an exact match
-
-- There are five types of query strings: @attribute name, tag, text, xpath, and css
+- The element search timeout is 10 seconds by default, and it stops waiting when it times out or finds an element. You can also set it as needed.
+- -You can find elements with query string or selenium native loc tuple (s mode can also be used)
+-The query string has 7 methods such as @attribute name, tag, text, xpath, css, ., #, etc.
 
 ```python
 # Find by attribute
@@ -589,6 +600,12 @@ page.ele('@id:ele_id', timeout = 2)  # Find the element whose id is ele_id and s
 page.eles('@class')  # Find all elements with class attribute
 page.eles('@class:class_name')  # Find all elements that have ele_class in class
 page.eles('@class=class_name')  # Find all elements whose class is equal to ele_class
+
+# Find by class or id
+page.ele('#ele_id') # equivalent to page.ele('@id=ele_id')
+page.ele('#:ele_id') # equivalent to page.ele('@id:ele_id')
+page.ele('.ele_class') # equivalent to page.ele('@class=ele_class')
+page.ele('.:ele_class') # equivalent to page.ele('@class:ele_class')
 
 # Find by tag name
 page.ele('tag:li')  # Find the first li element
@@ -603,7 +620,7 @@ page.ele('tag:div@text()=search_text')  # Find the div element whose text is equ
 
 # Find according to text content
 page.ele('search text')  # find the element containing the incoming text
-page.eles('text:search text')  # If the text starts with @, tag:, css:, xpath:, text:, add text: in front to avoid conflicts
+page.eles('text:search text')  # If the text starts with @, tag:, css:, xpath:, text:, you should add text: in front to avoid conflicts
 page.eles('text=search text')  # The text is equal to the element of search_text
 
 # Find according to xpath or css selector
@@ -626,7 +643,7 @@ element.parent  # parent element
 element.next  # next sibling element
 element.prev  # previous sibling element
 
-# Get shadow- dom, only support open shadow- root
+# Get the shadow-root and treat it as an element. Only support open shadow-root
 ele1 = element.shadow_root.ele('tag:div')
 
 # Chain search
@@ -776,6 +793,37 @@ page = MixPage('s')
 session = page.session
 
 response = session.get('https://www.baidu.com')
+```
+
+
+
+## requests function usage
+
+### Connection parameters
+
+In addition to passing in configuration information and connection parameters when creating, if necessary, you can also set connection parameters every time you visit the URL in the s mode.
+
+```python
+headers = {'User-Agent':'...',}
+cookies = {'name':'value',}
+proxies = {'http': '127.0.0.1:1080','https': '127.0.0.1:1080'}
+page.get(url, headers=headers, cookies=cookies, proxies=proxies)
+```
+
+Tips:
+
+-If the connection parameters are not specified, the s mode will automatically fill in the Host and Referer attributes according to the current domain name
+-The Session configuration passed in when creating MixPage is globally effective
+
+
+
+### Response object
+
+The Response object obtained by requests is stored in page.response and can be used directly. Such as:
+
+```python
+print(page.response.status_code)
+print(page.response.headers)
 ```
 
 

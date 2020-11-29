@@ -6,7 +6,7 @@ DrissionPage，即 driver 和 session 的合体。
 是个基于 python 的 Web 自动化操作集成工具。  
 它实现了 selenium 和 requests 之间的无缝切换。  
 因此可以兼顾 selenium 的便利性和 requests 的高效率。  
-它集成了页面常用功能，两种模式系统一致的 API，使用便捷。
+它集成了页面常用功能，两种模式系统一致的 API，使用便捷。  
 它用 POM 模式封装了页面元素常用的方法，很适合自动化操作功能扩展。  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。  
 
@@ -330,9 +330,9 @@ from DrissionPage import MixPage
 
 配置路径有四种方法：
 - 使用 easy_set 工具的 get_match_driver() 方法（推荐）
-- 将路径写入本库的ini文件
+- 将路径写入本库的 ini 文件
 - 将两个路径写入系统变量
-- 使用时手动传入路径
+- 在代码中填写路径
 
 ### 使用 get_match_driver()  方法
 
@@ -420,6 +420,12 @@ Tips：
 
 
 
+### 其它方法
+
+若你不想使用 ini 文件（如要打包项目时），可在系统路径写入以上两个路径，或在程序中填写。后者的使用方法见下一节。
+
+
+
 ## 创建驱动器对象 Drission
 
 创建的步骤不是必须，若想快速上手，可跳过本节。MixPage 会自动创建该对象。
@@ -453,16 +459,21 @@ do.set_paths(chrome_path='D:\\chrome\\chrome.exe',
 # 用于 s 模式的设置
 session_options = {'headers': {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)'}}
 
+# 代理设置，可选
+proxy = {'http': '127.0.0.1:1080', 'https': '127.0.0.1:1080'}
+
 # 传入配置，driver_options 和 session_options 都是可选的，须要使用对应模式才须要传入
-drission = Drission(driver_options, session_options)  
+drission = Drission(driver_options, session_options, proxy=proxy)  
 ```
+
+DriverOptions 和 SessionOptions 用法详见下文。
 
 
 
 ## 使用页面对象 MixPage
 
 MixPage 页面对象封装了常用的网页操作，并实现 driver 和 session 模式之间的切换。  
-MixPage 须接收一个 Drission 对象并使用其中的 driver 或 session，如没有传入，MixPage 会自己创建一个（使用默认 ini 文件的配置）。
+MixPage 须控制一个 Drission 对象并使用其中的 driver 或 session，如没有传入，MixPage 会自己创建一个（使用传入的配置信息或从默认 ini 文件读取）。
 
 Tips: 多对象协同工作时，可将一个 MixPage 中的 Drission 对象传递给另一个，使多个对象共享登录信息或操作同一个页面。
 
@@ -487,8 +498,6 @@ page = MixPage(driver_options=do, session_options=so)  # 默认 d 模式
 
 ### 访问网页
 
-若连接出错，程序会自动重试2次，可指定重试次数和等待间隔。
-
 ```python
 # 默认方式
 page.get(url)
@@ -497,6 +506,8 @@ page.post(url, data, **kwargs)  # 只有 session 模式才有 post 方法
 # 指定重试次数和间隔
 page.get(url, retry=5, interval=0.5)
 ```
+
+Tips：若连接出错，程序会自动重试2次，可指定重试次数和等待间隔。
 
 
 
@@ -507,6 +518,8 @@ page.get(url, retry=5, interval=0.5)
 ```python
 page.change_mode(go=False)  # go 为 False 表示不跳转 url
 ```
+
+Tips：使用某种模式独有的方法时会自动跳转到该模式。
 
 
 
@@ -536,7 +549,7 @@ page.current_tab_handle  # 返回当前标签页 handle
 调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见 APIs。
 
 ```python
-page.change_mode()  # 切换模式
+page.change_mode()  # 切换模式，会自动复制 cookies
 page.cookies_to_session()  # 从 WebDriver 对象复制 cookies 到 Session 对象
 page.cookies_to_driver()  # 从 Session 对象复制 cookies 到 WebDriver 对象
 page.get(url, retry, interval, **kwargs)  # 用 get 方式访问网页，可指定重试次数及间隔时间
@@ -558,7 +571,7 @@ page.close_current_tab()  # 关闭当前标签页
 page.close_other_tabs(num)  # 关闭其它标签页
 page.to_iframe(iframe)  # 切入 iframe
 page.screenshot(path)  # 页面截图
-page.scrool_to_see(element)  # 滚动直到某元素可见
+page.scroll_to_see(element)  # 滚动直到某元素可见
 page.scroll_to(mode, pixel)  # 按参数指示方式滚动页面，可选滚动方向：'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
 page.refresh()  # 刷新当前页面
 page.back()  # 浏览器后退
@@ -579,9 +592,10 @@ page.eles() 和 element.eles() 查找返回符合条件的所有元素列表。
 
 说明：
 
-- 元素查找超时默认为10秒，你也可以按需要设置。
+- 元素查找超时默认为10秒，超时或找到元素时停止等待，你也可以按需要设置。
 - 下面的查找语句中，冒号 : 表示模糊匹配，等号 = 表示精确匹配
-- 查询字符串有 @属性名、tag、text、xpath、css 五种
+- 可用查询字符串或 selenium 原生的 loc 元组（s 模式也能用）查找元素
+- 查询字符串有 @属性名、tag、text、xpath、css、.、# 等7种方法
 
 ```python
 # 根据属性查找，@ 后面可跟任意属性
@@ -589,6 +603,12 @@ page.ele('@id:ele_id', timeout=2)  # 查找 id 为 ele_id 的元素，设置等�
 page.eles('@class')  # 查找所有拥有 class 属性的元素
 page.eles('@class:class_name')  # 查找所有 class 含有 ele_class 的元素 
 page.eles('@class=class_name')  # 查找所有 class 等于 ele_class 的元素 
+
+# 根据 class 或 id 查找
+page.ele('#ele_id')  # 等价于 page.ele('@id=ele_id')
+page.ele('#:ele_id')  # 等价于 page.ele('@id:ele_id')
+page.ele('.ele_class')  # 等价于 page.ele('@class=ele_class')
+page.ele('.:ele_class')  # 等价于 page.ele('@class:ele_class')
 
 # 根据 tag name 查找
 page.ele('tag:li')  # 查找第一个 li 元素  
@@ -603,7 +623,7 @@ page.ele('tag:div@text()=search_text') # 查找文本等于 search_text 的 div 
 
 # 根据文本内容查找
 page.ele('search text')  # 查找包含传入文本的元素  
-page.eles('text:search text')  # 如文本以 @、tag:、css:、xpath:、text: 开头，则在前面加上 text: 避免冲突  
+page.eles('text:search text')  # 如文本以 @、tag:、css:、xpath:、text: 开头，则应在前加上 text: 避免冲突  
 page.eles('text=search text')  # 文本等于 search_text 的元素
 
 # 根据 xpath 或 css selector 查找
@@ -626,7 +646,7 @@ element.parent  # 父元素
 element.next  # 下一个兄弟元素  
 element.prev  # 上一个兄弟元素  
 
-# 获取 shadow-dom，只支持 open 的 shadow-root
+# 获取 shadow-root，把它作为元素对待。只支持 open 的 shadow-root
 ele1 = element.shadow_root.ele('tag:div')
 
 # 串连查找
@@ -782,19 +802,30 @@ response = session.get('https://www.baidu.com')
 
 ### 连接参数
 
-除了在创建时传入配置信息及连接参数，如有特别要求，s 模式下也可在每次访问网址时设置连接参数。
+除了在创建时传入配置信息及连接参数，如有必要，s 模式下也可在每次访问网址时设置连接参数。
 
 ```python
-
+headers = {'User-Agent': '......', }
+cookies = {'name': 'value', }
+proxies = {'http': '127.0.0.1:1080', 'https': '127.0.0.1:1080'}
+page.get(url, headers=headers, cookies=cookies, proxies=proxies)
 ```
 
-Tips：如果连接参数内没有指定，s 模式会根据当前域名自动填写 Host 和 Referer 属性。
+Tips：
+
+- 如果连接参数内没有指定，s 模式会根据当前域名自动填写 Host 和 Referer 属性
+- 在创建 MixPage 时传入的 Session 配置是全局有效的
 
 
 
 ### Response 对象
 
+requests 获取到的 Response 对象存放在 page.response，可直接使用。如：
 
+```python
+print(page.response.status_code)
+print(page.response.headers)
+```
 
 
 
