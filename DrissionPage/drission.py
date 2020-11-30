@@ -156,24 +156,30 @@ class Drission(object):
                 self._ensure_add_cookie(cookie)
 
     def set_cookies(self,
-                    cookies: Union[RequestsCookieJar, list, tuple],
+                    cookies: Union[RequestsCookieJar, list, tuple, str],
                     set_session: bool = False,
-                    set_driver: bool = False):
+                    set_driver: bool = False) -> None:
         if isinstance(cookies, (list, tuple, RequestsCookieJar)):
             cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
+        elif isinstance(cookies, str):
+            cookies = tuple(dict([cookie.split("=", 1)]) for cookie in cookies.split("; "))
+        elif isinstance(cookies, dict):
+            cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
         else:
             raise TypeError
 
-        if set_session:
-            pass
+        for cookie in cookies:
+            if set_session:
+                kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value')}
+                self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
 
-        if set_driver:
-            pass
+            if set_driver:
+                self.driver.add_cookie(cookie)
 
-    def add_cookie(self):
+    def add_a_cookie(self):
         pass
 
-    def remove_cookie(self):
+    def remove_a_cookie(self):
         pass
 
     def clear_cookies(self):
@@ -187,14 +193,7 @@ class Drission(object):
                  'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
 
         if 'cookies' in data:
-            if isinstance(data['cookies'], (list, tuple)):
-                for cookie in data['cookies']:
-                    kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value')}
-                    self._session.cookies.set(cookie['name'], cookie['value'], **kwargs)
-
-            elif isinstance(data['cookies'], RequestsCookieJar):
-                for cookie in data['cookies']:
-                    self._session.cookies.set_cookie(cookie)
+            self.set_cookies(data['cookies'], set_driver=False)
 
         for i in attrs:
             if i in data:
