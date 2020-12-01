@@ -162,7 +162,7 @@ class Drission(object):
         if isinstance(cookies, (list, tuple, RequestsCookieJar)):
             cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
         elif isinstance(cookies, str):
-            cookies = tuple(dict([cookie.split("=", 1)]) for cookie in cookies.split("; "))
+            cookies = tuple(dict([cookie.lstrip().split("=", 1)]) for cookie in cookies.split(";"))
         elif isinstance(cookies, dict):
             cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
         else:
@@ -176,10 +176,16 @@ class Drission(object):
             if set_driver:
                 self.driver.add_cookie(cookie)
 
-    def add_a_cookie(self):
+    def add_a_cookie(self,
+                     cookie: str,
+                     set_session: bool = False,
+                     set_driver: bool = False):
         pass
 
-    def remove_a_cookie(self):
+    def remove_a_cookie(self,
+                        name: str,
+                        set_session: bool = False,
+                        set_driver: bool = False):
         pass
 
     def clear_cookies(self):
