@@ -16,8 +16,8 @@ from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
 
-from .config import _cookie_to_dict
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
+from .config import _cookie_to_dict
 from .session_element import SessionElement, execute_session_find
 
 
@@ -382,6 +382,7 @@ class SessionPage(object):
 
         # -------------------打印要下载的文件-------------------
         if show_msg:
+            print(file_url)
             print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
             print(f'Downloading to: {goal_path}')
 
@@ -436,7 +437,7 @@ class SessionPage(object):
 
         # -------------------显示并返回值-------------------
         if show_msg:
-            print(info)
+            print(info, '\n')
 
         info = f'{goal_path}\\{full_name}' if download_status else info
         return download_status, info
@@ -455,6 +456,11 @@ class SessionPage(object):
         :param kwargs: 其它参数
         :return: tuple，第一位为Response或None，第二位为出错信息或'Sussess'
         """
+        if not str:
+            if show_errmsg:
+                raise ValueError('url is empty.')
+            return None, 'url is empty.'
+
         if mode not in ['get', 'post']:
             raise ValueError("Argument mode can only be 'get' or 'post'.")
 
