@@ -201,6 +201,7 @@ class SessionOptions(object):
         """返回cookies设置信息"""
         if self._cookies is None:
             self._cookies = []
+
         return self._cookies
 
     @property
@@ -213,6 +214,7 @@ class SessionOptions(object):
         """返回proxies设置信息"""
         if self._proxies is None:
             self._proxies = {}
+
         return self._proxies
 
     @property
@@ -220,6 +222,7 @@ class SessionOptions(object):
         """返回hooks设置信息"""
         if self._hooks is None:
             self._hooks = {}
+
         return self._hooks
 
     @property
@@ -268,7 +271,7 @@ class SessionOptions(object):
         self._headers = {key.lower(): headers[key] for key in headers}
 
     @cookies.setter
-    def cookies(self, cookies: Union[list, tuple]) -> None:
+    def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None:
         """设置cookies参数           \n
         :param cookies: 参数值
         :return: None
@@ -381,16 +384,6 @@ class SessionOptions(object):
 
         return self
 
-    def add_cookie(self, cookie):
-        pass
-
-    def remove_cookie(self, name: str):
-        pass
-
-    def clear_cookies(self):
-        """清空cookies"""
-        self.cookies = None
-
     def save(self, path: str = None):
         """保存设置到文件                                              \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
@@ -420,6 +413,7 @@ class SessionOptions(object):
         return self
 
     def as_dict(self) -> dict:
+        """以字典形式返回本对象"""
         return _session_options_to_dict(self)
 
 
@@ -696,7 +690,7 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None]) 
 
 
 def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]:
-    """把session配置对象装换为字典                 \n
+    """把session配置对象转换为字典                 \n
     :param options: session配置对象或字典
     :return: 配置字典
     """
@@ -706,12 +700,13 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     re_dict = dict()
     attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env', 'max_redirects']  # 'adapters',
 
-    val = options.__getattribute__(f'_cookies')
+    val = options.__getattribute__('_cookies')
+
     if val is not None:
-        if isinstance(val, (list, tuple)):
-            re_dict['cookies'] = val
-        elif isinstance(val, RequestsCookieJar):
+        if isinstance(val, RequestsCookieJar):
             re_dict['cookies'] = [_cookie_to_dict(cookie) for cookie in val]
+        else:
+            re_dict['cookies'] = val
 
     for attr in attrs:
         val = options.__getattribute__(f'_{attr}')
@@ -726,17 +721,15 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
 
 
 def _cookie_to_dict(cookie: Cookie) -> dict:
-    """把Cookie对象转为dict格式"""
-    # print(cookie)
+    """把Cookie对象转为dict格式                \n
+    :param cookie: Cookie对象
+    :return: cookie字典
+    """
     if isinstance(cookie, Cookie):
         cookie_dict = cookie.__dict__.copy()
         cookie_dict.pop('rfc2109')
         cookie_dict.pop('_rest')
         return cookie_dict
-        # cookie_dict = {'name': cookie.name, 'value': str(cookie.value), 'path': cookie.path, 'domain': cookie.domain}
-        #
-        # if cookie.expires:
-        #     cookie_dict['expiry'] = cookie.expires
 
     elif isinstance(cookie, dict):
         return cookie
