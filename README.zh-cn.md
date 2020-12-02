@@ -551,6 +551,7 @@ page.current_tab_handle  # 返回当前标签页 handle
 调用只属于 d 模式的方法，会自动切换到 d 模式。详细用法见 APIs。
 
 ```python
+page.set_cookies()  # 设置cookies
 page.get_cookies()  # 获取 cookies，可以 list 或 dict 方式返回
 page.change_mode()  # 切换模式，会自动复制 cookies
 page.cookies_to_session()  # 从 WebDriver 对象复制 cookies 到 Session 对象
@@ -1201,6 +1202,20 @@ Drission 类用于管理 WebDriver 对象和 Session 对象，是驱动器的角
 
 
 
+### set_cookies()
+
+设置 cookies。
+
+参数说明：
+
+- cookies: Union[RequestsCookieJar, list, tuple, str, dict]  - cookies 信息，可为CookieJar, list, tuple, str, dict
+- set_session: bool                                                             - 是否设置 session 的 cookies
+- set_driver: bool                                                                - 是否设置 driver 的 cookies
+
+返回： None
+
+
+
 ### cookies_to_session()
 
 把 driver 对象的 cookies 复制到 session 对象。
@@ -1358,13 +1373,28 @@ MixPage 封装了页面操作的常用功能，可在 driver 和 session 模式�
 
 
 
+### set_cookies()
+
+设置 cookies。
+
+参数说明：
+
+- cookies: Union[RequestsCookieJar, list, tuple, str, dict]  - cookies 信息，可为CookieJar, list, tuple, str, dict
+
+返回： None
+
+
+
 ### get_cookies()
 
 返回 cookies。
 
 参数说明：
 
-- as_dict: bool  - 是否以 dict 方式返回，默认以 list 返回完整的 cookies
+- as_dict: bool          - 是否以 dict 方式返回，默认以 list 返回完整的 cookies
+- all_domains: bool  - 是否返回所有域名的 cookies，只有 s 模式下生效
+
+返回：cookies 字典或列表
 
 
 

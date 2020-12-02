@@ -547,6 +547,7 @@ page.current_tab_handle  # Return to the current tab page handle
 When calling a method that only belongs to d mode, it will automatically switch to d mode. See APIs for detailed usage.
 
 ```python
+page.set_cookies()  # set cookies
 page.get_cookies() # Get cookies, which can be returned by list or dict
 page.change_mode()  # Switch mode, it will automatically copy cookies
 page.cookies_to_session()  # Copy cookies from WebDriver object to Session object
@@ -1196,6 +1197,22 @@ Returns: None
 
 
 
+### set_cookies()
+
+Set cookies.
+
+Parameter Description:
+
+- cookies: Union[RequestsCookieJar, list, tuple, str, dict]-cookies information, can be CookieJar, list, tuple, str, dict
+
+- set_session: bool-whether to set session cookies
+
+- set_driver: bool-whether to set driver cookies
+
+Returns: None
+
+
+
 ### cookies_to_driver()
 
 Copy cookies from session to driver.
@@ -1341,13 +1358,29 @@ Returns: bool
 
 
 
+### set_cookies()
+
+Set cookies.
+
+Parameter Description:
+
+- cookies: Union[RequestsCookieJar, list, tuple, str, dict]  - cookies information, can be CookieJar, list, tuple, str, dict
+
+Returns: None
+
+
+
 ### get_cookies()
 
 Return cookies.
 
 Parameter Description:
 
-- as_dict: bool-Whether to return as dict, the default is to return complete cookies as list
+- as_dict: bool  - Whether to return as dict, the default is to return complete cookies as list
+
+- all_domains: bool  - whether to return cookies of all domains, only valid in s mode
+
+Returns: a dictionary or list of cookies
 
 
 

@@ -7,6 +7,7 @@
 from typing import Union, List, Tuple
 
 from requests import Response, Session
+from requests.cookies import RequestsCookieJar
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -139,10 +140,24 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).title
 
-    def get_cookies(self, as_dict: bool = False) -> Union[dict, list]:
-        """返回cookies"""
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None:
+        """设置cookies                                                          \n
+        :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
+        :return: None
+        """
         if self._mode == 's':
-            return super().get_cookies(as_dict)
+            self.drission.set_cookies(cookies, set_session=True)
+        elif self._mode == 'd':
+            self.drission.set_cookies(cookies, set_driver=True)
+
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
+        """返回cookies                               \n
+        :param as_dict: 是否以字典方式返回
+        :param all_domains: 是否返回所有域的cookies
+        :return: cookies信息
+        """
+        if self._mode == 's':
+            return super().get_cookies(as_dict, all_domains)
         elif self._mode == 'd':
             return super(SessionPage, self).get_cookies(as_dict)
 
@@ -162,8 +177,10 @@ class MixPage(Null, SessionPage, DriverPage):
         if self._mode == 'd':
             self._driver = True
             self._url = None if not self._driver else self._drission.driver.current_url
+
             if self._session_url:
                 self.cookies_to_driver(self._session_url)
+
                 if go:
                     self.get(self._session_url)
 
@@ -171,8 +188,10 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 's':
             self._session = True
             self._url = self._session_url
+
             if self._driver:
                 self.cookies_to_session()
+
                 if go and self._drission.driver.current_url.startswith('http'):
                     self.get(self._drission.driver.current_url)
 

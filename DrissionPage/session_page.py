@@ -15,6 +15,7 @@ from typing import Union, List, Tuple
 from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
+from tldextract import extract
 
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
 from .config import _cookie_to_dict
@@ -67,12 +68,23 @@ class SessionPage(object):
         """返回页面html文本"""
         return format_html(self.response.text)
 
-    def get_cookies(self, as_dict: bool = False) -> Union[dict, list]:
-        """返回session的cookies"""
-        if as_dict:
-            return self.session.cookies.get_dict()
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
+        """返回cookies                               \n
+        :param as_dict: 是否以字典方式返回
+        :param all_domains: 是否返回所有域的cookies
+        :return: cookies信息
+        """
+        if all_domains:
+            cookies = self.session.cookies
         else:
-            return [_cookie_to_dict(cookie) for cookie in self.session.cookies]
+            url = extract(self.url)
+            domain = f'{url.domain}.{url.suffix}'
+            cookies = tuple(x for x in self.session.cookies if domain in x.domain)
+
+        if as_dict:
+            return {x.name: x.value for x in cookies}
+        else:
+            return [_cookie_to_dict(cookie) for cookie in cookies]
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
