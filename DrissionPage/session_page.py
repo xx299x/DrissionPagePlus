@@ -387,7 +387,7 @@ class SessionPage(object):
             print(f'Downloading to: {goal_path}')
 
             if skip:
-                print('Skipped.')
+                print('Skipped.\n')
 
         # -------------------开始下载-------------------
         if skip:
@@ -456,7 +456,7 @@ class SessionPage(object):
         :param kwargs: 其它参数
         :return: tuple，第一位为Response或None，第二位为出错信息或'Sussess'
         """
-        if not str:
+        if not url:
             if show_errmsg:
                 raise ValueError('url is empty.')
             return None, 'url is empty.'
