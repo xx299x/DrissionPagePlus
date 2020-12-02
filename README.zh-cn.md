@@ -19,7 +19,7 @@ DrissionPage，即 driver 和 session 的合体。
 
 **联系邮箱：** g1879@qq.com
 
-**交流QQ群：**897838127
+**交流QQ群：** 897838127
 
 # 理念及背景
 
@@ -1208,8 +1208,6 @@ Drission 类用于管理 WebDriver 对象和 Session 对象，是驱动器的角
 参数说明：
 
 - copy_user_agent: bool  - 是否复制 user_agent 到 session
-- driver: WebDriver           - 复制 cookies 的 WebDriver 对象
-- session: Session            - 接收 cookies 的 Session 对象
 
 返回： None
 
@@ -1222,8 +1220,6 @@ Drission 类用于管理 WebDriver 对象和 Session 对象，是驱动器的角
 参数说明：
 
 - url: str                       - cookies 的域
-- driver: WebDriver     - 接收 cookies 的 WebDriver 对象
-- session: Session      - 复制 cookies 的 Session 对象
 
 返回： None
 

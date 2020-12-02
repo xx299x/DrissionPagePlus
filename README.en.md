@@ -1191,8 +1191,6 @@ Copy the cookies of the driver object to the session object.
 Parameter Description:
 
 - copy_user_agent: bool  - whether to copy user_agent to session
-- driver: WebDriver- Copy the WebDriver object of cookies
-- session: Session- Session object that receives cookies
 
 Returns: None
 
@@ -1205,8 +1203,6 @@ Copy cookies from session to driver.
 Parameter Description:
 
 - url: str  - the domain of cookies
-- driver: WebDriver- WebDriver object that receives cookies
-- session: Session- Copy the Session object of cookies
 
 Returns: None
 
