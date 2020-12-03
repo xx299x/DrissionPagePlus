@@ -10,13 +10,13 @@ from typing import Union
 from requests import Session
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
-from selenium.common.exceptions import SessionNotCreatedException, UnableToSetCookieException
+from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
-                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookie_to_dict)
+                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookies_to_tuple)
 
 
 class Drission(object):
@@ -164,19 +164,13 @@ class Drission(object):
         :param set_driver: 是否设置driver的cookies
         :return: None
         """
-        if isinstance(cookies, (list, tuple, RequestsCookieJar)):
-            cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
-        elif isinstance(cookies, str):
-            cookies = tuple(dict([cookie.lstrip().split("=", 1)]) for cookie in cookies.split(";"))
-        elif isinstance(cookies, dict):
-            cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
-        else:
-            raise TypeError
+        cookies = _cookies_to_tuple(cookies)
 
         for cookie in cookies:
             if cookie['value'] is None:
                 cookie['value'] = ''
 
+            # 添加cookie到session
             if set_session:
                 kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value', 'httpOnly', 'expiry')}
 
@@ -185,26 +179,23 @@ class Drission(object):
 
                 self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
 
+            # 添加cookie到driver
             if set_driver:
                 if 'expiry' in cookie:
                     cookie['expiry'] = int(cookie['expiry'])
 
+                cookie_domain = cookie['domain'] if cookie['domain'][0] != '.' else cookie['domain'][1:]
+
                 try:
-                    self.driver.add_cookie(cookie)
+                    browser_domain = extract(self.driver.current_url).fqdn
+                except AttributeError:
+                    browser_domain = ''
 
-                except UnableToSetCookieException:
-                    cookie_domain = cookie['domain'] if cookie['domain'][0] != '.' else cookie['domain'][1:]
+                if cookie_domain not in browser_domain:
+                    self.driver.get(cookie_domain if cookie_domain.startswith('http://')
+                                    else f'http://{cookie_domain}')
 
-                    try:
-                        browser_domain = extract(self.driver.current_url).fqdn
-                    except AttributeError:
-                        browser_domain = ''
-
-                    if cookie_domain not in browser_domain:
-                        self.driver.get(cookie_domain if cookie_domain.startswith('http://')
-                                        else f'http://{cookie_domain}')
-
-                    self.driver.add_cookie(cookie)
+                self.driver.add_cookie(cookie)
 
     def _set_session(self, data: dict) -> None:
         if self._session is None:

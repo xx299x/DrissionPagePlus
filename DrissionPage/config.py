@@ -358,8 +358,8 @@ class SessionOptions(object):
         """
         self._max_redirects = max_redirects
 
-    def set_header(self, attr: str, value: str):
-        """设置header中一个项          \n
+    def set_a_header(self, attr: str, value: str):
+        """设置headers中一个项          \n
         :param attr: 设置名称
         :param value: 设置值
         :return: 返回当前对象
@@ -370,7 +370,7 @@ class SessionOptions(object):
         self._headers[attr.lower()] = value
         return self
 
-    def remove_header(self, attr: str):
+    def remove_a_header(self, attr: str):
         """从headers中删除一个设置     \n
         :param attr: 要删除的设置
         :return: 返回当前对象
@@ -700,13 +700,10 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     re_dict = dict()
     attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env', 'max_redirects']  # 'adapters',
 
-    val = options.__getattribute__('_cookies')
+    cookies = options.__getattribute__('_cookies')
 
-    if val is not None:
-        if isinstance(val, RequestsCookieJar):
-            re_dict['cookies'] = [_cookie_to_dict(cookie) for cookie in val]
-        else:
-            re_dict['cookies'] = val
+    if cookies is not None:
+        re_dict['cookies'] = _cookies_to_tuple(cookies)
 
     for attr in attrs:
         val = options.__getattribute__(f'_{attr}')
@@ -720,7 +717,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     return re_dict
 
 
-def _cookie_to_dict(cookie: Cookie) -> dict:
+def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
     """把Cookie对象转为dict格式                \n
     :param cookie: Cookie对象
     :return: cookie字典
@@ -732,6 +729,44 @@ def _cookie_to_dict(cookie: Cookie) -> dict:
         return cookie_dict
 
     elif isinstance(cookie, dict):
-        return cookie
+        cookie_dict = cookie
+
+    elif isinstance(cookie, str):
+        cookie = cookie.split(';')
+        cookie_dict = {}
+
+        for key, attr in enumerate(cookie):
+            attr_val = attr.lstrip().split('=')
+
+            if key == 0:
+                cookie_dict['name'] = attr_val[0]
+                cookie_dict['value'] = attr_val[1]
+            else:
+                cookie_dict[attr_val[0]] = attr_val[1]
+
+        return cookie_dict
+
     else:
         raise TypeError
+
+    return cookie_dict
+
+
+def _cookies_to_tuple(cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> tuple:
+    """把cookies转为tuple格式                                                \n
+    :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
+    :return: 返回tuple形式的cookies
+    """
+    if isinstance(cookies, (list, tuple, RequestsCookieJar)):
+        cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
+
+    elif isinstance(cookies, str):
+        cookies = tuple(dict([cookie.lstrip().split("=", 1)]) for cookie in cookies.split(";"))
+
+    elif isinstance(cookies, dict):
+        cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
+
+    else:
+        raise TypeError
+
+    return cookies
