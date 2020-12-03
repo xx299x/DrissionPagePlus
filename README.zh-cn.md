@@ -17,9 +17,9 @@ DrissionPage，即 driver 和 session 的合体。
 
 **示例地址：** [使用DrissionPage的网页自动化及爬虫示例](https://gitee.com/g1879/DrissionPage-demos)
 
-**联系邮箱：** g1879@qq.com
+**联系邮箱：**  g1879@qq.com
 
-**交流QQ群：** 897838127
+**交流QQ群：**  897838127
 
 # 理念及背景
 
@@ -902,9 +902,10 @@ do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe')  
 do.set_headless(False).set_no_imgs(True)  # 支持链式操作
 
 drission = Drission(driver_options=do)  # 用配置对象创建 Drission 对象
-page = MixPage(drission)  # 用Drission对象创建 MixPage 对象
+page = MixPage(driver_options=do)  # 用配置对象创建 MixPage 对象
 
 do.save()  # 保存当前打开的 ini 文件
+do.save('D:\\settings.ini')  # 保存到指定的 ini 文件
 do.save('default')  # 保存当前设置到默认 ini 文件
 ```
 
@@ -912,15 +913,36 @@ do.save('default')  # 保存当前设置到默认 ini 文件
 
 ## Session 设置
 
-
-
 ### SessionOPtions 对象
 
 SessionOptions 对象用于管理 Session 的配置信息。它创建时默认读取默认 ini 文件配置信息，也可手动设置所需信息。
 
+可配置的属性：
+
+headers、cookies、auth、proxies、hooks、params、verify、cert、adapters、stream、trust_env、max_redirects。
+
+**Tips:** cookies 可接收 dict、list、tuple、str、RequestsCookieJar 等格式的信息。
+
 
 
 ### 使用方法
+
+```python
+so = SessionOptions()  # 读取默认 ini 文件创建 SessionOptions 对象
+so = SessionOptions('D:\\settings.ini')  # 读取指定 ini 文件创建 SessionOptions 对象
+so = SessionOptions(read_file=False)  # 不读取 ini 文件，创建空的 SessionOptions 对象
+
+so.cookies = ['key1=val1; domain=xxxx', 'key2=val2; domain=xxxx']  # 设置 cookies
+so.headers = {'User-Agent': 'xxxx', 'Accept-Charset': 'xxxx'}
+so.set_a_header('Connection', 'keep-alive')
+
+drission = Drission(session_options=so)  # 用配置对象创建 Drission 对象
+page = MixPage(session_options=so)  # 用配置对象创建 MixPage 对象
+
+so.save()  # 保存当前打开的 ini 文件
+so.save('D:\\settings.ini')  # 保存到指定的 ini 文件
+so.save('default')  # 保存当前设置到默认 ini 文件
+```
 
 
 
@@ -2681,6 +2703,160 @@ shadow-root 所依赖的父元素。
 - path: str  - ini 文件的路径，传入 'default' 保存到默认ini文件
 
 返回： OptionsManager  - 返回自己
+
+
+
+## SessionOptions 类
+
+### class SessionOptions()
+
+Session 对象配置类。
+
+参数说明：
+
+- read_file: bool  - 创建时是否从 ini 文件读取配置信息
+- ini_path:  str     - ini 文件路径，为None则读取默认 ini 文件
+
+
+
+### headers
+
+headers 配置信息。
+
+返回： dict
+
+
+
+### cookies
+
+cookies 配置信息。
+
+返回： list
+
+
+
+### auth
+
+auth 配置信息。
+
+返回： tuple
+
+
+
+### proxies
+
+proxies 配置信息。
+
+返回： dict
+
+
+
+### hooks
+
+hooks 配置信息。
+
+返回： dict
+
+
+
+### params
+
+params 配置信息。
+
+返回： dict
+
+
+
+### verify
+
+verify 配置信息。
+
+返回： bool
+
+
+
+### cert
+
+cert 配置信息。
+
+返回： [str, tuple]
+
+
+
+### adapters
+
+adapters 配置信息。
+
+返回： adapters 
+
+
+
+### stream
+
+stream  配置信息。
+
+返回： bool
+
+
+
+### trust_env
+
+srust_env 配置信息。
+
+返回： bool
+
+
+
+### max_redirects
+
+max_redirect 配置信息。
+
+返回： int
+
+
+
+### set_a_header()
+
+设置 headers 中一个项。
+
+参数说明：
+
+- attr: str     - 配置项名称
+- value: str  - 配置的值
+
+返回： 当前对象
+
+
+
+### remove_a_header()
+
+从 headers 中删除一个设置。
+
+参数说明：
+
+- attr: str  - 要删除的配置名称
+
+返回：当前对象
+
+
+
+### save()
+
+保存设置到文件。
+
+参数说明：
+
+- path: str  - ini文件的路径，传入 'default' 保存到默认ini文件
+
+返回：当前对象
+
+
+
+### as_dict()
+
+以字典形式返回当前对象。
+
+返回： dict
 
 
 

@@ -859,7 +859,7 @@ page.download(url, save_path,'img','rename', show_msg=True)
 
 
 
-## Chrome Quick Settings
+## Chrome Settings
 
 The configuration of chrome is very cumbersome. In order to simplify the use, this library provides setting methods for common configurations.
 
@@ -899,10 +899,46 @@ do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe') #
 do.set_headless(False).set_no_imgs(True) # Support chain operation
 
 drission = Drission(driver_options=do) # Create Drission object with configuration object
-page = MixPage(drission) # Create MixPage object with Drission object
+page = MixPage(driver_options=do) # Create MixPage object with configuration object
 
-do.save() # Save the currently opened ini file
+do.save() # save the currently opened ini file
+do.save('D:\\settings.ini') # save to the specified ini file
 do.save('default') # Save the current settings to the default ini file
+```
+
+
+
+## Session Settings
+
+### SessionOPtions Object
+
+The SessionOptions object is used to manage the configuration information of the Session. It reads the default ini file configuration information by default when it is created, or you can manually set the required information.
+
+Configurable properties:
+
+headers, cookies, auth, proxies, hooks, params, verify, cert, adapters, stream, trust_env, max_redirects.
+
+**Tips:** cookies can receive information in dict, list, tuple, str, RequestsCookieJar and other formats.
+
+
+
+### Instructions
+
+```python
+so = SessionOptions() # read the default ini file to create a SessionOptions object
+so = SessionOptions('D:\\settings.ini') # read the specified ini file to create a SessionOptions object
+so = SessionOptions(read_file=False) # Do not read the ini file, create an empty SessionOptions object
+
+so.cookies = ['key1=val1; domain=xxxx','key2=val2; domain=xxxx'] # set cookies
+so.headers = {'User-Agent':'xxxx','Accept-Charset':'xxxx'}
+so.set_a_header('Connection','keep-alive')
+
+drission = Drission(session_options=so) # Create Drission object with configuration object
+page = MixPage(session_options=so) # Create MixPage object with configuration object
+
+so.save() # Save the currently opened ini file
+so.save('D:\\settings.ini') # save to the specified ini file
+so.save('default') # Save the current settings to the default ini file
 ```
 
 
@@ -2705,6 +2741,161 @@ Parameter Description:
 - path: str  - the path of the ini file, pass in 'default' would save to the default ini file
 
 Return: OptionsManager  - return to yourself
+
+
+
+## SessionOptions class
+
+### class SessionOptions()
+
+Session object configuration class.
+
+Parameter Description:
+
+-read_file: bool-whether to read configuration information from ini file when creating
+-ini_path: str-the path of the ini file, if it is None, the default ini file will be read
+
+
+
+### headers
+
+headers configuration information.
+
+Returns: dict
+
+
+
+### cookies
+
+Cookies configuration information.
+
+Returns: list
+
+
+
+### auth
+
+auth configuration information.
+
+Returns: tuple
+
+
+
+### proxies
+
+proxies configuration information.
+
+Returns: dict
+
+
+
+### hooks
+
+hooks configuration information.
+
+Returns: dict
+
+
+
+### params
+
+params configuration information.
+
+Returns: dict
+
+
+
+### verify
+
+Verify configuration information.
+
+Returns: bool
+
+
+
+### cert
+
+cert configuration information.
+
+Returns: [str, tuple]
+
+
+
+### adapters
+
+Adapters configuration information.
+
+Returns: adapters
+
+
+
+### stream
+
+stream configuration information.
+
+Returns: bool
+
+
+
+### trust_env
+
+srust_env configuration information.
+
+Returns: bool
+
+
+
+### max_redirects
+
+max_redirect configuration information.
+
+Returns: int
+
+
+
+### set_a_header()
+
+Set an item in headers.
+
+Parameter Description:
+
+- attr: str-configuration item name
+
+- value: str-configured value
+
+Returns: the current object
+
+
+
+### remove_a_header()
+
+Remove a setting from headers.
+
+Parameter Description:
+
+- attr: str-the name of the configuration to be deleted
+
+Returns: current object
+
+
+
+### save()
+
+Save the settings to a file.
+
+Parameter Description:
+
+- path: str-the path of the ini file, pass in'default' and save to the default ini file
+
+Returns: current object
+
+
+
+### as_dict()
+
+Return the current object as a dictionary.
+
+Returns: dict
 
 
 
