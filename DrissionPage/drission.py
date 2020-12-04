@@ -184,12 +184,22 @@ class Drission(object):
                 if 'expiry' in cookie:
                     cookie['expiry'] = int(cookie['expiry'])
 
-                cookie_domain = cookie['domain'] if cookie['domain'][0] != '.' else cookie['domain'][1:]
-
                 try:
                     browser_domain = extract(self.driver.current_url).fqdn
                 except AttributeError:
                     browser_domain = ''
+
+                if not cookie.get('domain', None):
+                    if browser_domain:
+                        url = extract(browser_domain)
+                        cookie_domain = f'{url.domain}.{url.suffix}'
+                    else:
+                        raise ValueError('There is no domain name in the cookie or the browser has not visited a URL.')
+
+                    cookie['domain'] = cookie_domain
+
+                else:
+                    cookie_domain = cookie['domain'] if cookie['domain'][0] != '.' else cookie['domain'][1:]
 
                 if cookie_domain not in browser_domain:
                     self.driver.get(cookie_domain if cookie_domain.startswith('http://')
