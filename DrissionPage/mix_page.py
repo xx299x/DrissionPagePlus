@@ -336,7 +336,8 @@ class MixPage(Null, SessionPage, DriverPage):
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
             mode: str = None,
-            timeout: float = None) -> Union[DriverElement, SessionElement, str]:
+            timeout: float = None) -> Union[
+        DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                            \n
         示例：                                                                                           \n
         - 接收到元素对象时：                                                                              \n
@@ -376,7 +377,7 @@ class MixPage(Null, SessionPage, DriverPage):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> Union[List[DriverElement or str], List[SessionElement or str]]:
+             timeout: float = None) -> Union[List[DriverElement], List[SessionElement]]:
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n

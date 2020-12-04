@@ -568,7 +568,7 @@ page.run_script(js, *args)  # Run js statement
 page.create_tab(url)  # Create and locate a tab page, which is at the end
 page.to_tab(num_or_handle)  # Jump to tab page
 page.close_current_tab()  # Close the current tab page
-page.close_other_tabs(num)  # Close other tabs
+page.close_other_tabs(num_or_handles)  # Close other tabs
 page.to_iframe(iframe)  # cut into iframe
 page.screenshot(path)  # Page screenshot
 page.scrool_to_see(element)  # Scroll until an element is visible
@@ -1669,11 +1669,11 @@ Returns: None
 
 ### close_other_tabs()
 
-Close tab pages other than the incoming tab page, and keep the current page by default.
+Close tab pages other than the incoming tab page, and keep the current page by default. You can pass in a list or tuple.
 
 Parameter Description:
 
-- num_or_handle:[int, str]  - The serial number or handle of the tab to keep, the first serial number is 0, and the last is - 1
+- num_or_handles:[int, str]-The serial number or handle of the tab to keep, you can pass in a list or tuple of handles
 
 Returns: None
 

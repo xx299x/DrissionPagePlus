@@ -88,7 +88,7 @@ class SessionPage(object):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            mode: str = None) -> Union[SessionElement, List[SessionElement or str], str, None]:
+            mode: str = None) -> Union[SessionElement, List[SessionElement], str, None]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
         示例：                                                                                           \n
         - 接收到元素对象时：                                                                              \n
@@ -140,7 +140,7 @@ class SessionPage(object):
         return execute_session_find(self, loc_or_ele, mode)
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement or str]:
+             loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]:
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
