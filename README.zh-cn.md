@@ -585,14 +585,28 @@ page.chrome_downloading()  # 获取 chrome 正在下载的文件列表
 page.process_alert(mode, text)  # 处理提示框
 ```
 
+### cookies 的使用
 
+MixPage 支持获取和设置 cookies，具体使用方法如下：
+
+```python
+page.cookies  # 以字典形式返回 cookies，只会返回当前域名可用的 cookies
+page.get_cookies(as_dict=False)  # 以列表形式返回当前域名可用 cookies，每个 cookie 包含所有详细信息
+page.get_cookies(all_domains=True)  # 以列表形式返回所有 cookies，只有 s 模式有效
+page.set_cookies(cookies)  # 设置 cookies，可传入 RequestsCookieJar, list, tuple, str, dict
+```
+
+Tips:
+
+- d 模式设置 cookies 后要刷新页面才能看到效果。
+- s 模式可在 ini 文件、SessionOptions、配置字典中设置 cookies，在 MixPage 初始化时即可传入，d 模式只能用 set_cookies() 函数设置。
 
 ## 查找元素
 
 ele() 返回第一个符合条件的元素，eles() 返回所有符合条件的元素列表。  
-你可在页面对象或元素对象下使用这两个函数，以查找下级元素。  
+你可在页面对象或元素对象下使用这两个函数，以查找下级元素。
 
-page.eles() 和 element.eles() 查找返回符合条件的所有元素列表。  
+page.eles() 和 element.eles() 查找返回符合条件的所有元素列表。
 
 说明：
 

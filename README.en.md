@@ -581,12 +581,28 @@ page.chrome_downloading()  # Get the list of files that chrome is downloading
 page.process_alert(mode, text)  # Process the prompt box
 ```
 
+### Use of cookies
 
+MixPage supports obtaining and setting cookies. The specific usage methods are as follows:
+
+```python
+page.cookies # Return cookies in dictionary form, only cookies available for the current domain name will be returned
+page.get_cookies(as_dict=False) # Return the cookies available for the current domain name in the form of a list, each cookie contains all the detailed information
+page.get_cookies(all_domains=True) # Return all cookies in list form, only s mode is valid
+page.set_cookies(cookies) # Set cookies, you can pass in RequestsCookieJar, list, tuple, str, dict
+```
+
+Tips:
+
+- After setting cookies in d mode, you must refresh the page to see the effect.
+
+- The s mode can set cookies in the ini file, SessionOptions, and configuration dictionary, which can be passed in when
+  MixPage is initialized. The d mode can only be set with the set_cookies() function.
 
 ## Find element
 
-ele() returns the first eligible element, and eles() returns a list of all eligible elements.
-You can use these two functions under the page object or element object to find subordinate elements.
+ele() returns the first eligible element, and eles() returns a list of all eligible elements. You can use these two
+functions under the page object or element object to find subordinate elements.
 
 page.eles() and element.eles() search and return a list of all elements that meet the conditions.
 
