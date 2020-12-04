@@ -5,7 +5,7 @@
 @Contact :   g1879@qq.com
 @File    :   config.py
 """
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import RawConfigParser, NoSectionError, NoOptionError
 from http.cookiejar import Cookie
 from pathlib import Path
 from typing import Any, Union
@@ -23,7 +23,7 @@ class OptionsManager(object):
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
         self.ini_path = path or str(Path(__file__).parent / 'configs.ini')
-        self._conf = ConfigParser()
+        self._conf = RawConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 
         self._paths = None
