@@ -1140,52 +1140,7 @@ print(page.ele('@id:su').text)  # 输出：百度一下
 
 ***
 
-## Drission 类
+请在 Wiki中查看：[[Drission 类 - Wiki - Gitee.com](https://gitee.com/g1879/DrissionPage/wikis/Drission
+类?sort_id=3159323)]([Drission 类 - Wiki - Gitee.com](https://gitee.com/g1879/DrissionPage/wikis/Drission
+类?sort_id=3159323))
 
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/Drission%20%E7%B1%BB?sort_id=3159323](https://gitee.com/g1879/DrissionPage/wikis/Drission%20%E7%B1%BB?sort_id=3159323)
-
-## MixPage 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/MixPage%20%E7%B1%BB?sort_id=3195973](https://gitee.com/g1879/DrissionPage/wikis/MixPage%20%E7%B1%BB?sort_id=3195973)
-
-
-
-## DriverElement 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/DriverElement%20%E7%B1%BB?sort_id=3195974](https://gitee.com/g1879/DrissionPage/wikis/DriverElement%20%E7%B1%BB?sort_id=3195974)
-
-
-
-## SessionElement 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/SessionElement%20%E7%B1%BB?sort_id=3195975](https://gitee.com/g1879/DrissionPage/wikis/SessionElement%20%E7%B1%BB?sort_id=3195975)
-
-
-
-## ShadowRootElement 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/ShadowRootElement%20%E7%B1%BB?sort_id=3195976](https://gitee.com/g1879/DrissionPage/wikis/ShadowRootElement%20%E7%B1%BB?sort_id=3195976)
-
-
-
-## OptionsManager 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/OptionsManager%20%E7%B1%BB?sort_id=3195977](https://gitee.com/g1879/DrissionPage/wikis/OptionsManager%20%E7%B1%BB?sort_id=3195977)
-
-
-
-## SessionOptions 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/SessionOptions%20%E7%B1%BB?sort_id=3195978](https://gitee.com/g1879/DrissionPage/wikis/SessionOptions%20%E7%B1%BB?sort_id=3195978)
-
-
-
-## DriverOptions 类
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/DriverOptions%20%E7%B1%BB?sort_id=3195979](https://gitee.com/g1879/DrissionPage/wikis/DriverOptions%20%E7%B1%BB?sort_id=3195979)
-
-
-
-## easy_set 方法
-
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/easy_set%20%E6%96%B9%E6%B3%95?sort_id=3195980](https://gitee.com/g1879/DrissionPage/wikis/easy_set%20%E6%96%B9%E6%B3%95?sort_id=3195980)
