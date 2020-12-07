@@ -8,8 +8,7 @@ import re
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, urljoin, urlunparse
 
-from cssselect import SelectorSyntaxError
-from lxml.etree import tostring, XPathEvalError
+from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
 from .common import DrissionElement, str_to_loc, translate_loc, format_html
@@ -383,8 +382,11 @@ def execute_session_find(page_or_ele,
         elif mode == 'all':
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']
 
-    except XPathEvalError:
-        raise SyntaxError(f'Invalid xpath syntax. {loc}')
+    except Exception as e:
 
-    except SelectorSyntaxError:
-        raise SyntaxError(f'Invalid css selector syntax. {loc}')
+        if 'Invalid expression' in str(e):
+            raise SyntaxError(f'Invalid xpath syntax. {loc}')
+        elif 'Expected selector' in str(e):
+            raise SyntaxError(f'Invalid css selector syntax. {loc}')
+
+        raise e
