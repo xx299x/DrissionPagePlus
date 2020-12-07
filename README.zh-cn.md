@@ -1134,13 +1134,11 @@ print(page.ele('@id:su').text)  # 输出：百度一下
 
 ***
 
-点击查看：[https://gitee.com/g1879/DrissionPage/wikis/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2?sort_id=3201403](https://gitee.com/g1879/DrissionPage/wikis/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2?sort_id=3201403)
+请在 Wiki中查看：[点击查看版本历史](https://gitee.com/g1879/DrissionPage/wikis/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2?sort_id=3201403)
 
 # APIs
 
 ***
 
-请在 Wiki中查看：[[Drission 类 - Wiki - Gitee.com](https://gitee.com/g1879/DrissionPage/wikis/Drission
-类?sort_id=3159323)]([Drission 类 - Wiki - Gitee.com](https://gitee.com/g1879/DrissionPage/wikis/Drission
-类?sort_id=3159323))
+请在 Wiki中查看：[点击查看APIs](https://gitee.com/g1879/DrissionPage/wikis/Drission%20%E7%B1%BB?sort_id=3159323)
 
