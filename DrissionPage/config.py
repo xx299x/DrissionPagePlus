@@ -761,7 +761,7 @@ def _cookies_to_tuple(cookies: Union[RequestsCookieJar, list, tuple, str, dict])
         cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
 
     elif isinstance(cookies, str):
-        cookies = tuple(dict([cookie.lstrip().split("=", 1)]) for cookie in cookies.split(";"))
+        cookies = tuple(_cookie_to_dict(cookie.lstrip()) for cookie in cookies.split(";"))
 
     elif isinstance(cookies, dict):
         cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
