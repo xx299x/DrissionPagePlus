@@ -1846,7 +1846,6 @@ Parameter Description:
 
 - ele: WebElement- WebElement object
 - page: DriverPage- the page object where the element is located
-- timeout: float  - Find the timeout of the element (it can be set separately each time the element is searched)
 
 
 
@@ -2555,7 +2554,6 @@ Parameter Description:
 
 - parent_ele: DriverElement-the element to which the shadow-root is attached
 
-- timeout: float-timeout
 
 
 
