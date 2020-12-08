@@ -487,7 +487,7 @@ class DriverElement(DrissionElement):
         """返获取css路径或xpath路径"""
         if mode == 'xpath':
             txt1 = 'var tag = el.nodeName.toLowerCase();'
-            txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
+            # txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
             txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
             txt4 = '''
             if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
@@ -495,7 +495,7 @@ class DriverElement(DrissionElement):
             txt5 = '''return path;'''
         elif mode == 'css':
             txt1 = ''
-            txt2 = '''return '#' + el.id + path;'''
+            # txt2 = '''return '#' + el.id + path;'''
             txt3 = ''
             txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
             txt5 = '''return path.substr(1);'''
@@ -508,16 +508,13 @@ class DriverElement(DrissionElement):
             var path = '';
             while (el.nodeType === Node.ELEMENT_NODE) {
                 ''' + txt1 + '''
-                if (el.id) {
-                    ''' + txt2 + '''
-                } else {
                     var sib = el, nth = 0;
                     while (sib) {
                         if(sib.nodeType === Node.ELEMENT_NODE''' + txt3 + '''){nth += 1;}
                         sib = sib.previousSibling;
                     }
                     ''' + txt4 + '''
-                }
+                
                 el = el.parentNode;
             }
             ''' + txt5 + '''

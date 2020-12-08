@@ -284,20 +284,20 @@ class SessionElement(DrissionElement):
         ele = self
 
         while ele:
-            ele_id = ele.attr('id')
+            # ele_id = ele.attr('id')
 
-            if ele_id:
-                return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
+            # if ele_id:
+            #     return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
+            # else:
+
+            if mode == 'css':
+                brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
+                path_str = f'>:nth-child({brothers + 1}){path_str}'
             else:
+                brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
+                path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
 
-                if mode == 'css':
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
-                    path_str = f'>:nth-child({brothers + 1}){path_str}'
-                else:
-                    brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
-                    path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
-
-                ele = ele.parent
+            ele = ele.parent
 
         return path_str[1:] if mode == 'css' else path_str
 
