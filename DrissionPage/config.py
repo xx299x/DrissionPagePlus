@@ -732,7 +732,7 @@ def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
         cookie_dict = cookie
 
     elif isinstance(cookie, str):
-        cookie = cookie.split(';')
+        cookie = cookie.split(',' if ',' in cookie else ';')
         cookie_dict = {}
 
         for key, attr in enumerate(cookie):
