@@ -1416,7 +1416,9 @@ Set cookies.
 
 Parameter Description:
 
-- cookies: Union[RequestsCookieJar, list, tuple, str, dict]  - cookies information, can be CookieJar, list, tuple, str, dict
+- cookies: Union[RequestsCookieJar, list, tuple, str, dict]  - cookies information, can be CookieJar, list, tuple, str,
+  dict
+- refresh: bool - Whether to refresh the page after setting cookies
 
 Returns: None
 
