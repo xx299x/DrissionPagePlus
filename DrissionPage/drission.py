@@ -10,7 +10,7 @@ from typing import Union
 from requests import Session
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
-from selenium.common.exceptions import SessionNotCreatedException
+from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
@@ -102,8 +102,8 @@ class Drission(object):
 
                 self._driver = webdriver.Chrome(driver_path, options=options)
 
-            except SessionNotCreatedException:
-                print('Chrome版本与chromedriver版本不匹配，可执行easy_set.get_match_driver()自动下载匹配的版本。')
+            except (WebDriverException, SessionNotCreatedException):
+                print('未指定chromedriver路径或版本与Chrome不匹配，可执行easy_set.get_match_driver()自动下载匹配的版本。')
                 exit(0)
 
             # 反爬设置，似乎没用
