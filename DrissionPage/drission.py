@@ -228,9 +228,10 @@ class Drission(object):
                                     else f'http://{cookie_domain}')
 
                 # 避免selenium自动添加.后无法正确覆盖已有cookie
-                c = self.driver.get_cookie(cookie['name'])
-                if c and c['domain'] == cookie['domain']:
-                    self.driver.delete_cookie(cookie['name'])
+                if cookie['domain'][0] != '.':
+                    c = self.driver.get_cookie(cookie['name'])
+                    if c and c['domain'] == cookie['domain']:
+                        self.driver.delete_cookie(cookie['name'])
 
                 self.driver.add_cookie(cookie)
 
