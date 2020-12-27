@@ -318,26 +318,42 @@ The get_match_driver() method in the easy_set tool can automatically identify th
 from DrissionPage import MixPage
 ```
 
-
-
 ## Initialization
 
 If you only use session mode, you can skip this section.
 
-Before using selenium, you must configure the path of chrome.exe and chromedriver.exe and ensure that their versions match.
+Before using selenium, you must configure the path of chrome.exe and chromedriver.exe and ensure that their versions
+match.  
+In the new version, if the program finds that their versions do not match when running, it will automatically download
+the corresponding version and set the path. If there is no special need, no manual intervention is required.
 
 There are four ways to configure the path:
--Use the get_match_driver() method of the easy_set tool (recommended)
--Write the path to the ini file of this library
--Write two paths to system variables
--Manually pass in the path when using
 
-### Use get_match_driver() method
+- Run directly, let the program automatically complete the settings (recommended)
 
-If you choose the first method, please run the following code before using it for the first time. The program will automatically detect the Chrome version installed on your computer, download the corresponding driver, and record it in the ini file.
+- Use the get_match_driver() method of the easy_set tool
+
+- Write the path to the ini file of this library
+
+- Write two paths to system variables
+
+- Fill in the path in the code
+
+**auto configuration**
+
+In the new version, you don't need to do any configuration, just run the program directly, the program will get the path
+of chrome.exe in the system, and automatically download the chromedriver.exe that matches the version. No feeling at
+all. If you need to set the chrome.exe used by yourself, you can use the following method.
+
+**Use the get_match_driver() method**
+
+If you choose this method, please run the following code before using it for the first time. The program will
+automatically detect the chrome version installed on your computer, download the corresponding driver, and record it in
+the ini file.
 
 ```python
 from DrissionPage.easy_set import get_match_driver
+
 get_match_driver()
 ```
 

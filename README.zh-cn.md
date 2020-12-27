@@ -315,16 +315,23 @@ from DrissionPage import MixPage
 > 如果你只使用 session 模式，可跳过本节。
 
 使用 selenium 前，必须配置 chrome.exe 和 chromedriver.exe 的路径，并确保它们版本匹配。  
+新版本中，运行时若程序发现它们版本不匹配，会自动下载对应版本并设置路径。如无特殊须要，无须手动干预。
 
 配置路径有四种方法：
-- 使用 easy_set 工具的 get_match_driver() 方法（推荐）
+
+- 直接运行，让程序自动完成设置（推荐）
+- 使用 easy_set 工具的 get_match_driver() 方法
 - 将路径写入本库的 ini 文件
 - 将两个路径写入系统变量
 - 在代码中填写路径
 
+**自动设置**
+
+新版本中，您无须做任何配置，只要直接运行程序，程序会获取系统中 chrome.exe 路径，并自动下载版本匹配的 chromedriver.exe。全程无感。如须自行设置所使用的 chrome.exe，可用下面的方法。
+
 **使用 get_match_driver()  方法**
 
-若你选择第一种方式，请在第一次使用前，运行以下代码，程序会自动检测电脑安装的 chrome 版本，下载对应 driver，并记录到 ini 文件。
+若你选择这种方式，请在第一次使用前，运行以下代码，程序会自动检测电脑安装的 chrome 版本，下载对应 driver，并记录到 ini 文件。
 
 ```python
 from DrissionPage.easy_set import get_match_driver
