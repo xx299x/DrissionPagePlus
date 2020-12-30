@@ -37,8 +37,15 @@ class SessionElement(DrissionElement):
     def html(self) -> str:
         """返回元素outerHTML文本"""
         # tostring()会把跟紧元素的文本节点也带上，因此要去掉
+        # print(tostring(self._inner_ele, method="html").decode())
         html = format_html(tostring(self._inner_ele, method="html").decode())
+        # print(html)
         return html[:html.rfind('>') + 1]
+        # return format_html(html[:html.rfind('>') + 1],False)
+
+    # def _html(self) -> str:
+    #     html = tostring(self._inner_ele, method="html").decode()
+    #     return html[:html.rfind('>') + 1]
 
     @property
     def inner_html(self) -> str:
@@ -59,7 +66,19 @@ class SessionElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return str(self._inner_ele.text_content())
+        html = format_html(tostring(self._inner_ele, method="html").decode(), False)
+        html = html[:html.rfind('>') + 1]
+
+        txt = re.sub(r'<.*?>', '', html).replace('\n', ' ')
+        txt = re.sub(r' {2,}', ' ', txt).strip()
+        # return format_html(txt)
+        return txt
+
+        # return t
+        # return str(self._inner_ele.text_content())
+        # return self._inner_ele.text_content()
+
+        # txt = str(self._inner_ele.text_content()).replace('\n', ' ')
 
     @property
     def link(self) -> str:
@@ -284,12 +303,6 @@ class SessionElement(DrissionElement):
         ele = self
 
         while ele:
-            # ele_id = ele.attr('id')
-
-            # if ele_id:
-            #     return f'#{ele_id}{path_str}' if mode == 'css' else f'//{ele.tag}[@id="{ele_id}"]{path_str}'
-            # else:
-
             if mode == 'css':
                 brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
                 path_str = f'>:nth-child({brothers + 1}){path_str}'
@@ -357,7 +370,8 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = fromstring(page_or_ele.html)
+        # page_or_ele = fromstring(page_or_ele.html)
+        page_or_ele = fromstring(page_or_ele.response.text, False)
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
@@ -368,6 +382,7 @@ def execute_session_find(page_or_ele,
         else:
             ele = page_or_ele.cssselect(loc[1])
 
+        # 结果不是列表，如数字
         if not isinstance(ele, list):
             return ele
 
