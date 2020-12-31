@@ -155,7 +155,7 @@ class DriverElement(DrissionElement):
         :return: DriverElement对象
         """
         loc = 'xpath', f'.{"/.." * num}'
-        return self.ele(loc, timeout=0.1)
+        return self.ele(loc, timeout=0)
 
     def nexts(self, num: int = 1, mode: str = 'ele'):
         """返回后面第num个兄弟元素或节点文本                                   \n
@@ -548,13 +548,15 @@ class DriverElement(DrissionElement):
         else:
             raise ValueError(f"Argument direction can only be 'next' or 'prev', not '{direction}'.")
 
+        timeout = 0 if direction == 'prev' else .5
+
         # 获取节点
-        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=0.1)
+        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
         # 跳过元素间的换行符
         while ele_or_node == '\n':
             num += 1
-            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=0.1)
+            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
         return ele_or_node
 
@@ -590,13 +592,30 @@ def execute_driver_find(page_or_ele,
             wait = page.wait
 
         if loc[0] == 'xpath':
-            return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
+            if timeout:
+                return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
+            else:
+                return ElementsByXpath(page, loc[1], mode, timeout)(driver)
         else:
             if mode == 'single':
-                return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
+                if timeout:
+                    return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
+                else:
+                    try:
+                        return DriverElement(driver.find_element_by_css_selector(loc[1]), page)
+                    except:
+                        return None
             elif mode == 'all':
-                eles = wait.until(ec.presence_of_all_elements_located(loc))
-                return [DriverElement(ele, page) for ele in eles]
+                if timeout:
+                    eles = wait.until(ec.presence_of_all_elements_located(loc))
+                    return [DriverElement(ele, page) for ele in eles]
+                else:
+                    try:
+                        eles = driver.find_elements_by_css_selector(loc[1])
+                        return [DriverElement(ele, page) for ele in eles]
+                    except:
+                        return []
+
 
     except TimeoutException:
         return [] if mode == 'all' else None
