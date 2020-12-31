@@ -37,21 +37,61 @@ class SessionElement(DrissionElement):
     def html(self) -> str:
         """返回元素outerHTML文本"""
         # tostring()会把跟紧元素的文本节点也带上，因此要去掉
-        # print(tostring(self._inner_ele, method="html").decode())
         html = format_html(tostring(self._inner_ele, method="html").decode())
-        # print(html)
         return html[:html.rfind('>') + 1]
-        # return format_html(html[:html.rfind('>') + 1],False)
-
-    # def _html(self) -> str:
-    #     html = tostring(self._inner_ele, method="html").decode()
-    #     return html[:html.rfind('>') + 1]
 
     @property
     def inner_html(self) -> str:
         """返回元素innerHTML文本"""
         r = re.match(r'<.*?>(.*)</.*?>', self.html, flags=re.DOTALL)
         return '' if not r else r.group(1)
+
+    @property
+    def text(self) -> str:
+        """返回元素内所有文本"""
+
+        # html = tostring(self._inner_ele, method="html").decode()
+        # html = html[:html.rfind('>') + 1]
+        # html = re.sub(r'<.*?>', '', html).strip('\n ')
+        # html = format_html(re.sub(r' {2,}', ' ', html))
+        # html = format_html(re.sub(r'\n{2,}', '\n', html))
+        # html = format_html(re.sub(r'( \n){2,}', '\n', html))
+        # html = format_html(re.sub(r'(\n ){2,}', '\n', html))
+        # return html
+
+        # return format_html(str(self._inner_ele.text_content()))
+        # return format_html(str(self._inner_ele.text_content()))#.replace('\n','')
+
+        def get_node(ele):
+            l = []
+            for el in ele.eles('xpath:./node()'):
+                if isinstance(el, str):
+                    s = el.replace(' ', '').replace('\n', '')
+                    # print('字符串', [s])
+                    if s != '':
+                        l.append(s.strip(' \n'))
+                    else:
+                        l.append('\n')
+                else:
+                    # print('元素', el)
+                    l.extend(get_node(el))
+            return l
+
+        # for i in self.eles('xpath:./*'):
+        #     print([i])
+
+        # l = []
+        # for el in get_node(self):
+        #     if isinstance(el,str):
+        #         print('字符串')
+        #         print(el)
+        #         l.append(el)
+        #     else:
+        #         print('元素')
+        #         print(el._inner_ele.text)
+        #         l.append(el._inner_ele.text)
+        s = ''.join(get_node(self))
+        return re.sub(r'\n{2,}', '\n', s)
 
     @property
     def tag(self) -> str:
@@ -62,23 +102,6 @@ class SessionElement(DrissionElement):
     def attrs(self) -> dict:
         """返回元素所有属性及值"""
         return {attr: self.attr(attr) for attr, val in self.inner_ele.items()}
-
-    @property
-    def text(self) -> str:
-        """返回元素内所有文本"""
-        html = format_html(tostring(self._inner_ele, method="html").decode(), False)
-        html = html[:html.rfind('>') + 1]
-
-        txt = re.sub(r'<.*?>', '', html).replace('\n', ' ')
-        txt = re.sub(r' {2,}', ' ', txt).strip()
-        # return format_html(txt)
-        return txt
-
-        # return t
-        # return str(self._inner_ele.text_content())
-        # return self._inner_ele.text_content()
-
-        # txt = str(self._inner_ele.text_content()).replace('\n', ' ')
 
     @property
     def link(self) -> str:
@@ -315,7 +338,7 @@ class SessionElement(DrissionElement):
         return path_str[1:] if mode == 'css' else path_str
 
     def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
-        """返回前面第num个兄弟元素或节点                                     \n
+        """返回前面或后面第num个兄弟元素或节点                                     \n
         :param num: 前面第几个兄弟元素或节点
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :param direction: 'next' 或 'prev'，查找的方向
@@ -370,8 +393,7 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        # page_or_ele = fromstring(page_or_ele.html)
-        page_or_ele = fromstring(page_or_ele.response.text, False)
+        page_or_ele = fromstring(format_html(page_or_ele.response.text, False))
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
