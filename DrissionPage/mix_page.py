@@ -379,7 +379,7 @@ class MixPage(Null, SessionPage, DriverPage):
         if self._mode == 's':
             return super().ele(loc_or_ele, mode=mode)
         elif self._mode == 'd':
-            timeout = timeout or self.timeout
+            timeout = timeout if timeout is not None else self.timeout
             return super(SessionPage, self).ele(loc_or_ele, mode=mode, timeout=timeout)
 
     def eles(self,

@@ -199,7 +199,7 @@ class DriverPage(object):
         else:
             raise ValueError('Argument loc_or_str can only be tuple, str, DriverElement, DriverElement.')
 
-        timeout = timeout or self.timeout
+        timeout = timeout if timeout is not None else self.timeout
         return execute_driver_find(self, loc_or_ele, mode, timeout)
 
     def eles(self,
