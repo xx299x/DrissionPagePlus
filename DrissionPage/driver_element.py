@@ -596,7 +596,7 @@ def execute_driver_find(page_or_ele,
                 return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
             else:
                 return ElementsByXpath(page, loc[1], mode, timeout)(driver)
-        else:
+        else:  # 用css获取
             if mode == 'single':
                 if timeout:
                     return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
@@ -605,6 +605,7 @@ def execute_driver_find(page_or_ele,
                         return DriverElement(driver.find_element_by_css_selector(loc[1]), page)
                     except:
                         return None
+
             elif mode == 'all':
                 if timeout:
                     eles = wait.until(ec.presence_of_all_elements_located(loc))
@@ -615,7 +616,6 @@ def execute_driver_find(page_or_ele,
                         return [DriverElement(ele, page) for ele in eles]
                     except:
                         return []
-
 
     except TimeoutException:
         return [] if mode == 'all' else None
