@@ -113,6 +113,18 @@ def str_to_loc(loc: str) -> tuple:
         else:
             loc = loc.replace('#', '@id=', 1)
 
+    if loc.startswith(('x:', 'x=')):
+        loc = f'xpath:{loc[2:]}'
+
+    if loc.startswith(('c:', 'c=')):
+        loc = f'css:{loc[2:]}'
+
+    if loc.startswith(('t:', 't=')):
+        loc = f'tag:{loc[2:]}'
+
+    if loc.startswith(('tx:', 'tx=')):
+        loc = f'text{loc[2:]}'
+
     # 根据属性查找
     if loc.startswith('@'):
         r = re_SPLIT(r'([:=])', loc[1:], maxsplit=1)
