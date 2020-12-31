@@ -201,12 +201,9 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def format_html(text: str, replace_space: bool = True) -> str:
+def format_html(text: str) -> str:
     """处理html编码字符"""
-    if text:
-        return unescape(text).replace('\xa0', ' ') if replace_space else unescape(text)
-    else:
-        return text
+    return unescape(text) if text else text
 
 
 def translate_loc(loc: tuple) -> tuple:

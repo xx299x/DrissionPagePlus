@@ -38,7 +38,7 @@ class SessionElement(DrissionElement):
         """返回元素outerHTML文本"""
         # tostring()会把跟紧元素的文本节点也带上，因此要去掉
         html = format_html(tostring(self._inner_ele, method="html").decode())
-        return html[:html.rfind('>') + 1]
+        return format_html(html[:html.rfind('>') + 1])
 
     @property
     def inner_html(self) -> str:
@@ -50,48 +50,27 @@ class SessionElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
 
-        # html = tostring(self._inner_ele, method="html").decode()
-        # html = html[:html.rfind('>') + 1]
-        # html = re.sub(r'<.*?>', '', html).strip('\n ')
-        # html = format_html(re.sub(r' {2,}', ' ', html))
-        # html = format_html(re.sub(r'\n{2,}', '\n', html))
-        # html = format_html(re.sub(r'( \n){2,}', '\n', html))
-        # html = format_html(re.sub(r'(\n ){2,}', '\n', html))
-        # return html
-
-        # return format_html(str(self._inner_ele.text_content()))
-        # return format_html(str(self._inner_ele.text_content()))#.replace('\n','')
-
+        # 为尽量保证与浏览器结果一致，弄得比较复杂
         def get_node(ele):
-            l = []
+            str_list = []
             for el in ele.eles('xpath:./node()'):
                 if isinstance(el, str):
-                    s = el.replace(' ', '').replace('\n', '')
-                    # print('字符串', [s])
-                    if s != '':
-                        l.append(s.strip(' \n'))
+                    if el.replace(' ', '').replace('\n', '') != '':
+                        str_list.append(el.replace('\xa0', '&nbsp;').replace('\n', ' ').strip())
+                    elif '\n' in el:
+                        str_list.append('\n')
                     else:
-                        l.append('\n')
+                        str_list.append(' ')
                 else:
-                    # print('元素', el)
-                    l.extend(get_node(el))
-            return l
+                    str_list.extend(get_node(el))
 
-        # for i in self.eles('xpath:./*'):
-        #     print([i])
+            return str_list
 
-        # l = []
-        # for el in get_node(self):
-        #     if isinstance(el,str):
-        #         print('字符串')
-        #         print(el)
-        #         l.append(el)
-        #     else:
-        #         print('元素')
-        #         print(el._inner_ele.text)
-        #         l.append(el._inner_ele.text)
-        s = ''.join(get_node(self))
-        return re.sub(r'\n{2,}', '\n', s)
+        re_str = ''.join(get_node(self))
+        re_str = re.sub(r'\n{2,}', '\n', re_str)
+        re_str = re.sub(r' {2,}', ' ', re_str)
+
+        return format_html(re_str.strip('\n '))
 
     @property
     def tag(self) -> str:
@@ -393,7 +372,8 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = fromstring(format_html(page_or_ele.response.text, False))
+        # page_or_ele = fromstring(format_html(page_or_ele.response.text, False))
+        page_or_ele = fromstring(page_or_ele.response.text)
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
