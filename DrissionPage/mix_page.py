@@ -74,7 +74,7 @@ class MixPage(Null, SessionPage, DriverPage):
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
                  mode: str = 'single',
                  timeout: float = None):
-        return self.ele(loc_or_str, mode, timeout or self.timeout)
+        return self.ele(loc_or_str, mode, timeout)
 
     @property
     def url(self) -> Union[str, None]:
@@ -379,7 +379,6 @@ class MixPage(Null, SessionPage, DriverPage):
         if self._mode == 's':
             return super().ele(loc_or_ele, mode=mode)
         elif self._mode == 'd':
-            timeout = timeout if timeout is not None else self.timeout
             return super(SessionPage, self).ele(loc_or_ele, mode=mode, timeout=timeout)
 
     def eles(self,

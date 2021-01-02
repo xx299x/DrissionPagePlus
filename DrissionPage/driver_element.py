@@ -584,38 +584,21 @@ def execute_driver_find(page_or_ele,
         page = page_or_ele
         driver = page_or_ele.driver
 
+    if timeout is not None and timeout != page.timeout:
+        wait = WebDriverWait(driver, timeout=timeout)
+    else:
+        page.wait._driver = driver
+        wait = page.wait
+
     try:
-        if timeout is not None and timeout != page.timeout:
-            wait = WebDriverWait(driver, timeout=timeout)
-        else:
-            page.wait._driver = driver
-            wait = page.wait
-
         if loc[0] == 'xpath':
-            if timeout:
-                return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
-            else:
-                return ElementsByXpath(page, loc[1], mode, timeout)(driver)
-        else:  # 用css获取
+            return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
+        else:  # 使用css selector查找
             if mode == 'single':
-                if timeout:
-                    return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
-                else:
-                    try:
-                        return DriverElement(driver.find_element_by_css_selector(loc[1]), page)
-                    except:
-                        return None
-
+                return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
             elif mode == 'all':
-                if timeout:
-                    eles = wait.until(ec.presence_of_all_elements_located(loc))
-                    return [DriverElement(ele, page) for ele in eles]
-                else:
-                    try:
-                        eles = driver.find_elements_by_css_selector(loc[1])
-                        return [DriverElement(ele, page) for ele in eles]
-                    except:
-                        return []
+                eles = wait.until(ec.presence_of_all_elements_located(loc))
+                return [DriverElement(ele, page) for ele in eles]
 
     except TimeoutException:
         return [] if mode == 'all' else None

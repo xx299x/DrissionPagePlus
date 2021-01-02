@@ -107,22 +107,16 @@ def str_to_loc(loc: str) -> tuple:
         else:
             loc = loc.replace('.', '@class=', 1)
 
-    if loc.startswith('#'):
+    elif loc.startswith('#'):
         if loc.startswith(('#=', '#:',)):
             loc = loc.replace('#', '@id', 1)
         else:
             loc = loc.replace('#', '@id=', 1)
 
-    if loc.startswith(('x:', 'x=')):
-        loc = f'xpath:{loc[2:]}'
-
-    if loc.startswith(('c:', 'c=')):
-        loc = f'css:{loc[2:]}'
-
-    if loc.startswith(('t:', 't=')):
+    elif loc.startswith(('t:', 't=')):
         loc = f'tag:{loc[2:]}'
 
-    if loc.startswith(('tx:', 'tx=')):
+    elif loc.startswith(('tx:', 'tx=')):
         loc = f'text{loc[2:]}'
 
     # 根据属性查找
@@ -135,7 +129,7 @@ def str_to_loc(loc: str) -> tuple:
             loc_str = f'//*[@{loc[1:]}]'
 
     # 根据tag name查找
-    elif loc.startswith(('tag=', 'tag:')):
+    elif loc.startswith(('tag:', 'tag=')):
         if '@' not in loc[4:]:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
@@ -149,7 +143,7 @@ def str_to_loc(loc: str) -> tuple:
                 loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
 
     # 根据文本查找
-    elif loc.startswith(('text=', 'text:')):
+    elif loc.startswith(('text:', 'text=')):
         if len(loc) > 5:
             mode = 'exact' if loc[4] == '=' else 'fuzzy'
             loc_str = _make_xpath_str('*', 'text()', loc[5:], mode)
@@ -157,13 +151,18 @@ def str_to_loc(loc: str) -> tuple:
             loc_str = '//*[not(text())]'
 
     # 用xpath查找
-    elif loc.startswith(('xpath=', 'xpath:')):
+    elif loc.startswith(('xpath:', 'xpath=')):
         loc_str = loc[6:]
+    elif loc.startswith(('x:', 'x=')):
+        loc_str = loc[2:]
 
     # 用css selector查找
-    elif loc.startswith(('css=', 'css:')):
+    elif loc.startswith(('css:', 'css=')):
         loc_by = 'css selector'
         loc_str = loc[4:]
+    elif loc.startswith(('c:', 'c=')):
+        loc_by = 'css selector'
+        loc_str = loc[2:]
 
     # 根据文本模糊查找
     else:
