@@ -36,9 +36,8 @@ class SessionElement(DrissionElement):
     @property
     def html(self) -> str:
         """返回元素outerHTML文本"""
-        # tostring()会把跟紧元素的文本节点也带上，因此要去掉
         html = format_html(tostring(self._inner_ele, method="html").decode())
-        return format_html(html[:html.rfind('>') + 1])
+        return html[:html.rfind('>') + 1]  # tostring()会把跟紧元素的文本节点也带上，因此要去掉
 
     @property
     def inner_html(self) -> str:
@@ -50,26 +49,35 @@ class SessionElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
 
+        # re_str = str(self._inner_ele.text_content())
+        # # re_str = re.sub(r'<br */?>', '\n', re_str)
+        # re_str = re.sub(r'\n{2,}', '\n', re_str)
+        # re_str = re.sub(r' {2,}', ' ', re_str)
+        # return format_html(re_str.strip('\n '))
+        # # return format_html(re_str)
+
         # 为尽量保证与浏览器结果一致，弄得比较复杂
         def get_node(ele):
             str_list = []
             for el in ele.eles('xpath:./node()'):
                 if isinstance(el, str):
                     if el.replace(' ', '').replace('\n', '') != '':
-                        str_list.append(el.replace('\xa0', '&nbsp;').replace('\n', ' ').strip())
+                        # str_list.append(el.replace('\xa0', '&nbsp;').replace('\n', ' ').strip())
+                        str_list.append(el.replace('\n', ' ').strip(' '))
                     elif '\n' in el:
                         str_list.append('\n')
                     else:
                         str_list.append(' ')
                 else:
                     str_list.extend(get_node(el))
+                    if el.tag in ('br', 'p',):
+                        str_list.append('\n')
 
             return str_list
 
         re_str = ''.join(get_node(self))
         re_str = re.sub(r'\n{2,}', '\n', re_str)
         re_str = re.sub(r' {2,}', ' ', re_str)
-
         return format_html(re_str.strip('\n '))
 
     @property
@@ -176,7 +184,7 @@ class SessionElement(DrissionElement):
         elif attr == 'src':
             return self._make_absolute(self.inner_ele.get('src'))
 
-        elif attr in ['text', 'innerText']:
+        elif attr in ('text', 'innerText'):
             return self.text
 
         elif attr == 'outerHTML':
@@ -189,10 +197,10 @@ class SessionElement(DrissionElement):
             return self.inner_ele.get(attr)
 
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                    \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
         示例：                                                                                           \n
         - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
+            ele.ele((By.CLASS_NAME, 'ele_class'))       - 返回第一个class为ele_class的子元素               \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
             @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
@@ -213,6 +221,12 @@ class SessionElement(DrissionElement):
             ele.ele('text=some_text')                   - 返回第一个文本等于some_text的子元素                \n
             ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的子元素                        \n
             ele.ele('css:div.ele_class')                - 返回第一个符合css selector的子元素                 \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
+            ele.ele('xpath://div[@class="ele_class"]')  - 等同于 ele.ele('x://div[@class="ele_class"]')    \n
+            ele.ele('css:div.ele_class')                - 等同于 ele.ele('c:div.ele_class')                \n
+            ele.ele('tag:div')                          - 等同于 ele.ele('t:div')                          \n
+            ele.ele('text:some_text')                   - 等同于 ele.ele('tx:some_text')                   \n
+            ele.ele('text=some_text')                   - 等同于 ele.ele('tx=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :return: SessionElement对象
@@ -246,7 +260,7 @@ class SessionElement(DrissionElement):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                                              \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
-            ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                     \n
+            ele.eles((By.CLASS_NAME, 'ele_class'))       - 返回所有class为ele_class的子元素               \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
             @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
@@ -267,6 +281,12 @@ class SessionElement(DrissionElement):
             ele.eles('text=some_text')                   - 返回所有文本等于some_text的子元素                \n
             ele.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的子元素                        \n
             ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                 \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
+            ele.eles('xpath://div[@class="ele_class"]')  - 等同于 ele.eles('x://div[@class="ele_class"]')  \n
+            ele.eles('css:div.ele_class')                - 等同于 ele.eles('c:div.ele_class')              \n
+            ele.eles('tag:div')                          - 等同于 ele.eles('t:div')                        \n
+            ele.eles('text:some_text')                   - 等同于 ele.eles('tx:some_text')                 \n
+            ele.eles('text=some_text')                   - 等同于 ele.eles('tx=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
@@ -363,7 +383,7 @@ def execute_session_find(page_or_ele,
     :return: 返回SessionElement元素或列表
     """
     mode = mode or 'single'
-    if mode not in ['single', 'all']:
+    if mode not in ('single', 'all'):
         raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
     # 根据传入对象类型获取页面对象和lxml元素对象
@@ -372,7 +392,6 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        # page_or_ele = fromstring(format_html(page_or_ele.response.text, False))
         page_or_ele = fromstring(page_or_ele.response.text)
 
     try:

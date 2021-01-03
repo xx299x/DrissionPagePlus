@@ -5,7 +5,7 @@
 @File    :   common.py
 """
 from abc import abstractmethod
-from html import unescape
+# from html import unescape
 from pathlib import Path
 from re import split as re_SPLIT
 from shutil import rmtree
@@ -96,7 +96,12 @@ def str_to_loc(loc: str) -> tuple:
         text:search_text                 - 文本含有search_text的元素                        \n
         text=search_text                 - 文本等于search_text的元素                        \n
         xpath://div[@class="ele_class"]  - 用xpath查找                                     \n
-        css:div.ele_class                - 用css selector查找
+        css:div.ele_class                - 用css selector查找                              \n
+        xpath://div[@class="ele_class"]  - 等同于 x://div[@class="ele_class"]              \n
+        css:div.ele_class                - 等同于 c:div.ele_class                          \n
+        tag:div                          - 等同于 t:div                                    \n
+        text:search_text                 - 等同于 tx:search_text                           \n
+        text=search_text                 - 等同于 tx=search_text                           \n
     """
     loc_by = 'xpath'
 
@@ -195,7 +200,7 @@ def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
 
 
 def _make_search_str(search_str: str) -> str:
-    """将"转义，不知何故不能直接用\来转义  \n
+    """将"转义，不知何故不能直接用 \ 来转义 \n
     :param search_str: 查询字符串
     :return: 把"转义后的字符串
     """
@@ -212,9 +217,20 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def format_html(text: str) -> str:
+def format_html(text: str, replace_space: bool = True) -> str:
     """处理html编码字符"""
-    return unescape(text) if text else text
+    if not text:
+        return text
+
+    # text = unescape(text)
+
+    # if '&' in text:
+    #     html = unescape(text)
+
+    if replace_space:
+        text = text.replace('\xa0', ' ')
+
+    return text
 
 
 def translate_loc(loc: tuple) -> tuple:
