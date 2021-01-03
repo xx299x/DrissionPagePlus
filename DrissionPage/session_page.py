@@ -483,7 +483,7 @@ class SessionPage(object):
                 raise ValueError('url is empty.')
             return None, 'url is empty.'
 
-        if mode not in ['get', 'post']:
+        if mode not in ('get', 'post'):
             raise ValueError("Argument mode can only be 'get' or 'post'.")
 
         url = quote(url, safe='/:&?=%;#@+')

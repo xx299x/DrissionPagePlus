@@ -47,7 +47,7 @@ class MixPage(Null, SessionPage, DriverPage):
         :param session_options: requests设置，没有传入drission参数时会用这个设置新建Drission对象
         """
         super().__init__()
-        if drission in ['s', 'd', 'S', 'D']:
+        if drission in ('s', 'd', 'S', 'D'):
             mode = drission.lower()
             drission = None
 
@@ -350,7 +350,7 @@ class MixPage(Null, SessionPage, DriverPage):
         - 接收到元素对象时：                                                                              \n
             返回元素对象对象                                                                              \n
         - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
+            ele.ele((By.CLASS_NAME, 'ele_class'))        - 返回第一个class为ele_class的子元素              \n
         - 用查询字符串查找：                                                                               \n
             查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                              \n
             @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串            \n
@@ -371,6 +371,12 @@ class MixPage(Null, SessionPage, DriverPage):
             page.ele('text=some_text')                   - 返回第一个文本等于some_text的元素                \n
             page.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素                        \n
             page.ele('css:div.ele_class')                - 返回第一个符合css selector的元素                 \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
+            ele.ele('xpath://div[@class="ele_class"]')  - 等同于 ele.ele('x://div[@class="ele_class"]')    \n
+            ele.ele('css:div.ele_class')                - 等同于 ele.ele('c:div.ele_class')                \n
+            ele.ele('tag:div')                          - 等同于 ele.ele('t:div')                          \n
+            ele.ele('text:some_text')                   - 等同于 ele.ele('tx:some_text')                   \n
+            ele.ele('text=some_text')                   - 等同于 ele.ele('tx=some_text')
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 查找元素超时时间，d模式专用
@@ -387,7 +393,7 @@ class MixPage(Null, SessionPage, DriverPage):
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         示例：                                                                                          \n
         - 用loc元组查找：                                                                                \n
-            page.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的元素                     \n
+            page.eles((By.CLASS_NAME, 'ele_class'))       - 返回所有class为ele_class的元素                \n
         - 用查询字符串查找：                                                                              \n
             查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
             @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
@@ -408,6 +414,12 @@ class MixPage(Null, SessionPage, DriverPage):
             page.eles('text=some_text')                   - 返回所有文本等于some_text的元素                \n
             page.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的元素                        \n
             page.eles('css:div.ele_class')                - 返回所有符合css selector的元素                 \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
+            ele.eles('xpath://div[@class="ele_class"]')  - 等同于 ele.eles('x://div[@class="ele_class"]')  \n
+            ele.eles('css:div.ele_class')                - 等同于 ele.eles('c:div.ele_class')              \n
+            ele.eles('tag:div')                          - 等同于 ele.eles('t:div')                        \n
+            ele.eles('text:some_text')                   - 等同于 ele.eles('tx:some_text')                 \n
+            ele.eles('text=some_text')                   - 等同于 ele.eles('tx=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
         :return: 元素对象或属性、文本节点文本组成的列表

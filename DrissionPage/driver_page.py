@@ -248,7 +248,7 @@ class DriverPage(object):
         :param timeout: 等待超时时间
         :return: 等待是否成功
         """
-        if mode.lower() not in ['del', 'display', 'hidden']:
+        if mode.lower() not in ('del', 'display', 'hidden'):
             raise ValueError('Argument mode can only be "del", "display", "hidden"')
 
         from selenium.webdriver.support.wait import WebDriverWait
