@@ -663,6 +663,7 @@ element.html  # 返回元素 outerHTML
 element.inner_html  # 返回元素 innerHTML
 element.tag  # 返回元素 tag name
 element.text  # 返回元素 innerText 值
+element.comments  # 返回元素内注释列表
 element.link  # 返回元素 href 或 src 绝对 url
 element.texts()  # 返回元素内所有直接子节点的文本，包括元素和文本节点，可指定只返回文本节点
 element.attrs  # 返回元素所有属性的字典

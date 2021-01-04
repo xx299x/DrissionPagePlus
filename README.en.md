@@ -697,6 +697,7 @@ element.html  # Return element outerHTML
 element.inner_html  # Return element innerHTML
 element.tag  # Return element tag name
 element.text  # Return element innerText value
+element.comments  # Returns the list of comments within the element
 element.link  # Returns absolute href or src value of the element.
 element.texts()  # Returns the text of all direct child nodes in the element, including elements and text nodes, you can specify to return only text nodes
 element.attrs  # Return a dictionary of all attributes of the element
@@ -1905,23 +1906,23 @@ Return all attributes and values ​​of the element in a dictionary.
 
 Returns: dict
 
-
-
 ### text
 
 Returns the text inside the element.
 
 Returns: str
 
+### comments
 
+Returns the list of comments within the element
+
+Returns: list
 
 ### link
 
 Returns absolute href or src value of the element.
 
 Returns: str
-
-
 
 ### css_path
 
@@ -2377,23 +2378,23 @@ Returns the names and values of all attributes of the element in dictionary form
 
 Returns: dict
 
-
-
 ### text
 
 Returns the text within the element, namely innerText.
 
 Returns: str
 
+### comments
 
+Returns the list of comments within the element
+
+Returns: list
 
 ### link
 
 Returns absolute href or src value of the element.
 
 Returns: str
-
-
 
 ### css_path
 
