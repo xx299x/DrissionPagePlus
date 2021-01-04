@@ -49,36 +49,40 @@ class SessionElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
 
+        # 为尽量保证与浏览器结果一致，弄得比较复杂
+        def get_node(ele, pre: bool = False):
+            str_list = []
+            if ele.tag == 'pre':
+                pre = True
+            for el in ele.eles('xpath:./text() | *'):
+                if isinstance(el, str):
+                    if el.replace(' ', '').replace('\n', '') != '':
+                        if pre:
+                            str_list.append(el)
+                        else:
+                            str_list.append(el.replace('\n', ' ').strip(' \t'))
+
+                    elif '\n' in el and str_list and str_list[-1] != '\n':
+                        str_list.append('\n')
+                    else:
+                        str_list.append(' ')
+                else:
+                    str_list.extend(get_node(el, pre))
+                    if el.tag in ('br', 'p',) and str_list and str_list[-1] != '\n':
+                        str_list.append('\n')
+
+            return str_list
+
+        re_str = ''.join(get_node(self))
+        re_str = re.sub(r' {2,}', ' ', re_str)
+        return format_html(re_str, False)
+
         # re_str = str(self._inner_ele.text_content())
         # # re_str = re.sub(r'<br */?>', '\n', re_str)
         # re_str = re.sub(r'\n{2,}', '\n', re_str)
         # re_str = re.sub(r' {2,}', ' ', re_str)
         # return format_html(re_str.strip('\n '))
         # # return format_html(re_str)
-
-        # 为尽量保证与浏览器结果一致，弄得比较复杂
-        def get_node(ele):
-            str_list = []
-            for el in ele.eles('xpath:./node()'):
-                if isinstance(el, str):
-                    if el.replace(' ', '').replace('\n', '') != '':
-                        # str_list.append(el.replace('\xa0', '&nbsp;').replace('\n', ' ').strip())
-                        str_list.append(el.replace('\n', ' ').strip(' '))
-                    elif '\n' in el:
-                        str_list.append('\n')
-                    else:
-                        str_list.append(' ')
-                else:
-                    str_list.extend(get_node(el))
-                    if el.tag in ('br', 'p',):
-                        str_list.append('\n')
-
-            return str_list
-
-        re_str = ''.join(get_node(self))
-        re_str = re.sub(r'\n{2,}', '\n', re_str)
-        re_str = re.sub(r' {2,}', ' ', re_str)
-        return format_html(re_str.strip('\n '))
 
     @property
     def tag(self) -> str:
@@ -120,26 +124,21 @@ class SessionElement(DrissionElement):
         """返回前一个兄弟元素"""
         return self._get_brother(1, 'ele', 'prev')
 
+    @property
+    def comments(self):
+        return self.eles('xpath:.//comment()')
+
     def texts(self, text_node_only: bool = False) -> list:
         """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
         :param text_node_only: 是否只返回文本节点
         :return: 文本列表
         """
         if text_node_only:
-            return self.eles('xpath:/text()')
+            texts = self.eles('xpath:/text()')
         else:
-            texts = []
+            texts = [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
 
-            for node in self.eles('xpath:/node()'):
-                if isinstance(node, str):
-                    text = node
-                else:
-                    text = node.text
-
-                if text:
-                    texts.append(text)
-
-            return texts
+        return [format_html(x) for x in texts if x and x.replace('\n', '').replace('\t', '').replace(' ', '') != '']
 
     def parents(self, num: int = 1):
         """返回上面第num级父元素                                         \n
@@ -392,7 +391,7 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = fromstring(page_or_ele.response.text)
+        page_or_ele = fromstring(re.sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表

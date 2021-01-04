@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
-import re
 from pathlib import Path
 from time import sleep
 from typing import Union, List, Any, Tuple
@@ -79,13 +78,13 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
+        return format_html(self.inner_ele.get_attribute('innerText'), False)
         # return self.inner_ele.get_attribute('innerText')
-        re_str = self.inner_ele.get_attribute('innerText')
-        re_str = re.sub(r'\n{2,}', '\n', re_str)
-        re_str = re.sub(r' {2,}', ' ', re_str)
-
-        return format_html(re_str.strip('\n '))
-        # return re_str.strip('\n ')
+        # re_str = self.inner_ele.get_attribute('innerText')
+        # re_str = re.sub(r'\n{2,}', '\n', re_str)
+        # re_str = re.sub(r' {2,}', ' ', re_str)
+        #
+        # return format_html(re_str.strip('\n '))
 
     @property
     def link(self) -> str:
@@ -115,6 +114,10 @@ class DriverElement(DrissionElement):
     def prev(self):
         """返回前一个兄弟元素"""
         return self._get_brother(1, 'ele', 'prev')
+
+    @property
+    def comments(self):
+        return self.eles('xpath:.//comment()')
 
     # -----------------driver独占属性-------------------
     @property
@@ -152,9 +155,9 @@ class DriverElement(DrissionElement):
         :return: 文本列表
         """
         if text_node_only:
-            return self.eles('xpath:./text()')
+            return self.eles('xpath:/text()')
         else:
-            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./node()')]
+            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
 
     def parents(self, num: int = 1):
         """返回上面第num级父元素              \n
@@ -576,7 +579,7 @@ class DriverElement(DrissionElement):
         ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
         # 跳过元素间的换行符
-        while ele_or_node == '\n':
+        while isinstance(ele_or_node, str) and ele_or_node.replace('\n', '').replace('\t', '').replace(' ', '') == '':
             num += 1
             ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
@@ -662,6 +665,7 @@ class ElementsByXpath(object):
                 return_txt = '''
                     if(e.singleNodeValue.constructor.name=="Text"){return e.singleNodeValue.data;}
                     else if(e.singleNodeValue.constructor.name=="Attr"){return e.singleNodeValue.nodeValue;}
+                    else if(e.singleNodeValue.constructor.name=="Comment"){return e.singleNodeValue.nodeValue;}
                     else{return e.singleNodeValue;}
                     '''
 
@@ -672,6 +676,7 @@ class ElementsByXpath(object):
                     for(var i = 0; i <e.snapshotLength ; i++){
                         if(e.snapshotItem(i).constructor.name=="Text"){a.push(e.snapshotItem(i).data);}
                         else if(e.snapshotItem(i).constructor.name=="Attr"){a.push(e.snapshotItem(i).nodeValue);}
+                        else if(e.snapshotItem(i).constructor.name=="Comment"){a.push(e.snapshotItem(i).nodeValue);}
                         else{a.push(e.snapshotItem(i));}
                     }
                     """
