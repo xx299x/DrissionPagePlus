@@ -5,7 +5,7 @@
 @File    :   common.py
 """
 from abc import abstractmethod
-# from html import unescape
+from html import unescape
 from pathlib import Path
 from re import split as re_SPLIT
 from shutil import rmtree
@@ -217,20 +217,15 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def format_html(text: str, replace_space: bool = True) -> str:
+def format_html(text: str, trans: bool = True) -> str:
     """处理html编码字符"""
     if not text:
         return text
 
-    # text = unescape(text)
+    if trans:
+        text = unescape(text)
 
-    # if '&' in text:
-    #     html = unescape(text)
-
-    if replace_space:
-        text = text.replace('\xa0', ' ')
-
-    return text
+    return text.replace('\xa0', ' ')
 
 
 def translate_loc(loc: tuple) -> tuple:
