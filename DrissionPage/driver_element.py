@@ -155,9 +155,11 @@ class DriverElement(DrissionElement):
         :return: 文本列表
         """
         if text_node_only:
-            return self.eles('xpath:/text()')
+            texts = self.eles('xpath:/text()')
         else:
-            return [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
+            texts = [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
+
+        return [x.strip(' ') for x in texts if x and x.replace('\n', '').replace('\t', '').replace(' ', '') != '']
 
     def parents(self, num: int = 1):
         """返回上面第num级父元素              \n

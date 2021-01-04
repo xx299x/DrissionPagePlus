@@ -54,7 +54,12 @@ class SessionElement(DrissionElement):
             str_list = []
             if ele.tag == 'pre':
                 pre = True
+
+            current_tag = None
             for el in ele.eles('xpath:./text() | *'):
+                if current_tag in ('br', 'p') and str_list and str_list[-1] != '\n':
+                    str_list.append('\n')
+
                 if isinstance(el, str):
                     if el.replace(' ', '').replace('\n', '') != '':
                         if pre:
@@ -66,10 +71,10 @@ class SessionElement(DrissionElement):
                         str_list.append('\n')
                     else:
                         str_list.append(' ')
+                    current_tag = None
                 else:
                     str_list.extend(get_node(el, pre))
-                    if el.tag in ('br', 'p',) and str_list and str_list[-1] != '\n':
-                        str_list.append('\n')
+                    current_tag = el.tag
 
             return str_list
 
@@ -138,7 +143,8 @@ class SessionElement(DrissionElement):
         else:
             texts = [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
 
-        return [format_html(x) for x in texts if x and x.replace('\n', '').replace('\t', '').replace(' ', '') != '']
+        return [format_html(x.strip(' ')) for x in texts if
+                x and x.replace('\n', '').replace('\t', '').replace(' ', '') != '']
 
     def parents(self, num: int = 1):
         """返回上面第num级父元素                                         \n
