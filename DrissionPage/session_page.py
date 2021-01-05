@@ -315,6 +315,12 @@ class SessionPage(object):
         :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
         """
         # 生成的response不写入self._response，是临时的
+        if file_exists == 'skip' and Path(f'{goal_path}\\{rename}').exists():
+            if show_msg:
+                print(f'{file_url}\n{goal_path}\\{rename}\nSkipped.\n')
+
+            return False, 'Skipped because a file with the same name already exists.'
+
         kwargs['stream'] = True
 
         if 'timeout' not in kwargs:
@@ -383,9 +389,8 @@ class SessionPage(object):
             goal_path += goal_Path.drive if key == 0 and goal_Path.drive else re_SUB(r'[*:|<>?"]', '', i).strip()
             goal_path += '\\' if i != '\\' and key < len(goal_Path.parts) - 1 else ''
 
-        goal_Path = Path(goal_path)
+        goal_Path = Path(goal_path).absolute()
         goal_Path.mkdir(parents=True, exist_ok=True)
-        goal_path = goal_Path.absolute()
         full_path = Path(f'{goal_path}\\{full_name}')
 
         if full_path.exists():
@@ -448,7 +453,7 @@ class SessionPage(object):
                 download_status, info = False, 'File size is 0.'
 
             else:
-                download_status, info = True, 'Success.'
+                download_status, info = True, str(full_path)
 
         finally:
             # 删除下载出错文件
