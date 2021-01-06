@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
-from sys import exit
 from typing import Union
 
 from requests import Session
@@ -13,6 +12,7 @@ from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
+from sys import exit
 from tldextract import extract
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
@@ -194,7 +194,8 @@ class Drission(object):
 
             # 添加cookie到session
             if set_session:
-                kwargs = {x: cookie[x] for x in cookie if x not in ('name', 'value', 'httpOnly', 'expiry')}
+                kwargs = {x: cookie[x] for x in cookie
+                          if x.lower() not in ('name', 'value', 'httponly', 'expiry', 'samesite')}
 
                 if 'expiry' in cookie:
                     kwargs['expires'] = cookie['expiry']
