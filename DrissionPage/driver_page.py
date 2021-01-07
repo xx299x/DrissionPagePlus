@@ -6,7 +6,6 @@
 """
 from glob import glob
 from pathlib import Path
-from time import time, sleep
 from typing import Union, List, Any, Tuple
 from urllib.parse import quote
 
@@ -14,6 +13,7 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
+from time import time, sleep
 
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 from .driver_element import DriverElement, execute_driver_find
@@ -100,14 +100,23 @@ class DriverPage(object):
         :param show_errmsg: 是否抛出异常
         :return: 是否成功
         """
-        self.driver.get(to_url)
-        is_ok = self.check_page()
 
-        while times and is_ok is False:
+        def goto() -> bool:
+            try:
+                self.driver.get(to_url)
+                return True
+            except:
+                return False
+
+        is_ok = self.check_page() if goto() else False
+
+        for _ in range(times):
+            if is_ok is not False:
+                break
+
             sleep(interval)
-            self.driver.get(to_url)
-            is_ok = self.check_page()
-            times -= 1
+            print(f'重试 {to_url}')
+            is_ok = self.check_page() if goto() else False
 
         if is_ok is False and show_errmsg:
             raise ConnectionError('Connect error.')

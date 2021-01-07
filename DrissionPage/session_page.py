@@ -10,11 +10,11 @@ from pathlib import Path
 from random import randint
 from re import search as re_SEARCH
 from re import sub as re_SUB
-from time import time, sleep
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
+from time import time, sleep
 from tldextract import extract
 
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
@@ -199,15 +199,13 @@ class SessionPage(object):
         """
         r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
 
-        while times and (not r or r.content == b''):
-            if r is not None and r.status_code in (403, 404):
+        for _ in range(times):
+            if (r and r.content != b'') or (r is not None and r.status_code in (403, 404)):
                 break
 
-            print('重试', to_url)
+            print(f'重试 {to_url}')
             sleep(interval)
-
             r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
-            times -= 1
 
         return r
 
