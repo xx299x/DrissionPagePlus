@@ -5,7 +5,6 @@
 @File    :   driver_element.py
 """
 from pathlib import Path
-from time import sleep
 from typing import Union, List, Any, Tuple
 
 from selenium.common.exceptions import TimeoutException, JavascriptException, InvalidElementStateException
@@ -13,6 +12,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
+from time import sleep
 
 from .common import DrissionElement, str_to_loc, get_available_file_name, translate_loc, format_html
 
@@ -541,7 +541,6 @@ class DriverElement(DrissionElement):
                         sib = sib.previousSibling;
                     }
                     ''' + txt4 + '''
-                
                 el = el.parentNode;
             }
             ''' + txt5 + '''
@@ -611,6 +610,7 @@ def execute_driver_find(page_or_ele,
         page = page_or_ele
         driver = page_or_ele.driver
 
+    # 设置等待对象
     if timeout is not None and timeout != page.timeout:
         wait = WebDriverWait(driver, timeout=timeout)
     else:
@@ -618,9 +618,12 @@ def execute_driver_find(page_or_ele,
         wait = page.wait
 
     try:
+        # 使用xpath查找
         if loc[0] == 'xpath':
             return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
-        else:  # 使用css selector查找
+
+        # 使用css selector查找
+        else:
             if mode == 'single':
                 return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
             elif mode == 'all':
@@ -692,11 +695,11 @@ class ElementsByXpath(object):
                 return_txt = 'return e.singleNodeValue;'
 
             js = """
-                var e=document.evaluate('""" + xpath_txt + """', """ + node_txt + """, null, """ + type_txt + """,null);
+                var e=document.evaluate(arguments[1], """ + node_txt + """, null, """ + type_txt + """,null);
                 """ + for_txt + """
                 """ + return_txt + """
                 """
-            return driver.execute_script(js, node)
+            return driver.execute_script(js, node, xpath_txt)
 
         if isinstance(ele_or_driver, WebDriver):
             driver, the_node = ele_or_driver, 'document'
