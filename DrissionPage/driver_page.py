@@ -100,26 +100,31 @@ class DriverPage(object):
         :param show_errmsg: 是否抛出异常
         :return: 是否成功
         """
+        err = None
 
-        def goto() -> bool:
+        def go() -> bool:
+            nonlocal err
             try:
                 self.driver.get(to_url)
                 return True
-            except:
+            except Exception as e:
+                err = e
                 return False
 
-        is_ok = self.check_page() if goto() else False
+        is_ok = False
 
-        for _ in range(times):
+        for _ in range(times + 1):
+            is_ok = self.check_page() if go() else False
+
             if is_ok is not False:
                 break
 
-            sleep(interval)
-            print(f'重试 {to_url}')
-            is_ok = self.check_page() if goto() else False
+            if _ < times:
+                sleep(interval)
+                print(f'重试 {to_url}')
 
         if is_ok is False and show_errmsg:
-            raise ConnectionError('Connect error.')
+            raise err if err is not None else ConnectionError('Connect error.')
 
         return is_ok
 

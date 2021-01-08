@@ -197,15 +197,28 @@ class SessionPage(object):
         :param kwargs: 连接参数
         :return: HTMLResponse对象
         """
-        r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
+        err = None
+        r = None
 
-        for _ in range(times):
-            if (r and r.content != b'') or (r is not None and r.status_code in (403, 404)):
+        def go() -> Union[Response, None]:
+            nonlocal err
+            try:
+                return self._make_response(to_url, mode=mode, show_errmsg=True, **kwargs)[0]
+            except Exception as e:
+                err = e
+                return None
+
+        for _ in range(times + 1):
+            r = go()
+            if r and (r.content != b'' or r.status_code in (403, 404)):
                 break
 
-            print(f'重试 {to_url}')
-            sleep(interval)
-            r = self._make_response(to_url, mode=mode, show_errmsg=show_errmsg, **kwargs)[0]
+            if _ < times:
+                sleep(interval)
+                print(f'重试 {to_url}')
+
+        if not r and show_errmsg:
+            raise err if err is not None else ConnectionError('Connect error.')
 
         return r
 
