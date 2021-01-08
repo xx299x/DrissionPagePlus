@@ -200,16 +200,13 @@ class SessionPage(object):
         err = None
         r = None
 
-        def go() -> Union[Response, None]:
-            nonlocal err
+        for _ in range(times + 1):
             try:
-                return self._make_response(to_url, mode=mode, show_errmsg=True, **kwargs)[0]
+                r = self._make_response(to_url, mode=mode, show_errmsg=True, **kwargs)[0]
             except Exception as e:
                 err = e
-                return None
+                r = None
 
-        for _ in range(times + 1):
-            r = go()
             if r and (r.content != b'' or r.status_code in (403, 404)):
                 break
 

@@ -101,20 +101,17 @@ class DriverPage(object):
         :return: 是否成功
         """
         err = None
-
-        def go() -> bool:
-            nonlocal err
-            try:
-                self.driver.get(to_url)
-                return True
-            except Exception as e:
-                err = e
-                return False
-
         is_ok = False
 
         for _ in range(times + 1):
-            is_ok = self.check_page() if go() else False
+            try:
+                self.driver.get(to_url)
+                go_ok = True
+            except Exception as e:
+                err = e
+                go_ok = False
+
+            is_ok = self.check_page() if go_ok else False
 
             if is_ok is not False:
                 break
