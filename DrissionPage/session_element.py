@@ -82,12 +82,10 @@ class SessionElement(DrissionElement):
         re_str = re.sub(r' {2,}', ' ', re_str)
         return format_html(re_str, False)
 
-        # re_str = str(self._inner_ele.text_content())
-        # # re_str = re.sub(r'<br */?>', '\n', re_str)
-        # re_str = re.sub(r'\n{2,}', '\n', re_str)
-        # re_str = re.sub(r' {2,}', ' ', re_str)
-        # return format_html(re_str.strip('\n '))
-        # # return format_html(re_str)
+    @property
+    def row_text(self) -> str:
+        """返回未格式化处理的元素内文本"""
+        return str(self._inner_ele.text_content())
 
     @property
     def tag(self) -> str:

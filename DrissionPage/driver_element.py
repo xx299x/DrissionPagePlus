@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
+import re
 from pathlib import Path
 from typing import Union, List, Any, Tuple
 
@@ -78,13 +79,17 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return format_html(self.inner_ele.get_attribute('innerText'), False)
-        # return self.inner_ele.get_attribute('innerText')
-        # re_str = self.inner_ele.get_attribute('innerText')
-        # re_str = re.sub(r'\n{2,}', '\n', re_str)
-        # re_str = re.sub(r' {2,}', ' ', re_str)
-        #
-        # return format_html(re_str.strip('\n '))
+        # return format_html(self.inner_ele.get_attribute('innerText'), False)
+        re_str = self.inner_ele.get_attribute('innerText')
+        re_str = re.sub(r'\n{2,}', '\n', re_str)
+        re_str = re.sub(r' {2,}', ' ', re_str)
+
+        return format_html(re_str.strip('\n '), False)
+
+    @property
+    def row_text(self) -> str:
+        """返回未格式化处理的元素内文本"""
+        return self.inner_ele.get_attribute('innerText')
 
     @property
     def link(self) -> str:
