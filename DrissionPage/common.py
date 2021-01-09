@@ -142,7 +142,7 @@ def str_to_loc(loc: str) -> tuple:
             r = re_SPLIT(r'([:=])', at_lst[1], maxsplit=1)
             if len(r) == 3:
                 mode = 'exact' if r[1] == '=' else 'fuzzy'
-                arg_str = r[0] if r[0] == 'text()' else f'@{r[0]}'
+                arg_str = 'text()' if r[0] in ('text', 'tx') else f'@{r[0]}'
                 loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
             else:
                 loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
@@ -193,7 +193,11 @@ def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
         return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
 
     elif mode == 'fuzzy':
-        return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
+        if arg == 'text()':
+            tag_name = '' if tag == '*' else f'{tag}/'
+            return f'//{tag_name}text()[contains(., {_make_search_str(val)})]/..'
+        else:
+            return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
 
     else:
         raise ValueError("Argument mode can only be 'exact' or 'fuzzy'.")
