@@ -142,7 +142,7 @@ def str_to_loc(loc: str) -> tuple:
             r = re_SPLIT(r'([:=])', at_lst[1], maxsplit=1)
             if len(r) == 3:
                 mode = 'exact' if r[1] == '=' else 'fuzzy'
-                arg_str = 'text()' if r[0] in ('text', 'tx') else f'@{r[0]}'
+                arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
                 loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
             else:
                 loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
