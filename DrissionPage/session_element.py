@@ -83,7 +83,7 @@ class SessionElement(DrissionElement):
         return format_html(re_str, False)
 
     @property
-    def row_text(self) -> str:
+    def raw_text(self) -> str:
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 

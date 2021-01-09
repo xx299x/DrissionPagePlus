@@ -87,7 +87,7 @@ class DriverElement(DrissionElement):
         return format_html(re_str.strip('\n '), False)
 
     @property
-    def row_text(self) -> str:
+    def raw_text(self) -> str:
         """返回未格式化处理的元素内文本"""
         return self.inner_ele.get_attribute('innerText')
 
