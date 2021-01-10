@@ -201,35 +201,36 @@ class SessionElement(DrissionElement):
 
     def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
-        示例：                                                                                           \n
+        示例：                                                                                            \n
         - 用loc元组查找：                                                                                 \n
             ele.ele((By.CLASS_NAME, 'ele_class'))       - 返回第一个class为ele_class的子元素               \n
         - 用查询字符串查找：                                                                               \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
+            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                              \n
+            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串            \n
             ele.ele('.ele_class')                       - 返回第一个 class 为 ele_class 的子元素            \n
             ele.ele('.:ele_class')                      - 返回第一个 class 中含有 ele_class 的子元素         \n
-            ele.ele('#ele_id')                          - 返回第一个 id 为 ele_id 的子元素                  \n
+            ele.ele('#ele_id')                          - 返回第一个 id 为 ele_id 的子元素                   \n
             ele.ele('#:ele_id')                         - 返回第一个 id 中含有 ele_id 的子元素               \n
-            ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素              \n
-            ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                \n
-            ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素               \n
-            ele.ele('tag:p')                            - 返回第一个<p>子元素                              \n
-            ele.ele('tag:div@class:ele_class')          - 返回第一个class含有ele_class的div子元素           \n
-            ele.ele('tag:div@class=ele_class')          - 返回第一个class等于ele_class的div子元素           \n
-            ele.ele('tag:div@text():some_text')         - 返回第一个文本含有some_text的div子元素             \n
-            ele.ele('tag:div@text()=some_text')         - 返回第一个文本等于some_text的div子元素             \n
-            ele.ele('text:some_text')                   - 返回第一个文本含有some_text的子元素                \n
-            ele.ele('some_text')                        - 返回第一个文本含有some_text的子元素（等价于上一行）  \n
-            ele.ele('text=some_text')                   - 返回第一个文本等于some_text的子元素                \n
-            ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的子元素                        \n
-            ele.ele('css:div.ele_class')                - 返回第一个符合css selector的子元素                 \n
-        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
-            ele.ele('xpath://div[@class="ele_class"]')  - 等同于 ele.ele('x://div[@class="ele_class"]')    \n
-            ele.ele('css:div.ele_class')                - 等同于 ele.ele('c:div.ele_class')                \n
-            ele.ele('tag:div')                          - 等同于 ele.ele('t:div')                          \n
-            ele.ele('text:some_text')                   - 等同于 ele.ele('tx:some_text')                   \n
-            ele.ele('text=some_text')                   - 等同于 ele.ele('tx=some_text')
+            ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素               \n
+            ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                 \n
+            ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素                \n
+            ele.ele('tag:p')                            - 返回第一个<p>子元素                               \n
+            ele.ele('tag:div@class:ele_class')          - 返回第一个class含有ele_class的div子元素            \n
+            ele.ele('tag:div@class=ele_class')          - 返回第一个class等于ele_class的div子元素            \n
+            ele.ele('tag:div@text():some_text')         - 返回第一个文本含有some_text的div子元素              \n
+            ele.ele('tag:div@text()=some_text')         - 返回第一个文本等于some_text的div子元素              \n
+            ele.ele('text:some_text')                   - 返回第一个文本含有some_text的子元素                 \n
+            ele.ele('some_text')                        - 返回第一个文本含有some_text的子元素（等价于上一行）   \n
+            ele.ele('text=some_text')                   - 返回第一个文本等于some_text的子元素                 \n
+            ele.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的子元素                         \n
+            ele.ele('css:div.ele_class')                - 返回第一个符合css selector的子元素                  \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                                \n
+            ele.ele('x://div[@class="ele_class"]')      - 等同于 ele.ele('xpath://div[@class="ele_class"]') \n
+            ele.ele('c:div.ele_class')                  - 等同于 ele.ele('css:div.ele_class')               \n
+            ele.ele('t:div')                            - 等同于 ele.ele('tag:div')                         \n
+            ele.ele('t:div@tx()=some_text')             - 等同于 ele.ele('tag:div@text()=some_text')        \n
+            ele.ele('tx:some_text')                     - 等同于 ele.ele('text:some_text')                  \n
+            ele.ele('tx=some_text')                     - 等同于 ele.ele('text=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :return: SessionElement对象
@@ -260,36 +261,37 @@ class SessionElement(DrissionElement):
         return execute_session_find(element, loc_or_str, mode)
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str]):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                              \n
-        示例：                                                                                          \n
-        - 用loc元组查找：                                                                                \n
-            ele.eles((By.CLASS_NAME, 'ele_class'))       - 返回所有class为ele_class的子元素               \n
-        - 用查询字符串查找：                                                                              \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            ele.eles('.ele_class')                       - 返回所有 class 为 ele_class 的子元素            \n
-            ele.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素         \n
-            ele.eles('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                  \n
-            ele.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素               \n
-            ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素              \n
-            ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                \n
-            ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素               \n
-            ele.eles('tag:p')                            - 返回所有<p>子元素                              \n
-            ele.eles('tag:div@class:ele_class')          - 返回所有class含有ele_class的div子元素           \n
-            ele.eles('tag:div@class=ele_class')          - 返回所有class等于ele_class的div子元素           \n
-            ele.eles('tag:div@text():some_text')         - 返回所有文本含有some_text的div子元素             \n
-            ele.eles('tag:div@text()=some_text')         - 返回所有文本等于some_text的div子元素             \n
-            ele.eles('text:some_text')                   - 返回所有文本含有some_text的子元素                \n
-            ele.eles('some_text')                        - 返回所有文本含有some_text的子元素（等价于上一行）  \n
-            ele.eles('text=some_text')                   - 返回所有文本等于some_text的子元素                \n
-            ele.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的子元素                        \n
-            ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                 \n
-        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                               \n
-            ele.eles('xpath://div[@class="ele_class"]')  - 等同于 ele.eles('x://div[@class="ele_class"]')  \n
-            ele.eles('css:div.ele_class')                - 等同于 ele.eles('c:div.ele_class')              \n
-            ele.eles('tag:div')                          - 等同于 ele.eles('t:div')                        \n
-            ele.eles('text:some_text')                   - 等同于 ele.eles('tx:some_text')                 \n
-            ele.eles('text=some_text')                   - 等同于 ele.eles('tx=some_text')
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
+        示例：                                                                                              \n
+        - 用loc元组查找：                                                                                    \n
+            ele.eles((By.CLASS_NAME, 'ele_class'))       - 返回所有class为ele_class的子元素                   \n
+        - 用查询字符串查找：                                                                                  \n
+            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                                \n
+            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串              \n
+            ele.eles('.ele_class')                       - 返回所有 class 为 ele_class 的子元素               \n
+            ele.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素            \n
+            ele.eles('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                      \n
+            ele.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素                  \n
+            ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素                  \n
+            ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                    \n
+            ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素                   \n
+            ele.eles('tag:p')                            - 返回所有<p>子元素                                  \n
+            ele.eles('tag:div@class:ele_class')          - 返回所有class含有ele_class的div子元素               \n
+            ele.eles('tag:div@class=ele_class')          - 返回所有class等于ele_class的div子元素               \n
+            ele.eles('tag:div@text():some_text')         - 返回所有文本含有some_text的div子元素                 \n
+            ele.eles('tag:div@text()=some_text')         - 返回所有文本等于some_text的div子元素                 \n
+            ele.eles('text:some_text')                   - 返回所有文本含有some_text的子元素                    \n
+            ele.eles('some_text')                        - 返回所有文本含有some_text的子元素（等价于上一行）      \n
+            ele.eles('text=some_text')                   - 返回所有文本等于some_text的子元素                    \n
+            ele.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的子元素                            \n
+            ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                     \n
+        - 查询字符串还有最精简模式，用x代替xpath、c代替css、t代替tag、tx代替text：                                  \n
+            ele.eles('x://div[@class="ele_class"]')      - 等同于 ele.eles('xpath://div[@class="ele_class"]') \n
+            ele.eles('c:div.ele_class')                  - 等同于 ele.eles('css:div.ele_class')               \n
+            ele.eles('t:div')                            - 等同于 ele.eles('tag:div')                         \n
+            ele.eles('t:div@tx()=some_text')             - 等同于 ele.eles('tag:div@text()=some_text')        \n
+            ele.eles('tx:some_text')                     - 等同于 ele.eles('text:some_text')                  \n
+            ele.eles('tx=some_text')                     - 等同于 ele.eles('text=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
