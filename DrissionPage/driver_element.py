@@ -144,6 +144,11 @@ class DriverElement(DrissionElement):
             return ShadowRootElement(shadow, self)
 
     @property
+    def sr(self):
+        """返回当前元素的shadow_root元素对象"""
+        return self.shadow_root
+
+    @property
     def before(self) -> str:
         """返回当前元素的::before伪元素内容"""
         return self.get_style_property('content', 'before')
