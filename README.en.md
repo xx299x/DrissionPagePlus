@@ -476,8 +476,8 @@ session_options = {'headers': {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac O
 # Proxy settings, optional
 proxy = {'http': '127.0.0.1:1080','https': '127.0.0.1:1080'}
 
-# Incoming configuration, driver_options and session_options are optional, you need to use the corresponding mode to pass in
-drission = Drission(driver_options, session_options, proxy=proxy)
+# Incoming configuration, driver_or_options and session_or_options are optional, you need to use the corresponding mode to pass in
+drission = Drission(driver_or_options, session_or_options, proxy=proxy)
 ```
 
 The usage of DriverOptions and SessionOptions is detailed below.
@@ -931,7 +931,7 @@ do.set_no_imgs(True) # Do not load pictures
 do.set_paths(driver_path='D:\\chromedriver.exe', chrome_path='D:\\chrome.exe') # set path
 do.set_headless(False).set_no_imgs(True) # Support chain operation
 
-drission = Drission(driver_options=do) # Create Drission object with configuration object
+drission = Drission(driver_or_options=do) # Create Drission object with configuration object
 page = MixPage(driver_options=do) # Create MixPage object with configuration object
 
 do.save() # save the currently opened ini file
@@ -966,7 +966,7 @@ so.cookies = ['key1=val1; domain=xxxx','key2=val2; domain=xxxx'] # set cookies
 so.headers = {'User-Agent':'xxxx','Accept-Charset':'xxxx'}
 so.set_a_header('Connection','keep-alive')
 
-drission = Drission(session_options=so) # Create Drission object with configuration object
+drission = Drission(session_or_options=so) # Create Drission object with configuration object
 page = MixPage(session_options=so) # Create MixPage object with configuration object
 
 so.save() # Save the currently opened ini file
