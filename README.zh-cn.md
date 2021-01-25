@@ -925,7 +925,7 @@ so.cookies = ['key1=val1; domain=xxxx', 'key2=val2; domain=xxxx']  # 设置 cook
 so.headers = {'User-Agent': 'xxxx', 'Accept-Charset': 'xxxx'}
 so.set_a_header('Connection', 'keep-alive')
 
-drission = Drission(session_options=so)  # 用配置对象创建 Drission 对象
+drission = Drission(session_or_options=so)  # 用配置对象创建 Drission 对象
 page = MixPage(session_options=so)  # 用配置对象创建 MixPage 对象
 
 so.save()  # 保存当前打开的 ini 文件
