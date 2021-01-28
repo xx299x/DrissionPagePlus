@@ -437,6 +437,7 @@ drission = Drission(read_file=False)
 
 ```python
 from DrissionPage.config import DriverOptions
+from DrissionPage import Drission
 
 # 创建 driver 配置对象，read_file = False 表示不读取 ini 文件
 do = DriverOptions(read_file=False)  
