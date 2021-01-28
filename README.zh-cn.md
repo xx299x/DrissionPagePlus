@@ -493,7 +493,7 @@ page.post(url, data, **kwargs)  # 只有 session 模式才有 post 方法
 page.get(url, retry=5, interval=0.5)
 ```
 
-Tips：若连接出错，程序会自动重试2次，可指定重试次数和等待间隔。
+Tips：若连接出错，程序会自动重试3次，可指定重试次数和等待间隔。
 
 **切换模式**
 
