@@ -529,16 +529,19 @@ class DriverPage(object):
         self.driver.back()
 
     def set_window_size(self, x: int = None, y: int = None) -> None:
-        """设置浏览器窗口大小，默认最大化  \n
+        """设置浏览器窗口大小，默认最大化，任一参数为0最小化  \n
         :param x: 浏览器窗口高
         :param y: 浏览器窗口宽
         :return: None
         """
-        if not x and not y:
+        if x is None and y is None:
             self.driver.maximize_window()
 
+        elif x == 0 or y == 0:
+            self.driver.minimize_window()
+
         else:
-            if x <= 0 or y <= 0:
+            if x < 0 or y < 0:
                 raise ValueError('Arguments x and y must greater than 0.')
 
             new_x = x or self.driver.get_window_size()['width']
