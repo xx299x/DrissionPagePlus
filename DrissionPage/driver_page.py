@@ -139,7 +139,7 @@ class DriverPage(object):
         :param interval: 重试间隔（秒）
         :return: 目标url是否可用
         """
-        to_url = quote(url, safe='/:&?=%;#@')
+        to_url = quote(url, safe='/:&?=%;#@+!')
         retry = int(retry) if retry is not None else int(self.retry_times)
         interval = int(interval) if interval is not None else int(self.retry_interval)
 
