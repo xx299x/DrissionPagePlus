@@ -324,7 +324,7 @@ class DriverElement(DrissionElement):
 
         return None if r == 'none' else r
 
-    def click(self, by_js=None) -> bool:
+    def click(self, by_js: bool = None, x: int = None, y: int = None) -> bool:
         """点击元素                                                                      \n
         尝试点击10次，若都失败就改用js点击                                                  \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
@@ -532,12 +532,14 @@ class DriverElement(DrissionElement):
             if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
                     else{path = '/' + tag + path;}'''
             txt5 = '''return path;'''
+
         elif mode == 'css':
             txt1 = ''
             # txt2 = '''return '#' + el.id + path;'''
             txt3 = ''
             txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
             txt5 = '''return path.substr(1);'''
+
         else:
             raise ValueError(f"Argument mode can only be 'xpath' or 'css', not '{mode}'.")
 
