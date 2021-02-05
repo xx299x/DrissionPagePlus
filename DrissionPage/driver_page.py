@@ -149,6 +149,11 @@ class DriverPage(object):
         self._url = to_url
         self._url_available = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg)
 
+        try:
+            self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => Chrome,});')
+        except:
+            pass
+
         return self._url_available
 
     def ele(self,
