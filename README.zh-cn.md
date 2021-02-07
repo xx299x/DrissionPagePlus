@@ -701,8 +701,9 @@ element.is_displayed()  # 返回元素是否可见
 
 ```python
 element.click(by_js)  # 点击元素，可选择是否用 js 方式点击
-element.input(value)  # 输入文本
-element.run_script(js)  # 对元素运行 JavaScript 脚本
+element.click_at(x, y, by_js)  # 带偏移量点击本元素，相对于左上角坐标。不传入 x 或 y 值时点击元素中点，可选择是否用 js 方式点击
+element.input(value, clear)  # 输入文本或组合键，组合键用 tuple 格式输入。clear 参数为输入前是否清空元素。
+element.run_script(js, *args)  # 对元素运行 JavaScript 脚本
 element.submit()  # 提交
 element.clear()  # 清空元素
 element.screenshot(path, filename)  # 对元素截图

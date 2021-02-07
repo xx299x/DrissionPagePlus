@@ -734,8 +734,9 @@ Element operation is unique to d mode. Calling the following method will automat
 
 ```python
 element.click(by_js)  # Click the element, you can choose whether to click with js
-element.input(value)  # input text
-element.run_script(js)  # Run JavaScript script on the element
+element.click_at(x, y, by_js)  # Click this element with offset, relative to the upper left corner coordinate. Click the midpoint of the element when the x or y value is not passed in, and you can choose whether to click with js
+element.input(value, clear)  # Input text or key combination, and input the key combination in tuple format. The clear parameter is whether to clear the element before input.
+element.run_script(js, *args)  # Run JavaScript script on the element
 element.submit()  # Submit
 element.clear()  # Clear the element
 element.screenshot(path, filename)  # Take a screenshot of the element
@@ -2160,20 +2161,31 @@ Click on the element. If it is unsuccessful, click in js mode. You can specify w
 
 Parameter Description:
 
-- by_js: bool  - whether to click with js
+- by_js: bool - whether to click with js
 
 Returns: bool
 
+### click_at()
 
-
-### input()
-
-Enter text and return whether it is successful.
+Click this element with offset, relative to the upper left corner coordinate. Click the midpoint of the element when the
+x or y value is not passed in, and you can choose whether to click with js.
 
 Parameter Description:
 
-- value: str  - text value
-- clear: bool  - whether to clear the text box before typing
+- x: int - The x-axis offset relative to the upper left corner of the element
+- y: int - The y-axis offset relative to the upper left corner of the element
+- by_js: bool - whether to click with js
+
+Returns: None
+
+### input()
+
+Enter text or key combination and return whether it is successful.
+
+Parameter Description:
+
+- value: Union[str, tuple]  - Text value or key combination
+- clear: bool - whether to clear the text box before typing
 
 Returns: bool
 
