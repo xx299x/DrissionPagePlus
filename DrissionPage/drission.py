@@ -96,9 +96,21 @@ class Drission(object):
 
             if options.debugger_address and _check_port(options.debugger_address) is False:
                 from subprocess import Popen
-                port = options.debugger_address.split(':')[-1]
+                port = options.debugger_address[options.debugger_address.rfind(':') + 1:]
 
-                Popen(f'{chrome_path} --remote-debugging-port={port}', shell=False)
+                try:
+                    Popen(f'{chrome_path} --remote-debugging-port={port}', shell=False)
+
+                except FileNotFoundError:
+                    from DrissionPage.easy_set import _get_chrome_path
+
+                    chrome_path = _get_chrome_path(show_msg=False)
+
+                    if not chrome_path:
+                        raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
+
+                    Popen(f'"{chrome_path}" --remote-debugging-port={port}', shell=False)
+                    options.binary_location = chrome_path
 
             try:
                 self._driver = webdriver.Chrome(driver_path, options=options)
@@ -106,9 +118,9 @@ class Drission(object):
             except (WebDriverException, SessionNotCreatedException):
                 from .easy_set import get_match_driver
 
-                chrome_path = self._driver_options.get('binary_location', None) or None
                 print('自动下载chromedriver...')
-                driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
+                chrome_path = None if chrome_path == 'chrome.exe' else chrome_path
+                driver_path = get_match_driver(chrome_path=chrome_path, check_version=False)
 
                 if driver_path:
                     try:
@@ -326,7 +338,7 @@ class Drission(object):
 
 
 def _check_port(debugger_address: str) -> Union[bool, None]:
-    """检查端口是否可用                               \n
+    """检查端口是否被占用                               \n
     :param debugger_address: 浏览器地址及端口
     :return: bool
     """
@@ -345,3 +357,6 @@ def _check_port(debugger_address: str) -> Union[bool, None]:
         return True
     except socket.error:
         return False
+    finally:
+        if s:
+            s.close()

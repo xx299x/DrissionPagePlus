@@ -208,11 +208,11 @@ def get_match_driver(ini_path: Union[str, None] = 'default',
     chrome_path = chrome_path or _get_chrome_path(ini_path, show_msg)
     chrome_path = Path(chrome_path).absolute() if chrome_path else None
     if show_msg:
-        print('chrome.exe路径', chrome_path, '\n')
+        print('chrome.exe路径', chrome_path)
 
     ver = _get_chrome_version(chrome_path)
     if show_msg:
-        print('version', ver, '\n')
+        print('version', ver)
 
     zip_path = _download_driver(ver, save_path, show_msg=show_msg)
 
@@ -225,7 +225,7 @@ def get_match_driver(ini_path: Union[str, None] = 'default',
         driver_path = None
 
     if show_msg:
-        print('\n解压路径', driver_path, '\n')
+        print('解压路径', driver_path)
 
     if driver_path:
         Path(zip_path).unlink()
