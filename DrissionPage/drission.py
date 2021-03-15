@@ -35,6 +35,7 @@ class Drission(object):
         """
         self._session = None
         self._driver = None
+        self._debugger = None
         self._proxy = proxy
 
         om = OptionsManager(ini_path) if session_or_options is None or driver_or_options is None else None
@@ -94,39 +95,59 @@ class Drission(object):
             driver_path = self._driver_options.get('driver_path', None) or 'chromedriver'
             chrome_path = self._driver_options.get('binary_location', None) or 'chrome.exe'
 
+            # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
             if options.debugger_address and _check_port(options.debugger_address) is False:
                 from subprocess import Popen
                 port = options.debugger_address[options.debugger_address.rfind(':') + 1:]
 
                 try:
-                    Popen(f'{chrome_path} --remote-debugging-port={port}', shell=False)
+                    self._debugger = Popen(f'{chrome_path} --remote-debugging-port={port}', shell=False)
 
+                    if chrome_path == 'chrome.exe':
+                        from common import get_exe_path_from_port
+                        chrome_path = get_exe_path_from_port(port)
+
+                # 启动不了进程，主动找浏览器执行文件启动
                 except FileNotFoundError:
                     from DrissionPage.easy_set import _get_chrome_path
-
                     chrome_path = _get_chrome_path(show_msg=False)
 
                     if not chrome_path:
                         raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
 
-                    Popen(f'"{chrome_path}" --remote-debugging-port={port}', shell=False)
-                    options.binary_location = chrome_path
+                    self._debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port}', shell=False)
 
+            # -----------创建WebDriver对象-----------
             try:
                 self._driver = webdriver.Chrome(driver_path, options=options)
 
+            # 若版本不对，获取对应chromedriver再试
             except (WebDriverException, SessionNotCreatedException):
                 from .easy_set import get_match_driver
-
-                print('自动下载chromedriver...')
                 chrome_path = None if chrome_path == 'chrome.exe' else chrome_path
-                driver_path = get_match_driver(chrome_path=chrome_path, check_version=False)
+                driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
 
                 if driver_path:
                     try:
                         self._driver = webdriver.Chrome(driver_path, options=options)
-                        print('下载完成。')
                     except:
+                        print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
+                        exit(0)
+
+                # 当找不到driver且chrome_path为None时，说明安装的版本过高，改在系统路径中查找
+                elif chrome_path is None and driver_path is None:
+                    from DrissionPage.easy_set import _get_chrome_path
+                    chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
+                    driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
+
+                    if driver_path:
+                        options.binary_location = chrome_path
+                        try:
+                            self._driver = webdriver.Chrome(driver_path, options=options)
+                        except:
+                            print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
+                            exit(0)
+                    else:
                         print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
                         exit(0)
                 else:
@@ -144,6 +165,11 @@ class Drission(object):
             #     {'source': 'Object.defineProperty(navigator,"webdriver",{get:() => Chrome,});'})
 
         return self._driver
+
+    @property
+    def debugger_progress(self):
+        """调试浏览器进程"""
+        return self._debugger
 
     @property
     def driver_options(self) -> dict:
