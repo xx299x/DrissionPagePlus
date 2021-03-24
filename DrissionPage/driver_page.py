@@ -450,7 +450,7 @@ class DriverPage(object):
                 self.driver.switch_to.parent_frame()
 
             # 传入id或name
-            elif ':' not in loc_or_ele and '=' not in loc_or_ele:
+            elif ':' not in loc_or_ele and '=' not in loc_or_ele and not loc_or_ele.startswith(('#', '.')):
                 self.driver.switch_to.frame(loc_or_ele)
 
             # 传入控制字符串
