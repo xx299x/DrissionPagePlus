@@ -464,6 +464,17 @@ class DriverElement(DrissionElement):
             print(e)
             return False
 
+    @property
+    def selected_option(self):
+        """返回下拉列表中被选中的option元素  \n
+        :return: DriverElement对象或None
+        """
+        if self.tag != 'select':
+            return None
+        else:
+            ele = self.run_script('return arguments[0].options[arguments[0].selectedIndex];')
+            return None if ele is None else DriverElement(ele, self.page)
+
     def set_attr(self, attr: str, value: str) -> bool:
         """设置元素属性          \n
         :param attr: 属性名
