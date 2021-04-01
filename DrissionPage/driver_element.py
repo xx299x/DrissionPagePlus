@@ -781,9 +781,9 @@ class Select(object):
         if ele.tag != 'select':
             raise TypeError(f"Select only works on <select> elements, not on {ele.tag}")
 
-        from selenium.webdriver.support.select import Select
+        from selenium.webdriver.support.select import Select as sl
         self.inner_ele = ele
-        self.select_ele = Select(ele.inner_ele)
+        self.select_ele = sl(ele.inner_ele)
 
     @property
     def is_multi(self) -> bool:
@@ -817,7 +817,7 @@ class Select(object):
     def select(self,
                text_value_index: Union[str, int, list, tuple] = None,
                para_type: str = 'text') -> bool:
-        """选择下拉列表中子元素                                                             \n
+        """选定下拉列表中子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选'text'、'value'、'index'
         :return: 是否选择成功
@@ -849,7 +849,7 @@ class Select(object):
     def select_multi(self,
                      text_value_index: Union[list, tuple] = None,
                      para_type: str = 'text') -> Union[bool, list]:
-        """选择下拉列表中子元素                                                             \n
+        """选定下拉列表中多个子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选'text'、'value'、'index'
         :return: 是否选择成功
@@ -871,11 +871,64 @@ class Select(object):
         else:
             raise TypeError('只能传入list或tuple类型。')
 
-    def deselect(self):
-        """清除传入的选项"""
-        pass
+    def deselect(self,
+                 text_value_index: Union[str, int, list, tuple] = None,
+                 para_type: str = 'text') -> bool:
+        """取消选定下拉列表中子元素                                                             \n
+        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
+        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :return: 是否选择成功
+        """
+        if para_type not in ('text', 'value', 'index'):
+            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
 
-    def 反选(self):
+        if not self.is_multi and isinstance(text_value_index, (list, tuple)):
+            raise TypeError('单选下拉列表不能传入list和tuple')
+
+        if isinstance(text_value_index, (str, int)):
+            try:
+                if para_type == 'text':
+                    self.select_ele.deselect_by_visible_text(text_value_index)
+                elif para_type == 'value':
+                    self.select_ele.deselect_by_value(text_value_index)
+                elif para_type == 'index':
+                    self.select_ele.deselect_by_index(int(text_value_index))
+                return True
+            except:
+                return False
+
+        elif isinstance(text_value_index, (list, tuple)):
+            self.deselect_multi(text_value_index, para_type)
+
+        else:
+            raise TypeError('只能传入str、int、list和tuple类型。')
+
+    def deselect_multi(self,
+                       text_value_index: Union[list, tuple] = None,
+                       para_type: str = 'text') -> Union[bool, list]:
+        """取消选定下拉列表中多个子元素                                                             \n
+        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
+        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :return: 是否选择成功
+        """
+        if para_type not in ('text', 'value', 'index'):
+            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
+
+        if isinstance(text_value_index, (list, tuple)):
+            fail_list = []
+            for i in text_value_index:
+                if not isinstance(i, (int, str)):
+                    raise TypeError('列表只能由str或int组成')
+
+                if not self.deselect(i, para_type):
+                    fail_list.append(i)
+
+            return fail_list or True
+
+        else:
+            raise TypeError('只能传入list或tuple类型。')
+
+    def invert(self):
         if not self.is_multi:
             raise NotImplementedError("You may only deselect options of a multi-select")
 
