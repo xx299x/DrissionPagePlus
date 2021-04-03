@@ -785,6 +785,18 @@ class Select(object):
         self.inner_ele = ele
         self.select_ele = sl(ele.inner_ele)
 
+    def __call__(self,
+                 text_value_index: Union[str, int, list, tuple] = None,
+                 para_type: str = 'text',
+                 deselect: bool = False) -> bool:
+        """选定或取消选定下拉列表中子元素                                                             \n
+        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
+        :param para_type: 参数类型，可选 'text'、'value'、'index'
+        :param deselect: 是否取消选择
+        :return: 是否选择成功
+        """
+        return self.select(text_value_index, para_type, deselect)
+
     @property
     def is_multi(self) -> bool:
         """返回是否多选表单"""
@@ -816,42 +828,55 @@ class Select(object):
 
     def select(self,
                text_value_index: Union[str, int, list, tuple] = None,
-               para_type: str = 'text') -> bool:
-        """选定下拉列表中子元素                                                             \n
+               para_type: str = 'text',
+               deselect: bool = False) -> bool:
+        """选定或取消选定下拉列表中子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :param para_type: 参数类型，可选 'text'、'value'、'index'
+        :param deselect: 是否取消选择
         :return: 是否选择成功
         """
-        if para_type not in ('text', 'value', 'index'):
-            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
-
         if not self.is_multi and isinstance(text_value_index, (list, tuple)):
             raise TypeError('单选下拉列表不能传入list和tuple')
 
         if isinstance(text_value_index, (str, int)):
             try:
                 if para_type == 'text':
-                    self.select_ele.select_by_visible_text(text_value_index)
+                    if deselect:
+                        self.select_ele.deselect_by_visible_text(text_value_index)
+                    else:
+                        self.select_ele.select_by_visible_text(text_value_index)
                 elif para_type == 'value':
-                    self.select_ele.select_by_value(text_value_index)
+                    if deselect:
+                        self.select_ele.deselect_by_value(text_value_index)
+                    else:
+                        self.select_ele.select_by_value(text_value_index)
                 elif para_type == 'index':
-                    self.select_ele.select_by_index(int(text_value_index))
+                    if deselect:
+                        self.select_ele.deselect_by_index(int(text_value_index))
+                    else:
+                        self.select_ele.select_by_index(int(text_value_index))
+                else:
+                    raise ValueError('para_type参数只能传入"text"、"value"或"index"。')
                 return True
+
             except:
                 return False
 
         elif isinstance(text_value_index, (list, tuple)):
-            self.select_multi(text_value_index, para_type)
+            self.select_multi(text_value_index, para_type, deselect)
 
         else:
             raise TypeError('只能传入str、int、list和tuple类型。')
 
     def select_multi(self,
                      text_value_index: Union[list, tuple] = None,
-                     para_type: str = 'text') -> Union[bool, list]:
-        """选定下拉列表中多个子元素                                                             \n
+                     para_type: str = 'text',
+                     deselect: bool = False) -> Union[bool, list]:
+        """选定或取消选定下拉列表中多个子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :param para_type: 参数类型，可选 'text'、'value'、'index'
+        :param deselect: 是否取消选择
         :return: 是否选择成功
         """
         if para_type not in ('text', 'value', 'index'):
@@ -863,7 +888,7 @@ class Select(object):
                 if not isinstance(i, (int, str)):
                     raise TypeError('列表只能由str或int组成')
 
-                if not self.select(i, para_type):
+                if not self.select(i, para_type, deselect):
                     fail_list.append(i)
 
             return fail_list or True
@@ -876,59 +901,23 @@ class Select(object):
                  para_type: str = 'text') -> bool:
         """取消选定下拉列表中子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :param para_type: 参数类型，可选 'text'、'value'、'index'
         :return: 是否选择成功
         """
-        if para_type not in ('text', 'value', 'index'):
-            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
-
-        if not self.is_multi and isinstance(text_value_index, (list, tuple)):
-            raise TypeError('单选下拉列表不能传入list和tuple')
-
-        if isinstance(text_value_index, (str, int)):
-            try:
-                if para_type == 'text':
-                    self.select_ele.deselect_by_visible_text(text_value_index)
-                elif para_type == 'value':
-                    self.select_ele.deselect_by_value(text_value_index)
-                elif para_type == 'index':
-                    self.select_ele.deselect_by_index(int(text_value_index))
-                return True
-            except:
-                return False
-
-        elif isinstance(text_value_index, (list, tuple)):
-            self.deselect_multi(text_value_index, para_type)
-
-        else:
-            raise TypeError('只能传入str、int、list和tuple类型。')
+        return self.select(text_value_index, para_type, True)
 
     def deselect_multi(self,
                        text_value_index: Union[list, tuple] = None,
                        para_type: str = 'text') -> Union[bool, list]:
         """取消选定下拉列表中多个子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选'text'、'value'、'index'
+        :param para_type: 参数类型，可选 'text'、'value'、'index'
         :return: 是否选择成功
         """
-        if para_type not in ('text', 'value', 'index'):
-            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
+        return self.select_multi(text_value_index, para_type, True)
 
-        if isinstance(text_value_index, (list, tuple)):
-            fail_list = []
-            for i in text_value_index:
-                if not isinstance(i, (int, str)):
-                    raise TypeError('列表只能由str或int组成')
-
-                if not self.deselect(i, para_type):
-                    fail_list.append(i)
-
-            return fail_list or True
-
-        else:
-            raise TypeError('只能传入list或tuple类型。')
-
-    def invert(self):
+    def invert(self) -> None:
+        """反选"""
         if not self.is_multi:
             raise NotImplementedError("You may only deselect options of a multi-select")
 
