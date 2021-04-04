@@ -491,8 +491,8 @@ class DriverPage(object):
         ele.run_script("arguments[0].scrollIntoView();")
 
     def scroll_to(self, mode: str = 'bottom', pixel: int = 300) -> None:
-        """按参数指示方式滚动页面                                                                           \n
-        :param mode: 可选滚动方向：'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
+        """按参数指示方式滚动页面                                                                                    \n
+        :param mode: 可选滚动方向：'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
         :param pixel: 滚动的像素
         :return: None
         """
@@ -502,6 +502,10 @@ class DriverPage(object):
         elif mode == 'bottom':
             self.driver.execute_script(
                 "window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight);")
+
+        elif mode == 'half':
+            self.driver.execute_script(
+                "window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight/2);")
 
         elif mode == 'rightmost':
             self.driver.execute_script("window.scrollTo(document.body.scrollWidth,document.documentElement.scrollTop);")
@@ -523,7 +527,7 @@ class DriverPage(object):
 
         else:
             raise ValueError(
-                "Argument mode can only be 'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'.")
+                "Argument mode can only be 'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'.")
 
     def refresh(self) -> None:
         """刷新当前页面"""
