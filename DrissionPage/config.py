@@ -8,11 +8,10 @@
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from http.cookiejar import Cookie
 from pathlib import Path
-from typing import Any, Union
-
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from typing import Any, Union
 
 
 class OptionsManager(object):
@@ -399,7 +398,7 @@ class SessionOptions(object):
         path = path / 'config.ini' if path.is_dir() else path
 
         if path.exists():
-            om = OptionsManager(path)
+            om = OptionsManager(str(path))
         else:
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
@@ -466,7 +465,7 @@ class DriverOptions(Options):
         path = path / 'config.ini' if path.is_dir() else path
 
         if path.exists():
-            om = OptionsManager(path)
+            om = OptionsManager(str(path))
         else:
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
