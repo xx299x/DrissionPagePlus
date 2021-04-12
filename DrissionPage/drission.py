@@ -219,10 +219,35 @@ class Drission(object):
         """调试浏览器进程"""
         return self._debugger
 
-    def kill_browser(self):
+    def kill_browser(self) -> None:
         """关闭浏览器进程（如果可以）"""
         if self.debugger_progress:
             self.debugger_progress.kill()
+            return
+
+        address = self.driver_options.get('debugger_address', '').split(':')
+        if len(address) == 1:
+            self.close_driver()
+
+        elif len(address) == 2:
+            ip, port = address
+            if ip not in ('127.0.0.1', 'localhost') or not port.isdigit():
+                return
+
+            from os import popen
+            progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
+            txt = ''
+            for progress in progresses:
+                if 'LISTENING' in progress:
+                    txt = progress
+                    break
+
+            if not txt:
+                return
+
+            pid = txt[txt.rfind(' ') + 1:]
+            if popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
+                popen(f'taskkill /pid {pid} /F')
 
     def set_cookies(self,
                     cookies: Union[RequestsCookieJar, list, tuple, str, dict],
