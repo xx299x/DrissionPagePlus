@@ -5,12 +5,12 @@
 @File    :   driver_page.py
 """
 from os import popen
+
 from pathlib import Path
 from pprint import pprint
 from re import search as RE_SEARCH
-from typing import Union
-
 from selenium import webdriver
+from typing import Union
 
 from DrissionPage.config import OptionsManager, DriverOptions
 from DrissionPage.drission import Drission
@@ -210,7 +210,7 @@ def get_match_driver(ini_path: Union[str, None] = 'default',
     if show_msg:
         print('chrome.exe路径', chrome_path)
 
-    ver = _get_chrome_version(chrome_path)
+    ver = _get_chrome_version(str(chrome_path))
     if show_msg:
         print('version', ver)
 
