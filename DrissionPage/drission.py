@@ -4,8 +4,6 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
-from typing import Union
-
 from requests import Session
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
@@ -14,6 +12,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from sys import exit
 from tldextract import extract
+from typing import Union
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
                      SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookies_to_tuple)
@@ -278,6 +277,10 @@ class Drission(object):
                 self.driver.add_cookie(cookie)
 
     def _set_session(self, data: dict) -> None:
+        """根据传入字典对session进行设置    \n
+        :param data: session配置字典
+        :return: None
+        """
         if self._session is None:
             self._session = Session()
 
