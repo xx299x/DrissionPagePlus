@@ -564,11 +564,12 @@ When calling a method that only belongs to d mode, it will automatically switch 
 
 ```python
 page.set_cookies()  # set cookies
-page.get_cookies() # Get cookies, which can be returned by list or dict
+page.get_cookies()  # Get cookies, which can be returned by list or dict
 page.change_mode()  # Switch mode, it will automatically copy cookies
 page.cookies_to_session()  # Copy cookies from WebDriver object to Session object
 page.cookies_to_driver()  # Copy cookies from Session object to WebDriver object
-page.get(url, retry, interval, **kwargs)  # Use get to access the web page, you can specify the number of retries and the interval
+page.get(url, retry, interval,
+         **kwargs)  # Use get to access the web page, you can specify the number of retries and the interval
 page.ele(loc_or_ele, timeout)  # Get the first element, node or attribute that meets the conditions
 page.eles(loc_or_ele, timeout)  # Get all eligible elements, nodes or attributes
 page.download(url, save_path, rename, file_exists, **kwargs)  # download file
@@ -576,7 +577,8 @@ page.close_driver()  # Close the WebDriver object
 page.close_session()  # Close the Session object
 
 # s mode unique:
-page.post(url, data, retry, interval, **kwargs)  # To access the webpage in post mode, you can specify the number of retries and the interval
+page.post(url, data, retry, interval,
+          **kwargs)  # To access the webpage in post mode, you can specify the number of retries and the interval
 
 # d mode unique:
 page.wait_ele(loc_or_ele, mode, timeout)  # Wait for the element to be deleted, displayed, and hidden from the dom
@@ -585,10 +587,11 @@ page.create_tab(url)  # Create and locate a tab page, which is at the end
 page.to_tab(num_or_handle)  # Jump to tab page
 page.close_current_tab()  # Close the current tab page
 page.close_other_tabs(num_or_handles)  # Close other tabs
-page.to_iframe(iframe)  # cut into iframe
+page.to_frame(iframe)  # cut into iframe
 page.screenshot(path)  # Page screenshot
 page.scrool_to_see(element)  # Scroll until an element is visible
-page.scroll_to(mode, pixel)  # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top','bottom','rightmost','leftmost','up','down','left', ' right'
+page.scroll_to(mode,
+               pixel)  # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top','bottom','rightmost','leftmost','up','down','left', ' right'
 page.refresh()  # refresh the current page
 page.back()  # Browser back
 page.et_window_size(x, y)  # Set the browser window size, maximize by default
@@ -1725,9 +1728,7 @@ Parameter Description:
 
 Returns: None
 
-
-
-### to_iframe()
+### to_frame()
 
 Jump to iframe, jump to the highest level by default, compatible with selenium native parameters.
 
@@ -1736,13 +1737,14 @@ Parameter Description:
 - loc_or_ele:[int, str, tuple, WebElement, DriverElement]  - Find the condition of iframe element, can receive iframe serial number (starting at 0), id or name, query string, loc parameter, WebElement object, DriverElement object, and pass in ' main' jump to the highest level, and pass in'parent' to jump to the upper level
 
 Example:
-- to_iframe('tag:iframe')- locate by the query string passed in iframe
-- to_iframe('iframe_id')- Positioning by the id attribute of the iframe
-- to_iframe('iframe_name')- locate by the name attribute of iframe
-- to_iframe(iframe_element)- locate by passing in the element object
-- to_iframe(0)- locate by the serial number of the iframe
-- to_iframe('main')- jump to the top level
-- to_iframe('parent')- jump to the previous level
+
+- to_frame('tag:iframe')- locate by the query string passed in iframe
+- to_frame('iframe_id')- Positioning by the id attribute of the iframe
+- to_frame('iframe_name')- locate by the name attribute of iframe
+- to_frame(iframe_element)- locate by passing in the element object
+- to_frame(0)- locate by the serial number of the iframe
+- to_frame('main')- jump to the top level
+- to_frame('parent')- jump to the previous level
 
 Returns: None
 

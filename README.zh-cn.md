@@ -551,10 +551,11 @@ page.create_tab(url)  # 新建并定位到一个标签页,该标签页在最后�
 page.to_tab(num_or_handle)  # 跳转到标签页
 page.close_current_tab()  # 关闭当前标签页
 page.close_other_tabs(num_or_handles)  # 关闭其它标签页
-page.to_iframe(iframe)  # 切入 iframe
+page.to_frame(iframe)  # 切入 iframe
 page.screenshot(path)  # 页面截图
 page.scroll_to_see(element)  # 滚动直到某元素可见
-page.scroll_to(mode, pixel)  # 按参数指示方式滚动页面，可选滚动方向：'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
+page.scroll_to(mode,
+               pixel)  # 按参数指示方式滚动页面，可选滚动方向：'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
 page.refresh()  # 刷新当前页面
 page.back()  # 浏览器后退
 page.et_window_size(x, y)  # 设置浏览器窗口大小，默认最大化

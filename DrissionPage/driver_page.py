@@ -5,15 +5,15 @@
 @File    :   driver_page.py
 """
 from glob import glob
-from pathlib import Path
-from typing import Union, List, Any, Tuple
-from urllib.parse import quote
 
+from pathlib import Path
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 from time import time, sleep
+from typing import Union, List, Any, Tuple
+from urllib.parse import quote
 
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 from .driver_element import DriverElement, execute_driver_find
@@ -421,18 +421,18 @@ class DriverPage(object):
         tab = self.driver.window_handles[tab] if isinstance(tab, int) else tab
         self.driver.switch_to.window(tab)
 
-    def to_iframe(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> None:
-        """跳转到iframe                                                                         \n
-        可接收iframe序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，  \n
-        传入'main'跳到最高层，传入'parent'跳到上一层                                               \n
-        示例：                                                                                   \n
-            to_iframe('tag:iframe')    - 通过传入iframe的查询字符串定位                            \n
-            to_iframe('iframe_id')     - 通过iframe的id属性定位                                   \n
-            to_iframe('iframe_name')   - 通过iframe的name属性定位                                 \n
-            to_iframe(iframe_element)  - 通过传入元素对象定位                                      \n
-            to_iframe(0)               - 通过iframe的序号定位                                     \n
-            to_iframe('main')          - 跳到最高层                                               \n
-            to_iframe('parent')        - 跳到上一层                                               \n
+    def to_frame(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> None:
+        """跳转到frame                                                                       \n
+        可接收frame序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，  \n
+        传入'main'跳到最高层，传入'parent'跳到上一层                                             \n
+        示例：                                                                                \n
+            to_frame('tag:iframe')    - 通过传入frame的查询字符串定位                            \n
+            to_frame('iframe_id')     - 通过frame的id属性定位                                   \n
+            to_frame('iframe_name')   - 通过frame的name属性定位                                 \n
+            to_frame(iframe_element)  - 通过传入元素对象定位                                     \n
+            to_frame(0)               - 通过frame的序号定位                                     \n
+            to_frame('main')          - 跳到最高层                                              \n
+            to_frame('parent')        - 跳到上一层                                              \n
         :param loc_or_ele: iframe的定位信息
         :return: None
         """
