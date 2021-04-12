@@ -98,9 +98,12 @@ class Drission(object):
             if options.debugger_address and _check_port(options.debugger_address) is False:
                 from subprocess import Popen
                 port = options.debugger_address[options.debugger_address.rfind(':') + 1:]
+                args = ' '.join(self._driver_options['arguments'])
+                if self._proxy:
+                    args = f'{args} --proxy-server={self._proxy["http"]}'
 
                 try:
-                    self._debugger = Popen(f'{chrome_path} --remote-debugging-port={port}', shell=False)
+                    self._debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
 
                     if chrome_path == 'chrome.exe':
                         from common import get_exe_path_from_port
@@ -114,7 +117,7 @@ class Drission(object):
                     if not chrome_path:
                         raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
 
-                    self._debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port}', shell=False)
+                    self._debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
 
             # -----------创建WebDriver对象-----------
             try:
@@ -166,11 +169,6 @@ class Drission(object):
         return self._driver
 
     @property
-    def debugger_progress(self):
-        """调试浏览器进程"""
-        return self._debugger
-
-    @property
     def driver_options(self) -> dict:
         """返回driver配置信息"""
         return self._driver_options
@@ -215,6 +213,16 @@ class Drission(object):
 
             for cookie in cookies:
                 self.set_cookies(cookie, set_driver=True)
+
+    @property
+    def debugger_progress(self):
+        """调试浏览器进程"""
+        return self._debugger
+
+    def kill_browser(self):
+        """关闭浏览器进程（如果可以）"""
+        if self.debugger_progress:
+            self.debugger_progress.kill()
 
     def set_cookies(self,
                     cookies: Union[RequestsCookieJar, list, tuple, str, dict],
