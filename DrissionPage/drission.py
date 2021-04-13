@@ -382,10 +382,22 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
     :return: chrome.exe 路径和进程对象组成的元组
     """
     from subprocess import Popen
-    args = ' '.join(args)
+
+    # ----------为路径加上双引号，避免路径中的空格产生异常----------
+    args1 = []
+    for arg in args:
+        if arg.startswith(('--user-data-dir', '--disk-cache-dir')):
+            index = arg.find('=') + 1
+            args1.append(f'{arg[:index]}"{arg[index:].strip()}"')
+        else:
+            args1.append(arg)
+
+    args = ' '.join(args1)
+
     if proxy:
         args = f'{args} --proxy-server={proxy["http"]}'
 
+    # ----------创建浏览器进程----------
     try:
         debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
 
