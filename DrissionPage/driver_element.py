@@ -6,14 +6,13 @@
 """
 import re
 from pathlib import Path
-from typing import Union, List, Any, Tuple
-
 from selenium.common.exceptions import TimeoutException, JavascriptException, InvalidElementStateException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 from time import sleep
+from typing import Union, List, Any, Tuple
 
 from .common import DrissionElement, str_to_loc, get_available_file_name, translate_loc, format_html
 
@@ -122,7 +121,8 @@ class DriverElement(DrissionElement):
         return self._get_brother(1, 'ele', 'prev')
 
     @property
-    def comments(self):
+    def comments(self) -> list:
+        """返回元素注释文本组成的列表"""
         return self.eles('xpath:.//comment()')
 
     # -----------------driver独占属性-------------------
