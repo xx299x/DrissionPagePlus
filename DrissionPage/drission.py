@@ -83,12 +83,12 @@ class Drission(object):
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
         if self._driver is None:
-            if isinstance(self._driver_options, dict):
-                options = _dict_to_chrome_options(self._driver_options)
-            else:
+            if not isinstance(self._driver_options, dict):
                 raise TypeError('Driver options invalid')
 
-            if self._proxy:
+            options = _dict_to_chrome_options(self._driver_options)
+
+            if not self._driver_options.get('debugger_address', None) and self._proxy:
                 options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
             driver_path = self._driver_options.get('driver_path', None) or 'chromedriver'
@@ -98,63 +98,13 @@ class Drission(object):
             if options.debugger_address and _check_port(options.debugger_address) is False:
                 from subprocess import Popen
                 port = options.debugger_address[options.debugger_address.rfind(':') + 1:]
-                args = ' '.join(self._driver_options['arguments'])
-                if self._proxy:
-                    args = f'{args} --proxy-server={self._proxy["http"]}'
 
-                try:
-                    self._debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
-
-                    if chrome_path == 'chrome.exe':
-                        from common import get_exe_path_from_port
-                        chrome_path = get_exe_path_from_port(port)
-
-                # 启动不了进程，主动找浏览器执行文件启动
-                except FileNotFoundError:
-                    from DrissionPage.easy_set import _get_chrome_path
-                    chrome_path = _get_chrome_path(show_msg=False)
-
-                    if not chrome_path:
-                        raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
-
-                    self._debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
+                # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
+                chrome_path, self._debugger = _create_chrome(chrome_path, port,
+                                                             self._driver_options['arguments'], self._proxy)
 
             # -----------创建WebDriver对象-----------
-            try:
-                self._driver = webdriver.Chrome(driver_path, options=options)
-
-            # 若版本不对，获取对应chromedriver再试
-            except (WebDriverException, SessionNotCreatedException):
-                from .easy_set import get_match_driver
-                chrome_path = None if chrome_path == 'chrome.exe' else chrome_path
-                driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
-
-                if driver_path:
-                    try:
-                        self._driver = webdriver.Chrome(driver_path, options=options)
-                    except:
-                        print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
-                        exit(0)
-
-                # 当找不到driver且chrome_path为None时，说明安装的版本过高，改在系统路径中查找
-                elif chrome_path is None and driver_path is None:
-                    from DrissionPage.easy_set import _get_chrome_path
-                    chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
-                    driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
-
-                    if driver_path:
-                        options.binary_location = chrome_path
-                        try:
-                            self._driver = webdriver.Chrome(driver_path, options=options)
-                        except:
-                            print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
-                            exit(0)
-                    else:
-                        print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
-                        exit(0)
-                else:
-                    print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
-                    exit(0)
+            self._driver = _create_driver(chrome_path, driver_path, options)
 
             # 反反爬设置
             try:
@@ -422,3 +372,78 @@ def _check_port(debugger_address: str) -> Union[bool, None]:
     finally:
         if s:
             s.close()
+
+
+def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tuple:
+    """创建 chrome 进程                          \n
+    :param chrome_path: chrome.exe 路径
+    :param port: 进程运行的端口号
+    :param args: chrome 配置参数
+    :return: chrome.exe 路径和进程对象组成的元组
+    """
+    from subprocess import Popen
+    args = ' '.join(args)
+    if proxy:
+        args = f'{args} --proxy-server={proxy["http"]}'
+
+    try:
+        debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
+
+        if chrome_path == 'chrome.exe':
+            from common import get_exe_path_from_port
+            chrome_path = get_exe_path_from_port(port)
+
+    # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
+    except FileNotFoundError:
+        from DrissionPage.easy_set import _get_chrome_path
+        chrome_path = _get_chrome_path(show_msg=False)
+
+        if not chrome_path:
+            raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
+
+        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
+
+    return chrome_path, debugger
+
+
+def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebDriver:
+    """创建 WebDriver 对象                            \n
+    :param chrome_path: chrome.exe 路径
+    :param driver_path: chromedriver.exe 路径
+    :param options: Options 对象
+    :return: WebDriver 对象
+    """
+
+    def show_err_and_exit():
+        print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
+        exit(0)
+
+    try:
+        return webdriver.Chrome(driver_path, options=options)
+
+    # 若版本不对，获取对应 chromedriver 再试
+    except (WebDriverException, SessionNotCreatedException):
+        from .easy_set import get_match_driver
+        chrome_path = None if chrome_path == 'chrome.exe' else chrome_path
+        driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
+
+        if driver_path:
+            try:
+                return webdriver.Chrome(driver_path, options=options)
+            except:
+                pass
+
+        # 当找不到 driver 且 chrome_path 为 None 时，说明安装的版本过高，改在系统路径中查找
+        elif chrome_path is None and driver_path is None:
+            from DrissionPage.easy_set import _get_chrome_path
+            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
+            driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
+
+            if driver_path:
+                options.binary_location = chrome_path
+                try:
+                    return webdriver.Chrome(driver_path, options=options)
+                except:
+                    pass
+
+    show_err_and_exit()
