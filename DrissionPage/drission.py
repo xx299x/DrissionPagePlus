@@ -413,11 +413,6 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
     :param options: Options 对象
     :return: WebDriver 对象
     """
-
-    def show_err_and_exit():
-        print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
-        exit(0)
-
     try:
         return webdriver.Chrome(driver_path, options=options)
 
@@ -446,4 +441,5 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
                 except:
                     pass
 
-    show_err_and_exit()
+    print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
+    exit(0)
