@@ -591,7 +591,7 @@ page.to_frame(iframe)  # cut into iframe
 page.screenshot(path)  # Page screenshot
 page.scrool_to_see(element)  # Scroll until an element is visible
 page.scroll_to(mode,
-               pixel)  # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top','bottom','rightmost','leftmost','up','down','left', ' right'
+               pixel)  # Scroll the page as indicated by the parameter, and the scroll direction is optional:'top', 'bottom', 'rightmost', 'leftmost', 'up', 'down', 'left', ' right', 'half'
 page.refresh()  # refresh the current page
 page.back()  # Browser back
 page.et_window_size(x, y)  # Set the browser window size, maximize by default
@@ -743,12 +743,29 @@ element.run_script(js, *args)  # Run JavaScript script on the element
 element.submit()  # Submit
 element.clear()  # Clear the element
 element.screenshot(path, filename)  # Take a screenshot of the element
-element.select(text)  # Select the drop- down list based on the text
 element.set_attr(attr, value)  # Set element attribute value
 element.remove_attr(attr)  # remove a element attribute
 element.drag(x, y, speed, shake)  # Drag the relative distance of the element, you can set the speed and whether to shake randomly
 element.drag_to(ele_or_loc, speed, shake)  # Drag the element to another element or a certain coordinate, you can set the speed and whether to shake randomly
 element.hover()  # Hover the mouse over the element
+
+# select function:
+element.select.is_multi # Whether to select multiple lists
+element.select.options # Return all list item objects
+element.select.selected_option # Return the first selected option element
+element.select.selected_options # Return a list of all selected option elements
+
+element.select(text) # Select the drop-down list item based on the text
+element.select(value,'value') # Select the drop-down list item according to the value
+element.select(index,'index') # Select the drop-down list item according to the serial number
+
+element.select.deselect(text) # Deselect drop-down list items based on the text (valid for multiple selection lists)
+element.select.deselect(value,'value') # Deselect drop-down list items according to value (valid for multiple selection lists)
+element.select.deselect(index,'index') # Deselect drop-down list items according to the serial number (valid for multiple selection lists)
+# Note: When the list is a multi-selection list, the first parameter above can receive list or tuple, and select or deselect multiple items at the same time
+
+element.select.clear() # Clear multiple selection list options
+element.select.invert() # Invert multiple selection list options
 ```
 
 
@@ -1997,15 +2014,17 @@ Returns the content of the ::before pseudo- element of the current element
 
 Returns: str
 
-
-
 ### after
 
 Returns the content of the ::after pseudo element of the current element
 
 Returns: str
 
+#### select
 
+If it is a select element, it returns the Select object, otherwise it returns None.
+
+Returns: Union[Select, None]
 
 ### texts()
 
@@ -2013,7 +2032,7 @@ Returns the text of all direct child nodes within the element, including element
 
 Parameter Description:
 
-- text_node_only: bool  - whether to return only text nodes
+- text_node_only: bool - whether to return only text nodes
 
 Returns: List[str]
 
@@ -2264,18 +2283,6 @@ Parameter Description:
 - filename: str  - the name of the screenshot file, the default is the page title as the file name
 
 Returns: str
-
-
-
-### select()
-
-Select from the drop- down list.
-
-Parameter Description:
-
-- text: str  - option text
-
-Returns: bool  - success
 
 
 
