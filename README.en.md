@@ -1249,31 +1249,29 @@ Return or set the driver configuration.
 
 Returns: dict
 
-
-
 ### session_options
 
-Return to session configuration.
+Return session configuration.
 
 Returns: dict
 
+### proxy
 
+Return proxy configuration.
+
+Returns: dict
+
+### debugger_progress
+
+Return debug browser process.
+
+Returns: debug browser process
 
 ### session_options()
 
 Set the session configuration.
 
 Returns: None
-
-
-
-### proxy
-
-Return to proxy configuration.
-
-Returns: dict
-
-
 
 ### cookies_to_session()
 
@@ -1342,23 +1340,25 @@ Close the session and set it to None.
 
 Returns: None
 
-
-
 ### close()
 
 Close the driver and session.
 
 Returns: None
 
+### kill_browser()
 
+Close the browser process (if possible).
 
 ## MixPage Class
 
 ### class MixPage()
 
-MixPage encapsulates the common functions of page operation and can seamlessly switch between driver and session modes. Cookies are automatically synchronized when switching.
-The function of obtaining information is shared by the two modes, and the function of operating page elements is only available in mode d. Calling a function unique to a certain mode will automatically switch to that mode.
-It inherits from DriverPage and SessionPage classes, these functions are implemented by these two classes, and MixPage exists as a scheduling role.
+MixPage encapsulates the common functions of page operation and can seamlessly switch between driver and session modes.
+Cookies are automatically synchronized when switching. The function of obtaining information is shared by the two modes,
+and the function of operating page elements is only available in mode d. Calling a function unique to a certain mode
+will automatically switch to that mode. It inherits from DriverPage and SessionPage classes, these functions are
+implemented by these two classes, and MixPage exists as a scheduling role.
 
 Parameter Description:
 
@@ -2572,7 +2572,8 @@ Returns: [SessionElement, str]
 
 ### eles()
 
-Get the list of elements that meet the conditions according to the query parameters. The query parameter usage method is the same as the ele method.
+Get the list of elements that meet the conditions according to the query parameters. The query parameter usage method is
+the same as the ele method.
 
 Parameter Description:
 
@@ -2580,7 +2581,92 @@ Parameter Description:
 
 Returns: List[SessionElement or str]
 
+## Select class
 
+### class Select()
+
+The Select class is specifically used to process select tags in d mode.
+
+Parameter Description:
+
+- ele: DriverElement - select element object
+
+### is_multi
+
+Returns: bool - Whether to select multiple lists
+
+### options
+
+Returns: List[DriverElement]  - a list of all selected option elements
+
+### selected_option
+
+Returns: Union[DriverElement, None]  - the first option element selected
+
+### selected_options
+
+Returns: List[DriverElement]  -a list of all selected option elements
+
+### clear()
+
+Clear all selected items.
+
+### select()
+
+Select or deselect child elements in the drop-down list.
+
+Parameter Description:
+
+- text_value_index: Union[str, int, list, tuple]  - select options based on text, value or serial number. If multiple
+  selections are allowed, multiple selections can be made by inputting a list or tuple
+
+- para_type: str - parameter type, optional'text','value','index'
+
+- deselect: bool - Whether to cancel the selection
+
+Returns: bool - Whether the selection is successful
+
+### select_multi()
+
+Select or deselect multiple child elements in the drop-down list.
+
+Parameter Description:
+
+- text_value_index: Union[list, tuple]  - Select multiple items based on text, value or serial number
+
+- para_type: str - parameter type, optional'text','value','index'
+
+- deselect: bool - Whether to cancel the selection
+
+Returns: Whether the selection is successful
+
+### deselect()
+
+Select or deselect child elements in the drop-down list.
+
+Parameter Description:
+
+- text_value_index: Union[str, int, list, tuple]  - deselect options based on text, value selection, or serial number.
+  If multiple selections are allowed, multiple selections can be made by inputting a list or tuple
+
+- para_type: str - parameter type, optional'text','value','index'
+
+Returns: Whether the selection is successful
+
+### deselect_multi()
+
+Select or deselect multiple child elements in the drop-down list.
+
+Parameter Description:
+
+- text_value_index: Union[list, tuple]  - Select multiple items based on text, value selection or serial number
+- para_type: str - parameter type, optional'text','value','index'
+
+Returns: Whether the selection is successful
+
+### invert()
+
+Invert the election.
 
 ## ShadowRootElement class
 
