@@ -272,7 +272,7 @@ page.download(url, save_path)
 
 ***
 
-请在 Wiki中查看：[点击跳转到wiki](https://gitee.com/g1879/DrissionPage/wikis/%E7%AE%80%E4%BB%8B?sort_id=3159316)
+请在 Wiki中查看：[点击跳转到wiki](https://gitee.com/g1879/DrissionPage/wikis/%E5%AE%89%E8%A3%85%E4%B8%8E%E5%AF%BC%E5%85%A5?sort_id=3201408)
 
 # 版本历史
 
