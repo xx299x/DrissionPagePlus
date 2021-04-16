@@ -819,7 +819,20 @@ session = page.session
 response = session.get('https://www.baidu.com')
 ```
 
+## 使用其它浏览器
 
+目前设置功能只支持 Chrome 浏览器，如要使用其它浏览器，可使用 selenium 原生方法创建 driver，然后用 Drission 对象接收即可。 注意：本库所有功能暂时只对 Chrome 做了完整测试。
+
+```python
+from selenium import webdriver
+from DrissionPage import Drission, MixPage
+
+driver = webdriver.Firefox()
+drission = Drission(driver_or_options=driver)
+
+p = MixPage(drission)
+driver.get('https://www.baidu.com')
+```
 
 ## requests 功能使用
 
