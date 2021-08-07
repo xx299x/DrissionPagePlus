@@ -69,7 +69,7 @@ class SessionPage(object):
     @property
     def html(self) -> str:
         """返回页面html文本"""
-        return format_html(self.response.text)
+        return format_html(self.response.text) if self.response else ''
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n
