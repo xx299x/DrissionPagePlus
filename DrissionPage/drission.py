@@ -4,15 +4,16 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
+from sys import exit
+from typing import Union
+
 from requests import Session
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
-from sys import exit
 from tldextract import extract
-from typing import Union
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
                      SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookies_to_tuple)
@@ -453,5 +454,5 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
                 except:
                     pass
 
-    print('无法启动，请检查chromedriver版本与Chrome是否匹配，并手动设置。')
+    print('无法启动，请手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
     exit(0)
