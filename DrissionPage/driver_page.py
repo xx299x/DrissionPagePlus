@@ -5,15 +5,15 @@
 @File    :   driver_page.py
 """
 from glob import glob
-
 from pathlib import Path
+from time import time, sleep
+from typing import Union, List, Any, Tuple
+from urllib.parse import quote
+
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
-from time import time, sleep
-from typing import Union, List, Any, Tuple
-from urllib.parse import quote
 
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 from .driver_element import DriverElement, execute_driver_find
@@ -32,6 +32,12 @@ class DriverPage(object):
 
         self.retry_times = 3
         self.retry_interval = 2
+
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
+                 mode: str = 'single',
+                 timeout: float = None):
+        return self.ele(loc_or_str, mode, timeout)
 
     @property
     def driver(self) -> WebDriver:
@@ -67,15 +73,18 @@ class DriverPage(object):
 
     @property
     def timeout(self) -> float:
+        """返回查找元素时等待的秒数"""
         return self._timeout
 
     @timeout.setter
     def timeout(self, second: float) -> None:
+        """设置查找元素时等待的秒数"""
         self._timeout = second
         self._wait = None
 
     @property
-    def wait(self) -> WebDriverWait:
+    def wait_object(self) -> WebDriverWait:
+        """返回WebDriverWait对象，重用避免每次新建对象"""
         if self._wait is None:
             self._wait = WebDriverWait(self.driver, timeout=self.timeout)
 

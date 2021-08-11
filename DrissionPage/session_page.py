@@ -4,17 +4,15 @@
 @Contact :   g1879@qq.com
 @File    :   session_page.py
 """
-import re
 from os import path as os_PATH
 from pathlib import Path
 from random import randint
-from re import search as re_SEARCH
-from re import sub as re_SUB
+from re import search as re_SEARCH, sub as re_SUB
+from time import time, sleep
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, quote, unquote
 
 from requests import Session, Response
-from time import time, sleep
 from tldextract import extract
 
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
@@ -35,6 +33,12 @@ class SessionPage(object):
 
         self.retry_times = 3
         self.retry_interval = 2
+
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str, SessionElement],
+                 mode: str = 'single',
+                 timeout: float = None):
+        return self.ele(loc_or_str, mode)
 
     @property
     def session(self) -> Session:
@@ -368,7 +372,7 @@ class SessionPage(object):
             # 使用header里的文件名
             if content_disposition:
                 file_name = content_disposition.encode('ISO-8859-1').decode('utf-8')
-                file_name = re.search(r'filename *= *"?([^";]+)', file_name)
+                file_name = re_SEARCH(r'filename *= *"?([^";]+)', file_name)
 
                 if file_name:
                     file_name = file_name.group(1)
@@ -569,7 +573,7 @@ class SessionPage(object):
             # ----------------获取并设置编码开始-----------------
             # 在headers中获取编码
             content_type = r.headers.get('content-type', '').lower()
-            charset = re.search(r'charset[=: ]*(.*)?[;]', content_type)
+            charset = re_SEARCH(r'charset[=: ]*(.*)?[;]', content_type)
 
             if charset:
                 r.encoding = charset.group(1)

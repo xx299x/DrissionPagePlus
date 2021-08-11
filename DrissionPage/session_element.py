@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   session_element.py
 """
-import re
+from re import match, DOTALL, sub
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, urljoin, urlunparse
 
@@ -42,7 +42,7 @@ class SessionElement(DrissionElement):
     @property
     def inner_html(self) -> str:
         """返回元素innerHTML文本"""
-        r = re.match(r'<.*?>(.*)</.*?>', self.html, flags=re.DOTALL)
+        r = match(r'<.*?>(.*)</.*?>', self.html, flags=DOTALL)
         return '' if not r else r.group(1)
 
     @property
@@ -79,7 +79,7 @@ class SessionElement(DrissionElement):
             return str_list
 
         re_str = ''.join(get_node(self))
-        re_str = re.sub(r' {2,}', ' ', re_str)
+        re_str = sub(r' {2,}', ' ', re_str)
         return format_html(re_str, False)
 
     @property
@@ -120,15 +120,16 @@ class SessionElement(DrissionElement):
     @property
     def next(self):
         """返回后一个兄弟元素"""
-        return self._get_brother(1, 'ele', 'next')
+        return self.nexts()
 
     @property
     def prev(self):
         """返回前一个兄弟元素"""
-        return self._get_brother(1, 'ele', 'prev')
+        return self.prevs()
 
     @property
-    def comments(self):
+    def comments(self) -> list:
+        """返回元素注释文本组成的列表"""
         return self.eles('xpath:.//comment()')
 
     def texts(self, text_node_only: bool = False) -> list:

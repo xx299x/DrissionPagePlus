@@ -4,8 +4,9 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
-import re
+
 from pathlib import Path
+from re import sub
 from time import sleep
 from typing import Union, List, Any, Tuple
 
@@ -82,8 +83,8 @@ class DriverElement(DrissionElement):
         """返回元素内所有文本"""
         # return format_html(self.inner_ele.get_attribute('innerText'), False)
         re_str = self.inner_ele.get_attribute('innerText')
-        re_str = re.sub(r'\n{2,}', '\n', re_str)
-        re_str = re.sub(r' {2,}', ' ', re_str)
+        re_str = sub(r'\n{2,}', '\n', re_str)
+        re_str = sub(r' {2,}', ' ', re_str)
 
         return format_html(re_str.strip('\n '), False)
 
@@ -104,6 +105,7 @@ class DriverElement(DrissionElement):
 
     @property
     def xpath(self) -> str:
+        """返回xpath路径"""
         return self._get_ele_path('xpath')
 
     @property
@@ -114,12 +116,12 @@ class DriverElement(DrissionElement):
     @property
     def next(self):
         """返回后一个兄弟元素"""
-        return self._get_brother(1, 'ele', 'next')
+        return self.nexts()
 
     @property
     def prev(self):
         """返回前一个兄弟元素"""
-        return self._get_brother(1, 'ele', 'prev')
+        return self.prevs()
 
     @property
     def comments(self) -> list:
@@ -385,22 +387,56 @@ class DriverElement(DrissionElement):
             from selenium.webdriver import ActionChains
             ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).click().perform()
 
-    def input(self, value: Union[str, tuple], clear: bool = True) -> bool:
-        """输入文本或组合键                          \n
+    def r_click(self) -> None:
+        """右键单击"""
+        from selenium.webdriver import ActionChains
+        ActionChains(self.page.driver).context_click(self.inner_ele).perform()
+
+    def r_click_at(self, x: Union[int, str] = None, y: Union[int, str] = None) -> None:
+        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
+        :param x: 相对元素左上角坐标的x轴偏移量
+        :param y: 相对元素左上角坐标的y轴偏移量
+        :return: None
+        """
+        x = int(x) if x is not None else self.size['width'] // 2
+        y = int(y) if y is not None else self.size['height'] // 2
+        from selenium.webdriver import ActionChains
+        ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).context_click().perform()
+
+    def input(self, value: Union[str, tuple], clear: bool = True) -> None:
+        """输入文本或组合键，可用于所有场合          \n
         :param value: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :return: 是否输入成功
         """
-        try:
+        if clear:
+            self.clear()
+
+        self.inner_ele.send_keys(*value)
+
+    def input_txt(self, txt: Union[str, tuple], clear: bool = True) -> None:
+        """专门用于输入文本框，解决文本框有时输入失效的问题       \n
+        :param txt: 文本值
+        :param clear: 输入前是否清空文本框
+        :return: 是否输入成功
+        """
+        enter = '\n' if txt.endswith('\n') else None
+        full_txt = txt if clear else f'{self.attr("value")}{txt}'
+        full_txt = full_txt.rstrip('\n')
+        from time import perf_counter
+
+        t1 = perf_counter()
+        while True:
+            if self.attr('value') == full_txt or perf_counter() - t1 > self.page.timeout:
+                break
+
             if clear:
                 self.clear()
 
-            self.inner_ele.send_keys(*value)
-            return True
+            self.inner_ele.send_keys(txt)
 
-        except Exception as e:
-            print(e)
-            return False
+        if enter:
+            self.inner_ele.send_keys(enter)
 
     def run_script(self, script: str, *args) -> Any:
         """执行js代码，传入自己为第一个参数  \n
@@ -416,8 +452,7 @@ class DriverElement(DrissionElement):
 
     def clear(self) -> None:
         """清空元素文本"""
-        self.run_script("arguments[0].value=''")
-        # self.inner_ele.clear()
+        self.inner_ele.clear()
 
     def is_selected(self) -> bool:
         """是否选中"""
@@ -463,7 +498,14 @@ class DriverElement(DrissionElement):
 
         return img_path
 
-    def set_property(self, prop: str, value: str) -> bool:
+    def prop(self, prop: str) -> str:
+        """获取property属性值            \n
+        :param prop: 属性名
+        :return: 属性值文本
+        """
+        return format_html(self.inner_ele.get_property(prop))
+
+    def set_prop(self, prop: str, value: str) -> bool:
         """设置元素property属性          \n
         :param prop: 属性名
         :param value: 属性值
@@ -669,8 +711,8 @@ def execute_driver_find(page_or_ele,
     if timeout is not None and timeout != page.timeout:
         wait = WebDriverWait(driver, timeout=timeout)
     else:
-        page.wait._driver = driver
-        wait = page.wait
+        page.wait_object._driver = driver
+        wait = page.wait_object
 
     try:
         # 使用xpath查找

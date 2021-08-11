@@ -36,7 +36,7 @@ class ShadowRootElement(DrissionElement):
         return 'shadow-root'
 
     @property
-    def html(self):
+    def html(self) -> str:
         """内部html文本"""
         return format_html(self.inner_ele.get_attribute('innerHTML'))
 
