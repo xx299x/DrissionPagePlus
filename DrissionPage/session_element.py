@@ -398,7 +398,7 @@ def execute_session_find(page_or_ele,
         page_or_ele = page_or_ele.inner_ele
     else:  # 传入的是SessionPage对象
         page = page_or_ele
-        page_or_ele = fromstring(re.sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
+        page_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
 
     try:
         # 用lxml内置方法获取lxml的元素对象列表
