@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
-
 from pathlib import Path
 from re import sub
 from time import sleep
@@ -43,7 +42,12 @@ class DriverElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode, timeout)
 
-    # -----------------共有属性-------------------
+    # -----------------共有属性和方法-------------------
+    @property
+    def tag(self) -> str:
+        """返回元素类型"""
+        return self._inner_ele.tag_name.lower()
+
     @property
     def html(self) -> str:
         """返回元素outerHTML文本"""
@@ -55,9 +59,19 @@ class DriverElement(DrissionElement):
         return self.attr('innerHTML')
 
     @property
-    def tag(self) -> str:
-        """返回元素类型"""
-        return self._inner_ele.tag_name.lower()
+    def parent(self):
+        """返回父级元素"""
+        return self.parents()
+
+    @property
+    def next(self):
+        """返回后一个兄弟元素"""
+        return self.nexts()
+
+    @property
+    def prev(self):
+        """返回前一个兄弟元素"""
+        return self.prevs()
 
     @property
     def attrs(self) -> dict:
@@ -109,71 +123,9 @@ class DriverElement(DrissionElement):
         return self._get_ele_path('xpath')
 
     @property
-    def parent(self):
-        """返回父级元素"""
-        return self.parents()
-
-    @property
-    def next(self):
-        """返回后一个兄弟元素"""
-        return self.nexts()
-
-    @property
-    def prev(self):
-        """返回前一个兄弟元素"""
-        return self.prevs()
-
-    @property
     def comments(self) -> list:
         """返回元素注释文本组成的列表"""
         return self.eles('xpath:.//comment()')
-
-    # -----------------driver独占属性-------------------
-    @property
-    def size(self) -> dict:
-        """返回元素宽和高"""
-        return self.inner_ele.size
-
-    @property
-    def location(self) -> dict:
-        """返回元素左上角坐标"""
-        return self.inner_ele.location
-
-    @property
-    def shadow_root(self):
-        """返回当前元素的shadow_root元素对象"""
-        shadow = self.run_script('return arguments[0].shadowRoot')
-        if shadow:
-            from .shadow_root_element import ShadowRootElement
-            return ShadowRootElement(shadow, self)
-
-    @property
-    def sr(self):
-        """返回当前元素的shadow_root元素对象"""
-        return self.shadow_root
-
-    @property
-    def before(self) -> str:
-        """返回当前元素的::before伪元素内容"""
-        return self.get_style_property('content', 'before')
-
-    @property
-    def after(self) -> str:
-        """返回当前元素的::after伪元素内容"""
-        return self.get_style_property('content', 'after')
-
-    @property
-    def select(self):
-        """返回专门处理下拉列表的Select类，非下拉列表元素返回False"""
-        if self._select is None:
-            if self.tag != 'select':
-                self._select = False
-            else:
-                self._select = Select(self)
-
-        return self._select
-
-    # -----------------共有函数-------------------
 
     def texts(self, text_node_only: bool = False) -> list:
         """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
@@ -326,7 +278,128 @@ class DriverElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all', timeout=timeout)
 
-    # -----------------driver独占函数-------------------
+    def _get_ele_path(self, mode) -> str:
+        """返获取css路径或xpath路径"""
+        if mode == 'xpath':
+            txt1 = 'var tag = el.nodeName.toLowerCase();'
+            # txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
+            txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
+            txt4 = '''
+            if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
+                    else{path = '/' + tag + path;}'''
+            txt5 = '''return path;'''
+
+        elif mode == 'css':
+            txt1 = ''
+            # txt2 = '''return '#' + el.id + path;'''
+            txt3 = ''
+            txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
+            txt5 = '''return path.substr(1);'''
+
+        else:
+            raise ValueError(f"Argument mode can only be 'xpath' or 'css', not '{mode}'.")
+
+        js = '''
+        function e(el) {
+            if (!(el instanceof Element)) return;
+            var path = '';
+            while (el.nodeType === Node.ELEMENT_NODE) {
+                ''' + txt1 + '''
+                    var sib = el, nth = 0;
+                    while (sib) {
+                        if(sib.nodeType === Node.ELEMENT_NODE''' + txt3 + '''){nth += 1;}
+                        sib = sib.previousSibling;
+                    }
+                    ''' + txt4 + '''
+                el = el.parentNode;
+            }
+            ''' + txt5 + '''
+        }
+        return e(arguments[0]);
+        '''
+        return self.run_script(js)
+
+    def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
+        """返回前面第num个兄弟节点或元素        \n
+        :param num: 前面第几个兄弟节点或元素
+        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+        :param direction: 'next' 或 'prev'，查找的方向
+        :return: DriverElement对象或字符串
+        """
+        # 查找节点的类型
+        if mode == 'ele':
+            node_txt = '*'
+        elif mode == 'node':
+            node_txt = 'node()'
+        elif mode == 'text':
+            node_txt = 'text()'
+        else:
+            raise ValueError(f"Argument mode can only be 'node' ,'ele' or 'text', not '{mode}'.")
+
+        # 查找节点的方向
+        if direction == 'next':
+            direction_txt = 'following'
+        elif direction == 'prev':
+            direction_txt = 'preceding'
+        else:
+            raise ValueError(f"Argument direction can only be 'next' or 'prev', not '{direction}'.")
+
+        timeout = 0 if direction == 'prev' else .5
+
+        # 获取节点
+        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+
+        # 跳过元素间的换行符
+        while isinstance(ele_or_node, str) and ele_or_node.replace('\n', '').replace('\t', '').replace(' ', '') == '':
+            num += 1
+            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+
+        return ele_or_node
+
+    # -----------------driver独有属性和方法-------------------
+    @property
+    def size(self) -> dict:
+        """返回元素宽和高"""
+        return self.inner_ele.size
+
+    @property
+    def location(self) -> dict:
+        """返回元素左上角坐标"""
+        return self.inner_ele.location
+
+    @property
+    def shadow_root(self):
+        """返回当前元素的shadow_root元素对象"""
+        shadow = self.run_script('return arguments[0].shadowRoot')
+        if shadow:
+            from .shadow_root_element import ShadowRootElement
+            return ShadowRootElement(shadow, self)
+
+    @property
+    def sr(self):
+        """返回当前元素的shadow_root元素对象"""
+        return self.shadow_root
+
+    @property
+    def before(self) -> str:
+        """返回当前元素的::before伪元素内容"""
+        return self.get_style_property('content', 'before')
+
+    @property
+    def after(self) -> str:
+        """返回当前元素的::after伪元素内容"""
+        return self.get_style_property('content', 'after')
+
+    @property
+    def select(self):
+        """返回专门处理下拉列表的Select类，非下拉列表元素返回False"""
+        if self._select is None:
+            if self.tag != 'select':
+                self._select = False
+            else:
+                self._select = Select(self)
+
+        return self._select
 
     def get_style_property(self, style: str, pseudo_ele: str = '') -> str:
         """返回元素样式属性值
@@ -603,85 +676,6 @@ class DriverElement(DrissionElement):
         """鼠标悬停"""
         from selenium.webdriver import ActionChains
         ActionChains(self.page.driver).move_to_element(self.inner_ele).perform()
-
-    # -----------------私有函数-------------------
-    def _get_ele_path(self, mode) -> str:
-        """返获取css路径或xpath路径"""
-        if mode == 'xpath':
-            txt1 = 'var tag = el.nodeName.toLowerCase();'
-            # txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
-            txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
-            txt4 = '''
-            if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
-                    else{path = '/' + tag + path;}'''
-            txt5 = '''return path;'''
-
-        elif mode == 'css':
-            txt1 = ''
-            # txt2 = '''return '#' + el.id + path;'''
-            txt3 = ''
-            txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
-            txt5 = '''return path.substr(1);'''
-
-        else:
-            raise ValueError(f"Argument mode can only be 'xpath' or 'css', not '{mode}'.")
-
-        js = '''
-        function e(el) {
-            if (!(el instanceof Element)) return;
-            var path = '';
-            while (el.nodeType === Node.ELEMENT_NODE) {
-                ''' + txt1 + '''
-                    var sib = el, nth = 0;
-                    while (sib) {
-                        if(sib.nodeType === Node.ELEMENT_NODE''' + txt3 + '''){nth += 1;}
-                        sib = sib.previousSibling;
-                    }
-                    ''' + txt4 + '''
-                el = el.parentNode;
-            }
-            ''' + txt5 + '''
-        }
-        return e(arguments[0]);
-        '''
-        return self.run_script(js)
-
-    def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
-        """返回前面第num个兄弟节点或元素        \n
-        :param num: 前面第几个兄弟节点或元素
-        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
-        :param direction: 'next' 或 'prev'，查找的方向
-        :return: DriverElement对象或字符串
-        """
-        # 查找节点的类型
-        if mode == 'ele':
-            node_txt = '*'
-        elif mode == 'node':
-            node_txt = 'node()'
-        elif mode == 'text':
-            node_txt = 'text()'
-        else:
-            raise ValueError(f"Argument mode can only be 'node' ,'ele' or 'text', not '{mode}'.")
-
-        # 查找节点的方向
-        if direction == 'next':
-            direction_txt = 'following'
-        elif direction == 'prev':
-            direction_txt = 'preceding'
-        else:
-            raise ValueError(f"Argument direction can only be 'next' or 'prev', not '{direction}'.")
-
-        timeout = 0 if direction == 'prev' else .5
-
-        # 获取节点
-        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
-
-        # 跳过元素间的换行符
-        while isinstance(ele_or_node, str) and ele_or_node.replace('\n', '').replace('\t', '').replace(' ', '') == '':
-            num += 1
-            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
-
-        return ele_or_node
 
 
 def execute_driver_find(page_or_ele,

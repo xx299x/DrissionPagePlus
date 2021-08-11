@@ -39,10 +39,7 @@ class DriverPage(object):
                  timeout: float = None):
         return self.ele(loc_or_str, mode, timeout)
 
-    @property
-    def driver(self) -> WebDriver:
-        return self._driver
-
+    # -----------------共有属性和方法-------------------
     @property
     def url(self) -> Union[str, None]:
         """返回当前网页url"""
@@ -52,14 +49,14 @@ class DriverPage(object):
             return self.driver.current_url
 
     @property
+    def title(self) -> str:
+        """返回网页title"""
+        return self.driver.title
+
+    @property
     def html(self) -> str:
         """返回页面html文本"""
         return format_html(self.driver.find_element_by_xpath("//*").get_attribute("outerHTML"))
-
-    @property
-    def url_available(self) -> bool:
-        """url有效性"""
-        return self._url_available
 
     @property
     def cookies(self) -> list:
@@ -67,72 +64,9 @@ class DriverPage(object):
         return self.get_cookies(True)
 
     @property
-    def title(self) -> str:
-        """返回网页title"""
-        return self.driver.title
-
-    @property
-    def timeout(self) -> float:
-        """返回查找元素时等待的秒数"""
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, second: float) -> None:
-        """设置查找元素时等待的秒数"""
-        self._timeout = second
-        self._wait = None
-
-    @property
-    def wait_object(self) -> WebDriverWait:
-        """返回WebDriverWait对象，重用避免每次新建对象"""
-        if self._wait is None:
-            self._wait = WebDriverWait(self.driver, timeout=self.timeout)
-
-        return self._wait
-
-    def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
-        """返回当前网站cookies"""
-        if as_dict:
-            return {cookie['name']: cookie['value'] for cookie in self.driver.get_cookies()}
-        else:
-            return self.driver.get_cookies()
-
-    def _try_to_connect(self,
-                        to_url: str,
-                        times: int = 0,
-                        interval: float = 1,
-                        show_errmsg: bool = False, ):
-        """尝试连接，重试若干次                            \n
-        :param to_url: 要访问的url
-        :param times: 重试次数
-        :param interval: 重试间隔（秒）
-        :param show_errmsg: 是否抛出异常
-        :return: 是否成功
-        """
-        err = None
-        is_ok = False
-
-        for _ in range(times + 1):
-            try:
-                self.driver.get(to_url)
-                go_ok = True
-            except Exception as e:
-                err = e
-                go_ok = False
-
-            is_ok = self.check_page() if go_ok else False
-
-            if is_ok is not False:
-                break
-
-            if _ < times:
-                sleep(interval)
-                print(f'重试 {to_url}')
-
-        if is_ok is False and show_errmsg:
-            raise err if err is not None else ConnectionError('Connect error.')
-
-        return is_ok
+    def url_available(self) -> bool:
+        """url有效性"""
+        return self._url_available
 
     def get(self,
             url: str,
@@ -262,7 +196,97 @@ class DriverPage(object):
 
         return self.ele(loc_or_str, mode='all', timeout=timeout)
 
-    # ----------------以下为独有函数-----------------------
+    def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
+        """返回当前网站cookies"""
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in self.driver.get_cookies()}
+        else:
+            return self.driver.get_cookies()
+
+    def _try_to_connect(self,
+                        to_url: str,
+                        times: int = 0,
+                        interval: float = 1,
+                        show_errmsg: bool = False, ):
+        """尝试连接，重试若干次                            \n
+        :param to_url: 要访问的url
+        :param times: 重试次数
+        :param interval: 重试间隔（秒）
+        :param show_errmsg: 是否抛出异常
+        :return: 是否成功
+        """
+        err = None
+        is_ok = False
+
+        for _ in range(times + 1):
+            try:
+                self.driver.get(to_url)
+                go_ok = True
+            except Exception as e:
+                err = e
+                go_ok = False
+
+            is_ok = self.check_page() if go_ok else False
+
+            if is_ok is not False:
+                break
+
+            if _ < times:
+                sleep(interval)
+                print(f'重试 {to_url}')
+
+        if is_ok is False and show_errmsg:
+            raise err if err is not None else ConnectionError('Connect error.')
+
+        return is_ok
+
+    # ----------------driver独有属性和方法-----------------------
+    @property
+    def driver(self) -> WebDriver:
+        return self._driver
+
+    @property
+    def timeout(self) -> float:
+        """返回查找元素时等待的秒数"""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, second: float) -> None:
+        """设置查找元素时等待的秒数"""
+        self._timeout = second
+        self._wait = None
+
+    @property
+    def wait_object(self) -> WebDriverWait:
+        """返回WebDriverWait对象，重用避免每次新建对象"""
+        if self._wait is None:
+            self._wait = WebDriverWait(self.driver, timeout=self.timeout)
+
+        return self._wait
+
+    @property
+    def tabs_count(self) -> int:
+        """返回标签页数量"""
+        try:
+            return len(self.driver.window_handles)
+        except:
+            return 0
+
+    @property
+    def tab_handles(self) -> list:
+        """返回所有标签页handle列表"""
+        return self.driver.window_handles
+
+    @property
+    def current_tab_num(self) -> int:
+        """返回当前标签页序号"""
+        return self.driver.window_handles.index(self.driver.current_window_handle)
+
+    @property
+    def current_tab_handle(self) -> str:
+        """返回当前标签页handle"""
+        return self.driver.current_window_handle
+
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, DriverElement, WebElement],
                  mode: str,
@@ -347,29 +371,6 @@ class DriverPage(object):
         :return: js执行结果
         """
         return self.driver.execute_script(script, *args)
-
-    @property
-    def tabs_count(self) -> int:
-        """返回标签页数量"""
-        try:
-            return len(self.driver.window_handles)
-        except:
-            return 0
-
-    @property
-    def tab_handles(self) -> list:
-        """返回所有标签页handle列表"""
-        return self.driver.window_handles
-
-    @property
-    def current_tab_num(self) -> int:
-        """返回当前标签页序号"""
-        return self.driver.window_handles.index(self.driver.current_window_handle)
-
-    @property
-    def current_tab_handle(self) -> str:
-        """返回当前标签页handle"""
-        return self.driver.current_window_handle
 
     def create_tab(self, url: str = '') -> None:
         """新建并定位到一个标签页,该标签页在最后面  \n

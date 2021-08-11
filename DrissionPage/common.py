@@ -28,14 +28,6 @@ class DrissionElement(object):
         return self._inner_ele
 
     @property
-    def is_valid(self):
-        return True
-
-    # @property
-    # def text(self):
-    #     return
-
-    @property
     def html(self):
         return
 
@@ -55,13 +47,9 @@ class DrissionElement(object):
     def prev(self):
         return
 
-    # @property
-    # def css_path(self):
-    #     return
-    #
-    # @property
-    # def xpath(self):
-    #     return
+    @property
+    def is_valid(self):
+        return True
 
     @abstractmethod
     def ele(self, loc: Union[tuple, str], mode: str = None):
@@ -70,10 +58,6 @@ class DrissionElement(object):
     @abstractmethod
     def eles(self, loc: Union[tuple, str]):
         pass
-
-    # @abstractmethod
-    # def attr(self, attr: str):
-    #     pass
 
 
 def str_to_loc(loc: str) -> tuple:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from re import split as re_SPLIT
 from typing import Union, Any, Tuple
@@ -45,6 +44,11 @@ class ShadowRootElement(DrissionElement):
         """shadow-root所依赖的父元素"""
         return self.parent_ele
 
+    @property
+    def next(self):
+        """返回后一个兄弟元素"""
+        return self.nexts()
+
     def parents(self, num: int = 1):
         """返回上面第num级父元素              \n
         :param num: 第几级父元素
@@ -52,11 +56,6 @@ class ShadowRootElement(DrissionElement):
         """
         loc = 'xpath', f'.{"/.." * (num - 1)}'
         return self.parent_ele.ele(loc, timeout=0.1)
-
-    @property
-    def next(self):
-        """返回后一个兄弟元素"""
-        return self.nexts()
 
     def nexts(self, num: int = 1):
         """返回后面第num个兄弟元素      \n
@@ -175,6 +174,7 @@ class ShadowRootElement(DrissionElement):
         except:
             return False
 
+    # ----------------ShadowRootElement独有方法-----------------------
     def _find_eles_by_text(self, text: str, tag: str = '', match: str = 'exact', mode: str = 'single'):
         """根据文本获取页面元素                               \n
         :param text: 文本字符串

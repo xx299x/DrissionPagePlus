@@ -34,6 +34,11 @@ class SessionElement(DrissionElement):
         return self.ele(loc_or_str, mode)
 
     @property
+    def tag(self) -> str:
+        """返回元素类型"""
+        return self._inner_ele.tag
+
+    @property
     def html(self) -> str:
         """返回元素outerHTML文本"""
         html = format_html(tostring(self._inner_ele, method="html").decode())
@@ -44,6 +49,26 @@ class SessionElement(DrissionElement):
         """返回元素innerHTML文本"""
         r = match(r'<.*?>(.*)</.*?>', self.html, flags=DOTALL)
         return '' if not r else r.group(1)
+
+    @property
+    def parent(self):
+        """返回父级元素"""
+        return self.parents()
+
+    @property
+    def next(self):
+        """返回后一个兄弟元素"""
+        return self.nexts()
+
+    @property
+    def prev(self):
+        """返回前一个兄弟元素"""
+        return self.prevs()
+
+    @property
+    def attrs(self) -> dict:
+        """返回元素所有属性及值"""
+        return {attr: self.attr(attr) for attr, val in self.inner_ele.items()}
 
     @property
     def text(self) -> str:
@@ -88,16 +113,6 @@ class SessionElement(DrissionElement):
         return str(self._inner_ele.text_content())
 
     @property
-    def tag(self) -> str:
-        """返回元素类型"""
-        return self._inner_ele.tag
-
-    @property
-    def attrs(self) -> dict:
-        """返回元素所有属性及值"""
-        return {attr: self.attr(attr) for attr, val in self.inner_ele.items()}
-
-    @property
     def link(self) -> str:
         """返回href或src绝对url"""
         return self.attr('href') or self.attr('src')
@@ -111,21 +126,6 @@ class SessionElement(DrissionElement):
     def xpath(self) -> str:
         """返回xpath路径"""
         return self._get_ele_path('xpath')
-
-    @property
-    def parent(self):
-        """返回父级元素"""
-        return self.parents()
-
-    @property
-    def next(self):
-        """返回后一个兄弟元素"""
-        return self.nexts()
-
-    @property
-    def prev(self):
-        """返回前一个兄弟元素"""
-        return self.prevs()
 
     @property
     def comments(self) -> list:
@@ -298,30 +298,6 @@ class SessionElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all')
 
-    # -----------------私有函数-------------------
-    def _make_absolute(self, link) -> str:
-        """获取绝对url
-        :param link: 超链接
-        :return: 绝对链接
-        """
-        if not link:
-            return link
-
-        parsed = urlparse(link)._asdict()
-
-        # 相对路径，与页面url拼接并返回
-        if not parsed['netloc']:  # 相对路径，与
-            return urljoin(self.page.url, link)
-
-        # 绝对路径但缺少协议，从页面url获取协议并修复
-        if not parsed['scheme']:
-            parsed['scheme'] = urlparse(self.page.url).scheme
-            parsed = tuple(v for v in parsed.values())
-            return urlunparse(parsed)
-
-        # 绝对路径且不缺协议，直接返回
-        return link
-
     def _get_ele_path(self, mode) -> str:
         """获取css路径或xpath路径
         :param mode: 'css' 或 'xpath'
@@ -376,6 +352,30 @@ class SessionElement(DrissionElement):
             ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]')
 
         return ele_or_node
+
+    # ----------------session独有方法-----------------------
+    def _make_absolute(self, link) -> str:
+        """获取绝对url
+        :param link: 超链接
+        :return: 绝对链接
+        """
+        if not link:
+            return link
+
+        parsed = urlparse(link)._asdict()
+
+        # 相对路径，与页面url拼接并返回
+        if not parsed['netloc']:  # 相对路径，与
+            return urljoin(self.page.url, link)
+
+        # 绝对路径但缺少协议，从页面url获取协议并修复
+        if not parsed['scheme']:
+            parsed['scheme'] = urlparse(self.page.url).scheme
+            parsed = tuple(v for v in parsed.values())
+            return urlunparse(parsed)
+
+        # 绝对路径且不缺协议，直接返回
+        return link
 
 
 def execute_session_find(page_or_ele,

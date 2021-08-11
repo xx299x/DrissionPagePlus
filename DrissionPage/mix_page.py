@@ -76,6 +76,7 @@ class MixPage(Null, SessionPage, DriverPage):
                  timeout: float = None):
         return self.ele(loc_or_str, mode, timeout)
 
+    # -----------------共有属性和方法-------------------
     @property
     def url(self) -> Union[str, None]:
         """返回当前url"""
@@ -85,47 +86,12 @@ class MixPage(Null, SessionPage, DriverPage):
             return self._session_url
 
     @property
-    def _session_url(self) -> str:
-        """返回session保存的url"""
-        return self._response.url if self._response else None
-
-    @property
-    def mode(self) -> str:
-        """返回当前模式，'s'或'd' """
-        return self._mode
-
-    @property
-    def drission(self) -> Drission:
-        """返回当前使用的Dirssion对象"""
-        return self._drission
-
-    @property
-    def driver(self) -> WebDriver:
-        """返回driver对象，如没有则创建              \n
-        每次访问时切换到d模式，用于独有函数及外部调用
-        :return: WebDriver对象
-        """
-        self.change_mode('d')
-        return self._drission.driver
-
-    @property
-    def session(self) -> Session:
-        """返回Session对象，如没有则创建"""
-        return self._drission.session
-
-    @property
-    def response(self) -> Response:
-        """返回s模式获取到的Response对象，切换到s模式"""
-        self.change_mode('s')
-        return self._response
-
-    @property
-    def cookies(self) -> Union[dict, list]:
-        """返回cookies"""
+    def title(self) -> str:
+        """返回网页title"""
         if self._mode == 's':
-            return super().cookies
+            return super().title
         elif self._mode == 'd':
-            return super(SessionPage, self).cookies
+            return super(SessionPage, self).title
 
     @property
     def html(self) -> str:
@@ -136,193 +102,12 @@ class MixPage(Null, SessionPage, DriverPage):
             return super(SessionPage, self).html
 
     @property
-    def title(self) -> str:
-        """返回网页title"""
+    def cookies(self) -> Union[dict, list]:
+        """返回cookies"""
         if self._mode == 's':
-            return super().title
+            return super().cookies
         elif self._mode == 'd':
-            return super(SessionPage, self).title
-
-    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict], refresh: bool = True) -> None:
-        """设置cookies                                                          \n
-        :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
-        :param refresh: 设置cookies后是否刷新页面
-        :return: None
-        """
-        if self._mode == 's':
-            self.drission.set_cookies(cookies, set_session=True)
-        elif self._mode == 'd':
-            self.drission.set_cookies(cookies, set_driver=True)
-
-            if refresh:
-                self.refresh()
-
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
-        """返回cookies                               \n
-        :param as_dict: 是否以字典方式返回
-        :param all_domains: 是否返回所有域的cookies
-        :return: cookies信息
-        """
-        if self._mode == 's':
-            return super().get_cookies(as_dict, all_domains)
-        elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict)
-
-    def change_mode(self, mode: str = None, go: bool = True) -> None:
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
-        切换时会把当前模式的cookies复制到目标模式                 \n
-        切换后，如果go是True，调用相应的get函数使访问的页面同步    \n
-        :param mode: 模式字符串
-        :param go: 是否跳转到原模式的url
-        """
-        if mode is not None and mode.lower() == self._mode:
-            return
-
-        self._mode = 's' if self._mode == 'd' else 'd'
-
-        # s模式转d模式
-        if self._mode == 'd':
-            self._driver = True
-            self._url = None if not self._driver else self._drission.driver.current_url
-
-            if self._session_url:
-                self.cookies_to_driver(self._session_url)
-
-                if go:
-                    self.get(self._session_url)
-
-        # d模式转s模式
-        elif self._mode == 's':
-            self._session = True
-            self._url = self._session_url
-
-            if self._driver:
-                self.cookies_to_session()
-
-                if go and self._drission.driver.current_url.startswith('http'):
-                    self.get(self._drission.driver.current_url)
-
-    def cookies_to_session(self, copy_user_agent: bool = False) -> None:
-        """从driver复制cookies到session                  \n
-        :param copy_user_agent : 是否复制user agent信息
-        """
-        self._drission.cookies_to_session(copy_user_agent)
-
-    def cookies_to_driver(self, url=None) -> None:
-        """从session复制cookies到driver  \n
-        chrome需要指定域才能接收cookies   \n
-        :param url: 目标域
-        :return: None
-        """
-        url = url or self._session_url
-        self._drission.cookies_to_driver(url)
-
-    def check_page(self, by_requests: bool = False) -> Union[bool, None]:
-        """d模式时检查网页是否符合预期                \n
-        默认由response状态检查，可重载实现针对性检查   \n
-        :param by_requests: 是否用内置response检查
-        :return: bool或None，None代表不知道结果
-        """
-        if self._session_url and self._session_url == self.url:
-            return self._response.ok
-
-        # 使用requests访问url并判断可用性
-        if by_requests:
-            self.cookies_to_session()
-            r = self._make_response(self.url, **{'timeout': 3})[0]
-            return r.ok if r else False
-
-    # ----------------重写SessionPage的函数-----------------------
-
-    def post(self,
-             url: str,
-             data: dict = None,
-             go_anyway: bool = False,
-             show_errmsg: bool = False,
-             retry: int = None,
-             interval: float = None,
-             **kwargs) -> Union[bool, None]:
-        """用post方式跳转到url，会切换到s模式                        \n
-        :param url: 目标url
-        :param data: post方式时提交的数据
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param kwargs: 连接参数
-        :return: url是否可用
-        """
-        self.change_mode('s', go=False)
-        return super().post(url, data, go_anyway, show_errmsg, retry, interval, **kwargs)
-
-    def download(self,
-                 file_url: str,
-                 goal_path: str = None,
-                 rename: str = None,
-                 file_exists: str = 'rename',
-                 post_data: dict = None,
-                 show_msg: bool = False,
-                 show_errmsg: bool = False,
-                 retry: int = None,
-                 interval: float = None,
-                 **kwargs) -> Tuple[bool, str]:
-        """下载一个文件                                                                      \n
-        d模式下下载前先同步cookies                                                            \n
-        :param file_url: 文件url
-        :param goal_path: 存放路径，默认为ini文件中指定的临时文件夹
-        :param rename: 重命名文件，可不写扩展名
-        :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
-        :param post_data: post方式的数据
-        :param show_msg: 是否显示下载信息
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔时间
-        :param kwargs: 连接参数
-        :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
-        """
-        if self.mode == 'd':
-            self.cookies_to_session()
-
-        return super().download(file_url, goal_path, rename, file_exists, post_data, show_msg, show_errmsg, retry,
-                                interval, **kwargs)
-
-    # ----------------重写DriverPage的函数-----------------------
-
-    def chrome_downloading(self, download_path: str = None) -> list:
-        """返回浏览器下载中的文件列表                             \n
-        :param download_path: 下载文件夹路径，默认读取配置信息
-        :return: 正在下载的文件列表
-        """
-        try:
-            path = download_path or self._drission.driver_options['experimental_options']['prefs'][
-                'download.default_directory']
-            if not path:
-                raise
-        except:
-            raise IOError('Download path not found.')
-        return super().chrome_downloading(path)
-
-    # ----------------以下为共用函数-----------------------
-    def _try_to_connect(self,
-                        to_url: str,
-                        times: int = 0,
-                        interval: float = 1,
-                        mode: str = 'get',
-                        data: dict = None,
-                        show_errmsg: bool = False,
-                        **kwargs):
-        """尝试连接，重试若干次                            \n
-        :param to_url: 要访问的url
-        :param times: 重试次数
-        :param interval: 重试间隔（秒）
-        :param show_errmsg: 是否抛出异常
-        :param kwargs: 连接参数
-        :return: s模式为Response对象，d模式为bool
-        """
-        if self._mode == 'd':
-            return super(SessionPage, self)._try_to_connect(to_url, times, interval, show_errmsg)
-        elif self._mode == 's':
-            return super()._try_to_connect(to_url, times, interval, mode, data, show_errmsg, **kwargs)
+            return super(SessionPage, self).cookies
 
     def get(self,
             url: str,
@@ -437,6 +222,151 @@ class MixPage(Null, SessionPage, DriverPage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
+        """返回cookies                               \n
+        :param as_dict: 是否以字典方式返回
+        :param all_domains: 是否返回所有域的cookies
+        :return: cookies信息
+        """
+        if self._mode == 's':
+            return super().get_cookies(as_dict, all_domains)
+        elif self._mode == 'd':
+            return super(SessionPage, self).get_cookies(as_dict)
+
+    def _try_to_connect(self,
+                        to_url: str,
+                        times: int = 0,
+                        interval: float = 1,
+                        mode: str = 'get',
+                        data: dict = None,
+                        show_errmsg: bool = False,
+                        **kwargs):
+        """尝试连接，重试若干次                            \n
+        :param to_url: 要访问的url
+        :param times: 重试次数
+        :param interval: 重试间隔（秒）
+        :param show_errmsg: 是否抛出异常
+        :param kwargs: 连接参数
+        :return: s模式为Response对象，d模式为bool
+        """
+        if self._mode == 'd':
+            return super(SessionPage, self)._try_to_connect(to_url, times, interval, show_errmsg)
+        elif self._mode == 's':
+            return super()._try_to_connect(to_url, times, interval, mode, data, show_errmsg, **kwargs)
+
+    # ----------------MixPage独有属性和方法-----------------------
+    @property
+    def drission(self) -> Drission:
+        """返回当前使用的Dirssion对象"""
+        return self._drission
+
+    @property
+    def driver(self) -> WebDriver:
+        """返回driver对象，如没有则创建              \n
+        每次访问时切换到d模式，用于独有函数及外部调用
+        :return: WebDriver对象
+        """
+        self.change_mode('d')
+        return self._drission.driver
+
+    @property
+    def session(self) -> Session:
+        """返回Session对象，如没有则创建"""
+        return self._drission.session
+
+    @property
+    def response(self) -> Response:
+        """返回s模式获取到的Response对象，切换到s模式"""
+        self.change_mode('s')
+        return self._response
+
+    @property
+    def mode(self) -> str:
+        """返回当前模式，'s'或'd' """
+        return self._mode
+
+    @property
+    def _session_url(self) -> str:
+        """返回session保存的url"""
+        return self._response.url if self._response else None
+
+    def change_mode(self, mode: str = None, go: bool = True) -> None:
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
+        切换时会把当前模式的cookies复制到目标模式                 \n
+        切换后，如果go是True，调用相应的get函数使访问的页面同步    \n
+        :param mode: 模式字符串
+        :param go: 是否跳转到原模式的url
+        """
+        if mode is not None and mode.lower() == self._mode:
+            return
+
+        self._mode = 's' if self._mode == 'd' else 'd'
+
+        # s模式转d模式
+        if self._mode == 'd':
+            self._driver = True
+            self._url = None if not self._driver else self._drission.driver.current_url
+
+            if self._session_url:
+                self.cookies_to_driver(self._session_url)
+
+                if go:
+                    self.get(self._session_url)
+
+        # d模式转s模式
+        elif self._mode == 's':
+            self._session = True
+            self._url = self._session_url
+
+            if self._driver:
+                self.cookies_to_session()
+
+                if go and self._drission.driver.current_url.startswith('http'):
+                    self.get(self._drission.driver.current_url)
+
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict], refresh: bool = True) -> None:
+        """设置cookies                                                          \n
+        :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
+        :param refresh: 设置cookies后是否刷新页面
+        :return: None
+        """
+        if self._mode == 's':
+            self.drission.set_cookies(cookies, set_session=True)
+        elif self._mode == 'd':
+            self.drission.set_cookies(cookies, set_driver=True)
+            if refresh:
+                self.refresh()
+
+    def cookies_to_session(self, copy_user_agent: bool = False) -> None:
+        """从driver复制cookies到session                  \n
+        :param copy_user_agent : 是否复制user agent信息
+        """
+        self._drission.cookies_to_session(copy_user_agent)
+
+    def cookies_to_driver(self, url=None) -> None:
+        """从session复制cookies到driver  \n
+        chrome需要指定域才能接收cookies   \n
+        :param url: 目标域
+        :return: None
+        """
+        url = url or self._session_url
+        self._drission.cookies_to_driver(url)
+
+    def check_page(self, by_requests: bool = False) -> Union[bool, None]:
+        """d模式时检查网页是否符合预期                \n
+        默认由response状态检查，可重载实现针对性检查   \n
+        :param by_requests: 是否用内置response检查
+        :return: bool或None，None代表不知道结果
+        """
+        if self._session_url and self._session_url == self.url:
+            return self._response.ok
+
+        # 使用requests访问url并判断可用性
+        if by_requests:
+            self.cookies_to_session()
+            r = self._make_response(self.url, **{'timeout': 3})[0]
+            return r.ok if r else False
+
     def close_driver(self) -> None:
         """关闭driver及浏览器"""
         self._driver = None
@@ -447,3 +377,71 @@ class MixPage(Null, SessionPage, DriverPage):
         self._session = None
         self._response = None
         self.drission.close_session()
+
+    # ----------------重写SessionPage的函数-----------------------
+    def post(self,
+             url: str,
+             data: dict = None,
+             go_anyway: bool = False,
+             show_errmsg: bool = False,
+             retry: int = None,
+             interval: float = None,
+             **kwargs) -> Union[bool, None]:
+        """用post方式跳转到url，会切换到s模式                        \n
+        :param url: 目标url
+        :param data: post方式时提交的数据
+        :param go_anyway: 若目标url与当前url一致，是否强制跳转
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
+        self.change_mode('s', go=False)
+        return super().post(url, data, go_anyway, show_errmsg, retry, interval, **kwargs)
+
+    def download(self,
+                 file_url: str,
+                 goal_path: str = None,
+                 rename: str = None,
+                 file_exists: str = 'rename',
+                 post_data: dict = None,
+                 show_msg: bool = False,
+                 show_errmsg: bool = False,
+                 retry: int = None,
+                 interval: float = None,
+                 **kwargs) -> Tuple[bool, str]:
+        """下载一个文件                                                                      \n
+        d模式下下载前先同步cookies                                                            \n
+        :param file_url: 文件url
+        :param goal_path: 存放路径，默认为ini文件中指定的临时文件夹
+        :param rename: 重命名文件，可不写扩展名
+        :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
+        :param post_data: post方式的数据
+        :param show_msg: 是否显示下载信息
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔时间
+        :param kwargs: 连接参数
+        :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
+        """
+        if self.mode == 'd':
+            self.cookies_to_session()
+
+        return super().download(file_url, goal_path, rename, file_exists, post_data, show_msg, show_errmsg, retry,
+                                interval, **kwargs)
+
+    # ----------------重写DriverPage的函数-----------------------
+    def chrome_downloading(self, download_path: str = None) -> list:
+        """返回浏览器下载中的文件列表                             \n
+        :param download_path: 下载文件夹路径，默认读取配置信息
+        :return: 正在下载的文件列表
+        """
+        try:
+            path = download_path or self._drission.driver_options['experimental_options']['prefs'][
+                'download.default_directory']
+            if not path:
+                raise
+        except:
+            raise IOError('Download path not found.')
+        return super().chrome_downloading(path)

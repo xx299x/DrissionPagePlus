@@ -40,30 +40,11 @@ class SessionPage(object):
                  timeout: float = None):
         return self.ele(loc_or_str, mode)
 
-    @property
-    def session(self) -> Session:
-        """返回session对象"""
-        return self._session
-
-    @property
-    def response(self) -> Response:
-        """返回访问url得到的response对象"""
-        return self._response
-
+    # -----------------共有属性和方法-------------------
     @property
     def url(self) -> str:
         """返回当前访问url"""
         return self._url
-
-    @property
-    def url_available(self) -> bool:
-        """返回当前访问的url有效性"""
-        return self._url_available
-
-    @property
-    def cookies(self) -> dict:
-        """返回session的cookies"""
-        return self.get_cookies(True)
 
     @property
     def title(self) -> str:
@@ -75,26 +56,56 @@ class SessionPage(object):
         """返回页面html文本"""
         return format_html(self.response.text) if self.response else ''
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
-        """返回cookies                               \n
-        :param as_dict: 是否以字典方式返回
-        :param all_domains: 是否返回所有域的cookies
-        :return: cookies信息
-        """
-        if all_domains:
-            cookies = self.session.cookies
-        else:
-            if self.url:
-                url = extract(self.url)
-                domain = f'{url.domain}.{url.suffix}'
-                cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
-            else:
-                cookies = tuple(x for x in self.session.cookies)
+    @property
+    def cookies(self) -> dict:
+        """返回session的cookies"""
+        return self.get_cookies(True)
 
-        if as_dict:
-            return {x.name: x.value for x in cookies}
+    @property
+    def url_available(self) -> bool:
+        """返回当前访问的url有效性"""
+        return self._url_available
+
+    def get(self,
+            url: str,
+            go_anyway: bool = False,
+            show_errmsg: bool = False,
+            retry: int = None,
+            interval: float = None,
+            **kwargs) -> Union[bool, None]:
+        """用get方式跳转到url                                 \n
+        :param url: 目标url
+        :param go_anyway: 若目标url与当前url一致，是否强制跳转
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
+        to_url = quote(url, safe='/:&?=%;#@+!')
+        retry = int(retry) if retry is not None else int(self.retry_times)
+        interval = int(interval) if interval is not None else int(self.retry_interval)
+
+        if not url or (not go_anyway and self.url == to_url):
+            return
+
+        self._url = to_url
+        self._response = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
+
+        if self._response is None:
+            self._url_available = False
+
         else:
-            return [_cookie_to_dict(cookie) for cookie in cookies]
+            if self._response.ok:
+                self._url_available = True
+
+            else:
+                if show_errmsg:
+                    raise ConnectionError(f'{to_url}\nStatus code: {self._response.status_code}.')
+
+                self._url_available = False
+
+        return self._url_available
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
@@ -183,6 +194,27 @@ class SessionPage(object):
 
         return self.ele(loc_or_str, mode='all')
 
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
+        """返回cookies                               \n
+        :param as_dict: 是否以字典方式返回
+        :param all_domains: 是否返回所有域的cookies
+        :return: cookies信息
+        """
+        if all_domains:
+            cookies = self.session.cookies
+        else:
+            if self.url:
+                url = extract(self.url)
+                domain = f'{url.domain}.{url.suffix}'
+                cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
+            else:
+                cookies = tuple(x for x in self.session.cookies)
+
+        if as_dict:
+            return {x.name: x.value for x in cookies}
+        else:
+            return [_cookie_to_dict(cookie) for cookie in cookies]
+
     def _try_to_connect(self,
                         to_url: str,
                         times: int = 0,
@@ -223,46 +255,16 @@ class SessionPage(object):
 
         return r
 
-    def get(self,
-            url: str,
-            go_anyway: bool = False,
-            show_errmsg: bool = False,
-            retry: int = None,
-            interval: float = None,
-            **kwargs) -> Union[bool, None]:
-        """用get方式跳转到url                                 \n
-        :param url: 目标url
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param kwargs: 连接参数
-        :return: url是否可用
-        """
-        to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = int(retry) if retry is not None else int(self.retry_times)
-        interval = int(interval) if interval is not None else int(self.retry_interval)
+    # ----------------session独有属性和方法-----------------------
+    @property
+    def session(self) -> Session:
+        """返回session对象"""
+        return self._session
 
-        if not url or (not go_anyway and self.url == to_url):
-            return
-
-        self._url = to_url
-        self._response = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
-
-        if self._response is None:
-            self._url_available = False
-
-        else:
-            if self._response.ok:
-                self._url_available = True
-
-            else:
-                if show_errmsg:
-                    raise ConnectionError(f'{to_url}\nStatus code: {self._response.status_code}.')
-
-                self._url_available = False
-
-        return self._url_available
+    @property
+    def response(self) -> Response:
+        """返回访问url得到的response对象"""
+        return self._response
 
     def post(self,
              url: str,
