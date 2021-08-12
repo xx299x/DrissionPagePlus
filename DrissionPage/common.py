@@ -4,60 +4,12 @@
 @Contact :   g1879@qq.com
 @File    :   common.py
 """
-from abc import abstractmethod
 from html import unescape
 from pathlib import Path
 from re import split as re_SPLIT
 from shutil import rmtree
 from typing import Union
 from zipfile import ZipFile
-
-from lxml.html import HtmlElement
-from selenium.webdriver.remote.webelement import WebElement
-
-
-class DrissionElement(object):
-    """SessionElement和DriverElement的基类"""
-
-    def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
-        self._inner_ele = ele
-        self.page = page
-
-    @property
-    def inner_ele(self) -> Union[WebElement, HtmlElement]:
-        return self._inner_ele
-
-    @property
-    def html(self):
-        return
-
-    @property
-    def tag(self):
-        return
-
-    @property
-    def parent(self):
-        return
-
-    @property
-    def next(self):
-        return
-
-    @property
-    def prev(self):
-        return
-
-    @property
-    def is_valid(self):
-        return True
-
-    @abstractmethod
-    def ele(self, loc: Union[tuple, str], mode: str = None):
-        pass
-
-    @abstractmethod
-    def eles(self, loc: Union[tuple, str]):
-        pass
 
 
 def str_to_loc(loc: str) -> tuple:

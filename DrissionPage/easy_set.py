@@ -5,17 +5,17 @@
 @File    :   driver_page.py
 """
 from os import popen
-
 from pathlib import Path
 from pprint import pprint
-from re import search as RE_SEARCH
-from selenium import webdriver
+from re import search as RE_SEARCH, sub
 from typing import Union
 
-from DrissionPage.config import OptionsManager, DriverOptions
-from DrissionPage.drission import Drission
-from DrissionPage.session_page import SessionPage
+from selenium import webdriver
+
 from .common import unzip
+from .config import OptionsManager, DriverOptions
+from .drission import Drission
+from .session_page import SessionPage
 
 
 def show_settings(ini_path: str = None) -> None:
@@ -349,7 +349,7 @@ def _download_driver(version: str, save_path: str = None, show_msg: bool = True)
         remote_main = i.text.split('.')[0]
 
         try:
-            remote_num = int(i.text.replace('.', '').replace('/', ''))
+            remote_num = int(sub(r'[./]', '', i.text))
         except ValueError:
             continue
 

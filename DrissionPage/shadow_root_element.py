@@ -1,26 +1,32 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+@File    :   shadow_root_element.py
+"""
 from re import split as re_SPLIT
-from typing import Union, Any, Tuple
+from typing import Union, Any, Tuple, List
 
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import format_html, DrissionElement
+from .base import BaseElement
+from .common import format_html
 from .driver_element import execute_driver_find, DriverElement
 
 
-class ShadowRootElement(DrissionElement):
+class ShadowRootElement(BaseElement):
     def __init__(self, inner_ele: WebElement, parent_ele: DriverElement):
         super().__init__(inner_ele, parent_ele.page)
         self.parent_ele = parent_ele
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<ShadowRootElement in {self.parent_ele} >'
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
                  mode: str = 'single',
-                 timeout: float = None):
-        """实现查找元素的简化写法                                     \n
+                 timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
+        """在内部查找元素                                            \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
@@ -30,7 +36,7 @@ class ShadowRootElement(DrissionElement):
         return self.ele(loc_or_str, mode, timeout)
 
     @property
-    def tag(self):
+    def tag(self) -> str:
         """元素标签名"""
         return 'shadow-root'
 
@@ -40,16 +46,11 @@ class ShadowRootElement(DrissionElement):
         return format_html(self.inner_ele.get_attribute('innerHTML'))
 
     @property
-    def parent(self):
+    def parent(self) -> DriverElement:
         """shadow-root所依赖的父元素"""
         return self.parent_ele
 
-    @property
-    def next(self):
-        """返回后一个兄弟元素"""
-        return self.nexts()
-
-    def parents(self, num: int = 1):
+    def parents(self, num: int = 1) -> DriverElement:
         """返回上面第num级父元素              \n
         :param num: 第几级父元素
         :return: DriverElement对象
@@ -57,7 +58,7 @@ class ShadowRootElement(DrissionElement):
         loc = 'xpath', f'.{"/.." * (num - 1)}'
         return self.parent_ele.ele(loc, timeout=0.1)
 
-    def nexts(self, num: int = 1):
+    def nexts(self, num: int = 1) -> DriverElement:
         """返回后面第num个兄弟元素      \n
         :param num: 后面第几个兄弟元素
         :return: DriverElement对象
@@ -68,36 +69,8 @@ class ShadowRootElement(DrissionElement):
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             mode: str = 'single',
-            timeout: float = None):
+            timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
         """返回当前元素下级符合条件的子元素，默认返回第一个                                                    \n
-        示例：                                                                                           \n
-        - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回第一个class为ele_class的子元素                     \n
-        - 用查询字符串查找：                                                                               \n
-            查找方式：属性、tag name和属性、文本、css selector                                               \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            ele.ele('.ele_class')                       - 返回所有 class 为 ele_class 的子元素             \n
-            ele.ele('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素          \n
-            ele.ele('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                   \n
-            ele.ele('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素                \n
-            ele.ele('@class:ele_class')                 - 返回第一个class含有ele_class的子元素              \n
-            ele.ele('@name=ele_name')                   - 返回第一个name等于ele_name的子元素                \n
-            ele.ele('@placeholder')                     - 返回第一个带placeholder属性的子元素               \n
-            ele.ele('tag:p')                            - 返回第一个<p>子元素                              \n
-            ele.ele('tag:div@class:ele_class')          - 返回第一个class含有ele_class的div子元素           \n
-            ele.ele('tag:div@class=ele_class')          - 返回第一个class等于ele_class的div子元素           \n
-            ele.ele('tag:div@text():some_text')         - 返回第一个文本含有some_text的div子元素             \n
-            ele.ele('tag:div@text()=some_text')         - 返回第一个文本等于some_text的div子元素             \n
-            ele.ele('text:some_text')                   - 返回第一个文本含有some_text的子元素                \n
-            ele.ele('some_text')                        - 返回第一个文本含有some_text的子元素（等价于上一行）  \n
-            ele.ele('text=some_text')                   - 返回第一个文本等于some_text的子元素                \n
-            ele.ele('css:div.ele_class')                - 返回第一个符合css selector的子元素                 \n
-        - 查询字符串还有最精简模式，用c代替css、t代替tag、tx代替text：                                          \n
-            ele.ele('c:div.ele_class')                  - 等同于 ele.ele('css:div.ele_class')              \n
-            ele.ele('t:div')                            - 等同于 ele.ele('tag:div')                        \n
-            ele.ele('t:div@tx()=some_text')             - 等同于 ele.ele('tag:div@txet()=some_text')       \n
-            ele.ele('tx:some_text')                     - 等同于 ele.ele('text:some_text')                 \n
-            ele.ele('tx=some_text')                     - 等同于 ele.ele('text=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 查找元素超时时间
@@ -118,41 +91,13 @@ class ShadowRootElement(DrissionElement):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None):
+             timeout: float = None) -> List[DriverElement]:
         """返回当前元素下级所有符合条件的子元素                                                            \n
-        示例：                                                                                          \n
-        - 用loc元组查找：                                                                                \n
-            ele.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                     \n
-        - 用查询字符串查找：                                                                              \n
-            查找方式：属性、tag name和属性、文本、css selector                                              \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            ele.eles('.ele_class')                       - 返回所有 class 为 ele_class 的子元素            \n
-            ele.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的子元素         \n
-            ele.eles('#ele_id')                          - 返回所有 id 为 ele_id 的子元素                  \n
-            ele.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的子元素               \n
-            ele.eles('@class:ele_class')                 - 返回所有class含有ele_class的子元素              \n
-            ele.eles('@name=ele_name')                   - 返回所有name等于ele_name的子元素                \n
-            ele.eles('@placeholder')                     - 返回所有带placeholder属性的子元素               \n
-            ele.eles('tag:p')                            - 返回所有<p>子元素                              \n
-            ele.eles('tag:div@class:ele_class')          - 返回所有class含有ele_class的div子元素           \n
-            ele.eles('tag:div@class=ele_class')          - 返回所有class等于ele_class的div子元素           \n
-            ele.eles('tag:div@text():some_text')         - 返回所有文本含有some_text的div子元素             \n
-            ele.eles('tag:div@text()=some_text')         - 返回所有文本等于some_text的div子元素             \n
-            ele.eles('text:some_text')                   - 返回所有文本含有some_text的子元素                \n
-            ele.eles('some_text')                        - 返回所有文本含有some_text的子元素（等价于上一行）  \n
-            ele.eles('text=some_text')                   - 返回所有文本等于some_text的子元素                \n
-            ele.eles('css:div.ele_class')                - 返回所有符合css selector的子元素                 \n
-        - 查询字符串还有最精简模式，用c代替css、t代替tag、tx代替text：                                          \n
-            ele.eles('c:div.ele_class')                  - 等同于 ele.eles('css:div.ele_class')            \n
-            ele.eles('t:div')                            - 等同于 ele.eles('tag:div')                      \n
-            ele.eles('t:div@tx()=some_text')             - 等同于 ele.eles('tag:div@txet()=some_text')     \n
-            ele.eles('tx:some_text')                     - 等同于 ele.eles('text:some_text')               \n
-            ele.eles('tx=some_text')                     - 等同于 ele.eles('text=some_text')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :return: DriverElement对象组成的列表
         """
-        return self.ele(loc_or_str, mode='all', timeout=timeout)
+        return super().eles(loc_or_str, timeout)
 
     def run_script(self, script: str, *args) -> Any:
         """执行js代码，传入自己为第一个参数  \n
@@ -175,7 +120,11 @@ class ShadowRootElement(DrissionElement):
             return False
 
     # ----------------ShadowRootElement独有方法-----------------------
-    def _find_eles_by_text(self, text: str, tag: str = '', match: str = 'exact', mode: str = 'single'):
+    def _find_eles_by_text(self,
+                           text: str,
+                           tag: str = '',
+                           match: str = 'exact',
+                           mode: str = 'single') -> Union[DriverElement, List[DriverElement]]:
         """根据文本获取页面元素                               \n
         :param text: 文本字符串
         :param tag: tag name

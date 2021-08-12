@@ -7,7 +7,7 @@
 from os import path as os_PATH
 from pathlib import Path
 from random import randint
-from re import search as re_SEARCH, sub as re_SUB
+from re import search as re_SEARCH, sub
 from time import time, sleep
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, quote, unquote
@@ -15,30 +15,33 @@ from urllib.parse import urlparse, quote, unquote
 from requests import Session, Response
 from tldextract import extract
 
+from .base import BasePage
 from .common import str_to_loc, translate_loc, get_available_file_name, format_html
 from .config import _cookie_to_dict
 from .session_element import SessionElement, execute_session_find
 
 
-class SessionPage(object):
+class SessionPage(BasePage):
     """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
     def __init__(self, session: Session, timeout: float = 10):
         """初始化函数"""
+        super().__init__(timeout)
         self._session = session
-        self.timeout = timeout
-        self._url = None
-        self._url_available = None
         self._response = None
-
-        self.retry_times = 3
-        self.retry_interval = 2
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
                  mode: str = 'single',
-                 timeout: float = None):
-        return self.ele(loc_or_str, mode)
+                 timeout: float = None) -> Union[SessionElement, List[SessionElement]]:
+        """在内部查找元素                                            \n
+        例：ele2 = ele1('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all'，对应查找一个或全部
+        :param timeout: 不起实际作用，用于和父类对应
+        :return: SessionElement对象
+        """
+        return super().__call__(loc_or_str, mode, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -57,14 +60,9 @@ class SessionPage(object):
         return format_html(self.response.text) if self.response else ''
 
     @property
-    def cookies(self) -> dict:
-        """返回session的cookies"""
-        return self.get_cookies(True)
-
-    @property
-    def url_available(self) -> bool:
-        """返回当前访问的url有效性"""
-        return self._url_available
+    def json(self) -> dict:
+        """当返回内容是json格式时，返回对应的字典"""
+        return self.response.json()
 
     def get(self,
             url: str,
@@ -109,35 +107,11 @@ class SessionPage(object):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            mode: str = None) -> Union[SessionElement, List[SessionElement], str, None]:
+            mode: str = None, timeout=None) -> Union[SessionElement, List[SessionElement], str, None]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
-        示例：                                                                                           \n
-        - 接收到元素对象时：                                                                              \n
-            返回SessionElement对象                                                                        \n
-        - 用loc元组查找：                                                                                 \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                       \n
-        - 用查询字符串查找：                                                                               \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            page.ele('.ele_class')                       - 返回第一个 class 为 ele_class 的元素            \n
-            page.ele('.:ele_class')                      - 返回第一个 class 中含有 ele_class 的元素         \n
-            page.ele('#ele_id')                          - 返回第一个 id 为 ele_id 的元素                  \n
-            page.ele('#:ele_id')                         - 返回第一个 id 中含有 ele_id 的元素               \n
-            page.ele('@class:ele_class')                 - 返回第一个class含有ele_class的元素              \n
-            page.ele('@name=ele_name')                   - 返回第一个name等于ele_name的元素                \n
-            page.ele('@placeholder')                     - 返回第一个带placeholder属性的元素               \n
-            page.ele('tag:p')                            - 返回第一个<p>元素                              \n
-            page.ele('tag:div@class:ele_class')          - 返回第一个class含有ele_class的div元素           \n
-            page.ele('tag:div@class=ele_class')          - 返回第一个class等于ele_class的div元素           \n
-            page.ele('tag:div@text():some_text')         - 返回第一个文本含有some_text的div元素             \n
-            page.ele('tag:div@text()=some_text')         - 返回第一个文本等于some_text的div元素             \n
-            page.ele('text:some_text')                   - 返回第一个文本含有some_text的元素                \n
-            page.ele('some_text')                        - 返回第一个文本含有some_text的元素（等价于上一行）  \n
-            page.ele('text=some_text')                   - 返回第一个文本等于some_text的元素                \n
-            page.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素                        \n
-            page.ele('css:div.ele_class')                - 返回第一个符合css selector的元素                 \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
+        :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象
         """
         if isinstance(loc_or_ele, (str, tuple)):
@@ -146,11 +120,7 @@ class SessionPage(object):
             else:
                 if len(loc_or_ele) != 2:
                     raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
-
                 loc_or_ele = translate_loc(loc_or_ele)
-
-            # if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
-            #     loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
 
         elif isinstance(loc_or_ele, SessionElement):
             return loc_or_ele
@@ -161,38 +131,16 @@ class SessionPage(object):
         return execute_session_find(self, loc_or_ele, mode)
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]:
+             loc_or_str: Union[Tuple[str, str], str], timeout=None) -> List[SessionElement]:
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
-        示例：                                                                                          \n
-        - 用loc元组查找：                                                                                \n
-            page.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的元素                     \n
-        - 用查询字符串查找：                                                                              \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            page.eles('.ele_class')                       - 返回所有 class 为 ele_class 的元素            \n
-            page.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的元素         \n
-            page.eles('#ele_id')                          - 返回所有 id 为 ele_id 的元素                  \n
-            page.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的元素               \n
-            page.eles('@class:ele_class')                 - 返回所有class含有ele_class的元素              \n
-            page.eles('@name=ele_name')                   - 返回所有name等于ele_name的元素                \n
-            page.eles('@placeholder')                     - 返回所有带placeholder属性的元素               \n
-            page.eles('tag:p')                            - 返回所有<p>元素                              \n
-            page.eles('tag:div@class:ele_class')          - 返回所有class含有ele_class的div元素           \n
-            page.eles('tag:div@class=ele_class')          - 返回所有class等于ele_class的div元素           \n
-            page.eles('tag:div@text():some_text')         - 返回所有文本含有some_text的div元素             \n
-            page.eles('tag:div@text()=some_text')         - 返回所有文本等于some_text的div元素             \n
-            page.eles('text:some_text')                   - 返回所有文本含有some_text的元素                \n
-            page.eles('some_text')                        - 返回所有文本含有some_text的元素（等价于上一行）  \n
-            page.eles('text=some_text')                   - 返回所有文本等于some_text的元素                \n
-            page.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的元素                        \n
-            page.eles('css:div.ele_class')                - 返回所有符合css selector的元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象组成的列表
         """
         if not isinstance(loc_or_str, (tuple, str)):
             raise TypeError('Type of loc_or_str can only be tuple or str.')
 
-        return self.ele(loc_or_str, mode='all')
+        return super().eles(loc_or_str, timeout)
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n
@@ -391,12 +339,12 @@ class SessionPage(object):
                 file_name = f'untitled_{time()}_{randint(0, 100)}'
 
             # 去除非法字符
-            file_name = re_SUB(r'[\\/*:|<>?"]', '', file_name).strip()
+            file_name = sub(r'[\\/*:|<>?"]', '', file_name).strip()
             file_name = unquote(file_name)
 
             # -------------------重命名，不改变扩展名-------------------
             if new_name:
-                new_name = re_SUB(r'[\\/*:|<>?"]', '', new_name).strip()
+                new_name = sub(r'[\\/*:|<>?"]', '', new_name).strip()
                 ext_name = file_name.split('.')[-1]
 
                 if '.' in new_name or ext_name == file_name:
@@ -412,9 +360,9 @@ class SessionPage(object):
             goal = ''
             skip = False
 
-            for key, i in enumerate(goal_Path.parts):  # 去除路径中的非法字符
-                goal += goal_Path.drive if key == 0 and goal_Path.drive else re_SUB(r'[*:|<>?"]', '', i).strip()
-                goal += '\\' if i != '\\' and key < len(goal_Path.parts) - 1 else ''
+            for key, p in enumerate(goal_Path.parts):  # 去除路径中的非法字符
+                goal += goal_Path.drive if key == 0 and goal_Path.drive else sub(r'[*:|<>?"]', '', p).strip()
+                goal += '\\' if p != '\\' and key < len(goal_Path.parts) - 1 else ''
 
             goal_Path = Path(goal).absolute()
             goal_Path.mkdir(parents=True, exist_ok=True)

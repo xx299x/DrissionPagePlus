@@ -6,7 +6,7 @@
 """
 from glob import glob
 from pathlib import Path
-from time import time, sleep
+from time import sleep
 from typing import Union, List, Any, Tuple
 from urllib.parse import quote
 
@@ -15,29 +15,32 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
+from .base import BasePage
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
-from .driver_element import DriverElement, execute_driver_find
+from .driver_element import DriverElement, execute_driver_find, _wait_ele
 
 
-class DriverPage(object):
+class DriverPage(BasePage):
     """DriverPage封装了页面操作的常用功能，使用selenium来获取、解析、操作网页"""
 
     def __init__(self, driver: WebDriver, timeout: float = 10):
         """初始化函数，接收一个WebDriver对象，用来操作网页"""
+        super().__init__(timeout)
         self._driver = driver
-        self._timeout = timeout
-        self._url = None
-        self._url_available = None
-        self._wait = None
-
-        self.retry_times = 3
-        self.retry_interval = 2
+        self._wait_object = None
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
                  mode: str = 'single',
-                 timeout: float = None):
-        return self.ele(loc_or_str, mode, timeout)
+                 timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
+        """在内部查找元素                                           \n
+        例：ele = page('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all'，对应查找一个或全部
+        :param timeout: 超时时间
+        :return: DriverElement对象
+        """
+        return super().__call__(loc_or_str, mode, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -59,14 +62,10 @@ class DriverPage(object):
         return format_html(self.driver.find_element_by_xpath("//*").get_attribute("outerHTML"))
 
     @property
-    def cookies(self) -> list:
-        """返回当前网站cookies"""
-        return self.get_cookies(True)
-
-    @property
-    def url_available(self) -> bool:
-        """url有效性"""
-        return self._url_available
+    def json(self) -> dict:
+        """当返回内容是json格式时，返回对应的字典"""
+        from json import loads
+        return loads(self('t:pre').text)
 
     def get(self,
             url: str,
@@ -104,31 +103,6 @@ class DriverPage(object):
             mode: str = None,
             timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
         """返回页面中符合条件的元素，默认返回第一个                                                         \n
-        示例：                                                                                           \n
-        - 接收到元素对象时：                                                                              \n
-            返回DriverElement对象                                                                        \n
-        - 用loc元组查找：                                                                                \n
-            ele.ele((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的子元素                      \n
-        - 用查询字符串查找：                                                                              \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            page.ele('.ele_class')                       - 返回第一个 class 为 ele_class 的元素            \n
-            page.ele('.:ele_class')                      - 返回第一个 class 中含有 ele_class 的元素         \n
-            page.ele('#ele_id')                          - 返回第一个 id 为 ele_id 的元素                  \n
-            page.ele('#:ele_id')                         - 返回第一个 id 中含有 ele_id 的元素               \n
-            page.ele('@class:ele_class')                 - 返回第一个class含有ele_class的元素              \n
-            page.ele('@name=ele_name')                   - 返回第一个name等于ele_name的元素                \n
-            page.ele('@placeholder')                     - 返回第一个带placeholder属性的元素               \n
-            page.ele('tag:p')                            - 返回第一个<p>元素                              \n
-            page.ele('tag:div@class:ele_class')          - 返回第一个class含有ele_class的div元素           \n
-            page.ele('tag:div@class=ele_class')          - 返回第一个class等于ele_class的div元素           \n
-            page.ele('tag:div@text():some_text')         - 返回第一个文本含有some_text的div元素             \n
-            page.ele('tag:div@text()=some_text')         - 返回第一个文本等于some_text的div元素             \n
-            page.ele('text:some_text')                   - 返回第一个文本含有some_text的元素                \n
-            page.ele('some_text')                        - 返回第一个文本含有some_text的元素（等价于上一行）  \n
-            page.ele('text=some_text')                   - 返回第一个文本等于some_text的元素                \n
-            page.ele('xpath://div[@class="ele_class"]')  - 返回第一个符合xpath的元素                        \n
-            page.ele('css:div.ele_class')                - 返回第一个符合css selector的元素                 \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 查找元素超时时间
@@ -142,9 +116,6 @@ class DriverPage(object):
                 if len(loc_or_ele) != 2:
                     raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
                 loc_or_ele = translate_loc(loc_or_ele)
-
-            # if loc_or_ele[0] == 'xpath' and not loc_or_ele[1].startswith(('/', '(')):
-            #     loc_or_ele = loc_or_ele[0], f'//{loc_or_ele[1]}'
 
         # 接收到DriverElement对象直接返回
         elif isinstance(loc_or_ele, DriverElement):
@@ -164,29 +135,6 @@ class DriverPage(object):
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[DriverElement]:
         """返回页面中所有符合条件的元素                                                                     \n
-        示例：                                                                                            \n
-        - 用loc元组查找：                                                                                 \n
-            page.eles((By.CLASS_NAME, 'ele_class')) - 返回所有class为ele_class的元素                       \n
-        - 用查询字符串查找：                                                                               \n
-            查找方式：属性、tag name和属性、文本、xpath、css selector、id、class                             \n
-            @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-            page.eles('.ele_class')                       - 返回所有 class 为 ele_class 的元素            \n
-            page.eles('.:ele_class')                      - 返回所有 class 中含有 ele_class 的元素         \n
-            page.eles('#ele_id')                          - 返回所有 id 为 ele_id 的元素                  \n
-            page.eles('#:ele_id')                         - 返回所有 id 中含有 ele_id 的元素               \n
-            page.eles('@class:ele_class')                 - 返回所有class含有ele_class的元素               \n
-            page.eles('@name=ele_name')                   - 返回所有name等于ele_name的元素                 \n
-            page.eles('@placeholder')                     - 返回所有带placeholder属性的元素                \n
-            page.eles('tag:p')                            - 返回所有<p>元素                               \n
-            page.eles('tag:div@class:ele_class')          - 返回所有class含有ele_class的div元素            \n
-            page.eles('tag:div@class=ele_class')          - 返回所有class等于ele_class的div元素            \n
-            page.eles('tag:div@text():some_text')         - 返回所有文本含有some_text的div元素             \n
-            page.eles('tag:div@text()=some_text')         - 返回所有文本等于some_text的div元素             \n
-            page.eles('text:some_text')                   - 返回所有文本含有some_text的元素                \n
-            page.eles('some_text')                        - 返回所有文本含有some_text的元素（等价于上一行）  \n
-            page.eles('text=some_text')                   - 返回所有文本等于some_text的元素                \n
-            page.eles('xpath://div[@class="ele_class"]')  - 返回所有符合xpath的元素                        \n
-            page.eles('css:div.ele_class')                - 返回所有符合css selector的元素                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :return: DriverElement对象组成的列表
@@ -194,7 +142,7 @@ class DriverPage(object):
         if not isinstance(loc_or_str, (tuple, str)):
             raise TypeError('Type of loc_or_str can only be tuple or str.')
 
-        return self.ele(loc_or_str, mode='all', timeout=timeout)
+        return super().eles(loc_or_str, timeout)
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
         """返回当前网站cookies"""
@@ -202,6 +150,17 @@ class DriverPage(object):
             return {cookie['name']: cookie['value'] for cookie in self.driver.get_cookies()}
         else:
             return self.driver.get_cookies()
+
+    @property
+    def timeout(self) -> float:
+        """返回查找元素时等待的秒数"""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, second: float) -> None:
+        """设置查找元素时等待的秒数"""
+        self._timeout = second
+        self._wait_object = None
 
     def _try_to_connect(self,
                         to_url: str,
@@ -246,23 +205,12 @@ class DriverPage(object):
         return self._driver
 
     @property
-    def timeout(self) -> float:
-        """返回查找元素时等待的秒数"""
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, second: float) -> None:
-        """设置查找元素时等待的秒数"""
-        self._timeout = second
-        self._wait = None
-
-    @property
     def wait_object(self) -> WebDriverWait:
         """返回WebDriverWait对象，重用避免每次新建对象"""
-        if self._wait is None:
-            self._wait = WebDriverWait(self.driver, timeout=self.timeout)
+        if self._wait_object is None:
+            self._wait_object = WebDriverWait(self.driver, timeout=self.timeout)
 
-        return self._wait
+        return self._wait_object
 
     @property
     def tabs_count(self) -> int:
@@ -297,66 +245,7 @@ class DriverPage(object):
         :param timeout: 等待超时时间
         :return: 等待是否成功
         """
-        if mode.lower() not in ('del', 'display', 'hidden'):
-            raise ValueError('Argument mode can only be "del", "display", "hidden"')
-
-        from selenium.webdriver.support.wait import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as ec
-
-        timeout = timeout or self.timeout
-        is_ele = False
-
-        if isinstance(loc_or_ele, DriverElement):
-            loc_or_ele = loc_or_ele.inner_ele
-            is_ele = True
-
-        elif isinstance(loc_or_ele, WebElement):
-            is_ele = True
-
-        elif isinstance(loc_or_ele, str):
-            loc_or_ele = str_to_loc(loc_or_ele)
-
-        elif isinstance(loc_or_ele, tuple):
-            pass
-
-        else:
-            raise TypeError('The type of loc_or_ele can only be str, tuple, DriverElement, WebElement')
-
-        # 当传入参数是元素对象时
-        if is_ele:
-            end_time = time() + timeout
-
-            while time() < end_time:
-                if mode == 'del':
-                    try:
-                        loc_or_ele.is_enabled()
-                    except:
-                        return True
-
-                elif mode == 'display' and loc_or_ele.is_displayed():
-                    return True
-
-                elif mode == 'hidden' and not loc_or_ele.is_displayed():
-                    return True
-
-            return False
-
-        # 当传入参数是控制字符串或元组时
-        else:
-            try:
-                if mode == 'del':
-                    WebDriverWait(self.driver, timeout).until_not(ec.presence_of_element_located(loc_or_ele))
-
-                elif mode == 'display':
-                    WebDriverWait(self.driver, timeout).until(ec.visibility_of_element_located(loc_or_ele))
-
-                elif mode == 'hidden':
-                    WebDriverWait(self.driver, timeout).until_not(ec.visibility_of_element_located(loc_or_ele))
-
-                return True
-
-            except:
-                return False
+        return _wait_ele(self, loc_or_ele, mode, timeout)
 
     def check_page(self) -> Union[bool, None]:
         """检查页面是否符合预期            \n
@@ -536,8 +425,8 @@ class DriverPage(object):
             self.driver.execute_script(f"window.scrollBy({pixel},0);")
 
         else:
-            raise ValueError(
-                "Argument mode can only be 'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'.")
+            raise ValueError("Argument mode can only be "
+                             "'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'.")
 
     def refresh(self) -> None:
         """刷新当前页面"""
