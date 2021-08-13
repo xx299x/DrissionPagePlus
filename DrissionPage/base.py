@@ -226,6 +226,12 @@ class BasePage(BaseParser):
         self._url_available = None
 
     @property
+    def title(self) -> Union[str, None]:
+        """返回网页title"""
+        ele = self('t:title')
+        return ele.text if ele else None
+
+    @property
     def timeout(self) -> float:
         """返回查找元素时等待的秒数"""
         return self._timeout
@@ -251,10 +257,6 @@ class BasePage(BaseParser):
     # ----------------以下属性或方法由后代实现----------------
     @property
     def url(self):
-        return
-
-    @property
-    def title(self):
         return
 
     @property

@@ -331,7 +331,7 @@ class DriverElement(DrissionElement):
         """输入文本或组合键，可用于所有场合          \n
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
-        :return: 是否输入成功
+        :return: None
         """
         if clear:
             self.clear()
@@ -342,7 +342,7 @@ class DriverElement(DrissionElement):
         """专门用于输入文本框，解决文本框有时输入失效的问题       \n
         :param txt: 文本值
         :param clear: 输入前是否清空文本框
-        :return: 是否输入成功
+        :return: None
         """
         enter = '\n' if txt.endswith('\n') else None
         full_txt = txt if clear else f'{self.attr("value")}{txt}'

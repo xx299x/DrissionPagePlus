@@ -50,11 +50,6 @@ class SessionPage(BasePage):
         return self._url
 
     @property
-    def title(self) -> str:
-        """返回网页title"""
-        return self.ele('tag:title').text
-
-    @property
     def html(self) -> str:
         """返回页面html文本"""
         return format_html(self.response.text) if self.response else ''
