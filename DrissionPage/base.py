@@ -30,7 +30,7 @@ class BaseParser(object):
         return
 
     @abstractmethod
-    def ele(self, loc_or_ele, mode, timeout):
+    def ele(self, loc_or_ele, mode='single', timeout=None):
         pass
 
 
@@ -75,7 +75,7 @@ class BaseElement(BaseParser):
         return True
 
     @abstractmethod
-    def ele(self, loc_or_str, mode, timeout):
+    def ele(self, loc_or_str, mode='single', timeout=None):
         pass
 
     @abstractmethod
@@ -228,7 +228,7 @@ class BasePage(BaseParser):
     @property
     def title(self) -> Union[str, None]:
         """返回网页title"""
-        ele = self('x:/html/head/title')
+        ele = self.ele('x:/html/head/title')
         return ele.text if ele else None
 
     @property
@@ -281,7 +281,7 @@ class BasePage(BaseParser):
         pass
 
     @abstractmethod
-    def ele(self, loc_or_ele, mode, timeout):
+    def ele(self, loc_or_ele, mode='single', timeout=None):
         pass
 
     @abstractmethod
