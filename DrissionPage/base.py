@@ -228,7 +228,7 @@ class BasePage(BaseParser):
     @property
     def title(self) -> Union[str, None]:
         """返回网页title"""
-        ele = self('t:title')
+        ele = self('x:html/head/title')
         return ele.text if ele else None
 
     @property
