@@ -268,7 +268,7 @@ def get_exe_path_from_port(port: Union[str, int]) -> Union[str, None]:
     while not process and perf_counter() - t < 10:
         process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
 
-    processid = process[process.rfind(' ') + 1:]
+    processid = process.split(' ')[-1]
 
     if not processid:
         return

@@ -98,7 +98,7 @@ class Drission(object):
             # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
             if options.debugger_address and _check_port(options.debugger_address) is False:
                 from subprocess import Popen
-                port = options.debugger_address[options.debugger_address.rfind(':') + 1:]
+                port = options.debugger_address.split(':')[-1]
 
                 # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
                 chrome_path, self._debugger = _create_chrome(chrome_path, port,
@@ -196,7 +196,7 @@ class Drission(object):
             if not txt:
                 return
 
-            pid = txt[txt.rfind(' ') + 1:]
+            pid = txt.split(' ')[-1]
             if popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
                 popen(f'taskkill /pid {pid} /F')
 
