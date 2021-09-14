@@ -29,33 +29,21 @@ class MixPage(SessionPage, DriverPage, BasePage):
     """
 
     def __init__(self,
-                 drission: Union[Drission, str] = None,
                  mode: str = 'd',
+                 drission: Union[Drission, str] = None,
                  timeout: float = 10,
                  driver_options: Union[dict, DriverOptions] = None,
                  session_options: Union[dict, SessionOptions] = None):
         """初始化函数                                                                         \n
-        :param drission: Drission对象，传入's'或'd'可自动创建Drission对象
         :param mode: 'd' 或 's'，即driver模式和session模式
+        :param drission: Drission对象，不传入时会自动创建
+        :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间
         :param driver_options: 浏览器设置，没有传入drission参数时会用这个设置新建Drission对象
         :param session_options: requests设置，没有传入drission参数时会用这个设置新建Drission对象
         """
         super().__init__(timeout)  # BasePage的__init__()
-        if isinstance(drission, str):
-            self._mode = drission.lower()
-            drission = None
-        else:
-            self._mode = mode
-
-        if self._mode == 's':
-            self._driver = None
-            self._session = True
-        elif self._mode == 'd':
-            self._driver = True
-            self._session = None
-        else:
-            raise ValueError("Argument mode can only be 'd' or 's'.")
-
+        self._mode = mode.lower()
+        self._driver, self._session = (None, True) if self._mode == 's' else (True, None)
         self._drission = drission or Drission(driver_options, session_options)
 
     def __call__(self,
