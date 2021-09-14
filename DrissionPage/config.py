@@ -8,10 +8,11 @@
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from http.cookiejar import Cookie
 from pathlib import Path
+from typing import Any, Union
+
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from typing import Any, Union
 
 
 class OptionsManager(object):
@@ -356,6 +357,14 @@ class SessionOptions(object):
         :return: None
         """
         self._max_redirects = max_redirects
+
+    def set_headers(self, headers: dict):
+        """设置headers参数           \n
+        :param headers: 参数值
+        :return: 返回当前对象
+        """
+        self._headers = {key.lower(): headers[key] for key in headers}
+        return self
 
     def set_a_header(self, attr: str, value: str):
         """设置headers中一个项          \n
