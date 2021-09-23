@@ -268,7 +268,7 @@ class SessionOptions(object):
         :param headers: 参数值
         :return: None
         """
-        self._headers = {key.lower(): headers[key] for key in headers}
+        self.set_headers(headers)
 
     @cookies.setter
     def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None:
@@ -679,12 +679,15 @@ def _dict_to_chrome_options(options: dict) -> Options:
     return chrome_options
 
 
-def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None]) -> Union[dict, None]:
+def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, bool]) -> Union[dict, None]:
     """把chrome配置对象转换为字典                             \n
     :param options: chrome配置对象，字典或DriverOptions对象
     :return: 配置字典
     """
-    if isinstance(options, (dict, type(None))):
+    if options in (False, None):
+        return DriverOptions(read_file=False).as_dict()
+
+    if isinstance(options, dict):
         return options
 
     re_dict = dict()
@@ -702,7 +705,10 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     :param options: session配置对象或字典
     :return: 配置字典
     """
-    if isinstance(options, (dict, type(None))):
+    if options in (False, None):
+        return SessionOptions(read_file=False).as_dict()
+
+    if isinstance(options, dict):
         return options
 
     re_dict = dict()
@@ -718,7 +724,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
         if val is not None:
             re_dict[attr] = val
 
-    # cert属性默认值为None，未免无法区分是否被设置，故主动赋值
+    # cert属性默认值为None，为免无法区分是否被设置，故主动赋值
     re_dict['cert'] = options.__getattribute__('_cert')
     re_dict['auth'] = options.__getattribute__('_auth')
 

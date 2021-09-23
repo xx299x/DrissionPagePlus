@@ -23,8 +23,8 @@ class Drission(object):
     """Drission类用于管理WebDriver对象和Session对象，是驱动器的角色"""
 
     def __init__(self,
-                 driver_or_options: Union[WebDriver, dict, Options, DriverOptions] = None,
-                 session_or_options: Union[Session, dict, SessionOptions] = None,
+                 driver_or_options: Union[WebDriver, dict, Options, DriverOptions, bool] = None,
+                 session_or_options: Union[Session, dict, SessionOptions, bool] = None,
                  ini_path: str = None,
                  proxy: dict = None):
         """初始化，可接收现成的WebDriver和Session对象，或接收它们的配置信息生成对象       \n
