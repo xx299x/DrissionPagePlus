@@ -181,7 +181,7 @@ class SessionPage(BasePage):
 
         for _ in range(times + 1):
             try:
-                r = self._make_response(to_url, mode=mode, show_errmsg=True, **kwargs)[0]
+                r = self._make_response(to_url, mode=mode, data=data, show_errmsg=True, **kwargs)[0]
             except Exception as e:
                 err = e
                 r = None
