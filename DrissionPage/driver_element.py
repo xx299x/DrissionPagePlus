@@ -15,7 +15,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from .base import DrissionElement
+from .base import DrissionElement, BaseElement
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 
 
@@ -542,7 +542,7 @@ def execute_driver_find(page_or_ele,
     if mode not in ('single', 'all'):
         raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
-    if isinstance(page_or_ele, DrissionElement):
+    if isinstance(page_or_ele, BaseElement):
         page = page_or_ele.page
         driver = page_or_ele.inner_ele
     else:  # 传入的是DriverPage对象
