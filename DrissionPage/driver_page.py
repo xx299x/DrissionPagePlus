@@ -5,6 +5,7 @@
 @File    :   driver_page.py
 """
 from glob import glob
+from os import sep
 from pathlib import Path
 from time import sleep
 from typing import Union, List, Any, Tuple
@@ -372,7 +373,7 @@ class DriverPage(BasePage):
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
         name = get_available_file_name(str(path), f'{name}.png')
-        img_path = f'{path}\\{name}'
+        img_path = f'{path}{sep}{name}'
         self.driver.save_screenshot(img_path)
         return img_path
 
@@ -456,17 +457,27 @@ class DriverPage(BasePage):
         :param download_path: 下载文件夹路径
         :return: 文件列表
         """
-        return glob(f'{download_path}\\*.crdownload')
+        return glob(f'{download_path}{sep}*.crdownload')
 
-    def process_alert(self, mode: str = 'ok', text: str = None) -> Union[str, None]:
+    def process_alert(self, mode: str = 'ok', text: str = None, timeout: float = None) -> Union[str, None]:
         """处理提示框                                                            \n
         :param mode: 'ok' 或 'cancel'，若输入其它值，不会按按钮但依然返回文本值
         :param text: 处理prompt提示框时可输入文本
+        :param timeout: 等待提示框出现的超时时间
         :return: 提示框内容文本
         """
-        try:
-            alert = self.driver.switch_to.alert
-        except NoAlertPresentException:
+        timeout = timeout if timeout is not None else self.timeout
+        from time import perf_counter
+        alert = None
+        t1 = perf_counter()
+        while perf_counter() - t1 <= timeout:
+            try:
+                alert = self.driver.switch_to.alert
+                break
+            except NoAlertPresentException:
+                pass
+
+        if not alert:
             return None
 
         if text:
@@ -476,7 +487,6 @@ class DriverPage(BasePage):
 
         if mode == 'cancel':
             alert.dismiss()
-
         elif mode == 'ok':
             alert.accept()
 

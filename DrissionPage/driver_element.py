@@ -4,9 +4,10 @@
 @Contact :   g1879@qq.com
 @File    :   driver_element.py
 """
+from os import sep
 from pathlib import Path
 from re import sub
-from time import sleep, time
+from time import time
 from typing import Union, List, Any, Tuple
 
 from selenium.common.exceptions import TimeoutException, JavascriptException, InvalidElementStateException
@@ -264,19 +265,23 @@ class DriverElement(DrissionElement):
 
         return None if r == 'none' else r
 
-    def click(self, by_js: bool = None) -> bool:
+    def click(self, by_js: bool = None, timeout: float = None) -> bool:
         """点击元素                                                                      \n
-        尝试点击3次，若都失败就改用js点击                                                  \n
+        尝试点击直到超时，若都失败就改用js点击                                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
+        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
         :return: 是否点击成功
         """
         if not by_js:
-            for _ in range(3):
+            timeout = timeout if timeout is not None else self.page.timeout
+            from time import perf_counter
+            t1 = perf_counter()
+            while perf_counter() - t1 <= timeout:
                 try:
                     self.inner_ele.click()
-                    return True
+                    break
                 except:
-                    sleep(0.2)
+                    pass
 
         # 若点击失败，用js方式点击
         if by_js is not False:
@@ -414,7 +419,7 @@ class DriverElement(DrissionElement):
             while not self.run_script(js):
                 pass
 
-        img_path = f'{path}\\{name}'
+        img_path = f'{path}{sep}{name}'
         self.inner_ele.screenshot(img_path)
 
         return img_path
@@ -842,7 +847,7 @@ def _wait_ele(page_or_ele,
     if mode.lower() not in ('del', 'display', 'hidden'):
         raise ValueError('Argument mode can only be "del", "display", "hidden"')
 
-    if isinstance(page_or_ele, DrissionElement):
+    if isinstance(page_or_ele, DrissionElement):  # TODO: 是否要改为 BaseElement
         page = page_or_ele.page
         ele_or_driver = page_or_ele.inner_ele
     else:

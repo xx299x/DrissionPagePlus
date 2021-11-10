@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   session_page.py
 """
-from os import path as os_PATH
+from os import path as os_PATH, sep
 from pathlib import Path
 from random import randint
 from re import search as re_SEARCH, sub
@@ -275,9 +275,9 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
         """
-        if file_exists == 'skip' and Path(f'{goal_path}\\{rename}').exists():
+        if file_exists == 'skip' and Path(f'{goal_path}{sep}{rename}').exists():
             if show_msg:
-                print(f'{file_url}\n{goal_path}\\{rename}\nSkipped.\n')
+                print(f'{file_url}\n{goal_path}{sep}{rename}\nSkipped.\n')
 
             return False, 'Skipped because a file with the same name already exists.'
 
@@ -361,12 +361,12 @@ class SessionPage(BasePage):
 
             goal_Path = Path(goal).absolute()
             goal_Path.mkdir(parents=True, exist_ok=True)
-            full_path = Path(f'{goal}\\{full_name}')
+            full_path = Path(f'{goal}{sep}{full_name}')
 
             if full_path.exists():
                 if file_exists == 'rename':
                     full_name = get_available_file_name(goal, full_name)
-                    full_path = Path(f'{goal}\\{full_name}')
+                    full_path = Path(f'{goal}{sep}{full_name}')
 
                 elif exists == 'skip':
                     skip = True
@@ -436,7 +436,7 @@ class SessionPage(BasePage):
             if msg:
                 print(info, '\n')
 
-            info = f'{goal}\\{full_name}' if download_status else info
+            info = f'{goal}{sep}{full_name}' if download_status else info
             return download_status, info
 
         retry_times = retry or self.retry_times

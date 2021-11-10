@@ -159,6 +159,8 @@ shadow_element = webdriver.execute_script('return arguments[0].shadowRoot', elem
 
 # 使用 DrissionPage：
 shadow_element = element.shadow_root
+# 或
+shadow_element = element.sr
 ```
 
 - 用 xpath 直接获取属性或文本节点（返回文本）
