@@ -163,7 +163,7 @@ class SessionPage(BasePage):
                         times: int = 0,
                         interval: float = 1,
                         mode: str = 'get',
-                        data: dict = None,
+                        data: Union[dict, str] = None,
                         show_errmsg: bool = False,
                         **kwargs) -> Response:
         """尝试连接，重试若干次                            \n
@@ -211,7 +211,7 @@ class SessionPage(BasePage):
 
     def post(self,
              url: str,
-             data: dict = None,
+             data: Union[dict, str] = None,
              go_anyway: bool = True,
              show_errmsg: bool = False,
              retry: int = None,
@@ -457,7 +457,7 @@ class SessionPage(BasePage):
     def _make_response(self,
                        url: str,
                        mode: str = 'get',
-                       data: dict = None,
+                       data: Union[dict, str] = None,
                        show_errmsg: bool = False,
                        **kwargs) -> tuple:
         """生成response对象                     \n
