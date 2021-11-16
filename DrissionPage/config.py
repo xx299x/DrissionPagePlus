@@ -292,7 +292,7 @@ class SessionOptions(object):
         :param proxies: 参数值
         :return: None
         """
-        self._proxies = proxies
+        self.set_proxies(proxies)
 
     @hooks.setter
     def hooks(self, hooks: dict) -> None:
@@ -390,6 +390,16 @@ class SessionOptions(object):
         if attr in self._headers:
             self._headers.pop(attr)
 
+        return self
+
+    def set_proxies(self, proxies: dict):
+        """设置proxies参数           \n
+        {'http': 'http://xx.xx.xx.xx:xxxx',
+         'https': 'http://xx.xx.xx.xx:xxxx'}
+        :param proxies: 参数值
+        :return: None
+        """
+        self._proxies = proxies
         return self
 
     def save(self, path: str = None):
