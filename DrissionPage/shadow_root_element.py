@@ -12,6 +12,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from .base import BaseElement
 from .common import format_html
 from .driver_element import execute_driver_find, DriverElement
+from .session_element import make_session_ele
 
 
 class ShadowRootElement(BaseElement):
@@ -88,6 +89,9 @@ class ShadowRootElement(BaseElement):
             return execute_driver_find(self, loc_or_str, mode, timeout)
         elif loc_or_str[0] == 'text':
             return self._find_eles_by_text(loc_or_str[1], loc_or_str[2], loc_or_str[3], mode)
+
+    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+        return make_session_ele(self, loc_or_ele, mode)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],

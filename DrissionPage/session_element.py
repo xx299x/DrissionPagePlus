@@ -145,16 +145,7 @@ class SessionElement(DrissionElement):
         :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象
         """
-        if isinstance(loc_or_str, (str, tuple)):
-            if isinstance(loc_or_str, str):
-                loc_or_str = str_to_loc(loc_or_str)
-            else:
-                if len(loc_or_str) != 2:
-                    raise ValueError("Len of loc_or_str must be 2 when it's a tuple.")
-                loc_or_str = translate_loc(loc_or_str)
-        else:
-            raise ValueError('Argument loc_or_str can only be tuple or str.')
-
+        loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
         element = self
         loc_str = loc_or_str[1]
 
@@ -168,7 +159,7 @@ class SessionElement(DrissionElement):
 
         loc_or_str = loc_or_str[0], loc_str
 
-        return execute_session_find(element, loc_or_str, mode)
+        return make_session_ele(element, loc_or_str, mode)
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
@@ -177,6 +168,9 @@ class SessionElement(DrissionElement):
         :return: SessionElement对象组成的列表
         """
         return self.ele(loc_or_str, mode='all')
+
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, timeout=None):
+        return self.ele(loc_or_str, mode=mode, timeout=timeout)
 
     def _get_ele_path(self, mode) -> str:
         """获取css路径或xpath路径
@@ -223,9 +217,9 @@ class SessionElement(DrissionElement):
         return link
 
 
-def execute_session_find(page_or_ele,
-                         loc: Tuple[str, str],
-                         mode: str = 'single', ) -> Union[SessionElement, List[SessionElement], str, None]:
+def make_session_ele(page_or_ele,
+                     loc: Union[str, Tuple[str, str]],
+                     mode: str = 'single', ) -> Union[SessionElement, List[SessionElement], str, None]:
     """执行session模式元素的查找                              \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: SessionPage对象或SessionElement对象
@@ -238,30 +232,44 @@ def execute_session_find(page_or_ele,
         raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
 
     # 根据传入对象类型获取页面对象和lxml元素对象
-    if isinstance(page_or_ele, SessionElement):
+    type_str = str(type(page_or_ele))
+    if isinstance(page_or_ele, str):  # 直接传入html文本
+        page = None
+        page_or_ele = fromstring(page_or_ele)
+    elif type_str.endswith("SessionElement'>"):  # SessionElement
         page = page_or_ele.page
         page_or_ele = page_or_ele.inner_ele
-    else:  # 传入的是SessionPage对象
+    elif "Page" in type_str:  # MixPage, DriverPage 或 SessionPage
         page = page_or_ele
-        page_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
+        page_or_ele = fromstring(page_or_ele.html)
+    else:  # DrissionElement 或 ShadowRootElement
+        page = page_or_ele.page
+        page_or_ele = fromstring(page_or_ele.html)
+    # else:  # 传入的是SessionPage对象
+    #     page = page_or_ele
+    #     page_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
 
+    # ---------------处理定位符---------------
+    if isinstance(loc, str):
+        loc = str_to_loc(loc)
+    elif isinstance(loc, tuple):
+        loc = translate_loc(loc)
+    else:
+        raise ValueError("定位符必须为str或长度为2的tuple。")
+
+    # ---------------执行搜索-----------------
     try:
-        # 用lxml内置方法获取lxml的元素对象列表
-        if loc[0] == 'xpath':
+        if loc[0] == 'xpath':  # 用lxml内置方法获取lxml的元素对象列表
             ele = page_or_ele.xpath(loc[1])
-
-        # 用css selector获取元素对象列表
-        else:
+        else:  # 用css selector获取元素对象列表
             ele = page_or_ele.cssselect(loc[1])
 
-        # 结果不是列表，如数字
-        if not isinstance(ele, list):
+        if not isinstance(ele, list):  # 结果不是列表，如数字
             return ele
 
         # 把lxml元素对象包装成SessionElement对象并按需要返回第一个或全部
         if mode == 'single':
             ele = ele[0] if ele else None
-
             if isinstance(ele, HtmlElement):
                 return SessionElement(ele, page)
             elif isinstance(ele, str):
@@ -273,7 +281,6 @@ def execute_session_find(page_or_ele,
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']
 
     except Exception as e:
-
         if 'Invalid expression' in str(e):
             raise SyntaxError(f'Invalid xpath syntax. {loc}')
         elif 'Expected selector' in str(e):

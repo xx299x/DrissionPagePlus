@@ -6,7 +6,7 @@
 """
 from abc import abstractmethod
 from re import sub
-from typing import Union
+from typing import Union, Tuple
 
 from lxml.html import HtmlElement
 from selenium.webdriver.remote.webelement import WebElement
@@ -21,13 +21,25 @@ class BaseParser(object):
                  timeout: float = None):
         return self.ele(loc_or_str, mode, timeout)
 
-    def eles(self, loc_or_str, timeout):
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None):
         return self.ele(loc_or_str, mode='all', timeout=timeout)
+
+    def s_eles(self,
+               loc_or_str: Union[Tuple[str, str], str],
+               timeout: float = None):
+        """查找并以SessionElement方式返回元素"""
+        return self.s_ele(loc_or_str, mode='all', timeout=timeout)
 
     # ----------------以下属性或方法待后代实现----------------
     @property
     def html(self):
         return
+
+    @abstractmethod
+    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+        pass
 
     @abstractmethod
     def ele(self, loc_or_ele, mode='single', timeout=None):
@@ -50,8 +62,8 @@ class BaseElement(BaseParser):
         """返回后一个兄弟元素"""
         return self.nexts()
 
-    def eles(self, loc_or_str, timeout):
-        return super().eles(loc_or_str, timeout)
+    # def eles(self, loc_or_str, timeout):
+    #     return super().eles(loc_or_str, timeout)
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -251,8 +263,8 @@ class BasePage(BaseParser):
         """返回当前访问的url有效性"""
         return self._url_available
 
-    def eles(self, loc_or_str, timeout):
-        return super().eles(loc_or_str, timeout)
+    # def eles(self, loc_or_str, timeout):
+    #     return super().eles(loc_or_str, timeout)
 
     # ----------------以下属性或方法由后代实现----------------
     @property

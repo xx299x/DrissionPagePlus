@@ -133,6 +133,12 @@ class MixPage(SessionPage, DriverPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).ele(loc_or_ele, mode=mode, timeout=timeout)
 
+    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+        if self._mode == 's':
+            return super().s_ele(loc_or_ele, mode=mode)
+        elif self._mode == 'd':
+            return super(SessionPage, self).s_ele(loc_or_ele, mode=mode, timeout=timeout)
+
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> Union[List[DriverElement], List[SessionElement]]:

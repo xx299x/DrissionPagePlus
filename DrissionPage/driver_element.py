@@ -18,6 +18,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
+from .session_element import make_session_ele
 
 
 class DriverElement(DrissionElement):
@@ -123,16 +124,7 @@ class DriverElement(DrissionElement):
         :param timeout: 查找元素超时时间
         :return: DriverElement对象
         """
-        if isinstance(loc_or_str, (str, tuple)):
-            if isinstance(loc_or_str, str):
-                loc_or_str = str_to_loc(loc_or_str)
-            else:
-                if len(loc_or_str) != 2:
-                    raise ValueError("Len of loc_or_str must be 2 when it's a tuple.")
-                loc_or_str = translate_loc(loc_or_str)
-        else:
-            raise ValueError('Argument loc_or_str can only be tuple or str.')
-
+        loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
         loc_str = loc_or_str[1]
 
         if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
@@ -142,8 +134,10 @@ class DriverElement(DrissionElement):
             loc_str = f'{self.css_path}{loc_or_str[1]}'
 
         loc_or_str = loc_or_str[0], loc_str
-
         return execute_driver_find(self, loc_or_str, mode, timeout)
+
+    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+        return make_session_ele(self, loc_or_ele, mode)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],

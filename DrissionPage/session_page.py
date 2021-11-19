@@ -16,9 +16,9 @@ from requests import Session, Response
 from tldextract import extract
 
 from .base import BasePage
-from .common import str_to_loc, translate_loc, get_available_file_name, format_html
+from .common import get_available_file_name, format_html
 from .config import _cookie_to_dict
-from .session_element import SessionElement, execute_session_find
+from .session_element import SessionElement, make_session_ele
 
 
 class SessionPage(BasePage):
@@ -102,40 +102,26 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            mode: str = None, timeout=None) -> Union[SessionElement, List[SessionElement], str, None]:
+            mode: str = None,
+            timeout=None) -> Union[SessionElement, List[SessionElement], str, None]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象
         """
-        if isinstance(loc_or_ele, (str, tuple)):
-            if isinstance(loc_or_ele, str):
-                loc_or_ele = str_to_loc(loc_or_ele)
-            else:
-                if len(loc_or_ele) != 2:
-                    raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
-                loc_or_ele = translate_loc(loc_or_ele)
+        return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, mode)
 
-        elif isinstance(loc_or_ele, SessionElement):
-            return loc_or_ele
-
-        else:
-            raise ValueError('Argument loc_or_str can only be tuple, str, SessionElement, Element.')
-
-        return execute_session_find(self, loc_or_ele, mode)
-
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str], timeout=None) -> List[SessionElement]:
+    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None) -> List[SessionElement]:
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象组成的列表
         """
-        if not isinstance(loc_or_str, (tuple, str)):
-            raise TypeError('Type of loc_or_str can only be tuple or str.')
-
         return super().eles(loc_or_str, timeout)
+
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, timeout=None):
+        return self.ele(loc_or_str, mode=mode, timeout=timeout)
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n

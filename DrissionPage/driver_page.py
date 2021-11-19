@@ -19,6 +19,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .base import BasePage
 from .common import str_to_loc, get_available_file_name, translate_loc, format_html
 from .driver_element import DriverElement, execute_driver_find, _wait_ele
+from .session_element import make_session_ele
 
 
 class DriverPage(BasePage):
@@ -127,6 +128,9 @@ class DriverPage(BasePage):
 
         return execute_driver_find(self, loc_or_ele, mode, timeout)
 
+    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+        return make_session_ele(self, loc_or_ele, mode)
+
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[DriverElement]:
@@ -135,9 +139,6 @@ class DriverPage(BasePage):
         :param timeout: 查找元素超时时间
         :return: DriverElement对象组成的列表
         """
-        if not isinstance(loc_or_str, (tuple, str)):
-            raise TypeError('Type of loc_or_str can only be tuple or str.')
-
         return super().eles(loc_or_str, timeout)
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:

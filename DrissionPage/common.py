@@ -158,7 +158,11 @@ def _make_search_str(search_str: str) -> str:
 
 
 def format_html(text: str, trans: bool = True) -> str:
-    """处理html编码字符"""
+    """处理html编码字符             \n
+    :param text: html文本
+    :param trans: 是否转码
+    :return: 格式化后的html文本
+    """
     if not text:
         return text
 
@@ -173,8 +177,10 @@ def translate_loc(loc: tuple) -> tuple:
     :param loc: By类型的loc元组
     :return: css selector或xpath类型的loc元组
     """
+    if len(loc) != 2:
+        raise ValueError('定位符长度必须为2。')
+
     loc_by = 'xpath'
-    loc_str = None
 
     if loc[0] == 'xpath':
         loc_str = loc[1]
@@ -200,6 +206,9 @@ def translate_loc(loc: tuple) -> tuple:
 
     elif loc[0] == 'partial link text':
         loc_str = f'//a[contains(text(),"{loc[1]}")]'
+
+    else:
+        raise ValueError('无法识别的定位符。')
 
     return loc_by, loc_str
 
