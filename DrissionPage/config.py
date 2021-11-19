@@ -657,7 +657,7 @@ def _dict_to_chrome_options(options: dict) -> Options:
         # 启动参数
         if options.get('arguments', None):
             if not isinstance(options['arguments'], list):
-                raise Exception(f"Arguments need list，not {type(options['arguments'])}.")
+                raise Exception(f"参数必须为list，现在是：{type(options['arguments'])}。")
 
             for arg in options['arguments']:
                 chrome_options.add_argument(arg)
@@ -665,7 +665,7 @@ def _dict_to_chrome_options(options: dict) -> Options:
         # 加载插件
         if options.get('extension_files', None):
             if not isinstance(options['extension_files'], list):
-                raise Exception(f'Extension files need list，not {type(options["extension_files"])}.')
+                raise Exception(f'extension_files必须是list，现在是：{type(options["extension_files"])}。')
 
             for arg in options['extension_files']:
                 chrome_options.add_extension(arg)
@@ -673,7 +673,7 @@ def _dict_to_chrome_options(options: dict) -> Options:
         # 扩展设置
         if options.get('extensions', None):
             if not isinstance(options['extensions'], list):
-                raise Exception(f'Extensions need list，not {type(options["extensions"])}.')
+                raise Exception(f'extensions必须是list，现在是：{type(options["extensions"])}。')
 
             for arg in options['extensions']:
                 chrome_options.add_encoded_extension(arg)
@@ -681,7 +681,7 @@ def _dict_to_chrome_options(options: dict) -> Options:
         # 实验性质的设置参数
         if options.get('experimental_options', None):
             if not isinstance(options['experimental_options'], dict):
-                raise Exception(f'Experimental options need dict，not {type(options["experimental_options"])}.')
+                raise Exception(f'experimental_options必须是dict，现在是：{type(options["experimental_options"])}。')
 
             for i in options['experimental_options']:
                 chrome_options.add_experimental_option(i, options['experimental_options'][i])
@@ -763,7 +763,6 @@ def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
             attr_val = attr.lstrip().split('=')
 
             if key == 0:
-                # TODO: 检查
                 cookie_dict['name'] = attr_val[0]
                 cookie_dict['value'] = attr_val[1] if len(attr_val) == 2 else ''
             else:
@@ -772,7 +771,7 @@ def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
         return cookie_dict
 
     else:
-        raise TypeError
+        raise TypeError('cookie参数必须为Cookie、str或dict类型。')
 
     return cookie_dict
 
@@ -792,6 +791,6 @@ def _cookies_to_tuple(cookies: Union[RequestsCookieJar, list, tuple, str, dict])
         cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
 
     else:
-        raise TypeError
+        raise TypeError('cookies参数必须为RequestsCookieJar、list、tuple、str或dict类型。')
 
     return cookies

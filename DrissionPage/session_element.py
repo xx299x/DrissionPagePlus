@@ -11,7 +11,7 @@ from urllib.parse import urlparse, urljoin, urlunparse
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
-from .base import DrissionElement
+from .base import DrissionElement, BasePage, BaseElement
 from .common import str_to_loc, translate_loc, format_html
 
 
@@ -31,7 +31,7 @@ class SessionElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象
+        :return: SessionElement对象或属性文本
         """
         return super().__call__(loc_or_str, mode, timeout)
 
@@ -158,7 +158,6 @@ class SessionElement(DrissionElement):
             element = self.page
 
         loc_or_str = loc_or_str[0], loc_str
-
         return make_session_ele(element, loc_or_str, mode)
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
@@ -169,8 +168,13 @@ class SessionElement(DrissionElement):
         """
         return self.ele(loc_or_str, mode='all')
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, timeout=None):
-        return self.ele(loc_or_str, mode=mode, timeout=timeout)
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 'single' 或 'all‘，对应查找一个或全部
+        :return: SessionElement对象
+        """
+        return self.ele(loc_or_str, mode=mode)
 
     def _get_ele_path(self, mode) -> str:
         """获取css路径或xpath路径
@@ -217,37 +221,39 @@ class SessionElement(DrissionElement):
         return link
 
 
-def make_session_ele(page_or_ele,
+def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
                      loc: Union[str, Tuple[str, str]],
                      mode: str = 'single', ) -> Union[SessionElement, List[SessionElement], str, None]:
-    """执行session模式元素的查找                              \n
-    页面查找元素及元素查找下级元素皆使用此方法                   \n
-    :param page_or_ele: SessionPage对象或SessionElement对象
-    :param loc: 元素定位元组
+    """从接收到的对象或html文本中查找元素，返回SessionElement对象                 \n
+    :param html_or_ele: html文本、BaseParser对象
+    :param loc: 定位元组或字符串
     :param mode: 'single' 或 'all'，对应获取第一个或全部
-    :return: 返回SessionElement元素或列表
+    :return: 返回SessionElement元素或列表，或属性文本
     """
     mode = mode or 'single'
     if mode not in ('single', 'all'):
-        raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
+        raise ValueError(f"mode参数只能是'single'或'all'，现在是：'{mode}'。")
 
     # 根据传入对象类型获取页面对象和lxml元素对象
-    type_str = str(type(page_or_ele))
-    if isinstance(page_or_ele, str):  # 直接传入html文本
+    if isinstance(html_or_ele, SessionElement):  # SessionElement
+        page = html_or_ele.page
+        html_or_ele = html_or_ele.inner_ele
+        # html_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', html_or_ele.response.text))
+
+    elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
+        page = html_or_ele
+        html_or_ele = fromstring(html_or_ele.html)
+
+    elif isinstance(html_or_ele, str):  # 直接传入html文本
         page = None
-        page_or_ele = fromstring(page_or_ele)
-    elif type_str.endswith("SessionElement'>"):  # SessionElement
-        page = page_or_ele.page
-        page_or_ele = page_or_ele.inner_ele
-    elif "Page" in type_str:  # MixPage, DriverPage 或 SessionPage
-        page = page_or_ele
-        page_or_ele = fromstring(page_or_ele.html)
-    else:  # DrissionElement 或 ShadowRootElement
-        page = page_or_ele.page
-        page_or_ele = fromstring(page_or_ele.html)
-    # else:  # 传入的是SessionPage对象
-    #     page = page_or_ele
-    #     page_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', page_or_ele.response.text))
+        html_or_ele = fromstring(html_or_ele)
+
+    elif isinstance(html_or_ele, BaseElement):  # DrissionElement 或 ShadowRootElement
+        page = html_or_ele.page
+        html_or_ele = fromstring(html_or_ele.html)
+
+    else:
+        raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')
 
     # ---------------处理定位符---------------
     if isinstance(loc, str):
@@ -257,12 +263,12 @@ def make_session_ele(page_or_ele,
     else:
         raise ValueError("定位符必须为str或长度为2的tuple。")
 
-    # ---------------执行搜索-----------------
+    # ---------------执行查找-----------------
     try:
         if loc[0] == 'xpath':  # 用lxml内置方法获取lxml的元素对象列表
-            ele = page_or_ele.xpath(loc[1])
+            ele = html_or_ele.xpath(loc[1])
         else:  # 用css selector获取元素对象列表
-            ele = page_or_ele.cssselect(loc[1])
+            ele = html_or_ele.cssselect(loc[1])
 
         if not isinstance(ele, list):  # 结果不是列表，如数字
             return ele
@@ -282,8 +288,8 @@ def make_session_ele(page_or_ele,
 
     except Exception as e:
         if 'Invalid expression' in str(e):
-            raise SyntaxError(f'Invalid xpath syntax. {loc}')
+            raise SyntaxError(f'无效的xpath语句：{loc}')
         elif 'Expected selector' in str(e):
-            raise SyntaxError(f'Invalid css selector syntax. {loc}')
+            raise SyntaxError(f'无效的css select语句：{loc}')
 
         raise e

@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BaseElement
 from .common import format_html
-from .driver_element import execute_driver_find, DriverElement
+from .driver_element import make_driver_ele, DriverElement
 from .session_element import make_session_ele
 
 
@@ -26,13 +26,13 @@ class ShadowRootElement(BaseElement):
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
                  mode: str = 'single',
-                 timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
+                 timeout: float = None) -> Union[DriverElement, List[DriverElement], str]:
         """在内部查找元素                                            \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
-        :return: DriverElement对象
+        :return: DriverElement对象或属性文本
         """
         return self.ele(loc_or_str, mode, timeout)
 
@@ -81,16 +81,21 @@ class ShadowRootElement(BaseElement):
             loc_or_str = str_to_css_loc(loc_or_str)
         elif isinstance(loc_or_str, tuple) and len(loc_or_str) == 2:
             if loc_or_str[0] == 'xpath':
-                raise ValueError('不支持xpath')
+                raise ValueError('不支持xpath。')
         else:
-            raise ValueError('Argument loc_or_str can only be tuple or str.')
+            raise ValueError('loc_or_str参数只能是tuple或str类型。')
 
         if loc_or_str[0] == 'css selector':
-            return execute_driver_find(self, loc_or_str, mode, timeout)
+            return make_driver_ele(self, loc_or_str, mode, timeout)
         elif loc_or_str[0] == 'text':
             return self._find_eles_by_text(loc_or_str[1], loc_or_str[2], loc_or_str[3], mode)
 
-    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+    def s_ele(self, loc_or_ele, mode='single'):
+        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 查找第一个或全部
+        :return: SessionElement对象或属性、文本
+        """
         return make_session_ele(self, loc_or_ele, mode)
 
     def eles(self,
@@ -213,7 +218,7 @@ def str_to_css_loc(loc: str) -> tuple:
         loc = f'text{loc[2:]}'
 
     elif loc.startswith(('x:', 'x=', 'xpath:', 'xpath=')):
-        raise ValueError('不支持xpath')
+        raise ValueError('不支持xpath。')
 
     # 根据属性查找
     if loc.startswith('@'):

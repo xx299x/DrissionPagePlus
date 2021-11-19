@@ -26,11 +26,12 @@ class BaseParser(object):
              timeout: float = None):
         return self.ele(loc_or_str, mode='all', timeout=timeout)
 
-    def s_eles(self,
-               loc_or_str: Union[Tuple[str, str], str],
-               timeout: float = None):
-        """查找并以SessionElement方式返回元素"""
-        return self.s_ele(loc_or_str, mode='all', timeout=timeout)
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """查找并以SessionElement方式返回元素           \n
+        :param loc_or_str: 定位符
+        :return: SessionElement或属性、文本组成的列表
+        """
+        return self.s_ele(loc_or_str, mode='all')
 
     # ----------------以下属性或方法待后代实现----------------
     @property
@@ -38,7 +39,7 @@ class BaseParser(object):
         return
 
     @abstractmethod
-    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+    def s_ele(self, loc_or_ele, mode='single'):
         pass
 
     @abstractmethod
@@ -169,7 +170,7 @@ class DrissionElement(BaseElement):
         elif mode == 'text':
             node_txt = 'text()'
         else:
-            raise ValueError(f"Argument mode can only be 'node' ,'ele' or 'text', not '{mode}'.")
+            raise ValueError(f"mode参数只能是'node'、'ele'或'text'，现在是：'{mode}'。")
 
         # 查找节点的方向
         if direction == 'next':
@@ -177,7 +178,7 @@ class DrissionElement(BaseElement):
         elif direction == 'prev':
             direction_txt = 'preceding'
         else:
-            raise ValueError(f"Argument direction can only be 'next' or 'prev', not '{direction}'.")
+            raise ValueError(f"direction参数只能是'next'或'prev'，现在是：'{direction}'。")
 
         timeout = 0 if direction == 'prev' else .5
 

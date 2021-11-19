@@ -84,7 +84,7 @@ class Drission(object):
         """
         if self._driver is None:
             if not isinstance(self._driver_options, dict):
-                raise TypeError('Driver options invalid')
+                raise TypeError('无效的Driver配置。')
 
             options = _dict_to_chrome_options(self._driver_options)
 
@@ -240,7 +240,7 @@ class Drission(object):
                         url = extract(browser_domain)
                         cookie_domain = f'{url.domain}.{url.suffix}'
                     else:
-                        raise ValueError('There is no domain name in the cookie or the browser has not visited a URL.')
+                        raise ValueError('cookie中没有域名或浏览器未访问过URL。')
 
                     cookie['domain'] = cookie_domain
 

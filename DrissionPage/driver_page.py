@@ -17,8 +17,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import BasePage
-from .common import str_to_loc, get_available_file_name, translate_loc, format_html
-from .driver_element import DriverElement, execute_driver_find, _wait_ele
+from .common import get_available_file_name, format_html
+from .driver_element import DriverElement, make_driver_ele, _wait_ele
 from .session_element import make_session_ele
 
 
@@ -34,13 +34,13 @@ class DriverPage(BasePage):
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
                  mode: str = 'single',
-                 timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
+                 timeout: float = None) -> Union[DriverElement, List[DriverElement], str]:
         """在内部查找元素                                           \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
-        :return: DriverElement对象
+        :return: DriverElement对象或属性文本
         """
         return super().__call__(loc_or_str, mode, timeout)
 
@@ -107,12 +107,7 @@ class DriverPage(BasePage):
         """
         # 接收到字符串或元组，获取定位loc元组
         if isinstance(loc_or_ele, (str, tuple)):
-            if isinstance(loc_or_ele, str):
-                loc_or_ele = str_to_loc(loc_or_ele)
-            else:
-                if len(loc_or_ele) != 2:
-                    raise ValueError("Len of loc_or_ele must be 2 when it's a tuple.")
-                loc_or_ele = translate_loc(loc_or_ele)
+            return make_driver_ele(self, loc_or_ele, mode, timeout)
 
         # 接收到DriverElement对象直接返回
         elif isinstance(loc_or_ele, DriverElement):
@@ -124,11 +119,14 @@ class DriverPage(BasePage):
 
         # 接收到的类型不正确，抛出异常
         else:
-            raise ValueError('Argument loc_or_str can only be tuple, str, DriverElement, DriverElement.')
+            raise ValueError('loc_or_str参数只能是tuple、str、DriverElement 或 DriverElement类型。')
 
-        return execute_driver_find(self, loc_or_ele, mode, timeout)
-
-    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+    def s_ele(self, loc_or_ele, mode='single'):
+        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 查找第一个或全部
+        :return: SessionElement对象或属性、文本
+        """
         return make_session_ele(self, loc_or_ele, mode)
 
     def eles(self,
@@ -192,7 +190,7 @@ class DriverPage(BasePage):
                 print(f'重试 {to_url}')
 
         if is_ok is False and show_errmsg:
-            raise err if err is not None else ConnectionError('Connect error.')
+            raise err if err is not None else ConnectionError('连接异常。')
 
         return is_ok
 
@@ -295,7 +293,7 @@ class DriverPage(BasePage):
         elif isinstance(tab, (list, tuple)):
             page_handle = tab
         else:
-            raise TypeError('Argument num_or_handle can only be int, str, list or tuple.')
+            raise TypeError('num_or_handle参数只能是int、str、list 或 tuple类型。')
 
         for i in tabs:  # 遍历所有标签页，关闭非保留的
             if i not in page_handle:
@@ -422,8 +420,8 @@ class DriverPage(BasePage):
             self.driver.execute_script(f"window.scrollBy({pixel},0);")
 
         else:
-            raise ValueError("Argument mode can only be "
-                             "'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'.")
+            raise ValueError("mode参数只能是'top', 'bottom', 'half', 'rightmost', "
+                             "'leftmost', 'up', 'down', 'left', 'right'。")
 
     def refresh(self) -> None:
         """刷新当前页面"""
@@ -447,7 +445,7 @@ class DriverPage(BasePage):
 
         else:
             if x < 0 or y < 0:
-                raise ValueError('Arguments x and y must greater than 0.')
+                raise ValueError('x 和 y参数必须大于0。')
 
             new_x = x or self.driver.get_window_size()['width']
             new_y = y or self.driver.get_window_size()['height']

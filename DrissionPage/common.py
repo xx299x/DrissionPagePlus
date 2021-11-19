@@ -136,7 +136,7 @@ def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
             return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
 
     else:
-        raise ValueError("Argument mode can only be 'exact' or 'fuzzy'.")
+        raise ValueError("mode参数只能是'exact'或'fuzzy'。")
 
 
 def _make_search_str(search_str: str) -> str:

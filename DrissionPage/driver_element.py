@@ -41,7 +41,7 @@ class DriverElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
-        :return: DriverElement对象
+        :return: DriverElement对象或属性文本
         """
         return super().__call__(loc_or_str, mode, timeout)
 
@@ -134,9 +134,14 @@ class DriverElement(DrissionElement):
             loc_str = f'{self.css_path}{loc_or_str[1]}'
 
         loc_or_str = loc_or_str[0], loc_str
-        return execute_driver_find(self, loc_or_str, mode, timeout)
+        return make_driver_ele(self, loc_or_str, mode, timeout)
 
-    def s_ele(self, loc_or_ele, mode='single', timeout=None):
+    def s_ele(self, loc_or_ele, mode='single'):
+        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param mode: 查找第一个或全部
+        :return: SessionElement对象或属性、文本
+        """
         return make_session_ele(self, loc_or_ele, mode)
 
     def eles(self,
@@ -168,7 +173,7 @@ class DriverElement(DrissionElement):
             txt5 = '''return path.substr(1);'''
 
         else:
-            raise ValueError(f"Argument mode can only be 'xpath' or 'css', not '{mode}'.")
+            raise ValueError(f"mode参数只能是'xpath'或'css'，现在是：'{mode}'。")
 
         js = '''
         function e(el) {
@@ -459,7 +464,7 @@ class DriverElement(DrissionElement):
             self.run_script(f'arguments[0].removeAttribute("{attr}");')
             return True
         except:
-            raise False
+            return False
 
     def drag(self, x: int, y: int, speed: int = 40, shake: bool = True) -> bool:
         """拖拽当前元素到相对位置                   \n
@@ -490,7 +495,7 @@ class DriverElement(DrissionElement):
         elif isinstance(ele_or_loc, tuple):
             target_x, target_y = ele_or_loc
         else:
-            raise TypeError('Need DriverElement, WebElement object or coordinate information.')
+            raise TypeError('需要DriverElement、WebElement对象或坐标。')
 
         current_x = self.location['x'] + self.size['width'] // 2
         current_y = self.location['y'] + self.size['height'] // 2
@@ -525,10 +530,10 @@ class DriverElement(DrissionElement):
         ActionChains(self.page.driver).move_to_element(self.inner_ele).perform()
 
 
-def execute_driver_find(page_or_ele,
-                        loc: Tuple[str, str],
-                        mode: str = 'single',
-                        timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
+def make_driver_ele(page_or_ele,
+                    loc: Union[str, Tuple[str, str]],
+                    mode: str = 'single',
+                    timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: DriverPage对象或DriverElement对象
@@ -539,7 +544,7 @@ def execute_driver_find(page_or_ele,
     """
     mode = mode or 'single'
     if mode not in ('single', 'all'):
-        raise ValueError(f"Argument mode can only be 'single' or 'all', not '{mode}'.")
+        raise ValueError(f"mode参数只能是'single'或'all'，现在是：'{mode}'。")
 
     if isinstance(page_or_ele, BaseElement):
         page = page_or_ele.page
@@ -555,6 +560,15 @@ def execute_driver_find(page_or_ele,
         page.wait_object._driver = driver
         wait = page.wait_object
 
+    # ---------------处理定位符---------------
+    if isinstance(loc, str):
+        loc = str_to_loc(loc)
+    elif isinstance(loc, tuple):
+        loc = translate_loc(loc)
+    else:
+        raise ValueError("定位符必须为str或长度为2的tuple。")
+
+    # ---------------执行查找-----------------
     try:
         # 使用xpath查找
         if loc[0] == 'xpath':
@@ -572,7 +586,7 @@ def execute_driver_find(page_or_ele,
         return [] if mode == 'all' else None
 
     except InvalidElementStateException:
-        raise ValueError(f'Invalid query syntax. {loc}')
+        raise ValueError(f'无效的查找语句：{loc}')
 
 
 class ElementsByXpath(object):
@@ -681,7 +695,7 @@ class Select(object):
         :param ele: select 元素对象
         """
         if ele.tag != 'select':
-            raise TypeError(f"Select only works on <select> elements, not on {ele.tag}")
+            raise TypeError(f"select方法只能在<select>元素使用，现在是：{ele.tag}。")
 
         from selenium.webdriver.support.select import Select as sl
         self.inner_ele = ele
@@ -821,7 +835,7 @@ class Select(object):
     def invert(self) -> None:
         """反选"""
         if not self.is_multi:
-            raise NotImplementedError("You may only deselect options of a multi-select")
+            raise NotImplementedError("只能对多项选框执行反选。")
 
         for i in self.options:
             i.click()
@@ -839,7 +853,7 @@ def _wait_ele(page_or_ele,
     :return: 等待是否成功
     """
     if mode.lower() not in ('del', 'display', 'hidden'):
-        raise ValueError('Argument mode can only be "del", "display", "hidden"')
+        raise ValueError('mode参数只能是"del"、"display"或"hidden"。')
 
     if isinstance(page_or_ele, DrissionElement):  # TODO: 是否要改为 BaseElement
         page = page_or_ele.page
@@ -865,7 +879,7 @@ def _wait_ele(page_or_ele,
         pass
 
     else:
-        raise TypeError('The type of loc_or_ele can only be str, tuple, DriverElement, WebElement')
+        raise TypeError('loc_or_ele参数只能是str、tuple、DriverElement 或 WebElement类型')
 
     # 当传入参数是元素对象时
     if is_ele:

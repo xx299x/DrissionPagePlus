@@ -33,13 +33,13 @@ class SessionPage(BasePage):
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
                  mode: str = 'single',
-                 timeout: float = None) -> Union[SessionElement, List[SessionElement]]:
+                 timeout: float = None) -> Union[SessionElement, List[SessionElement], str]:
         """在内部查找元素                                            \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象
+        :return: SessionElement对象或属性文本
         """
         return super().__call__(loc_or_str, mode, timeout)
 
@@ -94,7 +94,7 @@ class SessionPage(BasePage):
 
             else:
                 if show_errmsg:
-                    raise ConnectionError(f'{to_url}\nStatus code: {self._response.status_code}.')
+                    raise ConnectionError(f'{to_url}\n连接状态码：{self._response.status_code}.')
 
                 self._url_available = False
 
@@ -120,8 +120,13 @@ class SessionPage(BasePage):
         """
         return super().eles(loc_or_str, timeout)
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, timeout=None):
-        return self.ele(loc_or_str, mode=mode, timeout=timeout)
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                          \n
+        :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param mode: 'single' 或 'all‘，对应查找一个或全部
+        :return: SessionElement对象
+        """
+        return self.ele(loc_or_str, mode=mode)
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n
@@ -180,7 +185,7 @@ class SessionPage(BasePage):
                 print(f'重试 {to_url}')
 
         if not r and show_errmsg:
-            raise err if err is not None else ConnectionError('Connect error.')
+            raise err if err is not None else ConnectionError('连接异常。')
 
         return r
 
@@ -232,7 +237,7 @@ class SessionPage(BasePage):
 
             else:
                 if show_errmsg:
-                    raise ConnectionError(f'Status code: {self._response.status_code}.')
+                    raise ConnectionError(f'连接状态码：{self._response.status_code}.')
                 self._url_available = False
 
         return self._url_available
@@ -292,7 +297,7 @@ class SessionPage(BasePage):
 
             if not r.ok:
                 if errmsg:
-                    raise ConnectionError(f'Status code: {r.status_code}.')
+                    raise ConnectionError(f'连接状态码：{r.status_code}.')
 
                 return False, f'Status code: {r.status_code}.'
 
@@ -361,7 +366,7 @@ class SessionPage(BasePage):
                     pass
 
                 else:
-                    raise ValueError("Argument file_exists can only be 'skip', 'overwrite', 'rename'.")
+                    raise ValueError("file_exists参数只能是'skip'、'overwrite'或'rename'。")
 
             # -------------------打印要下载的文件-------------------
             if msg:
@@ -404,7 +409,7 @@ class SessionPage(BasePage):
             else:
                 if full_path.stat().st_size == 0:
                     if errmsg:
-                        raise ValueError('File size is 0.')
+                        raise ValueError('文件大小为0。')
 
                     download_status, info = False, 'File size is 0.'
 
@@ -456,11 +461,11 @@ class SessionPage(BasePage):
         """
         if not url:
             if show_errmsg:
-                raise ValueError('url is empty.')
+                raise ValueError('URL为空。')
             return None, 'url is empty.'
 
         if mode not in ('get', 'post'):
-            raise ValueError("Argument mode can only be 'get' or 'post'.")
+            raise ValueError("mode参数只能是'get'或'post'。")
 
         url = quote(url, safe='/:&?=%;#@+!')
 
