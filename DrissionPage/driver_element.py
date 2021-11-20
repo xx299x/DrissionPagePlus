@@ -43,7 +43,7 @@ class DriverElement(DrissionElement):
         :param timeout: 超时时间
         :return: DriverElement对象或属性文本
         """
-        return super().__call__(loc_or_str, mode, timeout)
+        return self.ele(loc_or_str, mode, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -697,9 +697,9 @@ class Select(object):
         if ele.tag != 'select':
             raise TypeError(f"select方法只能在<select>元素使用，现在是：{ele.tag}。")
 
-        from selenium.webdriver.support.select import Select as sl
+        from selenium.webdriver.support.select import Select
         self.inner_ele = ele
-        self.select_ele = sl(ele.inner_ele)
+        self.select_ele = Select(ele.inner_ele)
 
     def __call__(self,
                  text_value_index: Union[str, int, list, tuple] = None,

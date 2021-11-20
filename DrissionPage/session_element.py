@@ -222,11 +222,12 @@ class SessionElement(DrissionElement):
 
 
 def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
-                     loc: Union[str, Tuple[str, str]],
+                     loc: Union[str, Tuple[str, str]] = None,
                      mode: str = 'single', ) -> Union[SessionElement, List[SessionElement], str, None]:
     """从接收到的对象或html文本中查找元素，返回SessionElement对象                 \n
+    如要直接从html生成SessionElement而不在下级查找，loc输入None即可               \n
     :param html_or_ele: html文本、BaseParser对象
-    :param loc: 定位元组或字符串
+    :param loc: 定位元组或字符串，为None时不在下级查找，返回根元素
     :param mode: 'single' 或 'all'，对应获取第一个或全部
     :return: 返回SessionElement元素或列表，或属性文本
     """
@@ -256,7 +257,10 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
         raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')
 
     # ---------------处理定位符---------------
-    if isinstance(loc, str):
+    if not loc:
+        loc = ('xpath', '.')
+        mode = 'single'
+    elif isinstance(loc, str):
         loc = str_to_loc(loc)
     elif isinstance(loc, tuple):
         loc = translate_loc(loc)

@@ -23,6 +23,8 @@ class OptionsManager(object):
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
         self.ini_path = str(Path(__file__).parent / 'configs.ini') if path == 'default' or path is None else path
+        if not Path(self.ini_path).exists():
+            raise FileNotFoundError('ini文件不存在。')
         self._conf = RawConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 
