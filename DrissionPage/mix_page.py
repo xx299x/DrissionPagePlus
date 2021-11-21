@@ -33,7 +33,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                  drission: Union[Drission, str] = None,
                  timeout: float = 10,
                  driver_options: Union[dict, DriverOptions] = None,
-                 session_options: Union[dict, SessionOptions] = None):
+                 session_options: Union[dict, SessionOptions] = None) -> None:
         """初始化函数                                                                         \n
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param drission: Drission对象，不传入时会自动创建
@@ -50,17 +50,18 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-                 mode: str = 'single',
                  timeout: float = None) \
             -> Union[DriverElement, SessionElement, str, List[DriverElement], List[SessionElement]]:
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
         :return: 子元素对象或属性文本
         """
-        return super().__call__(loc_or_str, mode, timeout)
+        if self._mode == 's':
+            return super().__call__(loc_or_str)
+        elif self._mode == 'd':
+            return super(SessionPage, self).__call__(loc_or_str, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -119,30 +120,17 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-            mode: str = None,
             timeout: float = None) \
             -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
+        """返回第一个符合条件的元素、属性或节点文本                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 查找元素超时时间，d模式专用
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super().ele(loc_or_ele, mode=mode)
+            return super().ele(loc_or_ele)
         elif self._mode == 'd':
-            return super(SessionPage, self).ele(loc_or_ele, mode=mode, timeout=timeout)
-
-    def s_ele(self, loc_or_ele, mode='single') -> Union[SessionElement, List[SessionElement], List[str]]:
-        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 查找第一个或全部
-        :return: SessionElement对象或属性、文本
-        """
-        if self._mode == 's':
-            return super().s_ele(loc_or_ele, mode=mode)
-        elif self._mode == 'd':
-            return super(SessionPage, self).s_ele(loc_or_ele, mode=mode)
+            return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
@@ -152,7 +140,46 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :param timeout: 查找元素超时时间，d模式专用
         :return: 元素对象或属性、文本组成的列表
         """
-        return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
+        if self._mode == 's':
+            return super().eles(loc_or_str)
+        elif self._mode == 'd':
+            return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
+
+    def s_ele(self, loc_or_ele) -> Union[SessionElement, List[SessionElement], List[str]]:
+        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        if self._mode == 's':
+            return super().s_ele(loc_or_ele)
+        elif self._mode == 'd':
+            return super(SessionPage, self).s_ele(loc_or_ele)
+
+    def s_eles(self, loc_or_ele) -> Union[SessionElement, List[SessionElement], List[str]]:
+        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本组成的列表
+        """
+        if self._mode == 's':
+            return super().s_eles(loc_or_ele)
+        elif self._mode == 'd':
+            return super(SessionPage, self).s_eles(loc_or_ele)
+
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
+             timeout: float = None,
+             single: bool = True) \
+            -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
+        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，d模式专用
+        :param single: True则返回第一个，False则返回全部
+        :return: 元素对象或属性、文本节点文本
+        """
+        if self._mode == 's':
+            return super()._ele(loc_or_ele, single=single)
+        elif self._mode == 'd':
+            return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n
@@ -189,13 +216,13 @@ class MixPage(SessionPage, DriverPage, BasePage):
     # ----------------MixPage独有属性和方法-----------------------
     @property
     def drission(self) -> Drission:
-        """返回当前使用的Dirssion对象"""
+        """返回当前使用的 Dirssion 对象"""
         return self._drission
 
     @property
     def driver(self) -> WebDriver:
-        """返回driver对象，如没有则创建              \n
-        每次访问时切换到d模式，用于独有函数及外部调用
+        """返回 driver 对象，如没有则创建              \n
+        每次访问时切换到 d 模式，用于独有函数及外部调用
         :return: WebDriver对象
         """
         self.change_mode('d')
@@ -203,12 +230,12 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     @property
     def session(self) -> Session:
-        """返回Session对象，如没有则创建"""
+        """返回 Session 对象，如没有则创建"""
         return self._drission.session
 
     @property
     def response(self) -> Response:
-        """返回s模式获取到的Response对象，切换到s模式"""
+        """返回 s 模式获取到的 Response 对象，切换到 s 模式"""
         self.change_mode('s')
         return self._response
 
@@ -219,11 +246,11 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     @property
     def _session_url(self) -> str:
-        """返回session保存的url"""
+        """返回 session 保存的url"""
         return self._response.url if self._response else None
 
     def change_mode(self, mode: str = None, go: bool = True) -> None:
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为d模式   \n
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式   \n
         切换时会把当前模式的cookies复制到目标模式                 \n
         切换后，如果go是True，调用相应的get函数使访问的页面同步    \n
         :param mode: 模式字符串

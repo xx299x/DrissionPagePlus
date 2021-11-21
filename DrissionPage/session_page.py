@@ -30,18 +30,14 @@ class SessionPage(BasePage):
         self._session = session
         self._response = None
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 mode: str = 'single',
-                 timeout: float = None) -> Union[SessionElement, List[SessionElement], str]:
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, SessionElement]) \
+            -> Union[SessionElement, List[SessionElement], str]:
         """在内部查找元素                                            \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        例：ele2 = ele1('@id=ele_id')                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
-        :param timeout: 不起实际作用，用于和父类对应
         :return: SessionElement对象或属性文本
         """
-        return super().__call__(loc_or_str, mode, timeout)
+        return self.ele(loc_or_str)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -100,33 +96,46 @@ class SessionPage(BasePage):
 
         return self._url_available
 
-    def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            mode: str = None,
-            timeout=None) -> Union[SessionElement, List[SessionElement], str, None]:
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
+    def ele(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement]) \
+            -> Union[SessionElement, List[SessionElement], str, None]:
+        """返回页面中符合条件的第一个元素、属性或节点文本                                           \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
-        :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象
+        :return: SessionElement对象或属性、文本
         """
-        return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, mode)
+        return self._ele(loc_or_ele)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None) -> List[SessionElement]:
+    def eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]:
         """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象组成的列表
+        :return: SessionElement对象或属性、文本组成的列表
         """
-        return super().eles(loc_or_str, timeout)
+        return self._ele(loc_or_str, single=False)
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                          \n
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回页面中符合条件的第一个元素、属性或节点文本                          \n
         :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
+        :return: SessionElement对象或属性、文本
+        """
+        return self._ele(loc_or_str)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回页面中符合条件的所有元素、属性或节点文本                              \n
+        :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return self._ele(loc_or_str, single=False)
+
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+             timeout: float = None,
+             single: bool = True) -> Union[SessionElement, List[SessionElement], str, None]:
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
+        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和父类对应
+        :param single: True则返回第一个，False则返回全部
         :return: SessionElement对象
         """
-        return self.ele(loc_or_str, mode=mode)
+        return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, single)
 
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
         """返回cookies                               \n

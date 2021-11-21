@@ -15,23 +15,14 @@ from .common import format_html
 
 
 class BaseParser(object):
-    def __call__(self,
-                 loc_or_str,
-                 mode: str = 'single',
-                 timeout: float = None):
-        return self.ele(loc_or_str, mode, timeout)
+    def __call__(self, loc_or_str):
+        return self.ele(loc_or_str)
 
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None):
-        return self.ele(loc_or_str, mode='all', timeout=timeout)
+    def ele(self, loc_or_ele):
+        return self._ele(loc_or_ele, True)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
-        """查找并以SessionElement方式返回元素           \n
-        :param loc_or_str: 定位符
-        :return: SessionElement或属性、文本组成的列表
-        """
-        return self.s_ele(loc_or_str, mode='all')
+    def eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        return self._ele(loc_or_str, False)
 
     # ----------------以下属性或方法待后代实现----------------
     @property
@@ -39,16 +30,20 @@ class BaseParser(object):
         return
 
     @abstractmethod
-    def s_ele(self, loc_or_ele, mode='single'):
+    def s_ele(self, loc_or_ele):
         pass
 
     @abstractmethod
-    def ele(self, loc_or_ele, mode='single', timeout=None):
+    def s_eles(self, loc_or_str):
+        pass
+
+    @abstractmethod
+    def _ele(self, loc_or_ele, timeout=None, single=True):
         pass
 
 
 class BaseElement(BaseParser):
-    """SessionElement和DriverElement的基类"""
+    """SessionElement 和 DriverElement 的基类"""
 
     def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
         self._inner_ele = ele
@@ -62,9 +57,6 @@ class BaseElement(BaseParser):
     def next(self):
         """返回后一个兄弟元素"""
         return self.nexts()
-
-    # def eles(self, loc_or_str, timeout):
-    #     return super().eles(loc_or_str, timeout)
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -86,10 +78,6 @@ class BaseElement(BaseParser):
     @property
     def is_valid(self):
         return True
-
-    @abstractmethod
-    def ele(self, loc_or_str, mode='single', timeout=None):
-        pass
 
     @abstractmethod
     def nexts(self, num: int = 1):
@@ -183,12 +171,12 @@ class DrissionElement(BaseElement):
         timeout = 0 if direction == 'prev' else .5
 
         # 获取节点
-        ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+        ele_or_node = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
         # 跳过元素间的换行符
         while isinstance(ele_or_node, str) and sub('[\n\t ]', '', ele_or_node) == '':
             num += 1
-            ele_or_node = self.ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+            ele_or_node = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
 
         return ele_or_node
 
@@ -217,14 +205,6 @@ class DrissionElement(BaseElement):
     def attr(self, attr: str):
         return ''
 
-    @abstractmethod
-    def ele(self, loc: Union[tuple, str], mode: str = None, timeout=None):
-        pass
-
-    @abstractmethod
-    def eles(self, loc: Union[tuple, str], timeout=None):
-        pass
-
     def _get_ele_path(self, mode):
         return ''
 
@@ -241,7 +221,7 @@ class BasePage(BaseParser):
     @property
     def title(self) -> Union[str, None]:
         """返回网页title"""
-        ele = self.ele('x:/html/head/title')
+        ele = self.ele('xpath:/html/head/title')
         return ele.text if ele else None
 
     @property
@@ -263,9 +243,6 @@ class BasePage(BaseParser):
     def url_available(self) -> bool:
         """返回当前访问的url有效性"""
         return self._url_available
-
-    # def eles(self, loc_or_str, timeout):
-    #     return super().eles(loc_or_str, timeout)
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -291,10 +268,6 @@ class BasePage(BaseParser):
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None):
-        pass
-
-    @abstractmethod
-    def ele(self, loc_or_ele, mode='single', timeout=None):
         pass
 
     @abstractmethod

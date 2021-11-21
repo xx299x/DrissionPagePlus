@@ -25,24 +25,21 @@ from .session_element import make_session_ele
 class DriverPage(BasePage):
     """DriverPage封装了页面操作的常用功能，使用selenium来获取、解析、操作网页"""
 
-    def __init__(self, driver: WebDriver, timeout: float = 10):
+    def __init__(self, driver: WebDriver, timeout: float = 10) -> None:
         """初始化函数，接收一个WebDriver对象，用来操作网页"""
         super().__init__(timeout)
         self._driver = driver
         self._wait_object = None
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
-                 mode: str = 'single',
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
                  timeout: float = None) -> Union[DriverElement, List[DriverElement], str]:
         """在内部查找元素                                           \n
-        例：ele = page('@id=ele_id')                               \n
+        例：ele = page('@id=ele_id')                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
-        :return: DriverElement对象或属性文本
+        :return: DriverElement对象或属性、文本
         """
-        return super().__call__(loc_or_str, mode, timeout)
+        return self.ele(loc_or_str, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -97,17 +94,51 @@ class DriverPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, WebElement],
-            mode: str = None,
             timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
-        """返回页面中符合条件的元素，默认返回第一个                                                         \n
+        """返回页面中符合条件的第一个元素                                                           \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
         :param timeout: 查找元素超时时间
+        :return: DriverElement对象或属性、文本
+        """
+        return self._ele(loc_or_ele, timeout)
+
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None) -> List[DriverElement]:
+        """返回页面中所有符合条件的元素                                                                     \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间
+        :return: DriverElement对象或属性、文本组成的列表
+        """
+        return self._ele(loc_or_str, timeout, single=False)
+
+    def s_ele(self, loc_or_ele):
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return make_session_ele(self, loc_or_ele)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """查找所有符合条件的元素以SessionElement列表形式返回                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象组成的列表
+        """
+        return make_session_ele(self, loc_or_str, single=False)
+
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, DriverElement, WebElement],
+             timeout: float = None,
+             single: bool = True) -> Union[DriverElement, List[DriverElement], str, None]:
+        """返回页面中符合条件的元素，默认返回第一个                                   \n
+        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 查找元素超时时间
+        :param single: True则返回第一个，False则返回全部
         :return: DriverElement对象
         """
         # 接收到字符串或元组，获取定位loc元组
         if isinstance(loc_or_ele, (str, tuple)):
-            return make_driver_ele(self, loc_or_ele, mode, timeout)
+            return make_driver_ele(self, loc_or_ele, single, timeout)
 
         # 接收到DriverElement对象直接返回
         elif isinstance(loc_or_ele, DriverElement):
@@ -120,24 +151,6 @@ class DriverPage(BasePage):
         # 接收到的类型不正确，抛出异常
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、DriverElement 或 DriverElement类型。')
-
-    def s_ele(self, loc_or_ele, mode='single'):
-        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 查找第一个或全部
-        :return: SessionElement对象或属性、文本
-        """
-        return make_session_ele(self, loc_or_ele, mode)
-
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[DriverElement]:
-        """返回页面中所有符合条件的元素                                                                     \n
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
-        :return: DriverElement对象组成的列表
-        """
-        return super().eles(loc_or_str, timeout)
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
         """返回当前网站cookies"""

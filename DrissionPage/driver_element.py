@@ -34,16 +34,14 @@ class DriverElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 mode: str = 'single',
                  timeout: float = None):
-        """在内部查找元素                                            \n
+        """在内部查找元素                                             \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 超时时间
-        :return: DriverElement对象或属性文本
+        :return: DriverElement对象或属性、文本
         """
-        return self.ele(loc_or_str, mode, timeout)
+        return self.ele(loc_or_str, timeout)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -116,12 +114,46 @@ class DriverElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            mode: str = None,
             timeout: float = None):
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本                                      \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间
+        :return: DriverElement对象或属性、文本
+        """
+        return self._ele(loc_or_str, timeout)
+
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None):
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间
+        :return: DriverElement对象或属性、文本组成的列表
+        """
+        return self._ele(loc_or_str, timeout=timeout, single=False)
+
+    def s_ele(self, loc_or_ele):
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高        \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return make_session_ele(self, loc_or_ele)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """查找所有符合条件的元素以SessionElement列表形式返回                         \n
+        :param loc_or_str: 定位符
+        :return: SessionElement或属性、文本组成的列表
+        """
+        return make_session_ele(self, loc_or_str, single=False)
+
+    def _ele(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None,
+             single: bool = True):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
         :param timeout: 查找元素超时时间
+        :param single: True则返回第一个，False则返回全部
         :return: DriverElement对象
         """
         loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
@@ -134,25 +166,7 @@ class DriverElement(DrissionElement):
             loc_str = f'{self.css_path}{loc_or_str[1]}'
 
         loc_or_str = loc_or_str[0], loc_str
-        return make_driver_ele(self, loc_or_str, mode, timeout)
-
-    def s_ele(self, loc_or_ele, mode='single'):
-        """查找元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 查找第一个或全部
-        :return: SessionElement对象或属性、文本
-        """
-        return make_session_ele(self, loc_or_ele, mode)
-
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
-        :return: DriverElement对象组成的列表
-        """
-        return self.ele(loc_or_str, mode='all', timeout=timeout)
+        return make_driver_ele(self, loc_or_str, single, timeout)
 
     def _get_ele_path(self, mode) -> str:
         """返获取css路径或xpath路径"""
@@ -532,20 +546,16 @@ class DriverElement(DrissionElement):
 
 def make_driver_ele(page_or_ele,
                     loc: Union[str, Tuple[str, str]],
-                    mode: str = 'single',
+                    single: bool = True,
                     timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: DriverPage对象或DriverElement对象
     :param loc: 元素定位元组
-    :param mode: 'single' 或 'all'，对应获取第一个或全部
+    :param single: True则返回第一个，False则返回全部
     :param timeout: 查找元素超时时间
     :return: 返回DriverElement元素或它们组成的列表
     """
-    mode = mode or 'single'
-    if mode not in ('single', 'all'):
-        raise ValueError(f"mode参数只能是'single'或'all'，现在是：'{mode}'。")
-
     if isinstance(page_or_ele, BaseElement):
         page = page_or_ele.page
         driver = page_or_ele.inner_ele
@@ -572,18 +582,18 @@ def make_driver_ele(page_or_ele,
     try:
         # 使用xpath查找
         if loc[0] == 'xpath':
-            return wait.until(ElementsByXpath(page, loc[1], mode, timeout))
+            return wait.until(ElementsByXpath(page, loc[1], single, timeout))
 
         # 使用css selector查找
         else:
-            if mode == 'single':
+            if single:
                 return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
-            elif mode == 'all':
+            else:
                 eles = wait.until(ec.presence_of_all_elements_located(loc))
                 return [DriverElement(ele, page) for ele in eles]
 
     except TimeoutException:
-        return [] if mode == 'all' else None
+        return [] if not single else None
 
     except InvalidElementStateException:
         raise ValueError(f'无效的查找语句：{loc}')
@@ -592,16 +602,16 @@ def make_driver_ele(page_or_ele,
 class ElementsByXpath(object):
     """用js通过xpath获取元素、节点或属性，与WebDriverWait配合使用"""
 
-    def __init__(self, page, xpath: str = None, mode: str = 'all', timeout: float = 10):
+    def __init__(self, page, xpath: str = None, single: bool = False, timeout: float = 10):
         """
         :param page: DrissionPage对象
         :param xpath: xpath文本
-        :param mode: 'all' 或 'single'
+        :param single: True则返回第一个，False则返回全部
         :param timeout: 超时时间
         """
         self.page = page
         self.xpath = xpath
-        self.mode = mode
+        self.single = single
         self.timeout = timeout
 
     def __call__(self, ele_or_driver: Union[WebDriver, WebElement]) \
@@ -659,7 +669,7 @@ class ElementsByXpath(object):
             driver, the_node = ele_or_driver.parent, ele_or_driver
 
         # 把lxml元素对象包装成DriverElement对象并按需要返回第一个或全部
-        if self.mode == 'single':
+        if self.single:
             try:
                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
 
@@ -680,7 +690,7 @@ class ElementsByXpath(object):
                 else:
                     return None
 
-        elif self.mode == 'all':
+        else:  # 返回全部
             return ([DriverElement(x, self.page) if isinstance(x, WebElement)
                      else format_html(x)
                      for x in get_nodes(the_node, xpath_txt=self.xpath)

@@ -25,15 +25,13 @@ class SessionElement(DrissionElement):
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str], mode: str = 'single', timeout: float = None):
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str]):
         """在内部查找元素                                            \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        例：ele2 = ele1('@id=ele_id')                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all'，对应查找一个或全部
-        :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象或属性文本
+        :return: SessionElement对象或属性、文本
         """
-        return super().__call__(loc_or_str, mode, timeout)
+        return self.ele(loc_or_str)
 
     @property
     def tag(self) -> str:
@@ -138,11 +136,39 @@ class SessionElement(DrissionElement):
         else:
             return self.inner_ele.get(attr)
 
-    def ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None, timeout=None):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+    def ele(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
+        :return: SessionElement对象或属性、文本
+        """
+        return self._ele(loc_or_str)
+
+    def eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本组成的列表
+        """
+        return self._ele(loc_or_str, single=False)
+
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return self._ele(loc_or_str)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本组成的列表
+        """
+        return self._ele(loc_or_str, single=False)
+
+    def _ele(self, loc_or_str: Union[Tuple[str, str], str], timeout=None, single: bool = True):
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个           \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
+        :param single: True则返回第一个，False则返回全部
         :return: SessionElement对象
         """
         loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
@@ -158,23 +184,7 @@ class SessionElement(DrissionElement):
             element = self.page
 
         loc_or_str = loc_or_str[0], loc_str
-        return make_session_ele(element, loc_or_str, mode)
-
-    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和父类对应
-        :return: SessionElement对象组成的列表
-        """
-        return self.ele(loc_or_str, mode='all')
-
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str], mode: str = None):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param mode: 'single' 或 'all‘，对应查找一个或全部
-        :return: SessionElement对象
-        """
-        return self.ele(loc_or_str, mode=mode)
+        return make_session_ele(element, loc_or_str, single)
 
     def _get_ele_path(self, mode) -> str:
         """获取css路径或xpath路径
@@ -223,18 +233,14 @@ class SessionElement(DrissionElement):
 
 def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
                      loc: Union[str, Tuple[str, str]] = None,
-                     mode: str = 'single', ) -> Union[SessionElement, List[SessionElement], str, None]:
+                     single: bool = True) -> Union[SessionElement, List[SessionElement], str, None]:
     """从接收到的对象或html文本中查找元素，返回SessionElement对象                 \n
     如要直接从html生成SessionElement而不在下级查找，loc输入None即可               \n
     :param html_or_ele: html文本、BaseParser对象
     :param loc: 定位元组或字符串，为None时不在下级查找，返回根元素
-    :param mode: 'single' 或 'all'，对应获取第一个或全部
+    :param single: True则返回第一个，False则返回全部
     :return: 返回SessionElement元素或列表，或属性文本
     """
-    mode = mode or 'single'
-    if mode not in ('single', 'all'):
-        raise ValueError(f"mode参数只能是'single'或'all'，现在是：'{mode}'。")
-
     # 根据传入对象类型获取页面对象和lxml元素对象
     if isinstance(html_or_ele, SessionElement):  # SessionElement
         page = html_or_ele.page
@@ -278,7 +284,7 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
             return ele
 
         # 把lxml元素对象包装成SessionElement对象并按需要返回第一个或全部
-        if mode == 'single':
+        if single:
             ele = ele[0] if ele else None
             if isinstance(ele, HtmlElement):
                 return SessionElement(ele, page)
@@ -287,7 +293,7 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
             else:
                 return None
 
-        elif mode == 'all':
+        else:  # 返回全部
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']
 
     except Exception as e:
