@@ -71,17 +71,21 @@ class SessionElement(DrissionElement):
                     str_list.append('\n')
 
                 if isinstance(el, str):
-                    if sub('[ \n]', '', el) != '':
+                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
                         if pre:
                             str_list.append(el)
                         else:
                             str_list.append(el.replace('\n', ' ').strip(' \t'))
 
-                    elif '\n' in el and str_list and str_list[-1] != '\n':
+                    elif '\n' in el and str_list and str_list[-1] != '\n':  # 元素间换行的情况
                         str_list.append('\n')
-                    else:
+                    else:  # 整个字符由回车和空格组成
                         str_list.append(' ')
                     current_tag = None
+
+                elif el.tag.lower() == 'script':
+                    current_tag = None
+
                 else:
                     str_list.extend(get_node(el, pre))
                     current_tag = el.tag
@@ -90,7 +94,8 @@ class SessionElement(DrissionElement):
 
         re_str = ''.join(get_node(self))
         re_str = sub(r' {2,}', ' ', re_str)
-        return format_html(re_str, False)
+        re_str = sub(r'\n{2,}', '\n', re_str)
+        return format_html(re_str, False).strip('\n')
 
     @property
     def raw_text(self) -> str:
@@ -245,7 +250,6 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
     if isinstance(html_or_ele, SessionElement):  # SessionElement
         page = html_or_ele.page
         html_or_ele = html_or_ele.inner_ele
-        # html_or_ele = fromstring(sub(r'&nbsp;?', '&nbsp;', html_or_ele.response.text))
 
     elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
         page = html_or_ele
@@ -265,7 +269,7 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
     # ---------------处理定位符---------------
     if not loc:
         loc = ('xpath', '.')
-        mode = 'single'
+        single = True
     elif isinstance(loc, str):
         loc = str_to_loc(loc)
     elif isinstance(loc, tuple):
