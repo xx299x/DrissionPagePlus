@@ -66,6 +66,13 @@ class Drission(object):
             else:
                 self._driver_options = _chrome_options_to_dict(driver_or_options)
 
+    def __del__(self):
+        """关闭对象时关闭浏览器和Session"""
+        try:
+            self.close()
+        except ImportError:
+            pass
+
     @property
     def session(self) -> Session:
         """返回Session对象，如未初始化则按配置信息创建"""
@@ -175,29 +182,60 @@ class Drission(object):
             self.debugger_progress.kill()
             return
 
-        address = self.driver_options.get('debugger_address', '').split(':')
-        if len(address) == 1:
+        pid = self.get_browser_progress_id()
+        from os import popen
+        if pid and popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
+            print('kill')
+            popen(f'taskkill /pid {pid} /F')
+        else:
             self.close_driver()
 
-        elif len(address) == 2:
+    def get_browser_progress_id(self) -> Union[str, None]:
+        """获取浏览器进程id"""
+        if self.debugger_progress:
+            return self.debugger_progress.pid
+
+        address = self.driver_options.get('debugger_address', '').split(':')
+        if len(address) == 2:
             ip, port = address
             if ip not in ('127.0.0.1', 'localhost') or not port.isdigit():
-                return
+                return None
 
             from os import popen
-            progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
             txt = ''
+            progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
             for progress in progresses:
                 if 'LISTENING' in progress:
                     txt = progress
                     break
-
             if not txt:
-                return
+                return None
 
-            pid = txt.split(' ')[-1]
-            if popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
-                popen(f'taskkill /pid {pid} /F')
+            return txt.split(' ')[-1]
+
+    def hide_browser(self) -> None:
+        """隐藏浏览器界面"""
+        self._show_or_hide_browser()
+
+    def show_browser(self) -> None:
+        """显示浏览器界面"""
+        self._show_or_hide_browser(False)
+
+    def _show_or_hide_browser(self, hide: bool = True) -> None:
+        try:
+            from win32gui import ShowWindow
+            from win32con import SW_HIDE, SW_SHOW
+        except ImportError:
+            raise ImportError('请先安装：pip install pypiwin32')
+
+        pid = self.get_browser_progress_id()
+        if not pid:
+            print('只有设置了debugger_address参数才能使用 show_browser() 和 hide_browser()')
+            return
+        hds = _get_chrome_hwnds_from_pid(pid)
+        sw = SW_HIDE if hide else SW_SHOW
+        for hd in hds:
+            ShowWindow(hd, sw)
 
     def set_cookies(self,
                     cookies: Union[RequestsCookieJar, list, tuple, str, dict],
@@ -341,13 +379,6 @@ class Drission(object):
         if self._session:
             self.close_session()
 
-    def __del__(self):
-        """关闭对象时关闭浏览器和Session"""
-        try:
-            self.close()
-        except ImportError:
-            pass
-
 
 def _check_port(debugger_address: str) -> Union[bool, None]:
     """检查端口是否被占用                               \n
@@ -455,3 +486,23 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
 
     print('无法启动，请手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
     exit(0)
+
+
+def _get_chrome_hwnds_from_pid(pid) -> list:
+    # 通过PID查询句柄ID
+    try:
+        from win32gui import IsWindow, GetWindowText, EnumWindows
+        from win32process import GetWindowThreadProcessId
+    except ImportError:
+        raise ImportError('请先安装win32gui，pip install pypiwin32')
+
+    def callback(hwnd, hds):
+        if IsWindow(hwnd) and '- Google Chrome' in GetWindowText(hwnd):
+            _, found_pid = GetWindowThreadProcessId(hwnd)
+            if str(found_pid) == str(pid):
+                hds.append(hwnd)
+            return True
+
+    hwnds = []
+    EnumWindows(callback, hwnds)
+    return hwnds

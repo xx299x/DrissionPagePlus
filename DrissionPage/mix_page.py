@@ -145,7 +145,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    def s_ele(self, loc_or_ele) -> Union[SessionElement, List[SessionElement], List[str]]:
+    def s_ele(self, loc_or_ele=None) -> Union[SessionElement, List[SessionElement], List[str]]:
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -405,3 +405,12 @@ class MixPage(SessionPage, DriverPage, BasePage):
             raise IOError('无法找到下载路径。')
 
         return super().chrome_downloading(path)
+
+    # ----------------MixPage独有函数-----------------------
+    def hide_browser(self):
+        """隐藏浏览器窗口"""
+        self.drission.hide_browser()
+
+    def show_browser(self):
+        """显示浏览器窗口"""
+        self.drission.show_browser()
