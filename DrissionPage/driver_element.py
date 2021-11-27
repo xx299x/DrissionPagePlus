@@ -93,6 +93,11 @@ class DriverElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return self.inner_ele.get_attribute('innerText')
 
+    @property
+    def parent(self):
+        """返回父级元素"""
+        return self.parents()
+
     def parents(self, num: int = 1):
         """返回上面第num级父元素              \n
         :param num: 第几级父元素
@@ -132,7 +137,7 @@ class DriverElement(DrissionElement):
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
-    def s_ele(self, loc_or_ele):
+    def s_ele(self, loc_or_ele=None):
         """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高        \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -156,16 +161,6 @@ class DriverElement(DrissionElement):
         :param single: True则返回第一个，False则返回全部
         :return: DriverElement对象
         """
-        loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
-        loc_str = loc_or_str[1]
-
-        if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
-            loc_str = f'.{loc_str}'
-
-        if loc_or_str[0] == 'css selector' and loc_or_str[1].lstrip().startswith('>'):
-            loc_str = f'{self.css_path}{loc_or_str[1]}'
-
-        loc_or_str = loc_or_str[0], loc_str
         return make_driver_ele(self, loc_or_str, single, timeout)
 
     def _get_ele_path(self, mode) -> str:
@@ -292,7 +287,7 @@ class DriverElement(DrissionElement):
             while perf_counter() - t1 <= timeout:
                 try:
                     self.inner_ele.click()
-                    break
+                    return True
                 except:
                     pass
 
@@ -556,20 +551,6 @@ def make_driver_ele(page_or_ele,
     :param timeout: 查找元素超时时间
     :return: 返回DriverElement元素或它们组成的列表
     """
-    if isinstance(page_or_ele, BaseElement):
-        page = page_or_ele.page
-        driver = page_or_ele.inner_ele
-    else:  # 传入的是DriverPage对象
-        page = page_or_ele
-        driver = page_or_ele.driver
-
-    # 设置等待对象
-    if timeout is not None and timeout != page.timeout:
-        wait = WebDriverWait(driver, timeout=timeout)
-    else:
-        page.wait_object._driver = driver
-        wait = page.wait_object
-
     # ---------------处理定位符---------------
     if isinstance(loc, str):
         loc = str_to_loc(loc)
@@ -577,6 +558,29 @@ def make_driver_ele(page_or_ele,
         loc = translate_loc(loc)
     else:
         raise ValueError("定位符必须为str或长度为2的tuple。")
+
+    # ---------------设置 page 和 driver---------------
+    if isinstance(page_or_ele, BaseElement):  # 传入DriverElement 或 ShadowRootElement
+        loc_str = loc[1]
+        if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
+            loc_str = f'.{loc_str}'
+        elif loc[0] == 'css selector' and loc[1].lstrip().startswith('>') and isinstance(page_or_ele, DriverElement):
+            loc_str = f'{page_or_ele.css_path}{loc[1]}'
+        loc = loc[0], loc_str
+
+        page = page_or_ele.page
+        driver = page_or_ele.inner_ele
+
+    else:  # 传入的是DriverPage对象
+        page = page_or_ele
+        driver = page_or_ele.driver
+
+    # -----------------设置等待对象-----------------
+    if timeout is not None and timeout != page.timeout:
+        wait = WebDriverWait(driver, timeout=timeout)
+    else:
+        page.wait_object._driver = driver
+        wait = page.wait_object
 
     # ---------------执行查找-----------------
     try:

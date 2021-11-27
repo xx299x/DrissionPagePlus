@@ -144,7 +144,7 @@ class DrissionElement(BaseElement):
         return self._get_brother(num, mode, 'prev')
 
     def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
-        """返回前面第num个兄弟节点或元素        \n
+        """返回前面第num个兄弟节点或元素                                  \n
         :param num: 前面第几个兄弟节点或元素
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :param direction: 'next' 或 'prev'，查找的方向

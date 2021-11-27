@@ -102,6 +102,11 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
+    @property
+    def parent(self):
+        """返回父级元素"""
+        return self.parents()
+
     def parents(self, num: int = 1):
         """返回上面第num级父元素                                         \n
         :param num: 第几级父元素
@@ -155,7 +160,7 @@ class SessionElement(DrissionElement):
         """
         return self._ele(loc_or_str, single=False)
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str]):
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                       \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -176,20 +181,7 @@ class SessionElement(DrissionElement):
         :param single: True则返回第一个，False则返回全部
         :return: SessionElement对象
         """
-        loc_or_str = str_to_loc(loc_or_str) if isinstance(loc_or_str, str) else translate_loc(loc_or_str)
-        element = self
-        loc_str = loc_or_str[1]
-
-        if loc_or_str[0] == 'xpath' and loc_or_str[1].lstrip().startswith('/'):
-            loc_str = f'.{loc_str}'
-
-        # 若css以>开头，表示找元素的直接子元素，要用page以绝对路径才能找到
-        if loc_or_str[0] == 'css selector' and loc_or_str[1].lstrip().startswith('>'):
-            loc_str = f'{self.css_path}{loc_or_str[1]}'
-            element = self.page
-
-        loc_or_str = loc_or_str[0], loc_str
-        return make_session_ele(element, loc_or_str, single)
+        return make_session_ele(self, loc_or_str, single)
 
     def _get_ele_path(self, mode) -> str:
         """获取css路径或xpath路径
@@ -246,26 +238,6 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
     :param single: True则返回第一个，False则返回全部
     :return: 返回SessionElement元素或列表，或属性文本
     """
-    # 根据传入对象类型获取页面对象和lxml元素对象
-    if isinstance(html_or_ele, SessionElement):  # SessionElement
-        page = html_or_ele.page
-        html_or_ele = html_or_ele.inner_ele
-
-    elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
-        page = html_or_ele
-        html_or_ele = fromstring(html_or_ele.html)
-
-    elif isinstance(html_or_ele, str):  # 直接传入html文本
-        page = None
-        html_or_ele = fromstring(html_or_ele)
-
-    elif isinstance(html_or_ele, BaseElement):  # DrissionElement 或 ShadowRootElement
-        page = html_or_ele.page
-        html_or_ele = fromstring(html_or_ele.html)
-
-    else:
-        raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')
-
     # ---------------处理定位符---------------
     if not loc:
         loc = ('xpath', '.')
@@ -276,6 +248,57 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
         loc = translate_loc(loc)
     else:
         raise ValueError("定位符必须为str或长度为2的tuple。")
+
+    # ---------------根据传入对象类型获取页面对象和lxml元素对象---------------
+    if isinstance(html_or_ele, SessionElement):  # SessionElement
+        page = html_or_ele.page
+
+        loc_str = loc[1]
+        if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
+            loc_str = f'.{loc[1]}'
+            html_or_ele = html_or_ele.inner_ele
+
+        # 若css以>开头，表示找元素的直接子元素，要用page以绝对路径才能找到
+        elif loc[0] == 'css selector' and loc[1].lstrip().startswith('>'):
+            loc_str = f'{html_or_ele.css_path}{loc[1]}'
+            if html_or_ele.page:
+                html_or_ele = fromstring(html_or_ele.page.html)
+            else:  # 接收html文本，无page的情况
+                html_or_ele = fromstring(html_or_ele('xpath:/ancestor::*').html)
+
+        else:
+            html_or_ele = html_or_ele.inner_ele
+
+        loc = loc[0], loc_str
+
+    elif isinstance(html_or_ele, DrissionElement):  # DriverElement
+        loc_str = loc[1]
+        if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
+            loc_str = f'.{loc[1]}'
+        elif loc[0] == 'css selector' and loc[1].lstrip().startswith('>'):
+            loc_str = f'{html_or_ele.css_path}{loc[1]}'
+        loc = loc[0], loc_str
+
+        # 获取整个页面html再定位到当前元素，以实现查找上级元素
+        page = html_or_ele.page
+        xpath = html_or_ele.xpath
+        html_or_ele = fromstring(html_or_ele.page.html)
+        html_or_ele = html_or_ele.xpath(xpath)[0]
+
+    elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
+        page = html_or_ele
+        html_or_ele = fromstring(html_or_ele.html)
+
+    elif isinstance(html_or_ele, str):  # 直接传入html文本
+        page = None
+        html_or_ele = fromstring(html_or_ele)
+
+    elif isinstance(html_or_ele, BaseElement):  # ShadowRootElement
+        page = html_or_ele.page
+        html_or_ele = fromstring(html_or_ele.html)
+
+    else:
+        raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')
 
     # ---------------执行查找-----------------
     try:
