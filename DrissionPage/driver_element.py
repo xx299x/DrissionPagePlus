@@ -363,7 +363,7 @@ class DriverElement(DrissionElement):
         from time import perf_counter
 
         t1 = perf_counter()
-        while self.attr('value') != full_txt and perf_counter() - t1 > self.page.timeout:
+        while self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
             if clear:
                 self.clear()
 
