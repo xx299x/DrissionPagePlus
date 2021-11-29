@@ -7,7 +7,7 @@
 from os import path as os_PATH, sep
 from pathlib import Path
 from random import randint
-from re import search as re_SEARCH, sub
+from re import search, sub
 from time import time, sleep
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, quote, unquote
@@ -277,7 +277,7 @@ class SessionPage(BasePage):
         """
         if file_exists == 'skip' and Path(f'{goal_path}{sep}{rename}').exists():
             if show_msg:
-                print(f'{file_url}\n{goal_path}{sep}{rename}\nSkipped.\n')
+                print(f'{file_url}\n{goal_path}{sep}{rename}\n已跳过。\n')
 
             return False, 'Skipped because a file with the same name already exists.'
 
@@ -312,18 +312,22 @@ class SessionPage(BasePage):
 
             # -------------------获取文件名-------------------
             file_name = ''
-            content_disposition = r.headers.get('content-disposition')
+            content_disposition = r.headers.get('content-disposition', '').replace(' ', '')
 
             # 使用header里的文件名
             if content_disposition:
-                file_name = content_disposition.encode('ISO-8859-1').decode('utf-8')
-                file_name = re_SEARCH(r'filename *= *"?([^";]+)', file_name)
+                # TODO: 待测试
+                txt = search(r'filename\*="?([^";]+)', content_disposition)
+                if txt:
+                    charset, file_name = txt.group(1).split("''", 1)
+                    file_name = unquote(content_disposition, charset)
+                else:
+                    txt = search(r'filename="?([^";]+)', content_disposition)
+                    if txt:
+                        file_name = unquote(txt.group(1))
 
-                if file_name:
-                    file_name = file_name.group(1)
-
-                    if file_name[0] == file_name[-1] == "'":
-                        file_name = file_name[1:-1]
+                if file_name and file_name[0] == file_name[-1] == "'":
+                    file_name = file_name[1:-1]
 
             # 在url里获取文件名
             if not file_name and os_PATH.basename(url):
@@ -375,16 +379,16 @@ class SessionPage(BasePage):
                     pass
 
                 else:
-                    raise ValueError("file_exists参数只能是'skip'、'overwrite'或'rename'。")
+                    raise ValueError("file_exists参数只能是'skip'、'overwrite' 或 'rename'。")
 
             # -------------------打印要下载的文件-------------------
             if msg:
                 print(file_url)
                 print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
-                print(f'Downloading to: {goal}')
+                print(f'正在下载到：{goal}')
 
                 if skip:
-                    print('Skipped.\n')
+                    print('已跳过。\n')
 
             # -------------------开始下载-------------------
             if skip:
@@ -518,14 +522,14 @@ class SessionPage(BasePage):
             # ----------------获取并设置编码开始-----------------
             # 在headers中获取编码
             content_type = r.headers.get('content-type', '').lower()
-            charset = re_SEARCH(r'charset[=: ]*(.*)?[;]', content_type)
+            charset = search(r'charset[=: ]*(.*)?[;]', content_type)
 
             if charset:
                 r.encoding = charset.group(1)
 
             # 在headers中获取不到编码，且如果是网页
             elif content_type.replace(' ', '').startswith('text/html'):
-                re_result = re_SEARCH(b'<meta.*?charset=[ \\\'"]*([^"\\\' />]+).*?>', r.content)
+                re_result = search(b'<meta.*?charset=[ \\\'"]*([^"\\\' />]+).*?>', r.content)
 
                 if re_result:
                     charset = re_result.group(1).decode()
