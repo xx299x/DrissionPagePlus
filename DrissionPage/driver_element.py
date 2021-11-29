@@ -6,8 +6,7 @@
 """
 from os import sep
 from pathlib import Path
-from re import sub
-from time import time
+from time import time, perf_counter
 from typing import Union, List, Any, Tuple
 
 from selenium.common.exceptions import TimeoutException, JavascriptException, InvalidElementStateException
@@ -81,10 +80,10 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        # return format_html(self.inner_ele.get_attribute('innerText'), False)
-        re_str = self.inner_ele.get_attribute('innerText')
-        re_str = sub(r'\n{2,}', '\n', re_str)
-        re_str = sub(r' {2,}', ' ', re_str)
+        re_str = self.inner_ele.text
+        # re_str = self.inner_ele.get_attribute('innerText')
+        # re_str = sub(r'\n{2,}', '\n', re_str)
+        # re_str = sub(r' {2,}', ' ', re_str)
 
         return format_html(re_str.strip('\n '), False)
 
@@ -282,7 +281,6 @@ class DriverElement(DrissionElement):
         """
         if not by_js:
             timeout = timeout if timeout is not None else self.page.timeout
-            from time import perf_counter
             t1 = perf_counter()
             while perf_counter() - t1 <= timeout:
                 try:
@@ -340,37 +338,35 @@ class DriverElement(DrissionElement):
         from selenium.webdriver import ActionChains
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).context_click().perform()
 
-    def input(self, vals: Union[str, tuple], clear: bool = True) -> None:
-        """输入文本或组合键，可用于所有场合          \n
+    def input(self, vals: Union[str, tuple], clear: bool = True, insure_input: bool = True) -> None:
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                  \n
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
+        :param insure_input: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
         :return: None
         """
-        if clear:
-            self.clear()
-
-        self.inner_ele.send_keys(*vals)
-
-    def input_txt(self, txt: Union[str, tuple], clear: bool = True) -> None:
-        """专门用于输入文本框，解决文本框有时输入失效的问题       \n
-        :param txt: 文本值
-        :param clear: 输入前是否清空文本框
-        :return: None
-        """
-        enter = '\n' if txt.endswith('\n') else None
-        full_txt = txt if clear else f'{self.attr("value")}{txt}'
-        full_txt = full_txt.rstrip('\n')
-        from time import perf_counter
-
-        t1 = perf_counter()
-        while self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
+        if not insure_input:  # 普通输入
             if clear:
                 self.clear()
 
-            self.inner_ele.send_keys(txt)
+            self.inner_ele.send_keys(*vals)
 
-        if enter:
-            self.inner_ele.send_keys(enter)
+        else:  # 确保输入正确
+            if not isinstance(vals, str):
+                raise TypeError('insure_input参数生效时vals只能接收str数据。')
+            enter = '\n' if vals.endswith('\n') else None
+            full_txt = vals if clear else f'{self.attr("value")}{vals}'
+            full_txt = full_txt.rstrip('\n')
+
+            t1 = perf_counter()
+            while self.is_valid() and self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
+                if clear:
+                    self.clear()
+
+                self.inner_ele.send_keys(vals)
+
+            if enter:
+                self.inner_ele.send_keys(enter)
 
     def run_script(self, script: str, *args) -> Any:
         """执行js代码，传入自己为第一个参数  \n

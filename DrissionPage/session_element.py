@@ -60,41 +60,45 @@ class SessionElement(DrissionElement):
         """返回元素内所有文本"""
 
         # 为尽量保证与浏览器结果一致，弄得比较复杂
-        def get_node(ele, pre: bool = False):
+        nowrap_list = ('a', 'font', 'b', 'span', 'style', 's', 'i', 'del', 'br')  # 前面无须换行的元素
+        noText_list = ('script',)  # 不获取文本的元素
+
+        def get_node_txt(ele, pre: bool = False):
             str_list = []
-            if ele.tag == 'pre':
+            tag = ele.tag.lower()
+            if tag in noText_list:  # script标签内的文本不返回
+                return str_list
+            elif tag == 'br':
+                return ['\n']
+
+            if tag == 'pre':
                 pre = True
 
-            current_tag = None
-            for el in ele.eles('xpath:./text() | *'):
-                if current_tag in ('br', 'p') and str_list and str_list[-1] != '\n':
-                    str_list.append('\n')
+            nodes = ele.eles('xpath:./text() | *')
+            for k, el in enumerate(nodes):
+                if isinstance(el, str):  # 字符节点
+                    if pre:
+                        str_list.append(el)
 
-                if isinstance(el, str):
-                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
-                        if pre:
-                            str_list.append(el)
-                        else:
-                            str_list.append(el.replace('\n', ' ').strip(' \t'))
+                    else:
+                        if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
+                            txt = el
+                            if not pre:
+                                txt = txt.replace('\n', ' ').strip(' \t')
+                                txt = sub(r' {2,}', ' ', txt)
+                            str_list.append(txt)
 
-                    elif '\n' in el and str_list and str_list[-1] != '\n':  # 元素间换行的情况
+                else:  # 元素节点
+                    if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
                         str_list.append('\n')
-                    else:  # 整个字符由回车和空格组成
-                        str_list.append(' ')
-                    current_tag = None
+                    str_list.extend(get_node_txt(el, pre))
 
-                elif el.tag.lower() == 'script':
-                    current_tag = None
-
-                else:
-                    str_list.extend(get_node(el, pre))
-                    current_tag = el.tag
+            if tag in ('p', 'div'):
+                str_list.append('\n')
 
             return str_list
 
-        re_str = ''.join(get_node(self))
-        re_str = sub(r' {2,}', ' ', re_str)
-        re_str = sub(r'\n{2,}', '\n', re_str)
+        re_str = ''.join(get_node_txt(self))
         return format_html(re_str, False).strip('\n')
 
     @property
