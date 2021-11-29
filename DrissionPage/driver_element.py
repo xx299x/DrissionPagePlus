@@ -339,7 +339,7 @@ class DriverElement(DrissionElement):
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).context_click().perform()
 
     def input(self, vals: Union[str, tuple], clear: bool = True, insure_input: bool = True) -> None:
-        """输入文本或组合键，可用于所有场合                                              \n
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                  \n
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :param insure_input: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
@@ -353,7 +353,7 @@ class DriverElement(DrissionElement):
 
         else:  # 确保输入正确
             if not isinstance(vals, str):
-                raise TypeError('insure_input参数生效时只能接收str数据。')
+                raise TypeError('insure_input参数生效时vals只能接收str数据。')
             enter = '\n' if vals.endswith('\n') else None
             full_txt = vals if clear else f'{self.attr("value")}{vals}'
             full_txt = full_txt.rstrip('\n')
