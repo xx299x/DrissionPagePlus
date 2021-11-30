@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
-from .common import str_to_loc, get_available_file_name, translate_loc, format_html
+from .common import str_to_loc, get_usable_path, translate_loc, format_html
 from .session_element import make_session_ele
 
 
@@ -413,8 +413,8 @@ class DriverElement(DrissionElement):
         name = filename or self.tag
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
-        name = f'{name}.png' if not name.endswith('.png') else name
-        name = get_available_file_name(str(path), name)
+        if not name.lower().endswith('.png'):
+            name = f'{name}.png'
 
         # 等待元素加载完成
         if self.tag == 'img':
@@ -423,7 +423,7 @@ class DriverElement(DrissionElement):
             while not self.run_script(js):
                 pass
 
-        img_path = f'{path}{sep}{name}'
+        img_path = str(get_usable_path(f'{path}{sep}{name}'))
         self.inner_ele.screenshot(img_path)
 
         return img_path

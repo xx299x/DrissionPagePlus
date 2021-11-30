@@ -17,7 +17,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import BasePage
-from .common import get_available_file_name, format_html
+from .common import get_usable_path, format_html
 from .driver_element import DriverElement, make_driver_ele, _wait_ele
 from .session_element import make_session_ele
 
@@ -382,10 +382,11 @@ class DriverPage(BasePage):
         :return: 图片完整路径
         """
         name = filename or self.title
+        if not name.lower().endswith('.png'):
+            name = f'{name}.png'
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
-        name = get_available_file_name(str(path), f'{name}.png')
-        img_path = f'{path}{sep}{name}'
+        img_path = str(get_usable_path(f'{path}{sep}{name}'))
         self.driver.save_screenshot(img_path)
         return img_path
 

@@ -6,7 +6,7 @@
 """
 from html import unescape
 from pathlib import Path
-from re import split as re_SPLIT
+from re import split as re_SPLIT, search, sub
 from shutil import rmtree
 from typing import Union
 from zipfile import ZipFile
@@ -213,31 +213,6 @@ def translate_loc(loc: tuple) -> tuple:
     return loc_by, loc_str
 
 
-def get_available_file_name(folder_path: str, file_name: str) -> str:
-    """检查文件是否重名，并返回可以使用的文件名  \n
-    :param folder_path: 文件夹路径
-    :param file_name: 要检查的文件名
-    :return: 可用的文件名
-    """
-    folder_path = Path(folder_path).absolute()
-    file_Path = folder_path.joinpath(file_name)
-
-    while file_Path.exists():
-        ext_name = file_Path.suffix
-        base_name = file_Path.stem
-        num = base_name.split(' ')[-1]
-
-        if num and num[0] == '(' and num[-1] == ')' and num[1:-1].isdigit():
-            num = int(num[1:-1])
-            file_name = f'{base_name.replace(f"({num})", "", -1)}({num + 1}){ext_name}'
-        else:
-            file_name = f'{base_name} (1){ext_name}'
-
-        file_Path = folder_path.joinpath(file_name)
-
-    return file_name
-
-
 def clean_folder(folder_path: str, ignore: list = None) -> None:
     """清空一个文件夹，除了ignore里的文件和文件夹  \n
     :param folder_path: 要清空的文件夹路径
@@ -284,3 +259,66 @@ def get_exe_path_from_port(port: Union[str, int]) -> Union[str, None]:
     else:
         file_lst = popen(f'wmic process where processid={processid} get executablepath').read().split('\n')
         return file_lst[2].strip() if len(file_lst) > 2 else None
+
+
+def get_usable_path(path: Union[str, Path]) -> Path:
+    """检查文件或文件夹是否有重名，并返回可以使用的路径           \n
+    :param path: 文件或文件夹路径
+    :return: 可用的路径，Path对象
+    """
+    path = Path(path)
+    parent = path.parent
+    path = parent / make_valid_name(path.name)
+    name = path.stem if path.is_file() else path.name
+    ext = path.suffix if path.is_file() else ''
+
+    first_time = True
+
+    while path.exists():
+        r = search(r'(.*)_(\d+)$', name)
+
+        if not r or (r and first_time):
+            src_name, num = name, '1'
+        else:
+            src_name, num = r.group(1), int(r.group(2)) + 1
+
+        name = f'{src_name}_{num}'
+        path = parent / f'{name}{ext}'
+        first_time = None
+
+    return path
+
+
+def make_valid_name(full_name: str) -> str:
+    """获取有效的文件名                  \n
+    :param full_name: 文件名
+    :return: 可用的文件名
+    """
+    # ----------------去除前后空格----------------
+    full_name = full_name.strip()
+
+    # ----------------使总长度不大于255个字符（一个汉字是2个字符）----------------
+    r = search(r'(.*)(\.[^.]+$)', full_name)  # 拆分文件名和后缀名
+    if r:
+        name, ext = r.group(1), r.group(2)
+        ext_long = len(ext)
+    else:
+        name, ext = full_name, ''
+        ext_long = 0
+
+    while get_long(name) > 255 - ext_long:
+        name = name[:-1]
+
+    full_name = f'{name}{ext}'
+
+    # ----------------去除不允许存在的字符----------------
+    return sub(r'[<>/\\|:*?\n]', '', full_name)
+
+
+def get_long(txt) -> int:
+    """返回字符串中字符个数（一个汉字是2个字符）          \n
+    :param txt: 字符串
+    :return: 字符个数
+    """
+    txt_len = len(txt)
+    return int((len(txt.encode('utf-8')) - txt_len) / 2 + txt_len)
