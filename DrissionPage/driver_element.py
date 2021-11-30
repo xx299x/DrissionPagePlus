@@ -80,7 +80,7 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return get_ele_txt(self)
+        return get_ele_txt(make_session_ele(self.html))
 
     @property
     def raw_text(self) -> str:
