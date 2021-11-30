@@ -80,8 +80,8 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        re_str = self.inner_ele.text
-        # re_str = self.inner_ele.get_attribute('innerText')
+        # re_str = self.inner_ele.text
+        re_str = self.inner_ele.get_attribute('innerText')
         # re_str = sub(r'\n{2,}', '\n', re_str)
         # re_str = sub(r' {2,}', ' ', re_str)
 

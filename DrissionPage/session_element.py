@@ -60,16 +60,16 @@ class SessionElement(DrissionElement):
         """返回元素内所有文本"""
 
         # 为尽量保证与浏览器结果一致，弄得比较复杂
-        nowrap_list = ('a', 'font', 'b', 'span', 'style', 's', 'i', 'del', 'br')  # 前面无须换行的元素
+        nowrap_list = ('a', 'font', 'b', 'span', 'style', 's', 'i', 'del', 'br', 'img', 'td')  # 前面无须换行的元素
+        wrap_after_list = ('p', 'div', 'br')  # 后面添加换行的元素
         noText_list = ('script',)  # 不获取文本的元素
+        tab_list = ('td',)
 
         def get_node_txt(ele, pre: bool = False):
             str_list = []
             tag = ele.tag.lower()
             if tag in noText_list:  # script标签内的文本不返回
                 return str_list
-            elif tag == 'br':
-                return ['\n']
 
             if tag == 'pre':
                 pre = True
@@ -91,9 +91,11 @@ class SessionElement(DrissionElement):
                 else:  # 元素节点
                     if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
                         str_list.append('\n')
+                    if el.tag.lower() in tab_list:
+                        str_list.append('\t')
                     str_list.extend(get_node_txt(el, pre))
 
-            if tag in ('p', 'div'):
+            if tag in wrap_after_list:  # 有些元素后面要添加回车
                 str_list.append('\n')
 
             return str_list
