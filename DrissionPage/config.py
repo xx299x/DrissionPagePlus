@@ -612,27 +612,23 @@ class DriverOptions(Options):
         :param cache_path: 缓存路径
         :return: 当前对象
         """
-
-        def format_path(path: str) -> str:
-            return path.replace('/', '\\')
-
         if driver_path is not None:
-            self._driver_path = format_path(driver_path)
+            self._driver_path = driver_path
 
         if chrome_path is not None:
-            self.binary_location = format_path(chrome_path)
+            self.binary_location = chrome_path
 
         if debugger_address is not None:
             self.debugger_address = debugger_address
 
         if download_path is not None:
-            self.experimental_options['prefs']['download.default_directory'] = format_path(download_path)
+            self.experimental_options['prefs']['download.default_directory'] = download_path
 
         if user_data_path is not None:
-            self.set_argument('--user-data-dir', format_path(user_data_path))
+            self.set_argument('--user-data-dir', user_data_path)
 
         if cache_path is not None:
-            self.set_argument('--disk-cache-dir', format_path(cache_path))
+            self.set_argument('--disk-cache-dir', cache_path)
 
         return self
 
