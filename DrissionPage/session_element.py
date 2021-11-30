@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   session_element.py
 """
-from re import match, DOTALL, sub
+from re import match, DOTALL
 from typing import Union, List, Tuple
 from urllib.parse import urlparse, urljoin, urlunparse
 
@@ -12,7 +12,7 @@ from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
 from .base import DrissionElement, BasePage, BaseElement
-from .common import str_to_loc, translate_loc, format_html
+from .common import str_to_loc, translate_loc, format_html, get_ele_txt
 
 
 class SessionElement(DrissionElement):
@@ -58,57 +58,7 @@ class SessionElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-
-        # 为尽量保证与浏览器结果一致，弄得比较复杂
-        # 前面无须换行的元素
-        nowrap_list = ('sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'br', 'img', 'td', 'th',
-                       'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
-                       'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
-        # 后面添加换行的元素
-        wrap_after_list = ('p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'li', 'blockquote')
-        noText_list = (
-        'script', 'style', 'video', 'audio', 'iframe', 'embed', 'noscript', 'canvas', 'template')  # 不获取文本的元素
-        tab_list = ('td', 'th')
-
-        def get_node_txt(ele, pre: bool = False):
-            str_list = []
-            tag = ele.tag.lower()
-            if tag in noText_list:  # script标签内的文本不返回
-                return str_list
-
-            if tag == 'pre':
-                pre = True
-
-            nodes = ele.eles('xpath:./text() | *')
-            prev_ele = ''
-            for el in nodes:
-                if isinstance(el, str):  # 字符节点
-                    if pre:
-                        str_list.append(el)
-
-                    else:
-                        if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
-                            txt = el
-                            if not pre:
-                                txt = txt.replace('\n', ' ').strip(' \t')
-                                txt = sub(r' {2,}', ' ', txt)
-                            str_list.append(txt)
-
-                else:  # 元素节点
-                    if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
-                        str_list.append('\n')
-                    if el.tag.lower() in tab_list and prev_ele in tab_list:
-                        str_list.append('\t')
-                    str_list.extend(get_node_txt(el, pre))
-                    prev_ele = el.tag.lower()
-
-            if tag in wrap_after_list:  # 有些元素后面要添加回车
-                str_list.append('\n')
-
-            return str_list
-
-        re_str = ''.join(get_node_txt(self))
-        return format_html(re_str, False).strip('\n')
+        return get_ele_txt(self)
 
     @property
     def raw_text(self) -> str:

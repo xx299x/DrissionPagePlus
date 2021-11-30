@@ -115,6 +115,66 @@ def str_to_loc(loc: str) -> tuple:
     return loc_by, loc_str
 
 
+def get_ele_txt(e) -> str:
+    # 前面无须换行的元素
+    nowrap_list = ('sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
+                   'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
+                   'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
+    # 后面添加换行的元素
+    wrap_after_list = ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'li', 'blockquote', 'header',
+                       'footer', 'address' 'article', 'aside', 'main', 'nav', 'section', 'figcaption', 'summary')
+    # 不获取文本的元素
+    noText_list = ('script', 'style', 'video', 'audio', 'iframe', 'embed', 'noscript', 'canvas', 'template')
+    # 用/t分隔的元素
+    tab_list = ('td', 'th')
+
+    if e.tag in noText_list:
+        return e.raw_text
+
+    def get_node_txt(ele, pre: bool = False):
+        str_list = []
+        tag = ele.tag.lower()
+
+        if tag in noText_list:  # script标签内的文本不返回
+            return str_list
+        if tag == 'br':
+            return '\n'
+        if tag == 'pre':
+            pre = True
+
+        nodes = ele.eles('xpath:./text() | *')
+        prev_ele = ''
+        for el in nodes:
+            if isinstance(el, str):  # 字符节点
+                if pre:
+                    str_list.append(el)
+
+                else:
+                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
+                        txt = el
+                        if not pre:
+                            txt = txt.replace('\n', ' ').strip(' ')
+                            txt = sub(r' {2,}', ' ', txt)
+                        str_list.append(txt)
+
+            else:  # 元素节点
+                if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
+                    str_list.append('\n')
+                if el.tag.lower() in tab_list and prev_ele in tab_list:  # 表格的行
+                    str_list.append('\t')
+
+                str_list.extend(get_node_txt(el, pre))
+                prev_ele = el.tag.lower()
+
+        if tag in wrap_after_list and str_list and str_list[-1] != '\n':  # 有些元素后面要添加回车
+            str_list.append('\n')
+
+        return str_list
+
+    re_str = ''.join(get_node_txt(e))
+    return format_html(re_str, False).strip(' \n')
+
+
 def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
     """生成xpath语句                                          \n
     :param tag: 标签名

@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
-from .common import str_to_loc, get_usable_path, translate_loc, format_html
+from .common import str_to_loc, get_usable_path, translate_loc, format_html, get_ele_txt
 from .session_element import make_session_ele
 
 
@@ -80,12 +80,7 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        # re_str = self.inner_ele.text
-        re_str = self.inner_ele.get_attribute('innerText')
-        # re_str = sub(r'\n{2,}', '\n', re_str)
-        # re_str = sub(r' {2,}', ' ', re_str)
-
-        return format_html(re_str.strip('\n '), False)
+        return get_ele_txt(self)
 
     @property
     def raw_text(self) -> str:
