@@ -26,14 +26,9 @@ class BaseParser(object):
     def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
         return self._ele(loc_or_str, timeout, False)
 
-    @property
-    def html(self) -> str:
-        """返回已转码的html文本"""
-        return format_html(self.raw_html)
-
     # ----------------以下属性或方法待后代实现----------------
     @property
-    def raw_html(self) -> str:
+    def html(self) -> str:
         return ''
 
     @abstractmethod
@@ -120,11 +115,6 @@ class DrissionElement(BaseElement):
         """返回元素注释文本组成的列表"""
         return self.eles('xpath:.//comment()')
 
-    @property
-    def inner_html(self) -> str:
-        """返回已转码的html文本"""
-        return format_html(self.inner_raw_html)
-
     def texts(self, text_node_only: bool = False) -> list:
         """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
         :param text_node_only: 是否只返回文本节点
@@ -191,10 +181,6 @@ class DrissionElement(BaseElement):
         return ele_or_node
 
     # ----------------以下属性或方法由后代实现----------------
-    @property
-    def inner_raw_html(self) -> str:
-        return ''
-
     @property
     def attrs(self):
         return

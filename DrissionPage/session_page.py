@@ -46,8 +46,8 @@ class SessionPage(BasePage):
         return self._url
 
     @property
-    def raw_html(self) -> str:
-        """返回页面已转码的html文本"""
+    def html(self) -> str:
+        """返回页面的html文本"""
         return self.response.text if self.response else ''
 
     @property

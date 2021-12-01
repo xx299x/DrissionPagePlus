@@ -39,15 +39,15 @@ class SessionElement(DrissionElement):
         return self._inner_ele.tag
 
     @property
-    def raw_html(self) -> str:
-        """返回未转码的outerHTML文本"""
+    def html(self) -> str:
+        """返回outerHTML文本"""
         html = tostring(self._inner_ele, method="html").decode()
         return html[:html.rfind('>') + 1]  # tostring()会把跟紧元素的文本节点也带上，因此要去掉
 
     @property
-    def inner_raw_html(self) -> str:
-        """返回元素未转码的innerHTML文本"""
-        r = match(r'<.*?>(.*)</.*?>', self.raw_html, flags=DOTALL)
+    def inner_html(self) -> str:
+        """返回元素innerHTML文本"""
+        r = match(r'<.*?>(.*)</.*?>', self.html, flags=DOTALL)
         return '' if not r else r.group(1)
 
     @property
@@ -227,7 +227,7 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
         elif loc[0] == 'css selector' and loc[1].lstrip().startswith('>'):
             loc_str = f'{html_or_ele.css_path}{loc[1]}'
             if html_or_ele.page:
-                html_or_ele = fromstring(html_or_ele.page.raw_html)
+                html_or_ele = fromstring(html_or_ele.page.html)
             else:  # 接收html文本，无page的情况
                 html_or_ele = fromstring(html_or_ele('xpath:/ancestor::*').html)
 
@@ -247,12 +247,12 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
         # 获取整个页面html再定位到当前元素，以实现查找上级元素
         page = html_or_ele.page
         xpath = html_or_ele.xpath
-        html_or_ele = fromstring(html_or_ele.page.raw_html)
+        html_or_ele = fromstring(html_or_ele.page.html)
         html_or_ele = html_or_ele.xpath(xpath)[0]
 
     elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
         page = html_or_ele
-        html_or_ele = fromstring(html_or_ele.raw_html)
+        html_or_ele = fromstring(html_or_ele.html)
 
     elif isinstance(html_or_ele, str):  # 直接传入html文本
         page = None
@@ -260,7 +260,7 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
 
     elif isinstance(html_or_ele, BaseElement):  # ShadowRootElement
         page = html_or_ele.page
-        html_or_ele = fromstring(html_or_ele.raw_html)
+        html_or_ele = fromstring(html_or_ele.html)
 
     else:
         raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')

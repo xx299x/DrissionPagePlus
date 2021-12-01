@@ -89,14 +89,6 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).html
 
     @property
-    def raw_html(self) -> str:
-        """返回页面html文本"""
-        if self._mode == 's':
-            return super().raw_html
-        elif self._mode == 'd':
-            return super(SessionPage, self).raw_html
-
-    @property
     def json(self) -> dict:
         """当返回内容是json格式时，返回对应的字典"""
         if self._mode == 's':

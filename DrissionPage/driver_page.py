@@ -51,8 +51,8 @@ class DriverPage(BasePage):
             return self.driver.current_url
 
     @property
-    def raw_html(self) -> str:
-        """返回页面没有转码的html文本"""
+    def html(self) -> str:
+        """返回页面的html文本"""
         return self.driver.find_element('xpath', "//*").get_attribute("outerHTML")
 
     @property

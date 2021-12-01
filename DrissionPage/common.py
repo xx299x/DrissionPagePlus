@@ -18,7 +18,7 @@ def get_ele_txt(e) -> str:
     :return: 元素内所有文本
     """
     # 前面无须换行的元素
-    nowrap_list = ('sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
+    nowrap_list = ('br', 'sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
                    'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
                    'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
     # 后面添加换行的元素
@@ -35,7 +35,7 @@ def get_ele_txt(e) -> str:
     def get_node_txt(ele, pre: bool = False):
         tag = ele.tag
         if tag == 'br':
-            return '\n'
+            return [True]
         if not pre and tag == 'pre':
             pre = True
 
@@ -67,13 +67,16 @@ def get_ele_txt(e) -> str:
                 str_list.extend(get_node_txt(el, pre))
                 prev_ele = el.tag
 
-        if tag in wrap_after_list and str_list and str_list[-1] != '\n':  # 有些元素后面要添加回车
+        if tag in wrap_after_list and str_list and str_list[-1] not in ('\n', True):  # 有些元素后面要添加回车
             str_list.append('\n')
 
         return str_list
 
-    re_str = ''.join(get_node_txt(e))
-    return format_html(re_str, False).strip(' \n')
+    re_str = get_node_txt(e)
+    if re_str and re_str[-1] == '\n':
+        re_str.pop()
+    re_str = ''.join([i if i is not True else '\n' for i in re_str])
+    return format_html(re_str)
 
 
 def str_to_loc(loc: str) -> tuple:
@@ -240,19 +243,12 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def format_html(text: str, trans: bool = True) -> str:
+def format_html(text: str) -> str:
     """处理html编码字符             \n
     :param text: html文本
-    :param trans: 是否转码
     :return: 格式化后的html文本
     """
-    if not text:
-        return text
-
-    if trans:
-        text = unescape(text)
-
-    return text.replace('\xa0', ' ')
+    return unescape(text).replace('\xa0', ' ') if text else text
 
 
 def clean_folder(folder_path: str, ignore: list = None) -> None:

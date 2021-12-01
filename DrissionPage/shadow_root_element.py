@@ -41,8 +41,8 @@ class ShadowRootElement(BaseElement):
         return 'shadow-root'
 
     @property
-    def raw_html(self) -> str:
-        """内部没有转码的html文本"""
+    def html(self) -> str:
+        """返回内部的html文本"""
         return self.inner_ele.get_attribute('innerHTML')
 
     @property
