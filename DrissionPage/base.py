@@ -15,6 +15,8 @@ from .common import format_html
 
 
 class BaseParser(object):
+    """所有页面、元素类的基类"""
+
     def __call__(self, loc_or_str):
         return self.ele(loc_or_str)
 
@@ -43,7 +45,7 @@ class BaseParser(object):
 
 
 class BaseElement(BaseParser):
-    """SessionElement 和 DriverElement 的基类"""
+    """各元素类的基类"""
 
     def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
         self._inner_ele = ele
@@ -85,6 +87,8 @@ class BaseElement(BaseParser):
 
 
 class DrissionElement(BaseElement):
+    """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
+
     @property
     def parent(self):
         """返回父级元素"""
@@ -210,6 +214,8 @@ class DrissionElement(BaseElement):
 
 
 class BasePage(BaseParser):
+    """页面类的基类"""
+
     def __init__(self, timeout: float = 10):
         """初始化函数"""
         self._url = None

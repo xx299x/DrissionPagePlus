@@ -12,32 +12,74 @@ from typing import Union
 from zipfile import ZipFile
 
 
+def get_ele_txt(e) -> str:
+    """获取元素内所有文本
+    :param e: 元素对象
+    :return: 元素内所有文本
+    """
+    # 前面无须换行的元素
+    nowrap_list = ('sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
+                   'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
+                   'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
+    # 后面添加换行的元素
+    wrap_after_list = ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'li', 'blockquote', 'header',
+                       'footer', 'address' 'article', 'aside', 'main', 'nav', 'section', 'figcaption', 'summary')
+    # 不获取文本的元素
+    noText_list = ('script', 'style', 'video', 'audio', 'iframe', 'embed', 'noscript', 'canvas', 'template')
+    # 用/t分隔的元素
+    tab_list = ('td', 'th')
+
+    if e.tag in noText_list:
+        return e.raw_text
+
+    def get_node_txt(ele, pre: bool = False):
+        str_list = []
+        tag = ele.tag.lower()
+
+        if tag in noText_list:  # 标签内的文本不返回
+            return str_list
+        if tag == 'br':
+            return '\n'
+        if tag == 'pre':
+            pre = True
+
+        nodes = ele.eles('xpath:./text() | *')
+        prev_ele = ''
+        for el in nodes:
+            if isinstance(el, str):  # 字符节点
+                if pre:
+                    str_list.append(el)
+
+                else:
+                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
+                        txt = el
+                        if not pre:
+                            txt = txt.replace('\n', ' ').strip(' ')
+                            txt = sub(r' {2,}', ' ', txt)
+                        str_list.append(txt)
+
+            else:  # 元素节点
+                if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
+                    str_list.append('\n')
+                if el.tag.lower() in tab_list and prev_ele in tab_list:  # 表格的行
+                    str_list.append('\t')
+
+                str_list.extend(get_node_txt(el, pre))
+                prev_ele = el.tag.lower()
+
+        if tag in wrap_after_list and str_list and str_list[-1] != '\n':  # 有些元素后面要添加回车
+            str_list.append('\n')
+
+        return str_list
+
+    re_str = ''.join(get_node_txt(e))
+    return format_html(re_str, False).strip(' \n')
+
+
 def str_to_loc(loc: str) -> tuple:
     """处理元素查找语句                                                                    \n
     查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                      \n
     @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串    \n
-    示例：                                                                                \n
-        .ele_class                       - class等于ele_class的元素                        \n
-        .:ele_class                      - class含有ele_class的元素                        \n
-        #ele_id                          - id等于ele_id的元素                              \n
-        #:ele_id                         - id含有ele_id的元素                              \n
-        @class:ele_class                 - class含有ele_class的元素                        \n
-        @class=ele_class                 - class等于ele_class的元素                        \n
-        @class                           - 带class属性的元素                               \n
-        tag:div                          - div元素                                        \n
-        tag:div@class:ele_class          - class含有ele_class的div元素                     \n
-        tag:div@class=ele_class          - class等于ele_class的div元素                     \n
-        tag:div@text():search_text       - 文本含有search_text的div元素                     \n
-        tag:div@text()=search_text       - 文本等于search_text的div元素                     \n
-        text:search_text                 - 文本含有search_text的元素                        \n
-        text=search_text                 - 文本等于search_text的元素                        \n
-        xpath://div[@class="ele_class"]  - 用xpath查找                                     \n
-        css:div.ele_class                - 用css selector查找                              \n
-        xpath://div[@class="ele_class"]  - 等同于 x://div[@class="ele_class"]              \n
-        css:div.ele_class                - 等同于 c:div.ele_class                          \n
-        tag:div                          - 等同于 t:div                                    \n
-        text:search_text                 - 等同于 tx:search_text                           \n
-        text=search_text                 - 等同于 tx=search_text                           \n
     """
     loc_by = 'xpath'
 
@@ -115,64 +157,45 @@ def str_to_loc(loc: str) -> tuple:
     return loc_by, loc_str
 
 
-def get_ele_txt(e) -> str:
-    # 前面无须换行的元素
-    nowrap_list = ('sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
-                   'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
-                   'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
-    # 后面添加换行的元素
-    wrap_after_list = ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'li', 'blockquote', 'header',
-                       'footer', 'address' 'article', 'aside', 'main', 'nav', 'section', 'figcaption', 'summary')
-    # 不获取文本的元素
-    noText_list = ('script', 'style', 'video', 'audio', 'iframe', 'embed', 'noscript', 'canvas', 'template')
-    # 用/t分隔的元素
-    tab_list = ('td', 'th')
+def translate_loc(loc: tuple) -> tuple:
+    """把By类型的loc元组转换为css selector或xpath类型的  \n
+    :param loc: By类型的loc元组
+    :return: css selector或xpath类型的loc元组
+    """
+    if len(loc) != 2:
+        raise ValueError('定位符长度必须为2。')
 
-    if e.tag in noText_list:
-        return e.raw_text
+    loc_by = 'xpath'
 
-    def get_node_txt(ele, pre: bool = False):
-        str_list = []
-        tag = ele.tag.lower()
+    if loc[0] == 'xpath':
+        loc_str = loc[1]
 
-        if tag in noText_list:  # script标签内的文本不返回
-            return str_list
-        if tag == 'br':
-            return '\n'
-        if tag == 'pre':
-            pre = True
+    elif loc[0] == 'css selector':
+        loc_by = 'css selector'
+        loc_str = loc[1]
 
-        nodes = ele.eles('xpath:./text() | *')
-        prev_ele = ''
-        for el in nodes:
-            if isinstance(el, str):  # 字符节点
-                if pre:
-                    str_list.append(el)
+    elif loc[0] == 'id':
+        loc_str = f'//*[@id="{loc[1]}"]'
 
-                else:
-                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
-                        txt = el
-                        if not pre:
-                            txt = txt.replace('\n', ' ').strip(' ')
-                            txt = sub(r' {2,}', ' ', txt)
-                        str_list.append(txt)
+    elif loc[0] == 'class name':
+        loc_str = f'//*[@class="{loc[1]}"]'
 
-            else:  # 元素节点
-                if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
-                    str_list.append('\n')
-                if el.tag.lower() in tab_list and prev_ele in tab_list:  # 表格的行
-                    str_list.append('\t')
+    elif loc[0] == 'link text':
+        loc_str = f'//a[text()="{loc[1]}"]'
 
-                str_list.extend(get_node_txt(el, pre))
-                prev_ele = el.tag.lower()
+    elif loc[0] == 'name':
+        loc_str = f'//*[@name="{loc[1]}"]'
 
-        if tag in wrap_after_list and str_list and str_list[-1] != '\n':  # 有些元素后面要添加回车
-            str_list.append('\n')
+    elif loc[0] == 'tag name':
+        loc_str = f'//{loc[1]}'
 
-        return str_list
+    elif loc[0] == 'partial link text':
+        loc_str = f'//a[contains(text(),"{loc[1]}")]'
 
-    re_str = ''.join(get_node_txt(e))
-    return format_html(re_str, False).strip(' \n')
+    else:
+        raise ValueError('无法识别的定位符。')
+
+    return loc_by, loc_str
 
 
 def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
@@ -230,47 +253,6 @@ def format_html(text: str, trans: bool = True) -> str:
         text = unescape(text)
 
     return text.replace('\xa0', ' ')
-
-
-def translate_loc(loc: tuple) -> tuple:
-    """把By类型的loc元组转换为css selector或xpath类型的  \n
-    :param loc: By类型的loc元组
-    :return: css selector或xpath类型的loc元组
-    """
-    if len(loc) != 2:
-        raise ValueError('定位符长度必须为2。')
-
-    loc_by = 'xpath'
-
-    if loc[0] == 'xpath':
-        loc_str = loc[1]
-
-    elif loc[0] == 'css selector':
-        loc_by = 'css selector'
-        loc_str = loc[1]
-
-    elif loc[0] == 'id':
-        loc_str = f'//*[@id="{loc[1]}"]'
-
-    elif loc[0] == 'class name':
-        loc_str = f'//*[@class="{loc[1]}"]'
-
-    elif loc[0] == 'link text':
-        loc_str = f'//a[text()="{loc[1]}"]'
-
-    elif loc[0] == 'name':
-        loc_str = f'//*[@name="{loc[1]}"]'
-
-    elif loc[0] == 'tag name':
-        loc_str = f'//{loc[1]}'
-
-    elif loc[0] == 'partial link text':
-        loc_str = f'//a[contains(text(),"{loc[1]}")]'
-
-    else:
-        raise ValueError('无法识别的定位符。')
-
-    return loc_by, loc_str
 
 
 def clean_folder(folder_path: str, ignore: list = None) -> None:

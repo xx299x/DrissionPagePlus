@@ -16,6 +16,8 @@ from .session_element import make_session_ele
 
 
 class ShadowRootElement(BaseElement):
+    """ShadowRootElement是用于处理ShadowRoot的类，使用方法和DriverElement基本一致"""
+
     def __init__(self, inner_ele: WebElement, parent_ele: DriverElement):
         super().__init__(inner_ele, parent_ele.page)
         self.parent_ele = parent_ele
@@ -191,24 +193,8 @@ class ShadowRootElement(BaseElement):
 
 def str_to_css_loc(loc: str) -> tuple:
     """处理元素查找语句                                                                              \n
-    查找方式：属性、tag name及属性、文本、css selector                                                \n
+    查找方式：属性、tag name及属性、文本、css selector                                              \n
     @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
-    示例：                                                                                          \n
-        .ele_class                  - class为ele_class的元素                                        \n
-        .:ele_class                 - class含有ele_class的元素                                      \n
-        #ele_id                     - id为ele_id的元素                                              \n
-        #:ele_id                    - id含有ele_id的元素                                            \n
-        @class:ele_class            - class含有ele_class的元素                                      \n
-        @class=ele_class            - class等于ele_class的元素                                      \n
-        @class                      - 带class属性的元素                                             \n
-        tag:div                     - div元素                                                      \n
-        tag:div@class:ele_class     - class含有ele_class的div元素                                   \n
-        tag:div@class=ele_class     - class等于ele_class的div元素                                   \n
-        tag:div@text():search_text  - 文本含有search_text的div元素                                  \n
-        tag:div@text()=search_text  - 文本等于search_text的div元素                                  \n
-        text:search_text            - 文本含有search_text的元素                                     \n
-        text=search_text            - 文本等于search_text的元素                                     \n
-        css:div.ele_class           - 符合css selector的元素                                       \n
     """
     loc_by = 'css selector'
 

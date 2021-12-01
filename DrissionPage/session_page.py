@@ -267,7 +267,7 @@ class SessionPage(BasePage):
         :param goal_path: 存放路径
         :param rename: 重命名文件，可不写扩展名
         :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
-        :param post_data: post方式的数据
+        :param post_data: post方式的数据，这个参数不为None时自动转成post方式
         :param show_msg: 是否显示下载信息
         :param show_errmsg: 是否抛出和显示异常
         :param retry: 重试次数
@@ -285,7 +285,7 @@ class SessionPage(BasePage):
             if 'timeout' not in kwargs:
                 kwargs['timeout'] = 20
 
-            mode = 'post' if post_data else 'get'
+            mode = 'post' if post_data is not None else 'get'
             # 生成的response不写入self._response，是临时的
             r, info = self._make_response(file_url, mode=mode, data=post_data, show_errmsg=show_errmsg, **kwargs)
 
@@ -496,15 +496,15 @@ class SessionPage(BasePage):
             return r, 'Success'
 
 
-def _get_download_file_name(url, headers) -> str:
+def _get_download_file_name(url, response) -> str:
     """从headers或url中获取文件名，如果获取不到，生成一个随机文件名
     :param url: 文件url
-    :param headers: 返回的headers
+    :param response: 返回的response
     :return: 下载文件的文件名
     """
     file_name = ''
     charset = ''
-    content_disposition = headers.get('content-disposition', '').replace(' ', '')
+    content_disposition = response.headers.get('content-disposition', '').replace(' ', '')
 
     # 使用header里的文件名
     if content_disposition:
@@ -516,16 +516,13 @@ def _get_download_file_name(url, headers) -> str:
             else:
                 file_name = txt[0]
 
-        else:  # 文件名没有编码方式
+        else:  # 文件名没带编码方式
             txt = search(r'filename="?([^";]+)', content_disposition)
             if txt:
                 file_name = txt.group(1)
 
                 # 获取编码（如有）
-                content_type = headers.get('content-type', '').lower()
-                charset = search(r'charset[=: ]*(.*)?[;]', content_type)
-                if charset:
-                    charset = charset.group(1)
+                charset = response.encoding
 
         file_name = file_name.strip("'")
 

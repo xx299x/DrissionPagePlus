@@ -364,7 +364,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                  goal_path: str = None,
                  rename: str = None,
                  file_exists: str = 'rename',
-                 post_data: dict = None,
+                 post_data: Union[str, dict] = None,
                  show_msg: bool = False,
                  show_errmsg: bool = False,
                  retry: int = None,
@@ -376,13 +376,13 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :param goal_path: 存放路径，默认为ini文件中指定的临时文件夹
         :param rename: 重命名文件，可不写扩展名
         :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
-        :param post_data: post方式的数据
+        :param post_data: post方式的数据，这个参数不为None时自动转成post方式
         :param show_msg: 是否显示下载信息
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔时间
         :param kwargs: 连接参数
-        :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组
+        :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组，跳过时第一位返回None
         """
         if self.mode == 'd':
             self.cookies_to_session()
