@@ -132,7 +132,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
         """返回第一个符合条件的元素、属性或节点文本                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param timeout: 查找元素超时时间，d模式专用
+        :param timeout: 查找元素超时时间
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
@@ -145,7 +145,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
              timeout: float = None) -> Union[List[DriverElement], List[SessionElement], List[str]]:
         """返回页面中所有符合条件的元素、属性或节点文本                                \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间，d模式专用
+        :param timeout: 查找元素超时时间
         :return: 元素对象或属性、文本组成的列表
         """
         if self._mode == 's':

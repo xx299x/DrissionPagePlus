@@ -51,7 +51,7 @@ def get_ele_txt(e) -> str:
                     str_list.append(el)
 
                 else:
-                    if sub('[ \n]', '', el) != '':  # 字符除了回车和空格还有其它内容
+                    if sub('[ \n\t]', '', el) != '':  # 字符除了回车和空格还有其它内容
                         txt = el
                         if not pre:
                             txt = txt.replace('\n', ' ').strip(' ')

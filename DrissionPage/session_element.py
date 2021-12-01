@@ -109,16 +109,18 @@ class SessionElement(DrissionElement):
         else:
             return self.inner_ele.get(attr)
 
-    def ele(self, loc_or_str: Union[Tuple[str, str], str]):
+    def ele(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str]):
+    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)

@@ -81,7 +81,6 @@ class DriverElement(DrissionElement):
     def text(self) -> str:
         """返回元素内所有文本"""
         return get_ele_txt(make_session_ele(self.raw_html))
-        # return get_ele_txt(self)
 
     @property
     def raw_text(self) -> str:
@@ -106,7 +105,6 @@ class DriverElement(DrissionElement):
         :param attr: 属性名
         :return: 属性值文本
         """
-        # attr = 'innerText' if attr == 'text' else attr
         if attr in ('text', 'innerText'):
             return self.text
 
@@ -343,7 +341,7 @@ class DriverElement(DrissionElement):
         """
         if not insure_input:  # 普通输入
             if clear:
-                self.clear()
+                self.inner_ele.clear()
 
             self.inner_ele.send_keys(*vals)
 
@@ -357,8 +355,7 @@ class DriverElement(DrissionElement):
             t1 = perf_counter()
             while self.is_valid() and self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
                 if clear:
-                    self.clear()
-
+                    self.inner_ele.clear()
                 self.inner_ele.send_keys(vals)
 
             if enter:
@@ -378,7 +375,7 @@ class DriverElement(DrissionElement):
 
     def clear(self) -> None:
         """清空元素文本"""
-        self.inner_ele.clear()
+        self.input('')
 
     def is_selected(self) -> bool:
         """是否选中"""
@@ -861,7 +858,7 @@ def _wait_ele(page_or_ele,
     if mode.lower() not in ('del', 'display', 'hidden'):
         raise ValueError('mode参数只能是"del"、"display"或"hidden"。')
 
-    if isinstance(page_or_ele, DrissionElement):  # TODO: 是否要改为 BaseElement
+    if isinstance(page_or_ele, BaseElement):
         page = page_or_ele.page
         ele_or_driver = page_or_ele.inner_ele
     else:

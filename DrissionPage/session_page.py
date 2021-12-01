@@ -16,7 +16,7 @@ from requests import Session, Response
 from tldextract import extract
 
 from .base import BasePage
-from .common import get_usable_path, format_html, make_valid_name
+from .common import get_usable_path, make_valid_name
 from .config import _cookie_to_dict
 from .session_element import SessionElement, make_session_ele
 
@@ -96,17 +96,19 @@ class SessionPage(BasePage):
 
         return self._url_available
 
-    def ele(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement]) \
+    def ele(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement], timeout=None) \
             -> Union[SessionElement, List[SessionElement], str, None]:
-        """返回页面中符合条件的第一个元素、属性或节点文本                                           \n
+        """返回页面中符合条件的第一个元素、属性或节点文本                            \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_ele)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]:
-        """返回页面中所有符合条件的元素、属性或节点文本                                                     \n
+    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None) -> List[SessionElement]:
+        """返回页面中所有符合条件的元素、属性或节点文本                          \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
@@ -300,7 +302,7 @@ class SessionPage(BasePage):
                 return False, f'Status code: {r.status_code}.'
 
             # -------------------获取文件名-------------------
-            file_name = _get_download_file_name(file_url, r.headers)
+            file_name = _get_download_file_name(file_url, r)
 
             # -------------------重命名，不改变扩展名-------------------
             if rename:

@@ -20,11 +20,11 @@ class BaseParser(object):
     def __call__(self, loc_or_str):
         return self.ele(loc_or_str)
 
-    def ele(self, loc_or_ele):
-        return self._ele(loc_or_ele, True)
+    def ele(self, loc_or_ele, timeout=None):
+        return self._ele(loc_or_ele, timeout, True)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str]):
-        return self._ele(loc_or_str, False)
+    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
+        return self._ele(loc_or_str, timeout, False)
 
     @property
     def html(self) -> str:
@@ -69,10 +69,6 @@ class BaseElement(BaseParser):
     @property
     def tag(self):
         return
-
-    # @property
-    # def html(self):
-    #     return
 
     @property
     def parent(self):
@@ -264,10 +260,6 @@ class BasePage(BaseParser):
     @property
     def url(self):
         return
-
-    # @property
-    # def html(self):
-    #     return
 
     @property
     def json(self):

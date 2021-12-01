@@ -10,7 +10,6 @@ from typing import Union, Any, Tuple, List
 from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BaseElement
-from .common import format_html
 from .driver_element import make_driver_ele, DriverElement
 from .session_element import make_session_ele
 
@@ -40,11 +39,6 @@ class ShadowRootElement(BaseElement):
     def tag(self) -> str:
         """元素标签名"""
         return 'shadow-root'
-
-    # @property
-    # def html(self) -> str:
-    #     """内部已转码的html文本"""
-    #     return format_html(self.inner_ele.get_attribute('innerHTML'))
 
     @property
     def raw_html(self) -> str:
