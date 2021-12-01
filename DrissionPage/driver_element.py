@@ -49,14 +49,14 @@ class DriverElement(DrissionElement):
         return self._inner_ele.tag_name.lower()
 
     @property
-    def html(self) -> str:
-        """返回元素outerHTML文本"""
-        return self.attr('outerHTML')
+    def raw_html(self) -> str:
+        """返回未转码的的outerHTML文本"""
+        return self.inner_ele.get_attribute('outerHTML')
 
     @property
-    def inner_html(self) -> str:
-        """返回元素innerHTML文本"""
-        return self.attr('innerHTML')
+    def inner_raw_html(self) -> str:
+        """返回元素未转码的innerHTML文本"""
+        return self.inner_ele.get_attribute('innerHTML')
 
     @property
     def attrs(self) -> dict:
@@ -80,7 +80,8 @@ class DriverElement(DrissionElement):
     @property
     def text(self) -> str:
         """返回元素内所有文本"""
-        return get_ele_txt(make_session_ele(self.html))
+        return get_ele_txt(make_session_ele(self.raw_html))
+        # return get_ele_txt(self)
 
     @property
     def raw_text(self) -> str:

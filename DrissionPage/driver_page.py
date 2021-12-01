@@ -17,7 +17,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import BasePage
-from .common import get_usable_path, format_html
+from .common import get_usable_path
 from .driver_element import DriverElement, make_driver_ele, _wait_ele
 from .session_element import make_session_ele
 
@@ -51,9 +51,9 @@ class DriverPage(BasePage):
             return self.driver.current_url
 
     @property
-    def html(self) -> str:
-        """返回页面html文本"""
-        return format_html(self.driver.find_element('xpath', "//*").get_attribute("outerHTML"))
+    def raw_html(self) -> str:
+        """返回页面没有转码的html文本"""
+        return self.driver.find_element('xpath', "//*").get_attribute("outerHTML")
 
     @property
     def json(self) -> dict:

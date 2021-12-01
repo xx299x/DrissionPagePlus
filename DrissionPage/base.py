@@ -26,10 +26,15 @@ class BaseParser(object):
     def eles(self, loc_or_str: Union[Tuple[str, str], str]):
         return self._ele(loc_or_str, False)
 
+    @property
+    def html(self) -> str:
+        """返回已转码的html文本"""
+        return format_html(self.raw_html)
+
     # ----------------以下属性或方法待后代实现----------------
     @property
-    def html(self):
-        return
+    def raw_html(self) -> str:
+        return ''
 
     @abstractmethod
     def s_ele(self, loc_or_ele):
@@ -65,9 +70,9 @@ class BaseElement(BaseParser):
     def tag(self):
         return
 
-    @property
-    def html(self):
-        return
+    # @property
+    # def html(self):
+    #     return
 
     @property
     def parent(self):
@@ -118,6 +123,11 @@ class DrissionElement(BaseElement):
     def comments(self) -> list:
         """返回元素注释文本组成的列表"""
         return self.eles('xpath:.//comment()')
+
+    @property
+    def inner_html(self) -> str:
+        """返回已转码的html文本"""
+        return format_html(self.inner_raw_html)
 
     def texts(self, text_node_only: bool = False) -> list:
         """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
@@ -186,8 +196,8 @@ class DrissionElement(BaseElement):
 
     # ----------------以下属性或方法由后代实现----------------
     @property
-    def inner_html(self):
-        return
+    def inner_raw_html(self) -> str:
+        return ''
 
     @property
     def attrs(self):
@@ -255,9 +265,9 @@ class BasePage(BaseParser):
     def url(self):
         return
 
-    @property
-    def html(self):
-        return
+    # @property
+    # def html(self):
+    #     return
 
     @property
     def json(self):

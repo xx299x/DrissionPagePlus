@@ -33,15 +33,15 @@ def get_ele_txt(e) -> str:
         return e.raw_text
 
     def get_node_txt(ele, pre: bool = False):
-        str_list = []
-        tag = ele.tag.lower()
-
-        if tag in noText_list:  # 标签内的文本不返回
-            return str_list
+        tag = ele.tag
         if tag == 'br':
             return '\n'
-        if tag == 'pre':
+        if not pre and tag == 'pre':
             pre = True
+
+        str_list = []
+        if tag in noText_list and not pre:  # 标签内的文本不返回
+            return str_list
 
         nodes = ele.eles('xpath:./text() | *')
         prev_ele = ''
@@ -59,13 +59,13 @@ def get_ele_txt(e) -> str:
                         str_list.append(txt)
 
             else:  # 元素节点
-                if el.tag.lower() not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
+                if el.tag not in nowrap_list and str_list and str_list[-1] != '\n':  # 元素间换行的情况
                     str_list.append('\n')
-                if el.tag.lower() in tab_list and prev_ele in tab_list:  # 表格的行
+                if el.tag in tab_list and prev_ele in tab_list:  # 表格的行
                     str_list.append('\t')
 
                 str_list.extend(get_node_txt(el, pre))
-                prev_ele = el.tag.lower()
+                prev_ele = el.tag
 
         if tag in wrap_after_list and str_list and str_list[-1] != '\n':  # 有些元素后面要添加回车
             str_list.append('\n')

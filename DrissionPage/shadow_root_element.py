@@ -41,10 +41,15 @@ class ShadowRootElement(BaseElement):
         """元素标签名"""
         return 'shadow-root'
 
+    # @property
+    # def html(self) -> str:
+    #     """内部已转码的html文本"""
+    #     return format_html(self.inner_ele.get_attribute('innerHTML'))
+
     @property
-    def html(self) -> str:
-        """内部html文本"""
-        return format_html(self.inner_ele.get_attribute('innerHTML'))
+    def raw_html(self) -> str:
+        """内部没有转码的html文本"""
+        return self.inner_ele.get_attribute('innerHTML')
 
     @property
     def parent(self) -> DriverElement:
