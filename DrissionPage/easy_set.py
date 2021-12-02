@@ -261,7 +261,8 @@ def _get_chrome_path(ini_path: str = None,
         path = None
 
     if path and Path(path).is_file():
-        print('ini文件中', end='')
+        if show_msg:
+            print('ini文件中', end='')
         return str(path)
 
     # -----------从注册表中获取--------------

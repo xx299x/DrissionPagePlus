@@ -105,10 +105,16 @@ class DriverElement(DrissionElement):
         :param attr: 属性名
         :return: 属性值文本
         """
-        if attr in ('text', 'innerText'):
+        if attr == 'text':
             return self.text
-
-        return format_html(self.inner_ele.get_attribute(attr))
+        elif attr == 'innerText':
+            return self.raw_text
+        elif attr in ('html', 'outerHTML'):
+            return self.html
+        elif attr == 'innerHTML':
+            return self.inner_html
+        else:
+            return format_html(self.inner_ele.get_attribute(attr))
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],

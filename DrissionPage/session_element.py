@@ -85,22 +85,23 @@ class SessionElement(DrissionElement):
         # 获取href属性时返回绝对url
         if attr == 'href':
             link = self.inner_ele.get('href')
-
             # 若为链接为None、js或邮件，直接返回
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
 
-            # 其它情况直接返回绝对url
-            else:
+            else:  # 其它情况直接返回绝对url
                 return self._make_absolute(link)
 
         elif attr == 'src':
             return self._make_absolute(self.inner_ele.get('src'))
 
-        elif attr in ('text', 'innerText'):
+        elif attr == 'text':
             return self.text
 
-        elif attr == 'outerHTML':
+        elif attr == 'innerText':
+            return self.raw_text
+
+        elif attr in ('html', 'outerHTML'):
             return self.html
 
         elif attr == 'innerHTML':

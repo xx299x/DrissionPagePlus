@@ -484,7 +484,7 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
                 except:
                     pass
 
-    print('无法启动，请手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
+    print('无法启动，请检查浏览器路径，或手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
     exit(0)
 
 

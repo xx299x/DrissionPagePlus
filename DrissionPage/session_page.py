@@ -279,16 +279,16 @@ class SessionPage(BasePage):
         """
         if file_exists == 'skip' and Path(f'{goal_path}{sep}{rename}').exists():
             if show_msg:
-                print(f'{file_url}\n{goal_path}{sep}{rename}\n已跳过。\n')
-            return None, 'Skipped because a file with the same name already exists.'
+                print(f'{file_url}\n{goal_path}{sep}{rename}\n存在同名文件，已跳过。\n')
+            return None, '已跳过，因存在同名文件。'
 
         def do() -> tuple:
             kwargs['stream'] = True
             if 'timeout' not in kwargs:
                 kwargs['timeout'] = 20
 
+            # 生成临时的response
             mode = 'post' if post_data is not None else 'get'
-            # 生成的response不写入self._response，是临时的
             r, info = self._make_response(file_url, mode=mode, data=post_data, show_errmsg=show_errmsg, **kwargs)
 
             if r is None:
@@ -298,8 +298,8 @@ class SessionPage(BasePage):
 
             if not r.ok:
                 if show_errmsg:
-                    raise ConnectionError(f'连接状态码：{r.status_code}.')
-                return False, f'Status code: {r.status_code}.'
+                    raise ConnectionError(f'连接状态码：{r.status_code}')
+                return False, f'状态码：{r.status_code}'
 
             # -------------------获取文件名-------------------
             file_name = _get_download_file_name(file_url, r)
@@ -345,11 +345,11 @@ class SessionPage(BasePage):
                 print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
                 print(f'正在下载到：{goal}')
                 if skip:
-                    print('已跳过。\n')
+                    print('存在同名文件，已跳过。\n')
 
             # -------------------开始下载-------------------
             if skip:
-                return None, 'Skipped because a file with the same name already exists.'
+                return None, '已跳过，因存在同名文件。'
 
             # 获取远程文件大小
             content_length = r.headers.get('content-length')
@@ -373,23 +373,20 @@ class SessionPage(BasePage):
             except Exception as e:
                 if show_errmsg:
                     raise ConnectionError(e)
-
-                download_status, info = False, f'Download failed.\n{e}'
+                download_status, info = False, f'下载失败。\n{e}'
 
             else:
                 if full_path.stat().st_size == 0:
                     if show_errmsg:
                         raise ValueError('文件大小为0。')
-
-                    download_status, info = False, 'File size is 0.'
+                    download_status, info = False, '文件大小为0。'
 
                 else:
                     download_status, info = True, str(full_path)
 
             finally:
-                if not download_status and full_path.exists():
+                if download_status is False and full_path.exists():
                     full_path.unlink()  # 删除下载出错文件
-
                 r.close()
 
             # -------------------显示并返回值-------------------
@@ -406,7 +403,8 @@ class SessionPage(BasePage):
         if result[0] is False:  # 第一位为None表示跳过的情况
             for i in range(retry_times):
                 sleep(retry_interval)
-                print(f'重试 {file_url}')
+                if show_msg:
+                    print(f'\n重试 {file_url}')
 
                 result = do()
                 if result[0] is not False:
@@ -431,7 +429,7 @@ class SessionPage(BasePage):
         if not url:
             if show_errmsg:
                 raise ValueError('URL为空。')
-            return None, 'url is empty.'
+            return None, 'URL为空。'
 
         if mode not in ('get', 'post'):
             raise ValueError("mode参数只能是'get'或'post'。")
