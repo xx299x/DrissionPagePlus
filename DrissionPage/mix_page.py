@@ -250,9 +250,10 @@ class MixPage(SessionPage, DriverPage, BasePage):
         return self._response.url if self._response else None
 
     def change_mode(self, mode: str = None, go: bool = True) -> None:
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式   \n
-        切换时会把当前模式的cookies复制到目标模式                 \n
-        切换后，如果go是True，调用相应的get函数使访问的页面同步    \n
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
+        切换时会把当前模式的cookies复制到目标模式                   \n
+        切换后，如果go是True，调用相应的get函数使访问的页面同步        \n
+        注意：s转d时，若浏览器当前网址域名和s模式不一样，必须会跳转      \n
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
         """
