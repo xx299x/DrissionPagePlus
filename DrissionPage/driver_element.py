@@ -358,10 +358,12 @@ class DriverElement(DrissionElement):
             full_txt = vals if clear else f'{self.attr("value")}{vals}'
             full_txt = full_txt.rstrip('\n')
 
+            self.click(by_js=True)
+            from selenium.webdriver import Keys
             t1 = perf_counter()
             while self.is_valid() and self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
                 if clear:
-                    self.inner_ele.clear()
+                    self.inner_ele.send_keys(Keys.CONTROL, 'a', Keys.DELETE)  # 有些ui下clear()不生效
                 self.inner_ele.send_keys(vals)
 
             if enter:
