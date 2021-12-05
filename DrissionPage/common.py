@@ -6,7 +6,7 @@
 """
 from html import unescape
 from pathlib import Path
-from re import split as re_SPLIT, search, sub
+from re import split, search, sub, findall
 from shutil import rmtree
 from typing import Union
 from zipfile import ZipFile
@@ -107,32 +107,39 @@ def str_to_loc(loc: str) -> tuple:
 
     # 根据属性查找
     if loc.startswith('@'):
-        r = re_SPLIT(r'([:=])', loc[1:], maxsplit=1)
-        if len(r) == 3:
-            mode = 'exact' if r[1] == '=' else 'fuzzy'
-            loc_str = _make_xpath_str('*', f'@{r[0]}', r[2], mode)
-        else:
-            loc_str = f'//*[@{loc[1:]}]'
+        loc_str = _make_xpath_str('*', loc)
+        # r = split(r'([:=])', loc[1:], maxsplit=1)
+        # if len(r) == 3:
+        #     mode = 'exact' if r[1] == '=' else 'fuzzy'
+        #     loc_str = _make_xpath_str('*', f'@{r[0]}', r[2], mode)
+        # else:
+        #     loc_str = f'//*[@{loc[1:]}]'
 
     # 根据tag name查找
     elif loc.startswith(('tag:', 'tag=')):
-        if '@' not in loc[4:]:
+        at_ind = loc.find('@')
+        if at_ind == -1:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
-            at_lst = loc[4:].split('@', maxsplit=1)
-            r = re_SPLIT(r'([:=])', at_lst[1], maxsplit=1)
-            if len(r) == 3:
-                mode = 'exact' if r[1] == '=' else 'fuzzy'
-                arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
-                loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
-            else:
-                loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
+            loc_str = _make_xpath_str(loc[4:at_ind], loc[at_ind:])
+        # if '@' not in loc[4:]:
+        #     loc_str = f'//*[name()="{loc[4:]}"]'
+        # else:
+        #     at_lst = loc[4:].split('@', maxsplit=1)
+        #     r = split(r'([:=])', at_lst[1], maxsplit=1)
+        #     if len(r) == 3:
+        #         mode = 'exact' if r[1] == '=' else 'fuzzy'
+        #         arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+        #         loc_str = _make_xpath_str(at_lst[0], arg_str, r[2], mode)
+        #     else:
+        #         loc_str = f'//*[name()="{at_lst[0]}" and @{r[0]}]'
 
     # 根据文本查找
     elif loc.startswith(('text:', 'text=')):
         if len(loc) > 5:
-            mode = 'exact' if loc[4] == '=' else 'fuzzy'
-            loc_str = _make_xpath_str('*', 'text()', loc[5:], mode)
+            # mode = 'exact' if loc[4] == '=' else 'fuzzy'
+            # loc_str = _make_xpath_str('*', 'text()', loc[5:], mode)
+            loc_str = _make_xpath_str('*', f'@text(){loc[4:]}')
         else:
             loc_str = '//*[not(text())]'
 
@@ -153,11 +160,32 @@ def str_to_loc(loc: str) -> tuple:
     # 根据文本模糊查找
     else:
         if loc:
-            loc_str = _make_xpath_str('*', 'text()', loc, 'fuzzy')
+            # loc_str = _make_xpath_str('*', 'text()', loc, 'fuzzy')
+            loc_str = _make_xpath_str('*', f'@text():{loc}')
         else:
             loc_str = '//*[not(text())]'
 
     return loc_by, loc_str
+
+
+def _make_xpath_str(tag: str, text: str):
+    tag_name = '' if tag == '*' else f'name()="{tag}" and '
+    r = findall(r'@([^@]*)', text)
+    res_list = []
+    for i in r:
+        r = split(r'([:=])', i, maxsplit=1)
+        if len(r) == 3:
+            arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+            if r[1] == '=':
+                loc_str = f'{arg_str}={_make_search_str(r[2])}'
+            else:
+                loc_str = f'contains({arg_str}, {_make_search_str(r[2])})'
+        else:
+            loc_str = f'@{i}'
+        res_list.append(loc_str)
+
+    s = ' and '.join(res_list)
+    return f"//*[{tag_name}{s}]"
 
 
 def translate_loc(loc: tuple) -> tuple:
@@ -201,28 +229,28 @@ def translate_loc(loc: tuple) -> tuple:
     return loc_by, loc_str
 
 
-def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
-    """生成xpath语句                                          \n
-    :param tag: 标签名
-    :param arg: 属性名
-    :param val: 属性值
-    :param mode: 'exact' 或 'fuzzy'，对应精确或模糊查找
-    :return: xpath字符串
-    """
-    tag_name = '' if tag == '*' else f'name()="{tag}" and '
-
-    if mode == 'exact':
-        return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
-
-    elif mode == 'fuzzy':
-        if arg == 'text()':
-            tag_name = '' if tag == '*' else f'{tag}/'
-            return f'//{tag_name}text()[contains(., {_make_search_str(val)})]/..'
-        else:
-            return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
-
-    else:
-        raise ValueError("mode参数只能是'exact'或'fuzzy'。")
+# def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
+#     """生成xpath语句                                          \n
+#     :param tag: 标签名
+#     :param arg: 属性名
+#     :param val: 属性值
+#     :param mode: 'exact' 或 'fuzzy'，对应精确或模糊查找
+#     :return: xpath字符串
+#     """
+#     tag_name = '' if tag == '*' else f'name()="{tag}" and '
+#
+#     if mode == 'exact':
+#         return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
+#
+#     elif mode == 'fuzzy':
+#         if arg == 'text()':
+#             tag_name = '' if tag == '*' else f'{tag}/'
+#             return f'//{tag_name}text()[contains(., {_make_search_str(val)})]/..'
+#         else:
+#             return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
+#
+#     else:
+#         raise ValueError("mode参数只能是'exact'或'fuzzy'。")
 
 
 def _make_search_str(search_str: str) -> str:
@@ -239,7 +267,6 @@ def _make_search_str(search_str: str) -> str:
         search_str += ',' + '\'"\',' if key < parts_num - 1 else ''
 
     search_str += ',"")'
-
     return search_str
 
 
