@@ -137,8 +137,6 @@ def str_to_loc(loc: str) -> tuple:
     # 根据文本查找
     elif loc.startswith(('text:', 'text=')):
         if len(loc) > 5:
-            # mode = 'exact' if loc[4] == '=' else 'fuzzy'
-            # loc_str = _make_xpath_str('*', 'text()', loc[5:], mode)
             loc_str = _make_xpath_str('*', f'@text(){loc[4:]}')
         else:
             loc_str = '//*[not(text())]'
@@ -153,6 +151,7 @@ def str_to_loc(loc: str) -> tuple:
     elif loc.startswith(('css:', 'css=')):
         loc_by = 'css selector'
         loc_str = loc[4:]
+
     elif loc.startswith(('c:', 'c=')):
         loc_by = 'css selector'
         loc_str = loc[2:]
@@ -160,7 +159,6 @@ def str_to_loc(loc: str) -> tuple:
     # 根据文本模糊查找
     else:
         if loc:
-            # loc_str = _make_xpath_str('*', 'text()', loc, 'fuzzy')
             loc_str = _make_xpath_str('*', f'@text():{loc}')
         else:
             loc_str = '//*[not(text())]'
@@ -168,7 +166,7 @@ def str_to_loc(loc: str) -> tuple:
     return loc_by, loc_str
 
 
-def _make_xpath_str(tag: str, text: str):
+def _make_xpath_str(tag: str, text: str) -> str:
     tag_name = '' if tag == '*' else f'name()="{tag}" and '
     r = findall(r'@([^@]*)', text)
     res_list = []
@@ -186,6 +184,30 @@ def _make_xpath_str(tag: str, text: str):
 
     s = ' and '.join(res_list)
     return f"//*[{tag_name}{s}]"
+
+
+# def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
+#     """生成xpath语句                                          \n
+#     :param tag: 标签名
+#     :param arg: 属性名
+#     :param val: 属性值
+#     :param mode: 'exact' 或 'fuzzy'，对应精确或模糊查找
+#     :return: xpath字符串
+#     """
+#     tag_name = '' if tag == '*' else f'name()="{tag}" and '
+#
+#     if mode == 'exact':
+#         return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
+#
+#     elif mode == 'fuzzy':
+#         if arg == 'text()':
+#             tag_name = '' if tag == '*' else f'{tag}/'
+#             return f'//{tag_name}text()[contains(., {_make_search_str(val)})]/..'
+#         else:
+#             return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
+#
+#     else:
+#         raise ValueError("mode参数只能是'exact'或'fuzzy'。")
 
 
 def translate_loc(loc: tuple) -> tuple:
@@ -227,30 +249,6 @@ def translate_loc(loc: tuple) -> tuple:
         raise ValueError('无法识别的定位符。')
 
     return loc_by, loc_str
-
-
-# def _make_xpath_str(tag: str, arg: str, val: str, mode: str = 'fuzzy') -> str:
-#     """生成xpath语句                                          \n
-#     :param tag: 标签名
-#     :param arg: 属性名
-#     :param val: 属性值
-#     :param mode: 'exact' 或 'fuzzy'，对应精确或模糊查找
-#     :return: xpath字符串
-#     """
-#     tag_name = '' if tag == '*' else f'name()="{tag}" and '
-#
-#     if mode == 'exact':
-#         return f'//*[{tag_name}{arg}={_make_search_str(val)}]'
-#
-#     elif mode == 'fuzzy':
-#         if arg == 'text()':
-#             tag_name = '' if tag == '*' else f'{tag}/'
-#             return f'//{tag_name}text()[contains(., {_make_search_str(val)})]/..'
-#         else:
-#             return f"//*[{tag_name}contains({arg},{_make_search_str(val)})]"
-#
-#     else:
-#         raise ValueError("mode参数只能是'exact'或'fuzzy'。")
 
 
 def _make_search_str(search_str: str) -> str:
