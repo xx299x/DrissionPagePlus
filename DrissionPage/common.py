@@ -86,7 +86,6 @@ def str_to_loc(loc: str) -> tuple:
     """
     loc_by = 'xpath'
 
-    # .和#替换为class和id查找
     if loc.startswith('.'):
         if loc.startswith(('.=', '.:',)):
             loc = loc.replace('.', '@class', 1)
@@ -105,41 +104,43 @@ def str_to_loc(loc: str) -> tuple:
     elif loc.startswith(('tx:', 'tx=')):
         loc = f'text{loc[2:]}'
 
-    # 根据属性查找
-    if loc.startswith('@@'):
-        loc_str = _make_xpath_str('*', loc)  # TODO: 改成多属性
+    # ------------------------------------------------------------------
+    # 多属性查找
+    if loc.startswith('@@') and loc != '@@':
+        loc_str = _make_multi_xpath_str('*', loc)
 
-    elif loc.startswith('@'):
-        loc_str = _make_xpath_str('*', loc)
+    # 单属性查找
+    elif loc.startswith('@') and loc != '@':
+        loc_str = _make_single_xpath_str('*', loc)
 
     # 根据tag name查找
-    elif loc.startswith(('tag:', 'tag=')):
+    elif loc.startswith(('tag:', 'tag=')) and loc not in ('tag:', 'tag='):
         at_ind = loc.find('@')
         if at_ind == -1:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
-            if loc[4:].startswith('@@'):  # TODO: 改成多属性
-                loc_str = _make_xpath_str(loc[4:at_ind], loc[at_ind:])
+            if loc[4:].startswith('@@'):
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
             else:
-                loc_str = _make_xpath_str(loc[4:at_ind], loc[at_ind:])
+                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
 
     # 根据文本查找
-    elif loc.startswith('text:'):
-        loc_str = f'//*[text()={_make_search_str(loc[5:])}]'
     elif loc.startswith('text='):
+        loc_str = f'//*[.={_make_search_str(loc[5:])}]'
+    elif loc.startswith('text:') and loc != 'text:':
         loc_str = f'//*/text()[contains(., {_make_search_str(loc[5:])})]/..'
 
     # 用xpath查找
-    elif loc.startswith(('xpath:', 'xpath=')):
+    elif loc.startswith(('xpath:', 'xpath=')) and loc not in ('xpath:', 'xpath='):
         loc_str = loc[6:]
-    elif loc.startswith(('x:', 'x=')):
+    elif loc.startswith(('x:', 'x=')) and loc not in ('x:', 'x='):
         loc_str = loc[2:]
 
     # 用css selector查找
-    elif loc.startswith(('css:', 'css=')):
+    elif loc.startswith(('css:', 'css=')) and loc not in ('css:', 'css='):
         loc_by = 'css selector'
         loc_str = loc[4:]
-    elif loc.startswith(('c:', 'c=')):
+    elif loc.startswith(('c:', 'c=')) and loc not in ('c:', 'c='):
         loc_by = 'css selector'
         loc_str = loc[2:]
 
@@ -152,8 +153,8 @@ def str_to_loc(loc: str) -> tuple:
     return loc_by, loc_str
 
 
-def _make_xpath_str(tag: str, text: str) -> str:
-    """生成xpath语句                                          \n
+def _make_single_xpath_str(tag: str, text: str) -> str:
+    """生成xpath语句                  \n
     :param tag: 标签名
     :param text: 待处理的字符串
     :return: xpath字符串
@@ -164,7 +165,7 @@ def _make_xpath_str(tag: str, text: str) -> str:
         return f'//*[{tag_name}{r[0]}]'
     else:
         if r[1] == '=':  # 精确查找
-            arg = 'text()' if r[0] in ('@text()', '@tx()') else r[0]
+            arg = '.' if r[0] in ('@text()', '@tx()') else r[0]
             return f'//*[{tag_name}{arg}={_make_search_str(r[2])}]'
         else:  # 模糊查找
             if r[0] in ('@text()', '@tx()'):
@@ -172,6 +173,50 @@ def _make_xpath_str(tag: str, text: str) -> str:
                 return f'//{tag_name}text()[contains(., {_make_search_str(r[2])})]/..'
             else:
                 return f"//*[{tag_name}contains({r[0]},{_make_search_str(r[2])})]"
+
+
+def _make_multi_xpath_str(tag: str, text: str) -> str:
+    """生成多属性查找的xpath语句                    \n
+    :param tag: 标签名
+    :param text: 待处理的字符串
+    :return: xpath字符串
+    """
+    tag_name = '' if tag == '*' else f'name()="{tag}" and '
+    args = text.split('@@')
+    arg_list = []
+
+    for arg in args[1:]:
+        r = split(r'([:=])', arg, maxsplit=1)
+        if len(r) != 3:
+            arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+        else:
+            arg = '.' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+            if r[1] == '=':
+                arg_str = f'{arg}={_make_search_str(r[2])}'
+            else:
+                arg_str = f'contains({arg},{_make_search_str(r[2])})'
+        arg_list.append(arg_str)
+
+    re_str = f'//*[{tag_name}{" and ".join(arg_list)}]'
+
+    return re_str
+
+
+def _make_search_str(search_str: str) -> str:
+    """将"转义，不知何故不能直接用 \ 来转义 \n
+    :param search_str: 查询字符串
+    :return: 把"转义后的字符串
+    """
+    parts = search_str.split('"')
+    parts_num = len(parts)
+    search_str = 'concat('
+
+    for key, i in enumerate(parts):
+        search_str += f'"{i}"'
+        search_str += ',' + '\'"\',' if key < parts_num - 1 else ''
+
+    search_str += ',"")'
+    return search_str
 
 
 def translate_loc(loc: tuple) -> tuple:
@@ -213,23 +258,6 @@ def translate_loc(loc: tuple) -> tuple:
         raise ValueError('无法识别的定位符。')
 
     return loc_by, loc_str
-
-
-def _make_search_str(search_str: str) -> str:
-    """将"转义，不知何故不能直接用 \ 来转义 \n
-    :param search_str: 查询字符串
-    :return: 把"转义后的字符串
-    """
-    parts = search_str.split('"')
-    parts_num = len(parts)
-    search_str = 'concat('
-
-    for key, i in enumerate(parts):
-        search_str += f'"{i}"'
-        search_str += ',' + '\'"\',' if key < parts_num - 1 else ''
-
-    search_str += ',"")'
-    return search_str
 
 
 def format_html(text: str) -> str:
