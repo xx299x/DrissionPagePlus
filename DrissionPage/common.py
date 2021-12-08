@@ -119,7 +119,7 @@ def str_to_loc(loc: str) -> tuple:
         if at_ind == -1:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
-            if loc[4:].startswith('@@'):
+            if loc[at_ind:].startswith('@@'):
                 loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
             else:
                 loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
@@ -159,20 +159,28 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
     :param text: 待处理的字符串
     :return: xpath字符串
     """
-    tag_name = '' if tag == '*' else f'name()="{tag}" and '
+    arg_list = [] if tag == '*' else [f'name()="{tag}"']
+    arg_str = txt_str = ''
     r = split(r'([:=])', text, maxsplit=1)
-    if len(r) != 3:
-        return f'//*[{tag_name}{r[0]}]'
-    else:
+
+    if len(r) != 3 and len(r[0]) > 1:
+        arg_str = 'normalize-space(text())' if r[0] in ('@text()', '@tx()') else f'{r[0]}'
+
+    elif len(r) == 3 and len(r[0]) > 1:
         if r[1] == '=':  # 精确查找
             arg = '.' if r[0] in ('@text()', '@tx()') else r[0]
-            return f'//*[{tag_name}{arg}={_make_search_str(r[2])}]'
+            arg_str = f'{arg}={_make_search_str(r[2])}'
         else:  # 模糊查找
             if r[0] in ('@text()', '@tx()'):
-                tag_name = '' if tag == '*' else f'{tag}/'
-                return f'//{tag_name}text()[contains(., {_make_search_str(r[2])})]/..'
+                txt_str = f'/text()[contains(., {_make_search_str(r[2])})]/..'
+                arg_str = ''
             else:
-                return f"//*[{tag_name}contains({r[0]},{_make_search_str(r[2])})]"
+                arg_str = f"contains({r[0]},{_make_search_str(r[2])})"
+
+    if arg_str:
+        arg_list.append(arg_str)
+    arg_str = ' and '.join(arg_list)
+    return f'//*[{arg_str}]{txt_str}' if arg_str else f'//*{txt_str}'
 
 
 def _make_multi_xpath_str(tag: str, text: str) -> str:
@@ -181,25 +189,28 @@ def _make_multi_xpath_str(tag: str, text: str) -> str:
     :param text: 待处理的字符串
     :return: xpath字符串
     """
-    tag_name = '' if tag == '*' else f'name()="{tag}" and '
+    arg_list = [] if tag == '*' else [f'name()="{tag}"']
     args = text.split('@@')
-    arg_list = []
 
     for arg in args[1:]:
         r = split(r'([:=])', arg, maxsplit=1)
-        if len(r) != 3:
-            arg_str = 'text()' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
-        else:
+        arg_str = ''
+
+        if len(r) != 3 and r[0]:
+            arg_str = 'normalize-space(text())' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+
+        elif len(r) == 3:
             arg = '.' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
             if r[1] == '=':
                 arg_str = f'{arg}={_make_search_str(r[2])}'
             else:
                 arg_str = f'contains({arg},{_make_search_str(r[2])})'
-        arg_list.append(arg_str)
 
-    re_str = f'//*[{tag_name}{" and ".join(arg_list)}]'
+        if arg_str:
+            arg_list.append(arg_str)
 
-    return re_str
+    arg_str = ' and '.join(arg_list)
+    return f'//*[{arg_str}]' if arg_str else f'//*'
 
 
 def _make_search_str(search_str: str) -> str:
