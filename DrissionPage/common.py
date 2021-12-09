@@ -161,21 +161,28 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
     """
     arg_list = [] if tag == '*' else [f'name()="{tag}"']
     arg_str = txt_str = ''
-    r = split(r'([:=])', text, maxsplit=1)
 
-    if len(r) != 3 and len(r[0]) > 1:
-        arg_str = 'normalize-space(text())' if r[0] in ('@text()', '@tx()') else f'{r[0]}'
+    if text == '@':
+        arg_str = 'not(@*)'
 
-    elif len(r) == 3 and len(r[0]) > 1:
-        if r[1] == '=':  # 精确查找
-            arg = '.' if r[0] in ('@text()', '@tx()') else r[0]
-            arg_str = f'{arg}={_make_search_str(r[2])}'
-        else:  # 模糊查找
-            if r[0] in ('@text()', '@tx()'):
-                txt_str = f'/text()[contains(., {_make_search_str(r[2])})]/..'
-                arg_str = ''
-            else:
-                arg_str = f"contains({r[0]},{_make_search_str(r[2])})"
+    else:
+        r = split(r'([:=])', text, maxsplit=1)
+        len_r = len(r)
+        len_r0 = len(r[0])
+        if len_r != 3 and len_r0 > 1:
+            arg_str = 'normalize-space(text())' if r[0] in ('@text()', '@tx()') else f'{r[0]}'
+
+        elif len_r == 3 and len_r0 > 1:
+            if r[1] == '=':  # 精确查找
+                arg = '.' if r[0] in ('@text()', '@tx()') else r[0]
+                arg_str = f'{arg}={_make_search_str(r[2])}'
+
+            else:  # 模糊查找
+                if r[0] in ('@text()', '@tx()'):
+                    txt_str = f'/text()[contains(., {_make_search_str(r[2])})]/..'
+                    arg_str = ''
+                else:
+                    arg_str = f"contains({r[0]},{_make_search_str(r[2])})"
 
     if arg_str:
         arg_list.append(arg_str)
@@ -195,11 +202,15 @@ def _make_multi_xpath_str(tag: str, text: str) -> str:
     for arg in args[1:]:
         r = split(r'([:=])', arg, maxsplit=1)
         arg_str = ''
+        len_r = len(r)
 
-        if len(r) != 3 and r[0]:
+        if not r[0]:
+            arg_str = 'not(@*)'
+
+        elif len_r != 3:
             arg_str = 'normalize-space(text())' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
 
-        elif len(r) == 3:
+        elif len_r == 3:
             arg = '.' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
             if r[1] == '=':
                 arg_str = f'{arg}={_make_search_str(r[2])}'
