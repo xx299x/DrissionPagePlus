@@ -274,9 +274,14 @@ class DriverPage(BasePage):
         :param url: 新标签页跳转到的网址
         :return: None
         """
-        self.to_tab(-1)
-        self.run_script(f'window.open("{url}");')
-        self.to_tab(-1)
+        try:  # selenium4新增功能，须配合新版浏览器
+            self.driver.switch_to.new_window('tab')
+            if url:
+                self.get(url)
+        except:
+            self.to_tab(-1)
+            self.run_script(f'window.open("{url}");')
+            self.to_tab(-1)
 
     def close_current_tab(self) -> None:
         """关闭当前标签页"""

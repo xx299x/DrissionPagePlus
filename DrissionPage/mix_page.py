@@ -408,10 +408,10 @@ class MixPage(SessionPage, DriverPage, BasePage):
         return super().chrome_downloading(path)
 
     # ----------------MixPage独有函数-----------------------
-    def hide_browser(self):
+    def hide_browser(self) -> None:
         """隐藏浏览器窗口"""
         self.drission.hide_browser()
 
-    def show_browser(self):
+    def show_browser(self) -> None:
         """显示浏览器窗口"""
         self.drission.show_browser()

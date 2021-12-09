@@ -24,10 +24,14 @@ class DriverElement(DrissionElement):
     """driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能"""
 
     def __init__(self, ele: WebElement, page=None):
+        """初始化对象                          \n
+        :param ele: 被包装的WebElement元素
+        :param page: 元素所在页面
+        """
         super().__init__(ele, page)
         self._select = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<DriverElement {self.tag} {" ".join(attrs)}>'
 

@@ -30,11 +30,12 @@ class SessionPage(BasePage):
         self._session = session
         self._response = None
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str, SessionElement]) \
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, SessionElement], timeout=None) \
             -> Union[SessionElement, List[SessionElement], str]:
-        """在内部查找元素                                            \n
-        例：ele2 = ele1('@id=ele_id')                              \n
+        """在内部查找元素                                                  \n
+        例：ele2 = ele1('@id=ele_id')                                     \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性文本
         """
         return self.ele(loc_or_str)

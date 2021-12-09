@@ -19,16 +19,21 @@ class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
     def __init__(self, ele: HtmlElement, page=None):
+        """初始化对象                                                          \n
+        :param ele: 被包装的HtmlElement元素
+        :param page: 元素所在页面对象，如果是从 html 文本生成的元素，则为 None
+        """
         super().__init__(ele, page)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str]):
-        """在内部查找元素                                            \n
-        例：ele2 = ele1('@id=ele_id')                              \n
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
+        """在内部查找元素                                                  \n
+        例：ele2 = ele1('@id=ele_id')                                    \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self.ele(loc_or_str)
