@@ -211,6 +211,8 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
     """
     # ---------------处理定位符---------------
     if not loc:
+        if isinstance(html_or_ele, SessionElement):
+            return html_or_ele
         loc = ('xpath', '.')
         single = True
     elif isinstance(loc, str):
