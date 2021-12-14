@@ -323,7 +323,7 @@ def _get_chrome_version(path: str) -> Union[str, None]:
     try:
         return (popen(f'wmic datafile where "name=\'{path}\'" get version').read()
                 .lower().split('\n')[2].replace(' ', ''))
-    except:
+    except Exception:
         return None
 
 

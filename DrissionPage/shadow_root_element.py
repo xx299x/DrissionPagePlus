@@ -140,7 +140,7 @@ class ShadowRootElement(BaseElement):
         try:
             self.is_enabled()
             return True
-        except:
+        except Exception:
             return False
 
     # ----------------ShadowRootElement独有方法-----------------------

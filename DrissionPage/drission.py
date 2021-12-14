@@ -4,15 +4,16 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
+from sys import exit
+from typing import Union
+
 from requests import Session
 from requests.cookies import RequestsCookieJar
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
-from sys import exit
 from tldextract import extract
-from typing import Union
 
 from .config import (_dict_to_chrome_options, _session_options_to_dict,
                      SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookies_to_tuple)
@@ -116,7 +117,7 @@ class Drission(object):
             # 反反爬设置
             try:
                 self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
-            except:
+            except Exception:
                 pass
 
             # self._driver.execute_cdp_cmd(
@@ -468,7 +469,7 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
         if driver_path:
             try:
                 return webdriver.Chrome(driver_path, options=options)
-            except:
+            except Exception:
                 pass
 
         # 当找不到 driver 且 chrome_path 为 None 时，说明安装的版本过高，改在系统路径中查找
@@ -481,7 +482,7 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
                 options.binary_location = chrome_path
                 try:
                     return webdriver.Chrome(driver_path, options=options)
-                except:
+                except Exception:
                     pass
 
     print('无法启动，请检查浏览器路径，或手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')

@@ -290,7 +290,7 @@ class DriverElement(DrissionElement):
                 try:
                     self.inner_ele.click()
                     return True
-                except:
+                except Exception:
                     pass
 
         # 若点击失败，用js方式点击
@@ -405,7 +405,7 @@ class DriverElement(DrissionElement):
         try:
             self.is_enabled()
             return True
-        except:
+        except Exception:
             return False
 
     def screenshot(self, path: str, filename: str = None) -> str:
@@ -449,7 +449,7 @@ class DriverElement(DrissionElement):
             value = value.replace("'", "\\'")
             self.run_script(f"arguments[0].{prop}='{value}';")
             return True
-        except:
+        except Exception:
             return False
 
     def set_attr(self, attr: str, value: str) -> bool:
@@ -461,7 +461,7 @@ class DriverElement(DrissionElement):
         try:
             self.run_script(f"arguments[0].setAttribute(arguments[1], arguments[2]);", attr, value)
             return True
-        except:
+        except Exception:
             return False
 
     def remove_attr(self, attr: str) -> bool:
@@ -472,7 +472,7 @@ class DriverElement(DrissionElement):
         try:
             self.run_script(f'arguments[0].removeAttribute("{attr}");')
             return True
-        except:
+        except Exception:
             return False
 
     def drag(self, x: int, y: int, speed: int = 40, shake: bool = True) -> bool:
@@ -790,7 +790,7 @@ class Select(object):
                     raise ValueError('para_type参数只能传入"text"、"value"或"index"。')
                 return True
 
-            except:
+            except Exception:
                 return False
 
         elif isinstance(text_value_index, (list, tuple)):
@@ -903,7 +903,7 @@ def _wait_ele(page_or_ele,
             if mode == 'del':
                 try:
                     loc_or_ele.is_enabled()
-                except:
+                except Exception:
                     return True
 
             elif mode == 'display' and loc_or_ele.is_displayed():
@@ -928,5 +928,5 @@ def _wait_ele(page_or_ele,
 
             return True
 
-        except:
+        except Exception:
             return False

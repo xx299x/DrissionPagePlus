@@ -402,7 +402,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                 'download.default_directory']
             if not path:
                 raise ValueError('未指定下载路径。')
-        except:
+        except Exception:
             raise IOError('无法找到下载路径。')
 
         return super().chrome_downloading(path)

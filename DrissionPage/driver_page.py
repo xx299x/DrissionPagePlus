@@ -87,7 +87,7 @@ class DriverPage(BasePage):
 
         try:
             self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
-        except:
+        except Exception:
             pass
 
         return self._url_available
@@ -225,7 +225,7 @@ class DriverPage(BasePage):
         """返回标签页数量"""
         try:
             return len(self.driver.window_handles)
-        except:
+        except Exception:
             return 0
 
     @property
@@ -278,7 +278,7 @@ class DriverPage(BasePage):
             self.driver.switch_to.new_window('tab')
             if url:
                 self.get(url)
-        except:
+        except Exception:
             self.to_tab(-1)
             self.run_script(f'window.open("{url}");')
             self.to_tab(-1)
