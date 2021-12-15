@@ -254,7 +254,7 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 
 返回： List[SessionElement or str]
 
-## get_style_property()
+## style()
 
 返回元素样式属性值。
 
@@ -306,15 +306,16 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 
 ## input()
 
-输入文本或组合键。
+输入文本或组合键，返回是否成功输入。insure_input 为 False 时始终返回 True。
 
 参数说明：
 
 - vals: Union[str, tuple]    - 文本值或按键组合
 - clear: bool - 输入前是否清除文本框
 - insure_input: bool - 是否自动检测并确保输入正确
+- timeout: folat - 尝试输入的超时时间，不指定则使用父页面的超时时间，只在insure_input为True时生效
 
-返回： None
+返回： bool，是否成功输入。insure_input 为 False 时始终返回 True。
 
 ## run_script()
 
@@ -337,7 +338,11 @@ driver 模式的元素对象，包装了一个 WebElement 对象，并封装了�
 
 清空文本框。
 
-返回： None
+参数说明：
+
+- insure_clear: bool - 是否确保清空
+
+返回： bool - 是否清空成功，不能清空的元素返回None
 
 ## is_selected()
 
