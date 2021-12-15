@@ -234,12 +234,12 @@ class DriverElement(DrissionElement):
     @property
     def before(self) -> str:
         """返回当前元素的::before伪元素内容"""
-        return self.get_style_property('content', 'before')
+        return self.style('content', 'before')
 
     @property
     def after(self) -> str:
         """返回当前元素的::after伪元素内容"""
-        return self.get_style_property('content', 'after')
+        return self.style('content', 'after')
 
     @property
     def select(self):
@@ -264,10 +264,10 @@ class DriverElement(DrissionElement):
         """
         return _wait_ele(self, loc_or_ele, mode, timeout)
 
-    def get_style_property(self, style: str, pseudo_ele: str = '') -> str:
-        """返回元素样式属性值
+    def style(self, style: str, pseudo_ele: str = '') -> str:
+        """返回元素样式属性值，可获取伪元素属性值                \n
         :param style: 样式属性名称
-        :param pseudo_ele: 伪元素名称
+        :param pseudo_ele: 伪元素名称（如有）
         :return: 样式属性的值
         """
         if pseudo_ele:
@@ -300,7 +300,10 @@ class DriverElement(DrissionElement):
 
         return False
 
-    def click_at(self, x: Union[int, str] = None, y: Union[int, str] = None, by_js=False) -> None:
+    def click_at(self,
+                 x: Union[int, str] = None,
+                 y: Union[int, str] = None,
+                 by_js: bool = False) -> None:
         """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
         :param x: 相对元素左上角坐标的x轴偏移量
         :param y: 相对元素左上角坐标的y轴偏移量
@@ -342,18 +345,24 @@ class DriverElement(DrissionElement):
         from selenium.webdriver import ActionChains
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).context_click().perform()
 
-    def input(self, vals: Union[str, tuple], clear: bool = True, insure_input: bool = True) -> None:
-        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                  \n
+    def input(self,
+              vals: Union[str, tuple],
+              clear: bool = True,
+              insure_input: bool = True,
+              timeout: float = None) -> bool:
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                          \n
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :param insure_input: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
-        :return: None
+        :param timeout: 尝试输入的超时时间，不指定则使用父页面的超时时间，只在insure_input为True时生效
+        :return: bool
         """
         if not insure_input:  # 普通输入
             if clear:
                 self.inner_ele.clear()
 
             self.inner_ele.send_keys(*vals)
+            return True
 
         else:  # 确保输入正确
             if not isinstance(vals, str):
@@ -363,14 +372,26 @@ class DriverElement(DrissionElement):
             full_txt = full_txt.rstrip('\n')
 
             self.click(by_js=True)
+            timeout = timeout if timeout is not None else self.page.timeout
             t1 = perf_counter()
-            while self.is_valid() and self.attr('value') != full_txt and perf_counter() - t1 <= self.page.timeout:
-                if clear:
-                    self.inner_ele.send_keys(u'\ue009', 'a', u'\ue017')  # 有些ui下clear()不生效，用CTRL+a代替
-                self.inner_ele.send_keys(vals)
+            while self.is_valid() and self.attr('value') != full_txt and perf_counter() - t1 <= timeout:
+                try:
+                    if clear:
+                        self.inner_ele.send_keys(u'\ue009', 'a', u'\ue017')  # 有些ui下clear()不生效，用CTRL+a代替
+                    self.inner_ele.send_keys(vals)
 
-            if enter:
-                self.inner_ele.send_keys(enter)
+                except Exception:
+                    pass
+
+            if not self.is_valid():
+                return False
+            else:
+                if self.attr('value') != full_txt:
+                    return False
+                else:
+                    if enter:
+                        self.inner_ele.send_keys(enter)
+                    return True
 
     def run_script(self, script: str, *args) -> Any:
         """执行js代码，传入自己为第一个参数  \n
@@ -380,13 +401,28 @@ class DriverElement(DrissionElement):
         """
         return self.inner_ele.parent.execute_script(script, self.inner_ele, *args)
 
-    def submit(self) -> None:
+    def submit(self) -> Union[bool, None]:
         """提交表单"""
-        self.inner_ele.submit()
+        try:
+            self.inner_ele.submit()
+            return True
+        except Exception:
+            pass
 
-    def clear(self) -> None:
-        """清空元素文本"""
-        self.input('')
+    def clear(self, insure_clear: bool = True) -> Union[None, bool]:
+        """清空元素文本                                    \n
+        :param insure_clear: 是否确保清空
+        :return: 是否清空成功，不能清空的元素返回None
+        """
+        if insure_clear:
+            return self.input('')
+
+        else:
+            try:
+                self.inner_ele.clear()
+                return True
+            except InvalidElementStateException:
+                return None
 
     def is_selected(self) -> bool:
         """是否选中"""
@@ -453,9 +489,9 @@ class DriverElement(DrissionElement):
             return False
 
     def set_attr(self, attr: str, value: str) -> bool:
-        """设置元素attribute参数          \n
-        :param attr: 参数名
-        :param value: 参数值
+        """设置元素attribute属性          \n
+        :param attr: 属性名
+        :param value: 属性值
         :return: 是否设置成功
         """
         try:
@@ -465,9 +501,9 @@ class DriverElement(DrissionElement):
             return False
 
     def remove_attr(self, attr: str) -> bool:
-        """设置元素属性          \n
+        """删除元素attribute属性          \n
         :param attr: 属性名
-        :return: 是否设置成功
+        :return: 是否删除成功
         """
         try:
             self.run_script(f'arguments[0].removeAttribute("{attr}");')
@@ -533,10 +569,16 @@ class DriverElement(DrissionElement):
 
         return False if self.location == loc1 else True
 
-    def hover(self) -> None:
-        """鼠标悬停"""
+    def hover(self, x: int = None, y: int = None) -> None:
+        """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
+        :param x: 相对元素左上角坐标的x轴偏移量
+        :param y: 相对元素左上角坐标的y轴偏移量
+        :return: None
+        """
         from selenium.webdriver import ActionChains
-        ActionChains(self.page.driver).move_to_element(self.inner_ele).perform()
+        x = int(x) if x is not None else self.size['width'] // 2
+        y = int(y) if y is not None else self.size['height'] // 2
+        ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).perform()
 
 
 def make_driver_ele(page_or_ele,
