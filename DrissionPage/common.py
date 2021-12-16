@@ -204,18 +204,24 @@ def _make_multi_xpath_str(tag: str, text: str) -> str:
         arg_str = ''
         len_r = len(r)
 
-        if not r[0]:
+        if not r[0]:  # 不查询任何属性
             arg_str = 'not(@*)'
 
-        elif len_r != 3:
-            arg_str = 'normalize-space(text())' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+        else:
+            r[0], ignore = (r[0][1:], True) if r[0][0] == '-' else (r[0], None)  # 是否去除某个属性
 
-        elif len_r == 3:
-            arg = '.' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
-            if r[1] == '=':
-                arg_str = f'{arg}={_make_search_str(r[2])}'
-            else:
-                arg_str = f'contains({arg},{_make_search_str(r[2])})'
+            if len_r != 3:  # 只有属性名没有属性内容，查询是否存在该属性
+                arg_str = 'normalize-space(text())' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+
+            elif len_r == 3:  # 属性名和内容都有
+                arg = '.' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
+                if r[1] == '=':
+                    arg_str = f'{arg}={_make_search_str(r[2])}'
+                else:
+                    arg_str = f'contains({arg},{_make_search_str(r[2])})'
+
+            if arg_str and ignore:
+                arg_str = f'not({arg_str})'
 
         if arg_str:
             arg_list.append(arg_str)
