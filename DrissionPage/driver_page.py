@@ -243,6 +243,11 @@ class DriverPage(BasePage):
         """返回当前标签页handle"""
         return self.driver.current_window_handle
 
+    @property
+    def active_ele(self) -> DriverElement:
+        """返回当前焦点所在元素"""
+        return DriverElement(self.driver.switch_to.active_element, self)
+
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, DriverElement, WebElement],
                  mode: str,
