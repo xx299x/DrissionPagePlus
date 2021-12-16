@@ -234,7 +234,7 @@ class DriverPage(BasePage):
         return self.driver.window_handles
 
     @property
-    def current_tab_num(self) -> int:
+    def current_tab_index(self) -> int:
         """返回当前标签页序号"""
         return self.driver.window_handles.index(self.driver.current_window_handle)
 
