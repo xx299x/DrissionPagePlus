@@ -338,7 +338,7 @@ class DriverPage(BasePage):
         tab = self.driver.window_handles[tab] if isinstance(tab, int) else tab
         self.driver.switch_to.window(tab)
 
-    def to_frame(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> None:
+    def to_frame(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> 'DriverPage':
         """跳转到frame                                                                       \n
         可接收frame序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，  \n
         传入 'main' 跳到最高层，传入 'parent' 跳到上一层                                             \n
@@ -351,7 +351,7 @@ class DriverPage(BasePage):
             to_frame('main')          - 跳到最高层                                              \n
             to_frame('parent')        - 跳到上一层                                              \n
         :param loc_or_ele: iframe的定位信息
-        :return: None
+        :return: 返回自己，用于链式操作
         """
         # 根据序号跳转
         if isinstance(loc_or_ele, int):
@@ -384,6 +384,8 @@ class DriverPage(BasePage):
         elif isinstance(loc_or_ele, tuple):
             ele = self.ele(loc_or_ele)
             self.driver.switch_to.frame(ele.inner_ele)
+
+        return self
 
     def screenshot(self, path: str, filename: str = None) -> str:
         """截取页面可见范围截图                                  \n
