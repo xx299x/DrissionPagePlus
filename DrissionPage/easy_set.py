@@ -346,17 +346,23 @@ def _download_driver(version: str, save_path: str = None, show_msg: bool = True)
     except ValueError:
         return None
 
-    for i in page.eles('xpath://pre/a'):
-        remote_main = i.text.split('.')[0]
+    remote_versions = page.eles(f'xpath://pre/a[starts-with(text(),"{loc_main}.")]')
+    remote_versions = [v for v in remote_versions if v.text and v.text[-1] == '/']
+    remote_versions.sort(key=lambda x: x.text)
 
+    for i in remote_versions:
         try:
             remote_num = int(sub(r'[./]', '', i.text))
         except ValueError:
             continue
 
-        if remote_main == loc_main and remote_num >= loc_num:
+        if remote_num >= loc_num:
             remote_ver = i.text
             break
+
+    # 没有匹配到，则取大版本的最后一个号
+    if remote_versions and not remote_ver:
+        remote_ver = remote_versions[-1].text
 
     if remote_ver:
         url = f'https://cdn.npm.taobao.org/dist/chromedriver/{remote_ver}chromedriver_win32.zip'
