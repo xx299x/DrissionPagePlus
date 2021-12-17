@@ -148,7 +148,7 @@ def str_to_loc(loc: str) -> tuple:
     elif loc:
         loc_str = f'//*/text()[contains(., {_make_search_str(loc)})]/..'
     else:
-        loc_str = '//*[not(text())]'
+        loc_str = '//*'
 
     return loc_by, loc_str
 
