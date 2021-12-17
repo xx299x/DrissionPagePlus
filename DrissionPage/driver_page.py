@@ -150,7 +150,7 @@ class DriverPage(BasePage):
 
         # 接收到的类型不正确，抛出异常
         else:
-            raise ValueError('loc_or_str参数只能是tuple、str、DriverElement 或 DriverElement类型。')
+            raise ValueError('loc_or_str参数只能是tuple、str、DriverElement 或 WebElement类型。')
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
         """返回当前网站cookies"""
