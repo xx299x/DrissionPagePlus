@@ -91,17 +91,12 @@ class DriverElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return self.inner_ele.get_attribute('innerText')
 
-    @property
-    def parent(self):
-        """返回父级元素"""
-        return self.parents()
-
-    def parents(self, num: int = 1):
-        """返回上面第num级父元素              \n
-        :param num: 第几级父元素
+    def parent(self, level: int = 1) -> 'DriverElement':
+        """返回上面第level级父元素              \n
+        :param level: 第几级父元素
         :return: DriverElement对象
         """
-        loc = 'xpath', f'.{"/.." * num}'
+        loc = 'xpath', f'.{"/.." * level}'
         return self.ele(loc, timeout=0)
 
     def attr(self, attr: str) -> str:

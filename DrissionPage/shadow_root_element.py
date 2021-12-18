@@ -45,26 +45,28 @@ class ShadowRootElement(BaseElement):
         """返回内部的html文本"""
         return self.inner_ele.get_attribute('innerHTML')
 
-    @property
-    def parent(self) -> DriverElement:
-        """shadow-root所依赖的父元素"""
-        return self.parent_ele
-
-    def parents(self, num: int = 1) -> DriverElement:
-        """返回上面第num级父元素              \n
-        :param num: 第几级父元素
+    def parent(self, level: int = 1) -> DriverElement:
+        """返回上面第level级父元素              \n
+        :param level: 第几级父元素
         :return: DriverElement对象
         """
-        loc = 'xpath', f'.{"/.." * (num - 1)}'
-        return self.parent_ele.ele(loc, timeout=0.1)
+        if level == 1:
+            return self.parent_ele
+        else:
+            loc = 'xpath', f'.{"/.." * (level - 1)}'
+            return self.parent_ele.ele(loc, timeout=0.1)
 
-    def nexts(self, num: int = 1) -> DriverElement:
-        """返回后面第num个兄弟元素      \n
-        :param num: 后面第几个兄弟元素
+    def nexts(self, total: int = None, begin: int = 1) -> DriverElement:
+        """返回后面若干个兄弟元素或节点组成的列表，total为None返回所有      \n
+        :param total: 获取多少个元素或节点
+        :param begin: 从第几个开始获取，从1起
         :return: DriverElement对象
         """
-        loc = 'css selector', f':nth-child({num})'
-        return self.parent_ele.ele(loc, timeout=0.1)
+        loc = 'css selector', f':nth-child(n)'
+        eles = self.parent_ele.eles(loc, timeout=0.1)
+        end = None if not total or total >= len(eles) else begin + total - 1
+
+        return eles[begin - 1:end]
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],

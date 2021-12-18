@@ -55,22 +55,23 @@ class BaseElement(BaseParser):
     def inner_ele(self) -> Union[WebElement, HtmlElement]:
         return self._inner_ele
 
-    @property
-    def next(self):
-        """返回后一个兄弟元素"""
-        return self.nexts()
+    def next(self, index: int = 1):
+        """返回后面的一个兄弟元素，可指定第几个   \n
+        :param index: 后面第几个兄弟元素
+        :return: 兄弟元素
+        """
+        nexts = self.nexts(total=1, begin=index)
+        return nexts[0] if nexts else None
 
     # ----------------以下属性或方法由后代实现----------------
     @property
     def tag(self):
         return
 
-    @property
-    def parent(self):
-        return
+    def parent(self, level: int = 1):
+        pass
 
-    @property
-    def prev(self):
+    def prev(self, index: int = 1):
         return
 
     @property
@@ -78,22 +79,25 @@ class BaseElement(BaseParser):
         return True
 
     @abstractmethod
-    def nexts(self, num: int = 1):
+    def nexts(self, total: int = None, begin: int = 1):
         pass
 
 
 class DrissionElement(BaseElement):
     """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
 
-    @property
-    def parent(self):
+    @abstractmethod
+    def parent(self, level: int = 1):
         """返回父级元素"""
-        return self.parents()
+        pass
 
-    @property
-    def prev(self):
-        """返回前一个兄弟元素"""
-        return self.prevs()
+    def prev(self, index: int = 1):
+        """返回前面的一个兄弟元素，可指定第几个    \n
+        :param index: 前面第几个
+        :return: 兄弟元素
+        """
+        prevs = self.prevs(total=1, begin=index)
+        return prevs[0] if prevs else None
 
     @property
     def link(self) -> str:
@@ -125,60 +129,57 @@ class DrissionElement(BaseElement):
         else:
             texts = [x if isinstance(x, str) else x.text for x in self.eles('xpath:./text() | *')]
 
-        return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\n\t ]', '', x) != '']
+        return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
-    def nexts(self, num: int = 1, mode: str = 'ele'):
-        """返回后面第num个兄弟元素或节点                                  \n
-        :param num: 后面第几个兄弟元素或节点
+    def nexts(self, total: int = None, begin: int = 1, mode: str = 'ele'):
+        """返回后面若干个兄弟元素或节点组成的列表，total为None返回所有            \n
+        :param total: 获取多少个元素或节点
+        :param begin: 从第几个开始获取，从1起
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: SessionElement对象
         """
-        return self._get_brother(num, mode, 'next')
+        return self._get_brothers(begin=begin, total=total, mode=mode, direction='next')
 
-    def prevs(self, num: int = 1, mode: str = 'ele'):
-        """返回前面第num个兄弟元素或节点                                  \n
-        :param num: 前面第几个兄弟元素或节点
+    def prevs(self, total: int = None, begin: int = 1, mode: str = 'ele'):
+        """返回前面若干个兄弟元素或节点组成的列表，total为None返回所有            \n
+        :param total: 获取多少个元素或节点
+        :param begin: 从第几个开始获取，从1起
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :return: SessionElement对象
         """
-        return self._get_brother(num, mode, 'prev')
+        return self._get_brothers(begin=begin, total=total, mode=mode, direction='prev')
 
-    def _get_brother(self, num: int = 1, mode: str = 'ele', direction: str = 'next'):
-        """返回前面第num个兄弟节点或元素                                  \n
-        :param num: 前面第几个兄弟节点或元素
+    def _get_brothers(self, begin: int = 1, total: int = None, mode: str = 'ele', direction: str = 'next'):
+        """按要求返回兄弟元素或节点组成的列表                                  \n
+        :param begin: 从第几个兄弟节点或元素开始
+        :param total: 获取多少个
         :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
         :param direction: 'next' 或 'prev'，查找的方向
         :return: DriverElement对象或字符串
         """
         # 查找节点的类型
-        if mode == 'ele':
-            node_txt = '*'
-        elif mode == 'node':
-            node_txt = 'node()'
-        elif mode == 'text':
-            node_txt = 'text()'
-        else:
+        node_txt = {'ele': '*', 'node': 'node()', 'text': 'text()'}.get(mode)
+        if not node_txt:
             raise ValueError(f"mode参数只能是'node'、'ele'或'text'，现在是：'{mode}'。")
 
         # 查找节点的方向
-        if direction == 'next':
-            direction_txt = 'following'
-        elif direction == 'prev':
-            direction_txt = 'preceding'
-        else:
+        direction_txt = {'next': 'following', 'prev': 'preceding'}.get(direction)
+        if not direction_txt:
             raise ValueError(f"direction参数只能是'next'或'prev'，现在是：'{direction}'。")
 
         timeout = 0 if direction == 'prev' else .5
 
-        # 获取节点
-        ele_or_node = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+        # 获取所有节点
+        nodes = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}', timeout=timeout, single=False)
 
-        # 跳过元素间的换行符
-        while isinstance(ele_or_node, str) and sub('[\n\t ]', '', ele_or_node) == '':
-            num += 1
-            ele_or_node = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}[{num}]', timeout=timeout)
+        if direction == 'next':
+            end = None if not total or total >= len(nodes) else begin + total - 1
+            begin -= 1
+        else:
+            begin = None if not total or total >= len(nodes) else begin - total - 1
+            end = None
 
-        return ele_or_node
+        return [e for e in nodes[begin:end] if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -193,9 +194,9 @@ class DrissionElement(BaseElement):
     def raw_text(self):
         return
 
-    @abstractmethod
-    def parents(self, num: int = 1):
-        pass
+    # @abstractmethod
+    # def parents(self, num: int = 1):
+    #     pass
 
     @abstractmethod
     def attr(self, attr: str):

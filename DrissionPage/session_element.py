@@ -70,17 +70,12 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
-    @property
-    def parent(self):
-        """返回父级元素"""
-        return self.parents()
-
-    def parents(self, num: int = 1):
-        """返回上面第num级父元素                                         \n
-        :param num: 第几级父元素
+    def parent(self, level: int = 1) -> 'SessionElement':
+        """返回上面第level级父元素                      \n
+        :param level: 第几级父元素
         :return: SessionElement对象
         """
-        return self.ele(f'xpath:..{"/.." * (num - 1)}')
+        return self.ele(f'xpath:..{"/.." * (level - 1)}')
 
     def attr(self, attr: str) -> Union[str, None]:
         """返回attribute属性值                           \n
