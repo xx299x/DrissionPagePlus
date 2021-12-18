@@ -258,7 +258,7 @@ class DriverElement(DrissionElement):
         :param index: 获取第几个
         :return: DriverElement对象
         """
-        return self._get_relative_ele('left', filter_loc, 1, index)
+        return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
     def right(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
         """获取网页上显示在当前元素右边的某个元素，可设置选取条件                          \n
@@ -266,7 +266,7 @@ class DriverElement(DrissionElement):
         :param index: 获取第几个
         :return: DriverElement对象
         """
-        return self._get_relative_ele('right', filter_loc, 1, index)
+        return self._get_relative_eles('right', filter_loc, 1, index)[0]
 
     def above(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
         """获取网页上显示在当前元素上边的某个元素，可设置选取条件                          \n
@@ -274,7 +274,7 @@ class DriverElement(DrissionElement):
         :param index: 获取第几个
         :return: DriverElement对象
         """
-        return self._get_relative_ele('left', filter_loc, 1, index)
+        return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
     def below(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
         """获取网页上显示在当前元素下边的某个元素，可设置选取条件                          \n
@@ -282,7 +282,7 @@ class DriverElement(DrissionElement):
         :param index: 获取第几个
         :return: DriverElement对象
         """
-        return self._get_relative_ele('left', filter_loc, 1, index)
+        return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
     def near(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
         """获取网页上显示在当前元素最近的某个元素，可设置选取条件                          \n
@@ -290,52 +290,52 @@ class DriverElement(DrissionElement):
         :param index: 获取第几个
         :return: DriverElement对象
         """
-        return self._get_relative_ele('near', filter_loc, 1, index)
+        return self._get_relative_eles('near', filter_loc, 1, index)[0]
 
     def lefts(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
         """获取网页上显示在当前元素左边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
         :param begin: 从第几个开始返回
-        :return: DriverElement对象
+        :return: DriverElement对象组成的列表
         """
-        return self._get_relative_ele('left', filter_loc, total, begin)
+        return self._get_relative_eles('left', filter_loc, total, begin)
 
     def rights(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
         """获取网页上显示在当前元素右边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
         :param begin: 从第几个开始返回
-        :return: DriverElement对象
+        :return: DriverElement对象组成的列表
         """
-        return self._get_relative_ele('right', filter_loc, total, begin)
+        return self._get_relative_eles('right', filter_loc, total, begin)
 
     def aboves(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
         """获取网页上显示在当前元素上边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
         :param begin: 从第几个开始返回
-        :return: DriverElement对象
+        :return: DriverElement对象组成的列表
         """
-        return self._get_relative_ele('left', filter_loc, total, begin)
+        return self._get_relative_eles('left', filter_loc, total, begin)
 
     def belows(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
         """获取网页上显示在当前元素下边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
         :param begin: 从第几个开始返回
-        :return: DriverElement对象
+        :return: DriverElement对象组成的列表
         """
-        return self._get_relative_ele('left', filter_loc, total, begin)
+        return self._get_relative_eles('left', filter_loc, total, begin)
 
     def nears(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
         """获取网页上显示在当前元素最近的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param begin: 从第几个开始返回
         :param total: 获取多少个
-        :return: DriverElement对象
+        :return: DriverElement对象组成的列表
         """
-        return self._get_relative_ele('near', filter_loc, total, begin)
+        return self._get_relative_eles('near', filter_loc, total, begin)
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, DrissionElement, WebElement],
@@ -665,11 +665,11 @@ class DriverElement(DrissionElement):
         y = int(y) if y is not None else self.size['height'] // 2
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).perform()
 
-    def _get_relative_ele(self,
-                          mode: str,
-                          loc: Union[tuple, str] = '',
-                          total: int = 1,
-                          begin: int = 1) -> Union[List['DriverElement'], 'DriverElement']:
+    def _get_relative_eles(self,
+                           mode: str,
+                           loc: Union[tuple, str] = '',
+                           total: int = 1,
+                           begin: int = 1) -> Union[List['DriverElement'], 'DriverElement']:
         """获取网页上相对于当前元素周围的某个元素，可设置选取条件                          \n
         :param mode: 可选：'left', 'right', 'above', 'below', 'near'
         :param loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
@@ -701,8 +701,7 @@ class DriverElement(DrissionElement):
                 eles = self.page.driver.find_elements(RelativeBy({loc[0]: loc[1]}).near(self.inner_ele))
 
             end = None if not total or total >= len(eles) else begin + total - 1
-            begin -= 1
-            return self.page.ele(eles[begin]) if total == 1 else [self.page.ele(e) for e in eles[begin:end]]
+            return [self.page.ele(e) for e in eles[begin - 1:end]]
 
         except IndexError:
             raise ValueError('未找到元素，请检查浏览器版本，低版本的浏览器无法使用此方法。')
