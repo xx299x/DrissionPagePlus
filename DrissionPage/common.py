@@ -18,9 +18,9 @@ def get_ele_txt(e) -> str:
     :return: 元素内所有文本
     """
     # 前面无须换行的元素
-    nowrap_list = ('br', 'sub', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td', 'th',
-                   'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
-                   'samp', 'small', 'sub', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
+    nowrap_list = ('br', 'sub', 'sup', 'em', 'strong', 'a', 'font', 'b', 'span', 's', 'i', 'del', 'ins', 'img', 'td',
+                   'th', 'abbr', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'kbd', 'mark', 'q', 'rp', 'rt', 'ruby',
+                   'samp', 'small', 'time', 'u', 'var', 'wbr', 'button', 'slot', 'content')
     # 后面添加换行的元素
     wrap_after_list = ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'li', 'blockquote', 'header',
                        'footer', 'address' 'article', 'aside', 'main', 'nav', 'section', 'figcaption', 'summary')
