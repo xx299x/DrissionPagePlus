@@ -11,7 +11,7 @@ from typing import Union, Tuple
 from lxml.html import HtmlElement
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import format_html
+from .common import format_html, translate_loc, str_to_loc
 
 
 class BaseParser(object):
@@ -55,12 +55,13 @@ class BaseElement(BaseParser):
     def inner_ele(self) -> Union[WebElement, HtmlElement]:
         return self._inner_ele
 
-    def next(self, index: int = 1):
-        """返回后面的一个兄弟元素，可指定第几个   \n
+    def next(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 后面第几个兄弟元素
+        :param filter_loc: 用于筛选元素的查询语法
         :return: 兄弟元素
         """
-        nexts = self.nexts(total=1, begin=index)
+        nexts = self.nexts(total=1, begin=index, filter_loc=filter_loc)
         return nexts[0] if nexts else None
 
     # ----------------以下属性或方法由后代实现----------------
@@ -68,18 +69,21 @@ class BaseElement(BaseParser):
     def tag(self):
         return
 
-    def parent(self, level: int = 1):
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
         pass
 
-    def prev(self, index: int = 1):
-        return
+    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+        return None  # ShadowRootElement直接继承
+
+    def prevs(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
+        return None  # ShadowRootElement直接继承
 
     @property
     def is_valid(self):
         return True
 
     @abstractmethod
-    def nexts(self, total: int = None, begin: int = 1):
+    def nexts(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
         pass
 
 
@@ -87,16 +91,17 @@ class DrissionElement(BaseElement):
     """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
 
     @abstractmethod
-    def parent(self, level: int = 1):
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
         """返回父级元素"""
         pass
 
-    def prev(self, index: int = 1):
-        """返回前面的一个兄弟元素，可指定第几个    \n
+    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 前面第几个
+        :param filter_loc: 用于筛选元素的查询语法
         :return: 兄弟元素
         """
-        prevs = self.prevs(total=1, begin=index)
+        prevs = self.prevs(total=1, begin=index, filter_loc=filter_loc)
         return prevs[0] if prevs else None
 
     @property
@@ -131,55 +136,72 @@ class DrissionElement(BaseElement):
 
         return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
-    def nexts(self, total: int = None, begin: int = 1, mode: str = 'ele'):
-        """返回后面若干个兄弟元素或节点组成的列表，total为None返回所有            \n
+    def nexts(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回后面若干个兄弟元素或节点组成的列表                                \n
+        可用查询语法筛选，可指定返回筛选结果的哪几个，total为None返回所有            \n
         :param total: 获取多少个元素或节点
         :param begin: 从第几个开始获取，从1起
-        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+        :param filter_loc: 用于筛选元素的查询语法
         :return: SessionElement对象
         """
-        return self._get_brothers(begin=begin, total=total, mode=mode, direction='next')
+        return self._get_brothers(begin=begin, total=total, filter_loc=filter_loc, direction='following')
 
-    def prevs(self, total: int = None, begin: int = 1, mode: str = 'ele'):
-        """返回前面若干个兄弟元素或节点组成的列表，total为None返回所有            \n
+    def prevs(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回前面若干个兄弟元素或节点组成的列表                                \n
+        可用查询语法筛选，可指定返回筛选结果的哪几个，total为None返回所有            \n
         :param total: 获取多少个元素或节点
         :param begin: 从第几个开始获取，从1起
-        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
+        :param filter_loc: 用于筛选元素的查询语法
         :return: SessionElement对象
         """
-        return self._get_brothers(begin=begin, total=total, mode=mode, direction='prev')
+        return self._get_brothers(begin=begin, total=total, filter_loc=filter_loc, direction='preceding')
 
-    def _get_brothers(self, begin: int = 1, total: int = None, mode: str = 'ele', direction: str = 'next'):
-        """按要求返回兄弟元素或节点组成的列表                                  \n
+    def _get_brothers(self,
+                      begin: int = 1,
+                      total: int = None,
+                      filter_loc: Union[tuple, str] = '',
+                      direction: str = 'following'):
+        """按要求返回兄弟元素或节点组成的列表                     \n
         :param begin: 从第几个兄弟节点或元素开始
         :param total: 获取多少个
-        :param mode: 'ele', 'node' 或 'text'，匹配元素、节点、或文本节点
-        :param direction: 'next' 或 'prev'，查找的方向
+        :param filter_loc: 用于筛选元素的查询语法
+        :param direction: 'following' 或 'preceding'，查找的方向
         :return: DriverElement对象或字符串
         """
-        # 查找节点的类型
-        node_txt = {'ele': '*', 'node': 'node()', 'text': 'text()'}.get(mode)
-        if not node_txt:
-            raise ValueError(f"mode参数只能是'node'、'ele'或'text'，现在是：'{mode}'。")
+        timeout = 0 if direction == 'preceding' else .5
 
-        # 查找节点的方向
-        direction_txt = {'next': 'following', 'prev': 'preceding'}.get(direction)
-        if not direction_txt:
-            raise ValueError(f"direction参数只能是'next'或'prev'，现在是：'{direction}'。")
+        if isinstance(filter_loc, tuple):
+            node_txt = translate_loc(filter_loc)
 
-        timeout = 0 if direction == 'prev' else .5
+        elif isinstance(filter_loc, str):
+            node_txt = str_to_loc(filter_loc)
+
+        else:
+            raise TypeError('filter_loc参数只能是tuple或str。')
+
+        if node_txt[0] == 'css selector':
+            raise ValueError('此处暂不支持css selector选择器。')
+
+        node_txt = node_txt[1].lstrip('./')
 
         # 获取所有节点
-        nodes = self._ele(f'xpath:./{direction_txt}-sibling::{node_txt}', timeout=timeout, single=False)
+        t = f'xpath:./{direction}-sibling::{node_txt}'
+        nodes = self._ele(t, timeout=timeout, single=False)
+        nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
-        if direction == 'next':
-            end = None if not total or total >= len(nodes) else begin + total - 1
+        len_nodes = len(nodes)
+        if direction == 'following':
+            end = None if not total else begin - 1 + total
             begin -= 1
-        else:
-            begin = None if not total or total >= len(nodes) else begin - total - 1
-            end = None
 
-        return [e for e in nodes[begin:end] if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
+        else:
+            tmp = len_nodes - begin
+            begin = tmp - total + 1
+            end = tmp + 1
+            if begin < 0:
+                begin = None
+
+        return nodes[begin:end]
 
     # ----------------以下属性或方法由后代实现----------------
     @property

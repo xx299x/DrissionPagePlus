@@ -70,12 +70,14 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
-    def parent(self, level: int = 1) -> 'SessionElement':
-        """返回上面第level级父元素                      \n
-        :param level: 第几级父元素
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> 'SessionElement':
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
         :return: SessionElement对象
         """
-        return self.ele(f'xpath:..{"/.." * (level - 1)}')
+        if isinstance(level_or_loc, int):
+            return self.ele(f'xpath:..{"/.." * (level_or_loc - 1)}')
+        # TODO: 完善用定位符时的逻辑
 
     def attr(self, attr: str) -> Union[str, None]:
         """返回attribute属性值                           \n

@@ -91,13 +91,15 @@ class DriverElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return self.inner_ele.get_attribute('innerText')
 
-    def parent(self, level: int = 1) -> 'DriverElement':
-        """返回上面第level级父元素              \n
-        :param level: 第几级父元素
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> 'DriverElement':
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
         :return: DriverElement对象
         """
-        loc = 'xpath', f'.{"/.." * level}'
+        if isinstance(level_or_loc, int):
+            loc = 'xpath', f'.{"/.." * level_or_loc}'
         return self.ele(loc, timeout=0)
+        # TODO: 完善用定位符时的逻辑
 
     def attr(self, attr: str) -> str:
         """获取attribute属性值            \n
@@ -247,7 +249,7 @@ class DriverElement(DrissionElement):
 
         return self._select
 
-    def left(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
+    def left(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素左边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param index: 获取第几个
@@ -255,7 +257,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
-    def right(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
+    def right(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素右边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param index: 获取第几个
@@ -263,7 +265,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('right', filter_loc, 1, index)[0]
 
-    def above(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
+    def above(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素上边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param index: 获取第几个
@@ -271,7 +273,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
-    def below(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
+    def below(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素下边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param index: 获取第几个
@@ -279,7 +281,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, 1, index)[0]
 
-    def near(self, filter_loc: Union[tuple, str] = '', index: int = 1) -> 'DriverElement':
+    def near(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素最近的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param index: 获取第几个
@@ -287,7 +289,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('near', filter_loc, 1, index)[0]
 
-    def lefts(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
+    def lefts(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = '') -> List['DriverElement']:
         """获取网页上显示在当前元素左边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
@@ -296,7 +298,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, total, begin)
 
-    def rights(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
+    def rights(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = '') -> List['DriverElement']:
         """获取网页上显示在当前元素右边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
@@ -305,7 +307,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('right', filter_loc, total, begin)
 
-    def aboves(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
+    def aboves(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = '') -> List['DriverElement']:
         """获取网页上显示在当前元素上边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
@@ -314,7 +316,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, total, begin)
 
-    def belows(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
+    def belows(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = '') -> List['DriverElement']:
         """获取网页上显示在当前元素下边的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param total: 获取多少个
@@ -323,7 +325,7 @@ class DriverElement(DrissionElement):
         """
         return self._get_relative_eles('left', filter_loc, total, begin)
 
-    def nears(self, filter_loc: Union[tuple, str] = '', total: int = None, begin: int = 1) -> List['DriverElement']:
+    def nears(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = '') -> List['DriverElement']:
         """获取网页上显示在当前元素最近的某个元素，可设置选取条件                          \n
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :param begin: 从第几个开始返回
@@ -674,6 +676,8 @@ class DriverElement(DrissionElement):
         """
         if not isinstance(begin, int) or begin < 1 or not isinstance(total, int) or total < 1:
             raise ValueError('begin和total参数只能是大于0的整数。')
+
+        # TODO: 支持selenium原生相对定位符
 
         try:
             from selenium.webdriver.support.relative_locator import RelativeBy
