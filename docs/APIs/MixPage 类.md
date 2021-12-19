@@ -336,9 +336,9 @@ d 模式时检查网页是否符合预期。默认由 response 状态检查，�
 
 返回： None
 
-## to_iframe()
+## to_frame()
 
-跳转到 iframe，默认跳转到最高层级，兼容 selenium 原生参数。
+跳转到 frame，默认跳转到最高层级，兼容 selenium 原生参数。
 
 参数说明：
 
@@ -355,7 +355,7 @@ d 模式时检查网页是否符合预期。默认由 response 状态检查，�
 - to_iframe('main')                  - 跳到最高层
 - to_iframe('parent')                - 跳到上一层
 
-返回： None
+返回： 自己，用于链式操作进行下一步元素查找
 
 ## scroll_to_see()
 
