@@ -6,12 +6,12 @@
 """
 from abc import abstractmethod
 from re import sub
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 from lxml.html import HtmlElement
 from selenium.webdriver.remote.webelement import WebElement
 
-from .common import format_html, translate_loc, str_to_loc
+from .common import format_html, get_loc
 
 
 class BaseParser(object):
@@ -31,11 +31,9 @@ class BaseParser(object):
     def html(self) -> str:
         return ''
 
-    @abstractmethod
     def s_ele(self, loc_or_ele):
         pass
 
-    @abstractmethod
     def s_eles(self, loc_or_str):
         pass
 
@@ -55,54 +53,37 @@ class BaseElement(BaseParser):
     def inner_ele(self) -> Union[WebElement, HtmlElement]:
         return self._inner_ele
 
-    def next(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 后面第几个兄弟元素
-        :param filter_loc: 用于筛选元素的查询语法
-        :return: 兄弟元素
-        """
-        nexts = self.nexts(total=1, begin=index, filter_loc=filter_loc)
-        return nexts[0] if nexts else None
-
     # ----------------以下属性或方法由后代实现----------------
     @property
     def tag(self):
         return
-
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
-        pass
-
-    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
-        return None  # ShadowRootElement直接继承
-
-    def prevs(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
-        return None  # ShadowRootElement直接继承
 
     @property
     def is_valid(self):
         return True
 
     @abstractmethod
-    def nexts(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
+    def _ele(self, loc_or_ele, timeout=None, single=True):
+        pass
+
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
+        pass
+
+    def prev(self, index: int = 1):
+        return None  # ShadowRootElement直接继承
+
+    def prevs(self):
+        return None  # ShadowRootElement直接继承
+
+    def next(self, index: int = 1):
+        pass
+
+    def nexts(self):
         pass
 
 
 class DrissionElement(BaseElement):
     """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
-
-    @abstractmethod
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
-        """返回父级元素"""
-        pass
-
-    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 前面第几个
-        :param filter_loc: 用于筛选元素的查询语法
-        :return: 兄弟元素
-        """
-        prevs = self.prevs(total=1, begin=index, filter_loc=filter_loc)
-        return prevs[0] if prevs else None
 
     @property
     def link(self) -> str:
@@ -136,72 +117,92 @@ class DrissionElement(BaseElement):
 
         return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
-    def nexts(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
-        """返回后面若干个兄弟元素或节点组成的列表                                \n
-        可用查询语法筛选，可指定返回筛选结果的哪几个，total为None返回所有            \n
-        :param total: 获取多少个元素或节点
-        :param begin: 从第几个开始获取，从1起
-        :param filter_loc: 用于筛选元素的查询语法
-        :return: SessionElement对象
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> 'DrissionElement':
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
+        :return: DriverElement对象
         """
-        return self._get_brothers(begin=begin, total=total, filter_loc=filter_loc, direction='following')
+        if isinstance(level_or_loc, int):
+            loc = f'xpath:./ancestor::*[{level_or_loc}]'
 
-    def prevs(self, total: int = None, begin: int = 1, filter_loc: Union[tuple, str] = ''):
-        """返回前面若干个兄弟元素或节点组成的列表                                \n
-        可用查询语法筛选，可指定返回筛选结果的哪几个，total为None返回所有            \n
-        :param total: 获取多少个元素或节点
-        :param begin: 从第几个开始获取，从1起
+        elif isinstance(level_or_loc, (tuple, str)):
+            loc = get_loc(level_or_loc, True)
+
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+            loc = f'xpath:./ancestor::{loc[1].lstrip(". / ")}'
+
+        else:
+            raise TypeError('level_or_loc参数只能是tuple、int或str。')
+
+        return self.ele(loc, timeout=0)
+
+    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 兄弟元素
+        """
+        nodes = self._get_brothers(index=index, filter_loc=filter_loc, direction='preceding')
+        return nodes[-1] if nodes else None
+
+    def next(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 兄弟元素
+        """
+        nodes = self._get_brothers(index=index, filter_loc=filter_loc, direction='following')
+        return nodes[0] if nodes else None
+
+    def nexts(self, filter_loc: Union[tuple, str] = ''):
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :return: SessionElement对象
         """
-        return self._get_brothers(begin=begin, total=total, filter_loc=filter_loc, direction='preceding')
+        return self._get_brothers(filter_loc=filter_loc, direction='following')
+
+    def prevs(self, filter_loc: Union[tuple, str] = ''):
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: SessionElement对象
+        """
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding')
 
     def _get_brothers(self,
-                      begin: int = 1,
-                      total: int = None,
+                      index: int = None,
                       filter_loc: Union[tuple, str] = '',
-                      direction: str = 'following'):
+                      direction: str = 'following') -> List['DrissionElement']:
         """按要求返回兄弟元素或节点组成的列表                     \n
-        :param begin: 从第几个兄弟节点或元素开始
-        :param total: 获取多少个
+        :param index: 获取第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param direction: 'following' 或 'preceding'，查找的方向
         :return: DriverElement对象或字符串
         """
+        if index is not None and index < 1:
+            raise ValueError('index必须大于等于1。')
+
         timeout = 0 if direction == 'preceding' else .5
 
-        if isinstance(filter_loc, tuple):
-            node_txt = translate_loc(filter_loc)
+        # 仅根据位置取一个
+        if index and not filter_loc:
+            xpath = f'xpath:./{direction}-sibling::*[{index}]'
 
-        elif isinstance(filter_loc, str):
-            node_txt = str_to_loc(filter_loc)
-
+        # 根据筛选获取所有
         else:
-            raise TypeError('filter_loc参数只能是tuple或str。')
+            loc = get_loc(filter_loc, True)
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
 
-        if node_txt[0] == 'css selector':
-            raise ValueError('此处暂不支持css selector选择器。')
+            loc = loc[1].lstrip('./')
+            xpath = f'xpath:./{direction}-sibling::{loc}'
 
-        node_txt = node_txt[1].lstrip('./')
-
-        # 获取所有节点
-        t = f'xpath:./{direction}-sibling::{node_txt}'
-        nodes = self._ele(t, timeout=timeout, single=False)
+        print(xpath)
+        nodes = self._ele(xpath, timeout=timeout, single=False)
         nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
-        len_nodes = len(nodes)
-        if direction == 'following':
-            end = None if not total else begin - 1 + total
-            begin -= 1
-
-        else:
-            tmp = len_nodes - begin
-            begin = tmp - total + 1
-            end = tmp + 1
-            if begin < 0:
-                begin = None
-
-        return nodes[begin:end]
+        return nodes
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -215,10 +216,6 @@ class DrissionElement(BaseElement):
     @property
     def raw_text(self):
         return
-
-    # @abstractmethod
-    # def parents(self, num: int = 1):
-    #     pass
 
     @abstractmethod
     def attr(self, attr: str):

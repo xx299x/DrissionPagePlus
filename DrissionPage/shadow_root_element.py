@@ -10,6 +10,7 @@ from typing import Union, Any, Tuple, List
 from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BaseElement
+from .common import get_loc
 from .driver_element import make_driver_ele, DriverElement
 from .session_element import make_session_ele
 
@@ -45,28 +46,48 @@ class ShadowRootElement(BaseElement):
         """返回内部的html文本"""
         return self.inner_ele.get_attribute('innerHTML')
 
-    def parent(self, level: int = 1) -> DriverElement:
-        """返回上面第level级父元素              \n
-        :param level: 第几级父元素
+    def parent(self, level_or_loc: Union[str, int] = 1) -> DriverElement:
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
         :return: DriverElement对象
         """
-        if level == 1:
-            return self.parent_ele
+        if isinstance(level_or_loc, int):
+            loc = f'xpath:./ancestor-or-self::*[{level_or_loc}]'
+
+        elif isinstance(level_or_loc, (tuple, str)):
+            loc = get_loc(level_or_loc, True)
+
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}'
+
         else:
-            loc = 'xpath', f'.{"/.." * (level - 1)}'
-            return self.parent_ele.ele(loc, timeout=0.1)
+            raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-    def nexts(self, total: int = None, begin: int = 1) -> DriverElement:
-        """返回后面若干个兄弟元素或节点组成的列表，total为None返回所有      \n
-        :param total: 获取多少个元素或节点
-        :param begin: 从第几个开始获取，从1起
+        return self.parent_ele.ele(loc, timeout=0)
+
+    def next(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> DriverElement:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
         :return: DriverElement对象
         """
-        loc = 'css selector', f':nth-child(n)'
-        eles = self.parent_ele.eles(loc, timeout=0.1)
-        end = None if not total or total >= len(eles) else begin + total - 1
+        nodes = self.nexts(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
 
-        return eles[begin - 1:end]
+    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[DriverElement]:
+        """返回后面所有兄弟元素或节点组成的列表        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: DriverElement对象组成的列表
+        """
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./{loc}'
+        return self.parent_ele.eles(xpath, timeout=0.1)
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -114,14 +135,17 @@ class ShadowRootElement(BaseElement):
         """
         if isinstance(loc_or_str, str):
             loc_or_str = str_to_css_loc(loc_or_str)
+
         elif isinstance(loc_or_str, tuple) and len(loc_or_str) == 2:
             if loc_or_str[0] == 'xpath':
                 raise ValueError('不支持xpath。')
+
         else:
             raise ValueError('loc_or_str参数只能是tuple或str类型。')
 
         if loc_or_str[0] == 'css selector':
             return make_driver_ele(self, loc_or_str, single, timeout)
+
         elif loc_or_str[0] == 'text':
             return self._find_eles_by_text(loc_or_str[1], loc_or_str[2], loc_or_str[3], single)
 
@@ -193,7 +217,7 @@ class ShadowRootElement(BaseElement):
 
 
 def str_to_css_loc(loc: str) -> tuple:
-    """处理元素查找语句                                                                              \n
+    """处理元素查找语句                                                                           \n
     查找方式：属性、tag name及属性、文本、css selector                                              \n
     @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串           \n
     """

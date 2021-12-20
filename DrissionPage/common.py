@@ -79,6 +79,33 @@ def get_ele_txt(e) -> str:
     return format_html(re_str)
 
 
+def get_loc(loc: Union[tuple, str], translate_css: bool = False) -> tuple:
+    """接收selenium定位元组或本库定位语法，转换为标准定位元组，可翻译css selector为xpath  \n
+    :param loc: selenium定位元组或本库定位语法
+    :param translate_css: 是否翻译css selector为xpath
+    :return: DrissionPage定位元组
+    """
+    if isinstance(loc, tuple):
+        loc = translate_loc(loc)
+
+    elif isinstance(loc, str):
+        loc = str_to_loc(loc)
+
+    else:
+        raise TypeError('loc参数只能是tuple或str。')
+
+    if loc[0] == 'css selector' and translate_css:
+        from lxml.cssselect import CSSSelector, ExpressionError
+        try:
+            path = str(CSSSelector(loc[1], translator='html').path)
+            path = path[20:] if path.startswith('descendant-or-self::') else path
+            loc = 'xpath', path
+        except ExpressionError:
+            pass
+
+    return loc
+
+
 def str_to_loc(loc: str) -> tuple:
     """处理元素查找语句                                                                    \n
     查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                      \n
