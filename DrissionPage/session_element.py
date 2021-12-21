@@ -158,9 +158,9 @@ class SessionElement(DrissionElement):
                 brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
                 path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
 
-            ele = ele.parent
+            ele = ele.parent()
 
-        return path_str[1:] if mode == 'css' else path_str
+        return f':root{path_str[1:]}' if mode == 'css' else path_str
 
     # ----------------session独有方法-----------------------
     def _make_absolute(self, link) -> str:

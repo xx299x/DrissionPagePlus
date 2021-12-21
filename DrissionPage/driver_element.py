@@ -192,7 +192,8 @@ class DriverElement(DrissionElement):
         }
         return e(arguments[0]);
         '''
-        return self.run_script(js)
+        res_txt = self.run_script(js)
+        return f':root{res_txt}' if mode == 'css' else res_txt
 
     # -----------------driver独有属性和方法-------------------
     @property
