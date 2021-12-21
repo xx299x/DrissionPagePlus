@@ -220,12 +220,12 @@ class DriverElement(DrissionElement):
         return self.shadow_root
 
     @property
-    def before(self) -> str:
+    def pseudo_before(self) -> str:
         """返回当前元素的::before伪元素内容"""
         return self.style('content', 'before')
 
     @property
-    def after(self) -> str:
+    def pseudo_after(self) -> str:
         """返回当前元素的::after伪元素内容"""
         return self.style('content', 'after')
 

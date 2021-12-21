@@ -138,37 +138,77 @@ class DrissionElement(BaseElement):
 
         return self.ele(loc, timeout=0)
 
-    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+    def prev(self, index: int = 1, filter_loc: Union[tuple, str] = '', timeout: float = 0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
-        nodes = self._get_brothers(index=index, filter_loc=filter_loc, direction='preceding')
+        nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout)
         return nodes[-1] if nodes else None
 
-    def next(self, index: int = 1, filter_loc: Union[tuple, str] = ''):
+    def next(self, index: int = 1, filter_loc: Union[tuple, str] = '', timeout: float = 0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
-        nodes = self._get_brothers(index=index, filter_loc=filter_loc, direction='following')
+        nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout)
         return nodes[0] if nodes else None
 
-    def nexts(self, filter_loc: Union[tuple, str] = ''):
+    def nexts(self, filter_loc: Union[tuple, str] = '', timeout: float = 0):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
         :return: SessionElement对象
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following')
+        return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout)
 
-    def prevs(self, filter_loc: Union[tuple, str] = ''):
+    def prevs(self, filter_loc: Union[tuple, str] = '', timeout: float = 0):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
         :return: SessionElement对象
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding')
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout)
+
+    def before(self, index: int = 1, filter_loc: Union[tuple, str] = '', timeout: float = None):
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素
+        """
+        nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout)
+        return nodes[-1] if nodes else None
+
+    def after(self, index: int = 1, filter_loc: Union[tuple, str] = '', timeout: float = None):
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素
+        """
+        nodes = self._get_brothers(index, filter_loc, 'following', False, timeout)
+        return nodes[0] if nodes else None
+
+    def befores(self, filter_loc: Union[tuple, str] = '', timeout: float = None):
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: SessionElement对象
+        """
+        return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
+
+    def afters(self, filter_loc: Union[tuple, str] = '', timeout: float = None):
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: SessionElement对象
+        """
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
     def _get_brothers(self,
                       index: int = None,
