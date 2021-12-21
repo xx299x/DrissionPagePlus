@@ -198,7 +198,6 @@ class DrissionElement(BaseElement):
             loc = loc[1].lstrip('./')
             xpath = f'xpath:./{direction}-sibling::{loc}'
 
-        print(xpath)
         nodes = self._ele(xpath, timeout=timeout, single=False)
         nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
