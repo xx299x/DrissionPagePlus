@@ -200,7 +200,7 @@ class DrissionElement(BaseElement):
         :param timeout: 查找元素的超时时间
         :return: SessionElement对象
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
     def afters(self, filter_loc: Union[tuple, str] = '', timeout: float = None):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
@@ -208,7 +208,7 @@ class DrissionElement(BaseElement):
         :param timeout: 查找元素的超时时间
         :return: SessionElement对象
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
+        return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
 
     def _get_brothers(self,
                       index: int = None,
@@ -217,7 +217,7 @@ class DrissionElement(BaseElement):
                       brother: bool = True,
                       timeout: float = .5) -> List['DrissionElement']:
         """按要求返回兄弟元素或节点组成的列表                            \n
-        :param index: 获取第几个
+        :param index: 获取第几个，该参数不为None时只获取该编号的元素
         :param filter_loc: 用于筛选元素的查询语法
         :param direction: 'following' 或 'preceding'，查找的方向
         :param brother: 查找范围，在同级查找还是整个dom前后查找
@@ -229,20 +229,21 @@ class DrissionElement(BaseElement):
 
         brother = '-sibling' if brother else ''
 
-        # 仅根据位置取一个
-        if index and not filter_loc:
-            xpath = f'xpath:./{direction}{brother}::*[{index}]'
+        if not filter_loc:
+            loc = '*'
 
-        # 根据筛选获取所有
         else:
             loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
-
             loc = loc[1].lstrip('./')
-            xpath = f'xpath:./{direction}{brother}::{loc}'
 
-        nodes = self._ele(xpath, timeout=timeout, single=False)
+        if index:
+            loc = f'xpath:(./{direction}{brother}::{loc})[{index}]'  # TODO: 有没有括号是否有区别
+        else:
+            loc = f'xpath:./{direction}{brother}::{loc}'
+
+        nodes = self._ele(loc, timeout=timeout, single=False)
         nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
         return nodes
