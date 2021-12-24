@@ -138,7 +138,11 @@ class ShadowRootElement(BaseElement):
         :return: DriverElement对象
         """
         # 先转换为sessionElement，再获取所有元素，获取它们的css selector路径，再用路径在页面上执行查找
-        eles = make_session_ele(self.html).eles(loc_or_str)
+        loc = get_loc(loc_or_str)
+        if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
+            loc = loc[0], loc[1][5:]
+            
+        eles = make_session_ele(self.html).eles(loc)
 
         if not eles:
             return None if single else []
