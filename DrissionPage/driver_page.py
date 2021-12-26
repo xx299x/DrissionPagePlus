@@ -7,7 +7,7 @@
 from glob import glob
 from os import sep
 from pathlib import Path
-from time import sleep
+from time import sleep, perf_counter
 from typing import Union, List, Any, Tuple
 from urllib.parse import quote
 
@@ -95,9 +95,9 @@ class DriverPage(BasePage):
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, WebElement],
             timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
-        """返回页面中符合条件的第一个元素                                                           \n
+        """返回页面中符合条件的第一个元素                                          \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: DriverElement对象或属性、文本
         """
         return self._ele(loc_or_ele, timeout)
@@ -105,9 +105,9 @@ class DriverPage(BasePage):
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[DriverElement]:
-        """返回页面中所有符合条件的元素                                                                     \n
+        """返回页面中所有符合条件的元素                                     \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: DriverElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, timeout, single=False)
@@ -489,18 +489,20 @@ class DriverPage(BasePage):
         :param mode: 'ok' 或 'cancel'，若输入其它值，不会按按钮但依然返回文本值
         :param text: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间
-        :return: 提示框内容文本
+        :return: 提示框内容文本，未等到提示框则返回None
         """
-        timeout = timeout if timeout is not None else self.timeout
-        from time import perf_counter
-        alert = None
-        t1 = perf_counter()
-        while perf_counter() - t1 <= timeout:
+
+        def do_it():
             try:
-                alert = self.driver.switch_to.alert
-                break
+                return self.driver.switch_to.alert
             except NoAlertPresentException:
-                pass
+                return False
+
+        timeout = timeout if timeout is not None else self.timeout
+        t1 = perf_counter()
+        alert = do_it()
+        while not alert and perf_counter() - t1 <= timeout:
+            alert = do_it()
 
         if not alert:
             return None

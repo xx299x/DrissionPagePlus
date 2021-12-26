@@ -110,9 +110,9 @@ class DriverElement(DrissionElement):
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本                                      \n
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本
         """
         return self._ele(loc_or_str, timeout)
@@ -120,9 +120,9 @@ class DriverElement(DrissionElement):
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                                                   \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
@@ -351,15 +351,19 @@ class DriverElement(DrissionElement):
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
         :return: 是否点击成功
         """
+
+        def do_it() -> bool:
+            try:
+                self.inner_ele.click()
+                return True
+            except Exception:
+                return False
+
         if not by_js:
             timeout = timeout if timeout is not None else self.page.timeout
             t1 = perf_counter()
-            while perf_counter() - t1 <= timeout:
-                try:
-                    self.inner_ele.click()
-                    return True
-                except Exception:
-                    pass
+            while not do_it() and perf_counter() - t1 <= timeout:
+                pass
 
         # 若点击失败，用js方式点击
         if by_js is not False:

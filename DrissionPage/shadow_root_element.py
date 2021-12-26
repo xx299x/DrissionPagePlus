@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   shadow_root_element.py
 """
+from time import perf_counter
 from typing import Union, Any, Tuple, List
 
 from selenium.webdriver.remote.webelement import WebElement
@@ -98,7 +99,7 @@ class ShadowRootElement(BaseElement):
             timeout: float = None) -> Union[DriverElement, List[DriverElement]]:
         """返回当前元素下级符合条件的第一个元素，默认返回                                   \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本
         """
         return self._ele(loc_or_str, timeout)
@@ -108,7 +109,7 @@ class ShadowRootElement(BaseElement):
              timeout: float = None) -> List[DriverElement]:
         """返回当前元素下级所有符合条件的子元素                                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
@@ -141,11 +142,20 @@ class ShadowRootElement(BaseElement):
         loc = get_loc(loc_or_str)
         if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
             loc = loc[0], loc[1][5:]
-            
+
+        timeout = timeout if timeout is not None else self.page.timeout
         eles = make_session_ele(self.html).eles(loc)
 
+        t1 = perf_counter()
+        while not eles and perf_counter() - t1 <= timeout:
+            try:
+                eles = make_session_ele(self.html).eles(loc)
+
+            except Exception:
+                pass
+
         if not eles:
-            return None if single else []
+            return None if single else eles
 
         css_paths = [i.css_path[47:] for i in eles]
 
