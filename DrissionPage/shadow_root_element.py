@@ -144,15 +144,10 @@ class ShadowRootElement(BaseElement):
             loc = loc[0], loc[1][5:]
 
         timeout = timeout if timeout is not None else self.page.timeout
-        eles = make_session_ele(self.html).eles(loc)
-
         t1 = perf_counter()
+        eles = make_session_ele(self.html).eles(loc)
         while not eles and perf_counter() - t1 <= timeout:
-            try:
-                eles = make_session_ele(self.html).eles(loc)
-
-            except Exception:
-                pass
+            eles = make_session_ele(self.html).eles(loc)
 
         if not eles:
             return None if single else eles

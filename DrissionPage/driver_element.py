@@ -362,8 +362,12 @@ class DriverElement(DrissionElement):
         if not by_js:
             timeout = timeout if timeout is not None else self.page.timeout
             t1 = perf_counter()
-            while not do_it() and perf_counter() - t1 <= timeout:
-                pass
+            click = do_it()
+            while not click and perf_counter() - t1 <= timeout:
+                click = do_it()
+
+            if click:
+                return True
 
         # 若点击失败，用js方式点击
         if by_js is not False:
