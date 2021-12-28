@@ -126,7 +126,7 @@ class SessionElement(DrissionElement):
         """
         return self._ele(loc_or_str)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
@@ -200,9 +200,9 @@ def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
     # ---------------处理定位符---------------
     if not loc:
         if isinstance(html_or_ele, SessionElement):
-            return html_or_ele
+            return html_or_ele if single else [html_or_ele]
+
         loc = ('xpath', '.')
-        single = True
 
     elif isinstance(loc, (str, tuple)):
         loc = get_loc(loc)
