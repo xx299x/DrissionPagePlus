@@ -599,6 +599,7 @@ class DriverOptions(Options):
     def set_paths(self,
                   driver_path: str = None,
                   chrome_path: str = None,
+                  local_port: Union[int, str] = None,
                   debugger_address: str = None,
                   download_path: str = None,
                   user_data_path: str = None,
@@ -606,6 +607,7 @@ class DriverOptions(Options):
         """快捷的路径设置函数                                             \n
         :param driver_path: chromedriver.exe路径
         :param chrome_path: chrome.exe路径
+        :param local_port: 本地端口号
         :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
         :param download_path: 下载文件路径
         :param user_data_path: 用户数据路径
@@ -617,6 +619,9 @@ class DriverOptions(Options):
 
         if chrome_path is not None:
             self.binary_location = chrome_path
+
+        if local_port is not None:
+            self.debugger_address = f'127.0.0.1:{local_port}'
 
         if debugger_address is not None:
             self.debugger_address = debugger_address

@@ -239,7 +239,7 @@ class DrissionElement(BaseElement):
             loc = loc[1].lstrip('./')
 
         if index:
-            loc = f'xpath:(./{direction}{brother}::{loc})[{index}]'  # TODO: 有没有括号是否有区别
+            loc = f'xpath:./{direction}{brother}::{loc}[{index}]'
         else:
             loc = f'xpath:./{direction}{brother}::{loc}'
 
