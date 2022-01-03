@@ -174,7 +174,7 @@ class DriverPage(BasePage):
                         to_url: str,
                         times: int = 0,
                         interval: float = 1,
-                        show_errmsg: bool = False, ):
+                        show_errmsg: bool = False):
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
