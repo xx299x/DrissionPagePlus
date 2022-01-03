@@ -143,7 +143,7 @@ class DrissionElement(BaseElement):
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+        :return: 兄弟元素或节点文本组成的列表
         """
         nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout)
         return nodes[-1] if nodes else None
@@ -153,7 +153,7 @@ class DrissionElement(BaseElement):
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+        :return: 兄弟元素或节点文本组成的列表
         """
         nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout)
         return nodes[0] if nodes else None
@@ -162,7 +162,7 @@ class DrissionElement(BaseElement):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: SessionElement对象
+        :return: 兄弟元素或节点文本组成的列表
         """
         return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout)
 
@@ -170,7 +170,7 @@ class DrissionElement(BaseElement):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: SessionElement对象
+        :return: 兄弟元素或节点文本组成的列表
         """
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout)
 
@@ -179,7 +179,7 @@ class DrissionElement(BaseElement):
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+        :return: 本元素前面的某个元素或节点
         """
         nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout)
         return nodes[-1] if nodes else None
@@ -189,7 +189,7 @@ class DrissionElement(BaseElement):
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+        :return: 本元素后面的某个元素或节点
         """
         nodes = self._get_brothers(index, filter_loc, 'following', False, timeout)
         return nodes[0] if nodes else None
@@ -198,7 +198,7 @@ class DrissionElement(BaseElement):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: SessionElement对象
+        :return: 本元素前面的元素或节点组成的列表
         """
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
@@ -206,7 +206,7 @@ class DrissionElement(BaseElement):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: SessionElement对象
+        :return: 本元素后面的元素或节点组成的列表
         """
         return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
 
@@ -239,7 +239,7 @@ class DrissionElement(BaseElement):
             loc = loc[1].lstrip('./')
 
         if index:
-            loc = f'xpath:(./{direction}{brother}::{loc})[{index}]'  # TODO: 有没有括号是否有区别
+            loc = f'xpath:./{direction}{brother}::{loc}[{index}]'
         else:
             loc = f'xpath:./{direction}{brother}::{loc}'
 

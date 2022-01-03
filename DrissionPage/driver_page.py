@@ -112,14 +112,17 @@ class DriverPage(BasePage):
         """
         return self._ele(loc_or_str, timeout, single=False)
 
-    def s_ele(self, loc_or_ele):
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, DriverElement] = None):
         """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        return make_session_ele(self, loc_or_ele)
+        if isinstance(loc_or_ele, DriverElement):
+            return make_session_ele(loc_or_ele)
+        else:
+            return make_session_ele(self, loc_or_ele)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]):
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None):
         """查找所有符合条件的元素以SessionElement列表形式返回                       \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
