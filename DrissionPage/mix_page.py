@@ -104,7 +104,6 @@ class MixPage(SessionPage, DriverPage, BasePage):
             interval: float = None,
             **kwargs) -> Union[bool, None]:
         """跳转到一个url                                         \n
-        跳转前先同步cookies，跳转后判断目标url是否可用
         :param url: 目标url
         :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
@@ -145,7 +144,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    def s_ele(self, loc_or_ele=None) -> Union[SessionElement, List[SessionElement], List[str]]:
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement] = None) \
+            -> Union[SessionElement, List[SessionElement], List[str]]:
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -155,20 +155,20 @@ class MixPage(SessionPage, DriverPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_ele(loc_or_ele)
 
-    def s_eles(self, loc_or_ele) -> Union[SessionElement, List[SessionElement], List[str]]:
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) \
+            -> Union[SessionElement, List[SessionElement], List[str]]:
         """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
         if self._mode == 's':
-            return super().s_eles(loc_or_ele)
+            return super().s_eles(loc_or_str)
         elif self._mode == 'd':
-            return super(SessionPage, self).s_eles(loc_or_ele)
+            return super(SessionPage, self).s_eles(loc_or_str)
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-             timeout: float = None,
-             single: bool = True) \
+             timeout: float = None, single: bool = True) \
             -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
