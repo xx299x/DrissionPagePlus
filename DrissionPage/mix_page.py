@@ -341,7 +341,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
-             data: dict = None,
+             data: Union[dict, str] = None,
              go_anyway: bool = False,
              show_errmsg: bool = False,
              retry: int = None,
@@ -362,7 +362,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def download(self,
                  file_url: str,
-                 goal_path: str = None,
+                 goal_path: str,
                  rename: str = None,
                  file_exists: str = 'rename',
                  post_data: Union[str, dict] = None,
@@ -374,7 +374,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         """下载一个文件                                                                      \n
         d模式下下载前先同步cookies                                                            \n
         :param file_url: 文件url
-        :param goal_path: 存放路径，默认为ini文件中指定的临时文件夹
+        :param goal_path: 存放路径
         :param rename: 重命名文件，可不写扩展名
         :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
         :param post_data: post方式的数据，这个参数不为None时自动转成post方式

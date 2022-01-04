@@ -369,7 +369,7 @@ class SessionPage(BasePage):
                             if show_msg and file_size:
                                 downloaded_size += 1024
                                 rate = downloaded_size / file_size if downloaded_size < file_size else 1
-                                print('\r {:.0%} '.format(rate), end="")
+                                print('\r{:.0%} '.format(rate), end="")
 
             except Exception as e:
                 if show_errmsg:
