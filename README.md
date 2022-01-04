@@ -6,10 +6,10 @@
 
 DrissionPage，即 driver 和 session 组合而成的 page。  
 是个基于 python 的 Web 自动化操作集成工具。  
-它实现了 selenium 和 requests 之间的无缝切换。  
-可以兼顾 selenium 的便利性和 requests 的高效率。  
-它集成了页面常用功能，两种模式系统一致的 API，使用便捷。  
-它用 POM 模式封装了页面元素常用的方法，适合自动化操作功能扩展。  
+它用 POM 模式封装了页面和元素常用的方法，  
+自带一套简洁直观优雅的元素定位语法，  
+实现了 selenium 和 requests 之间的无缝切换，  
+可兼顾 selenium 的便利性和 requests 的高效率，  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。
 
 **示例地址：** [使用DrissionPage的网页自动化及爬虫示例](https://gitee.com/g1879/DrissionPage-demos)
@@ -37,7 +37,7 @@ requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，�
 - 两种模式提供一致的 API，使用体验一致。
 - 人性化设计，集成众多实用功能，大大降低开发工作量。
 
-## 亮点
+## 亮点功能
 
 - 每次运行程序可以反复使用已经打开的浏览器。如手动设置网页到某个状态，再用程序接管，或手动处理登录，再用程序爬内容。无须每次运行从头启动浏览器，超级方便。
 - 使用 ini 文件保存常用配置，自动调用，也提供便捷的设置api，远离繁杂的配置项。
@@ -286,4 +286,11 @@ Git 命令学习
 ***
 
 请在 Wiki中查看：[点击查看APIs](https://gitee.com/g1879/DrissionPage/wikis/Drission%20%E7%B1%BB?sort_id=3159323)
+
+# 请我喝咖啡
+
+如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
+
+| ![](https://gitee.com/g1879/DrissionPage-demos/raw/master/pics/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20220104105717.jpg) | ![](https://gitee.com/g1879/DrissionPage-demos/raw/master/pics/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20220104105709.jpg) |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
 
