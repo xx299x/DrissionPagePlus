@@ -434,7 +434,7 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
         debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
 
         if chrome_path == 'chrome.exe':
-            from common import get_exe_path_from_port
+            from .common import get_exe_path_from_port
             chrome_path = get_exe_path_from_port(port)
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
