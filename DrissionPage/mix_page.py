@@ -303,7 +303,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         """
         self._drission.cookies_to_session(copy_user_agent)
 
-    def cookies_to_driver(self, url=None) -> None:
+    def cookies_to_driver(self, url: str = None) -> None:
         """从session复制cookies到driver  \n
         chrome需要指定域才能接收cookies   \n
         :param url: 目标域
@@ -330,7 +330,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def close_driver(self) -> None:
         """关闭driver及浏览器"""
         self._driver = None
-        self.drission.close_driver()
+        self.drission.close_driver(True)
 
     def close_session(self) -> None:
         """关闭session"""

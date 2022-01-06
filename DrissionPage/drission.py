@@ -185,11 +185,14 @@ class Drission(object):
 
         pid = self.get_browser_progress_id()
         from os import popen
-        if pid and popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
-            print('kill')
+        from platform import system
+
+        if pid and system().lower() == 'windows' \
+                and popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
             popen(f'taskkill /pid {pid} /F')
+
         else:
-            self.close_driver()
+            self._driver.quit()
 
     def get_browser_progress_id(self) -> Union[str, None]:
         """获取浏览器进程id"""
@@ -223,6 +226,10 @@ class Drission(object):
         self._show_or_hide_browser(False)
 
     def _show_or_hide_browser(self, hide: bool = True) -> None:
+        from platform import system
+        if system().lower() != 'windows':
+            raise OSError('该方法只能在Windows系统使用。')
+
         try:
             from win32gui import ShowWindow
             from win32con import SW_HIDE, SW_SHOW
@@ -360,10 +367,14 @@ class Drission(object):
         selenium_user_agent = driver.execute_script("return navigator.userAgent;")
         session.headers.update({"User-Agent": selenium_user_agent})
 
-    def close_driver(self) -> None:
+    def close_driver(self, kill: bool = False) -> None:
         """关闭driver和浏览器"""
         if self._driver:
-            self._driver.quit()
+            if kill:
+                self.kill_browser()
+            else:
+                self._driver.quit()
+
             self._driver = None
 
     def close_session(self) -> None:
