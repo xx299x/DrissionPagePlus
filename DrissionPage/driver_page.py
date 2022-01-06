@@ -326,7 +326,7 @@ class DriverPage(BasePage):
                 self.driver.switch_to.window(i)
                 self.driver.close()
 
-        self.driver.switch_to.window(page_handle[0])  # 把权柄定位回保留的页面
+        self.to_tab(0)
 
     def to_tab(self, num_or_handle: Union[int, str] = 0) -> None:
         """跳转到标签页                                                         \n
@@ -457,27 +457,31 @@ class DriverPage(BasePage):
         self.driver.refresh()
 
     def back(self) -> None:
-        """浏览器后退"""
+        """在浏览历史中后退一步"""
         self.driver.back()
 
-    def set_window_size(self, x: int = None, y: int = None) -> None:
+    def forward(self) -> None:
+        """在浏览历史中前进一步"""
+        self.driver.forward()
+
+    def set_window_size(self, width: int = None, height: int = None) -> None:
         """设置浏览器窗口大小，默认最大化，任一参数为0最小化  \n
-        :param x: 浏览器窗口高
-        :param y: 浏览器窗口宽
+        :param width: 浏览器窗口高
+        :param height: 浏览器窗口宽
         :return: None
         """
-        if x is None and y is None:
+        if width is None and height is None:
             self.driver.maximize_window()
 
-        elif x == 0 or y == 0:
+        elif width == 0 or height == 0:
             self.driver.minimize_window()
 
         else:
-            if x < 0 or y < 0:
+            if width < 0 or height < 0:
                 raise ValueError('x 和 y参数必须大于0。')
 
-            new_x = x or self.driver.get_window_size()['width']
-            new_y = y or self.driver.get_window_size()['height']
+            new_x = width or self.driver.get_window_size()['width']
+            new_y = height or self.driver.get_window_size()['height']
             self.driver.set_window_size(new_x, new_y)
 
     def chrome_downloading(self, download_path: str) -> list:
