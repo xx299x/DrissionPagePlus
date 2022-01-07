@@ -303,30 +303,27 @@ class DriverPage(BasePage):
         :param num_or_handles: 要保留的标签页序号或handle，可传入handle组成的列表或元组
         :return: None
         """
-        try:
-            tab = int(num_or_handles)
-        except (ValueError, TypeError):
-            tab = num_or_handles
-
-        tabs = self.driver.window_handles
-
-        if tab is None:
-            page_handle = (self.current_tab_handle,)
-        elif isinstance(tab, int):
-            page_handle = (tabs[tab],)
-        elif isinstance(tab, str):
-            page_handle = (tab,)
-        elif isinstance(tab, (list, tuple)):
-            page_handle = tab
+        if num_or_handles is None:
+            reserve_tabs = (self.current_tab_handle,)
+        elif isinstance(num_or_handles, (int, str)):
+            reserve_tabs = (num_or_handles,)
+        elif isinstance(num_or_handles, (list, tuple)):
+            reserve_tabs = num_or_handles
         else:
             raise TypeError('num_or_handle参数只能是int、str、list 或 tuple类型。')
 
+        tabs = self.driver.window_handles
+        reserve_tabs = set(i if isinstance(i, str) else tabs[i] for i in reserve_tabs)
+
         for i in tabs:  # 遍历所有标签页，关闭非保留的
-            if i not in page_handle:
+            if i not in reserve_tabs:
                 self.driver.switch_to.window(i)
                 self.driver.close()
 
         self.to_tab(0)
+
+    def close_tab(self, num_or_handles: Union[int, str, list, tuple] = None):
+        pass
 
     def to_tab(self, num_or_handle: Union[int, str] = 0) -> None:
         """跳转到标签页                                                         \n
@@ -525,3 +522,17 @@ class DriverPage(BasePage):
             alert.accept()
 
         return text
+
+
+def _get_handles(page: DriverPage, num_or_handles: Union[int, str, list, tuple] = None):
+    if num_or_handles is None:
+        reserve_tabs = (page.current_tab_handle,)
+    elif isinstance(num_or_handles, (int, str)):
+        reserve_tabs = (num_or_handles,)
+    elif isinstance(num_or_handles, (list, tuple)):
+        reserve_tabs = num_or_handles
+    else:
+        raise TypeError('num_or_handle参数只能是int、str、list 或 tuple类型。')
+
+    tabs = page.driver.window_handles
+    return set(i if isinstance(i, str) else tabs[i] for i in reserve_tabs)
