@@ -38,8 +38,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param drission: Drission对象，不传入时会自动创建
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间
-        :param driver_options: 浏览器设置，没有传入drission参数时会用这个设置新建Drission对象，传入False不从ini文件读取
-        :param session_options: requests设置，没有传入drission参数时会用这个设置新建Drission对象，传入False不从ini文件读取
+        :param driver_options: 浏览器设置，没传入drission参数时会用这个设置新建Drission对象中的WebDriver对象，传入False则不创建
+        :param session_options: requests设置，没传入drission参数时会用这个设置新建Drission对象中的Session对象，传入False则不创建
         """
         super(DriverPage, self).__init__(timeout)  # BasePage的__init__()
         self._mode = mode.lower()
