@@ -32,11 +32,11 @@ class OptionsManager(object):
         self._chrome_options = None
         self._session_options = None
 
-        if 'tmp_path' not in self.paths or not self.get_value('paths', 'tmp_path'):
-            tmp_path = str((Path(__file__).parent / 'tmp').absolute())
-            Path(tmp_path).mkdir(parents=True, exist_ok=True)
-            self.set_item('paths', 'tmp_path', tmp_path)
-            self.save(self.ini_path)
+        # if 'tmp_path' not in self.paths or not self.get_value('paths', 'tmp_path'):
+        #     tmp_path = str((Path(__file__).parent / 'tmp').absolute())
+        #     Path(tmp_path).mkdir(parents=True, exist_ok=True)
+        #     self.set_item('paths', 'tmp_path', tmp_path)
+        #     self.save(self.ini_path)
 
     def __text__(self) -> str:
         """打印ini文件内容"""
@@ -111,13 +111,14 @@ class OptionsManager(object):
         self.__setattr__(f'_{section}', None)
         return self
 
-    def save(self, path: str = None):
+    def save(self, path: str = None) -> str:
         """保存配置文件                                               \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
-        :return: 当前对象
+        :return: 保存路径
         """
+        default_path = (Path(__file__).parent / 'configs.ini').absolute()
         if path == 'default':
-            path = (Path(__file__).parent / 'configs.ini').absolute()
+            path = default_path
         elif path is None:
             path = Path(self.ini_path).absolute()
         else:
@@ -125,9 +126,14 @@ class OptionsManager(object):
 
         path = path / 'config.ini' if path.is_dir() else path
 
-        self._conf.write(open(str(path), 'w', encoding='utf-8'))
+        path = str(path)
+        self._conf.write(open(path, 'w', encoding='utf-8'))
 
-        return self
+        print(f'配置已保存到文件：{path}')
+        if path == str(default_path):
+            print('以后程序可自动从文件加载配置。')
+
+        return path
 
 
 class SessionOptions(object):
