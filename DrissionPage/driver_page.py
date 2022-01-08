@@ -278,7 +278,7 @@ class DriverPage(BasePage):
         return self.driver.execute_script(script, *args)
 
     def create_tab(self, url: str = '') -> None:
-        """新建并定位到一个标签页,该标签页在最后面  \n
+        """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
         :return: None
         """
@@ -286,44 +286,37 @@ class DriverPage(BasePage):
             self.driver.switch_to.new_window('tab')
             if url:
                 self.get(url)
+
         except Exception:
             self.to_tab(-1)
             self.run_script(f'window.open("{url}");')
             self.to_tab(-1)
 
-    def close_current_tab(self) -> None:
-        """关闭当前标签页"""
-        self.driver.close()
-
-        if self.tabs_count:
-            self.to_tab(0)
-
     def close_other_tabs(self, num_or_handles: Union[int, str, list, tuple] = None) -> None:
-        """关闭传入的标签页以外标签页，默认保留当前页。可传入列表或元组                                \n
-        :param num_or_handles: 要保留的标签页序号或handle，可传入handle组成的列表或元组
+        """关闭传入的标签页以外标签页，默认保留当前页。可传入列表或元组                                              \n
+        :param num_or_handles: 要保留的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时保存当前页
         :return: None
         """
-        if num_or_handles is None:
-            reserve_tabs = (self.current_tab_handle,)
-        elif isinstance(num_or_handles, (int, str)):
-            reserve_tabs = (num_or_handles,)
-        elif isinstance(num_or_handles, (list, tuple)):
-            reserve_tabs = num_or_handles
-        else:
-            raise TypeError('num_or_handle参数只能是int、str、list 或 tuple类型。')
+        all_tabs = self.driver.window_handles
+        reserve_tabs = (self.current_tab_handle,) if num_or_handles is None else _get_handles(all_tabs, num_or_handles)
 
-        tabs = self.driver.window_handles
-        reserve_tabs = set(i if isinstance(i, str) else tabs[i] for i in reserve_tabs)
-
-        for i in tabs:  # 遍历所有标签页，关闭非保留的
-            if i not in reserve_tabs:
-                self.driver.switch_to.window(i)
-                self.driver.close()
+        for i in set(all_tabs) - reserve_tabs:
+            self.driver.switch_to.window(i)
+            self.driver.close()
 
         self.to_tab(0)
 
-    def close_tab(self, num_or_handles: Union[int, str, list, tuple] = None):
-        pass
+    def close_tab(self, num_or_handles: Union[int, str, list, tuple] = None) -> None:
+        """关闭传入的标签页，默认关闭当前页。可传入列表或元组                                                     \n
+        :param num_or_handles:要关闭的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时关闭当前页
+        :return: None
+        """
+        tabs = (self.current_tab_handle,) if num_or_handles is None else _get_handles(self.tab_handles, num_or_handles)
+        for i in tabs:
+            self.driver.switch_to.window(i)
+            self.driver.close()
+
+        self.to_tab(0)
 
     def to_tab(self, num_or_handle: Union[int, str] = 0) -> None:
         """跳转到标签页                                                         \n
@@ -340,16 +333,16 @@ class DriverPage(BasePage):
 
     def to_frame(self, loc_or_ele: Union[int, str, tuple, WebElement, DriverElement] = 'main') -> 'DriverPage':
         """跳转到frame                                                                       \n
-        可接收frame序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，  \n
-        传入 'main' 跳到最高层，传入 'parent' 跳到上一层                                             \n
+        可接收frame序号(0开始)、id或name、查询字符串、loc元组、WebElement对象、DriverElement对象，     \n
+        传入 'main' 跳到最高层，传入 'parent' 跳到上一层                                           \n
         示例：                                                                                \n
-            to_frame('tag:iframe')    - 通过传入frame的查询字符串定位                            \n
+            to_frame('tag:iframe')    - 通过传入frame的查询字符串定位                             \n
             to_frame('iframe_id')     - 通过frame的id属性定位                                   \n
             to_frame('iframe_name')   - 通过frame的name属性定位                                 \n
             to_frame(iframe_element)  - 通过传入元素对象定位                                     \n
             to_frame(0)               - 通过frame的序号定位                                     \n
-            to_frame('main')          - 跳到最高层                                              \n
-            to_frame('parent')        - 跳到上一层                                              \n
+            to_frame('main')          - 跳到最高层                                             \n
+            to_frame('parent')        - 跳到上一层                                             \n
         :param loc_or_ele: iframe的定位信息
         :return: 返回自己，用于链式操作
         """
@@ -524,15 +517,15 @@ class DriverPage(BasePage):
         return text
 
 
-def _get_handles(page: DriverPage, num_or_handles: Union[int, str, list, tuple] = None):
-    if num_or_handles is None:
-        reserve_tabs = (page.current_tab_handle,)
-    elif isinstance(num_or_handles, (int, str)):
-        reserve_tabs = (num_or_handles,)
-    elif isinstance(num_or_handles, (list, tuple)):
-        reserve_tabs = num_or_handles
-    else:
+def _get_handles(handles: list, num_or_handles: Union[int, str, list, tuple]) -> set:
+    """返回指定标签页组成的set
+    :param handles: handles列表
+    :param num_or_handles: 指定的标签页，可以是多个
+    :return: 指定标签页组成的set
+    """
+    if isinstance(num_or_handles, (int, str)):
+        num_or_handles = (num_or_handles,)
+    elif not isinstance(num_or_handles, (list, tuple)):
         raise TypeError('num_or_handle参数只能是int、str、list 或 tuple类型。')
 
-    tabs = page.driver.window_handles
-    return set(i if isinstance(i, str) else tabs[i] for i in reserve_tabs)
+    return set(i if isinstance(i, str) else handles[i] for i in num_or_handles)
