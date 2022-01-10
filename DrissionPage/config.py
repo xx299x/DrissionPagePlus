@@ -366,7 +366,7 @@ class SessionOptions(object):
         """
         self._max_redirects = max_redirects
 
-    def set_headers(self, headers: dict):
+    def set_headers(self, headers: dict) -> 'SessionOptions':
         """设置headers参数           \n
         :param headers: 参数值
         :return: 返回当前对象
@@ -374,7 +374,7 @@ class SessionOptions(object):
         self._headers = {key.lower(): headers[key] for key in headers}
         return self
 
-    def set_a_header(self, attr: str, value: str):
+    def set_a_header(self, attr: str, value: str) -> 'SessionOptions':
         """设置headers中一个项          \n
         :param attr: 设置名称
         :param value: 设置值
@@ -386,7 +386,7 @@ class SessionOptions(object):
         self._headers[attr.lower()] = value
         return self
 
-    def remove_a_header(self, attr: str):
+    def remove_a_header(self, attr: str) -> 'SessionOptions':
         """从headers中删除一个设置     \n
         :param attr: 要删除的设置
         :return: 返回当前对象
@@ -400,7 +400,7 @@ class SessionOptions(object):
 
         return self
 
-    def set_proxies(self, proxies: dict):
+    def set_proxies(self, proxies: dict) -> 'SessionOptions':
         """设置proxies参数           \n
         {'http': 'http://xx.xx.xx.xx:xxxx',
          'https': 'http://xx.xx.xx.xx:xxxx'}
@@ -410,10 +410,10 @@ class SessionOptions(object):
         self._proxies = proxies
         return self
 
-    def save(self, path: str = None):
+    def save(self, path: str = None) -> str:
         """保存设置到文件                                              \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
-        :return: 返回当前对象
+        :return: 保存文件的绝对路径
         """
         if path == 'default':
             path = (Path(__file__).parent / 'configs.ini').absolute()
@@ -434,9 +434,10 @@ class SessionOptions(object):
         for i in options:
             om.set_item('session_options', i, options[i])
 
-        om.save(str(path))
+        path = str(path)
+        om.save(path)
 
-        return self
+        return path
 
     def as_dict(self) -> dict:
         """以字典形式返回本对象"""
@@ -477,10 +478,10 @@ class DriverOptions(Options):
     def chrome_path(self) -> str:
         return self.binary_location
 
-    def save(self, path: str = None):
+    def save(self, path: str = None) -> str:
         """保存设置到文件                                              \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
-        :return: 当前对象
+        :return: 保存文件的绝对路径
         """
         if path == 'default':
             path = (Path(__file__).parent / 'configs.ini').absolute()
@@ -504,11 +505,12 @@ class DriverOptions(Options):
             else:
                 om.set_item('chrome_options', i, options[i])
 
-        om.save(str(path))
+        path = str(path)
+        om.save(path)
 
-        return self
+        return path
 
-    def remove_argument(self, value: str):
+    def remove_argument(self, value: str) -> 'DriverOptions':
         """移除一个argument项                                    \n
         :param value: 设置项名，有值的设置项传入设置名称即可
         :return: 当前对象
@@ -524,7 +526,7 @@ class DriverOptions(Options):
 
         return self
 
-    def remove_experimental_option(self, key: str):
+    def remove_experimental_option(self, key: str) -> 'DriverOptions':
         """移除一个实验设置，传入key值删除  \n
         :param key: 实验设置的名称
         :return: 当前对象
@@ -534,7 +536,7 @@ class DriverOptions(Options):
 
         return self
 
-    def remove_all_extensions(self):
+    def remove_all_extensions(self) -> 'DriverOptions':
         """移除所有插件             \n
         :return: 当前对象
         """
@@ -542,7 +544,7 @@ class DriverOptions(Options):
         self._extensions = []
         return self
 
-    def set_argument(self, arg: str, value: Union[bool, str]):
+    def set_argument(self, arg: str, value: Union[bool, str]) -> 'DriverOptions':
         """设置浏览器配置的argument属性                          \n
         :param arg: 属性名
         :param value: 属性值，有值的属性传入值，没有的传入bool
@@ -556,7 +558,7 @@ class DriverOptions(Options):
 
         return self
 
-    def set_headless(self, on_off: bool = True):
+    def set_headless(self, on_off: bool = True) -> 'DriverOptions':
         """设置是否隐藏浏览器界面   \n
         :param on_off: 开或关
         :return: 当前对象
@@ -564,7 +566,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--headless', on_off)
 
-    def set_no_imgs(self, on_off: bool = True):
+    def set_no_imgs(self, on_off: bool = True) -> 'DriverOptions':
         """设置是否加载图片           \n
         :param on_off: 开或关
         :return: 当前对象
@@ -572,7 +574,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
-    def set_no_js(self, on_off: bool = True):
+    def set_no_js(self, on_off: bool = True) -> 'DriverOptions':
         """设置是否禁用js       \n
         :param on_off: 开或关
         :return: 当前对象
@@ -580,7 +582,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--disable-javascript', on_off)
 
-    def set_mute(self, on_off: bool = True):
+    def set_mute(self, on_off: bool = True) -> 'DriverOptions':
         """设置是否静音            \n
         :param on_off: 开或关
         :return: 当前对象
@@ -588,19 +590,30 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
-    def set_user_agent(self, user_agent: str):
+    def set_user_agent(self, user_agent: str) -> 'DriverOptions':
         """设置user agent                  \n
         :param user_agent: user agent文本
         :return: 当前对象
         """
         return self.set_argument('user-agent', user_agent)
 
-    def set_proxy(self, proxy: str):
+    def set_proxy(self, proxy: str) -> 'DriverOptions':
         """设置代理                    \n
         :param proxy: 代理url和端口
         :return: 当前对象
         """
         return self.set_argument('--proxy-server', proxy)
+
+    def set_page_load_strategy(self, value: str) -> 'DriverOptions':
+        """设置page_load_strategy，可接收 'normal', 'eager', 'none'                    \n
+        normal：默认情况下使用, 等待所有资源下载完成
+        eager：DOM访问已准备就绪, 但其他资源 (如图像) 可能仍在加载中
+        none：完全不阻塞WebDriver
+        :param value: 可接收 'normal', 'eager', 'none'
+        :return: 当前对象
+        """
+        self.page_load_strategy = value
+        return self
 
     def set_paths(self,
                   driver_path: str = None,
@@ -609,7 +622,7 @@ class DriverOptions(Options):
                   debugger_address: str = None,
                   download_path: str = None,
                   user_data_path: str = None,
-                  cache_path: str = None):
+                  cache_path: str = None) -> 'DriverOptions':
         """快捷的路径设置函数                                             \n
         :param driver_path: chromedriver.exe路径
         :param chrome_path: chrome.exe路径
