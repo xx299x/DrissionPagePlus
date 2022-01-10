@@ -477,6 +477,45 @@ class DriverElement(DrissionElement):
         """
         return self.inner_ele.parent.execute_script(script, self.inner_ele, *args)
 
+    def scroll_to(self, mode: str = 'bottom', pixel: int = 300) -> None:
+        """按参数指示方式滚动元素                                                                                    \n
+        :param mode: 可选滚动方向：'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if mode == 'top':
+            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,0);")
+
+        elif mode == 'bottom':
+            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,arguments[0].scrollHeight);")
+
+        elif mode == 'half':
+            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,arguments[0].scrollHeight/2);")
+
+        elif mode == 'rightmost':
+            self.run_script("arguments[0].scrollTo(arguments[0].scrollWidth,arguments[0].scrollTop);")
+
+        elif mode == 'leftmost':
+            self.run_script("arguments[0].scrollTo(0,arguments[0].scrollTop);")
+
+        elif mode == 'up':
+            pixel = pixel if pixel >= 0 else -pixel
+            self.run_script(f"arguments[0].scrollBy(0,{pixel});")
+
+        elif mode == 'down':
+            self.run_script(f"arguments[0].scrollBy(0,{pixel});")
+
+        elif mode == 'left':
+            pixel = pixel if pixel >= 0 else -pixel
+            self.run_script(f"arguments[0].scrollBy({pixel},0);")
+
+        elif mode == 'right':
+            self.run_script(f"arguments[0].scrollBy({pixel},0);")
+
+        else:
+            raise ValueError("mode参数只能是'top', 'bottom', 'half', 'rightmost', "
+                             "'leftmost', 'up', 'down', 'left', 'right'。")
+
     def submit(self) -> Union[bool, None]:
         """提交表单"""
         try:

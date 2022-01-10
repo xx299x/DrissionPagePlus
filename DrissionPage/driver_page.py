@@ -429,13 +429,15 @@ class DriverPage(BasePage):
             self.driver.execute_script("window.scrollTo(0,document.documentElement.scrollTop);")
 
         elif mode == 'up':
-            self.driver.execute_script(f"window.scrollBy(0,-{pixel});")
+            pixel = pixel if pixel >= 0 else -pixel
+            self.driver.execute_script(f"window.scrollBy(0,{pixel});")
 
         elif mode == 'down':
             self.driver.execute_script(f"window.scrollBy(0,{pixel});")
 
         elif mode == 'left':
-            self.driver.execute_script(f"window.scrollBy(-{pixel},0);")
+            pixel = pixel if pixel >= 0 else -pixel
+            self.driver.execute_script(f"window.scrollBy({pixel},0);")
 
         elif mode == 'right':
             self.driver.execute_script(f"window.scrollBy({pixel},0);")
