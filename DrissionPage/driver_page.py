@@ -277,6 +277,14 @@ class DriverPage(BasePage):
         """
         return self.driver.execute_script(script, *args)
 
+    def run_async_script(self, script: str, *args) -> Any:
+        """以异步方式执行js代码                 \n
+        :param script: js文本
+        :param args: 传入的参数
+        :return: js执行结果
+        """
+        return self.driver.execute_async_script(script, *args)
+
     def create_tab(self, url: str = '') -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址

@@ -606,6 +606,7 @@ class DriverOptions(Options):
 
     def set_page_load_strategy(self, value: str) -> 'DriverOptions':
         """设置page_load_strategy，可接收 'normal', 'eager', 'none'                    \n
+        selenium4以上版本才支持此功能
         normal：默认情况下使用, 等待所有资源下载完成
         eager：DOM访问已准备就绪, 但其他资源 (如图像) 可能仍在加载中
         none：完全不阻塞WebDriver
