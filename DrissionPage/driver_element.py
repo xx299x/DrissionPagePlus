@@ -470,7 +470,7 @@ class DriverElement(DrissionElement):
                     return True
 
     def run_script(self, script: str, *args) -> Any:
-        """执行js代码，传入自己为第一个参数  \n
+        """执行js代码，代码中用arguments[0]表示自己    \n
         :param script: js文本
         :param args: 传入的参数
         :return: js执行结果

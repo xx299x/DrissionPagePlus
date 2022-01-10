@@ -41,12 +41,18 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :param driver_options: 浏览器设置，没传入drission参数时会用这个设置新建Drission对象中的WebDriver对象，传入False则不创建
         :param session_options: requests设置，没传入drission参数时会用这个设置新建Drission对象中的Session对象，传入False则不创建
         """
-        super(DriverPage, self).__init__(timeout)  # BasePage的__init__()
         self._mode = mode.lower()
+        if self._mode not in ('s', 'd'):
+            raise ValueError('mode参数只能是s或d。')
+
+        super(DriverPage, self).__init__(timeout)  # BasePage的__init__()
         self._driver, self._session = (None, True) if self._mode == 's' else (True, None)
         self._drission = drission or Drission(driver_options, session_options)
         self._wait_object = None
         self._response = None
+
+        if self._mode == 'd':
+            self._drission.get_driver()  # 接管或创建浏览器
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],

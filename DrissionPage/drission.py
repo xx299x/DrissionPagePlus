@@ -90,6 +90,12 @@ class Drission(object):
         """返回WebDriver对象，如未初始化则按配置信息创建。         \n
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
+        return self.get_driver()
+
+    def get_driver(self) -> WebDriver:
+        """返回WebDriver对象，如未初始化则按配置信息创建。         \n
+        如设置了本地调试浏览器，可自动接入或打开浏览器进程。
+        """
         if self._driver is None:
             if not isinstance(self._driver_options, dict):
                 raise TypeError('无效的Driver配置。')
