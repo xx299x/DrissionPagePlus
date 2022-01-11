@@ -31,12 +31,6 @@ class OptionsManager(object):
         self._chrome_options = None
         self._session_options = None
 
-        # if 'tmp_path' not in self.paths or not self.get_value('paths', 'tmp_path'):
-        #     tmp_path = str((Path(__file__).parent / 'tmp').absolute())
-        #     Path(tmp_path).mkdir(parents=True, exist_ok=True)
-        #     self.set_item('paths', 'tmp_path', tmp_path)
-        #     self.save(self.ini_path)
-
     def __text__(self) -> str:
         """打印ini文件内容"""
         return (f"paths:\n"
@@ -93,7 +87,7 @@ class OptionsManager(object):
 
         for j in items:
             try:
-                option[j[0]] = eval(self._conf.get(section, j[0]).replace('\\', '\\\\'))
+                option[j[0]] = eval(self._conf.get(section, j[0]))
             except Exception:
                 option[j[0]] = self._conf.get(section, j[0])
 
@@ -470,7 +464,9 @@ class DriverOptions(Options):
             self._driver_path = om.paths.get('chromedriver_path', None)
             self.set_window_rect = options_dict.get('set_window_rect', None)
             self.page_load_strategy = om.paths.get('page_load_strategy', 'normal')
-            self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 10, 'script': 10})
+            self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 30, 'script': 30})
+            self.timeouts['pageLoad'] *= 1000
+            self.timeouts['script'] *= 1000
 
     @property
     def driver_path(self) -> str:
