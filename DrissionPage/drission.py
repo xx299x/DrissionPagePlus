@@ -15,15 +15,14 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from tldextract import extract
 
-from .config import (_dict_to_chrome_options, _session_options_to_dict,
-                     SessionOptions, DriverOptions, _chrome_options_to_dict, OptionsManager, _cookies_to_tuple)
+from .config import _session_options_to_dict, SessionOptions, DriverOptions, _cookies_to_tuple
 
 
 class Drission(object):
     """Drission类用于管理WebDriver对象和Session对象，是驱动器的角色"""
 
     def __init__(self,
-                 driver_or_options: Union[WebDriver, dict, Options, DriverOptions, bool] = None,
+                 driver_or_options: Union[WebDriver, Options, DriverOptions, bool] = None,
                  session_or_options: Union[Session, dict, SessionOptions, bool] = None,
                  ini_path: str = None,
                  proxy: dict = None):
@@ -35,37 +34,45 @@ class Drission(object):
         """
         self._session = None
         self._driver = None
+        self._session_options = None
+        self._driver_options = None
         self._debugger = None
         self._proxy = proxy
 
-        om = OptionsManager(ini_path) if session_or_options is None or driver_or_options is None else None
-
         # ------------------处理session options----------------------
         if session_or_options is None:
-            self._session_options = om.session_options
+            self._session_options = SessionOptions(ini_path=ini_path).as_dict()
+
+        elif session_or_options is False:
+            self._driver_options = SessionOptions(read_file=False).as_dict()
+
+        elif isinstance(session_or_options, Session):
+            self._session = session_or_options
+
+        elif isinstance(session_or_options, SessionOptions):
+            self._session_options = session_or_options.as_dict()
+
+        elif isinstance(session_or_options, dict):
+            self._session_options = session_or_options
 
         else:
-            # 若接收到Session对象，直接记录
-            if isinstance(session_or_options, Session):
-                self._session = session_or_options
-
-            # 否则记录其配置信息
-            else:
-                self._session_options = _session_options_to_dict(session_or_options)
+            raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions或False。')
 
         # ------------------处理driver options----------------------
         if driver_or_options is None:
-            self._driver_options = om.chrome_options
-            self._driver_options['driver_path'] = om.get_value('paths', 'chromedriver_path')
+            self._driver_options = DriverOptions(ini_path=ini_path)
+
+        elif driver_or_options is False:
+            self._driver_options = DriverOptions(read_file=False)
+
+        elif isinstance(driver_or_options, WebDriver):
+            self._driver = driver_or_options
+
+        elif isinstance(driver_or_options, (Options, DriverOptions)):
+            self._driver_options = driver_or_options
 
         else:
-            # 若接收到WebDriver对象，直接记录
-            if isinstance(driver_or_options, WebDriver):
-                self._driver = driver_or_options
-
-            # 否则记录其配置信息
-            else:
-                self._driver_options = _chrome_options_to_dict(driver_or_options)
+            raise TypeError('driver_or_options参数只能接收WebDriver, Options, DriverOptions或False。')
 
     def __del__(self):
         """关闭对象时关闭浏览器和Session"""
@@ -91,28 +98,25 @@ class Drission(object):
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
         if self._driver is None:
-            if not isinstance(self._driver_options, dict):
-                raise TypeError('无效的Driver配置。')
+            # options = _dict_to_chrome_options(self._driver_options)
 
-            options = _dict_to_chrome_options(self._driver_options)
+            if not self.driver_options.debugger_address and self._proxy:
+                self.driver_options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
-            if not self._driver_options.get('debugger_address', None) and self._proxy:
-                options.add_argument(f'--proxy-server={self._proxy["http"]}')
-
-            driver_path = self._driver_options.get('driver_path', None) or 'chromedriver'
-            chrome_path = self._driver_options.get('binary_location', None) or 'chrome.exe'
+            driver_path = self.driver_options.driver_path or 'chromedriver'
+            chrome_path = self.driver_options.binary_location or 'chrome.exe'
 
             # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
-            if options.debugger_address and _check_port(options.debugger_address) is False:
+            if self.driver_options.debugger_address and _check_port(self.driver_options.debugger_address) is False:
                 from subprocess import Popen
-                port = options.debugger_address.split(':')[-1]
+                port = self.driver_options.debugger_address.split(':')[-1]
 
                 # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
                 chrome_path, self._debugger = _create_chrome(chrome_path, port,
-                                                             self._driver_options['arguments'], self._proxy)
+                                                             self.driver_options.arguments, self._proxy)
 
             # -----------创建WebDriver对象-----------
-            self._driver = _create_driver(chrome_path, driver_path, options)
+            self._driver = _create_driver(chrome_path, driver_path, self.driver_options)
 
             # 反反爬设置
             try:
@@ -127,7 +131,7 @@ class Drission(object):
         return self._driver
 
     @property
-    def driver_options(self) -> dict:
+    def driver_options(self) -> Union[DriverOptions, Options]:
         """返回driver配置信息"""
         return self._driver_options
 
@@ -199,7 +203,7 @@ class Drission(object):
         if self.debugger_progress:
             return self.debugger_progress.pid
 
-        address = self.driver_options.get('debugger_address', '').split(':')
+        address = str(self.driver_options.debugger_address).split(':')
         if len(address) == 2:
             ip, port = address
             if ip not in ('127.0.0.1', 'localhost') or not port.isdigit():
@@ -469,6 +473,11 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
     :return: WebDriver 对象
     """
     try:
+        debugger_address = options.debugger_address
+        if options.debugger_address:
+            options = Options()
+            options.debugger_address = debugger_address
+
         return webdriver.Chrome(driver_path, options=options)
 
     # 若版本不对，获取对应 chromedriver 再试

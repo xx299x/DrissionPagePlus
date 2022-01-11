@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any, Union
 
 from requests.cookies import RequestsCookieJar
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
@@ -469,6 +468,9 @@ class DriverOptions(Options):
             self._experimental_options = options_dict.get('experimental_options', {})
             self._debugger_address = options_dict.get('debugger_address', None)
             self._driver_path = om.paths.get('chromedriver_path', None)
+            self.set_window_rect = options_dict.get('set_window_rect', None)
+            self.page_load_strategy = om.paths.get('page_load_strategy', 'normal')
+            self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 10, 'script': 10})
 
     @property
     def driver_path(self) -> str:
@@ -555,6 +557,24 @@ class DriverOptions(Options):
         if value:
             arg_str = arg if isinstance(value, bool) else f'{arg}={value}'
             self.add_argument(arg_str)
+
+        return self
+
+    def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> 'DriverOptions':
+        """设置超时时间，selenium4以上版本有效       \n
+        :param implicit: 查找元素超时时间
+        :param pageLoad: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: 当前对象
+        """
+        timeouts = self.timeouts
+        if implicit is not None:
+            timeouts['implicit'] = implicit
+        if pageLoad is not None:
+            timeouts['pageLoad'] = pageLoad
+        if script is not None:
+            timeouts['script'] = script
+        self.timeouts = timeouts
 
         return self
 
@@ -661,57 +681,6 @@ class DriverOptions(Options):
         return _chrome_options_to_dict(self)
 
 
-def _dict_to_chrome_options(options: dict) -> Options:
-    """从传入的字典获取浏览器设置，返回ChromeOptions对象  \n
-    :param options: 配置信息字典
-    :return: 保存浏览器配置的ChromeOptions对象
-    """
-    chrome_options = webdriver.ChromeOptions()
-    # 已打开的浏览器路径
-    if options.get('debugger_address', None):
-        chrome_options.debugger_address = options['debugger_address']
-
-    # 创建新的浏览器
-    else:
-        # 浏览器的exe文件路径
-        if options.get('binary_location', None):
-            chrome_options.binary_location = options['binary_location']
-
-        # 启动参数
-        if options.get('arguments', None):
-            if not isinstance(options['arguments'], list):
-                raise Exception(f"参数必须为list，现在是：{type(options['arguments'])}。")
-
-            for arg in options['arguments']:
-                chrome_options.add_argument(arg)
-
-        # 加载插件
-        if options.get('extension_files', None):
-            if not isinstance(options['extension_files'], list):
-                raise Exception(f'extension_files必须是list，现在是：{type(options["extension_files"])}。')
-
-            for arg in options['extension_files']:
-                chrome_options.add_extension(arg)
-
-        # 扩展设置
-        if options.get('extensions', None):
-            if not isinstance(options['extensions'], list):
-                raise Exception(f'extensions必须是list，现在是：{type(options["extensions"])}。')
-
-            for arg in options['extensions']:
-                chrome_options.add_encoded_extension(arg)
-
-        # 实验性质的设置参数
-        if options.get('experimental_options', None):
-            if not isinstance(options['experimental_options'], dict):
-                raise Exception(f'experimental_options必须是dict，现在是：{type(options["experimental_options"])}。')
-
-            for i in options['experimental_options']:
-                chrome_options.add_experimental_option(i, options['experimental_options'][i])
-
-    return chrome_options
-
-
 def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, bool]) -> Union[dict, None]:
     """把chrome配置对象转换为字典                             \n
     :param options: chrome配置对象，字典或DriverOptions对象
@@ -724,11 +693,15 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
         return options
 
     re_dict = dict()
-    attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path']
+    attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path',
+             'timeouts', 'set_window_rect', 'page_load_strategy']
 
     options_dir = options.__dir__()
     for attr in attrs:
-        re_dict[attr] = options.__getattribute__(f'_{attr}') if attr in options_dir else None
+        try:
+            re_dict[attr] = options.__getattribute__(f'{attr}') if attr in options_dir else None
+        except Exception:
+            pass
 
     return re_dict
 

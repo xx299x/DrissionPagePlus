@@ -8,6 +8,7 @@ from typing import Union, List, Tuple
 
 from requests import Response, Session
 from requests.cookies import RequestsCookieJar
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -31,19 +32,26 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def __init__(self,
                  mode: str = 'd',
                  drission: Union[Drission, str] = None,
-                 timeout: float = 10,
-                 driver_options: Union[dict, DriverOptions, bool] = None,
+                 timeout: float = None,
+                 driver_options: Union[Options, DriverOptions, bool] = None,
                  session_options: Union[dict, SessionOptions, bool] = None) -> None:
         """初始化函数                                                                                            \n
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param drission: Drission对象，不传入时会自动创建
-        :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间
+        :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
         :param driver_options: 浏览器设置，没传入drission参数时会用这个设置新建Drission对象中的WebDriver对象，传入False则不创建
         :param session_options: requests设置，没传入drission参数时会用这个设置新建Drission对象中的Session对象，传入False则不创建
         """
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
+
+        if driver_options:
+            try:
+                timeout = driver_options.timeouts.get('implicit', None)
+            except Exception:
+                timeout = None
+        timeout = timeout if timeout is not None else 10
 
         super(DriverPage, self).__init__(timeout)  # BasePage的__init__()
         self._driver, self._session = (None, True) if self._mode == 's' else (True, None)
@@ -344,6 +352,20 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._response = None
         self.drission.close_session()
 
+    def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> None:
+        """设置超时时间，selenium4以上版本有效       \n
+        :param implicit: 查找元素超时时间
+        :param pageLoad: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: 当前对象
+        """
+        if implicit is not None:
+            self.timeout = implicit
+        if pageLoad is not None:
+            self.driver.timeouts.page_load = pageLoad
+        if script is not None:
+            self.driver.timeouts.script = script
+
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
@@ -398,14 +420,13 @@ class MixPage(SessionPage, DriverPage, BasePage):
                                 interval, **kwargs)
 
     # ----------------重写DriverPage的函数-----------------------
-    def chrome_downloading(self, download_path: str = None) -> list:
+    def chrome_downloading(self, path: str = None) -> list:
         """返回浏览器下载中的文件列表                             \n
-        :param download_path: 下载文件夹路径，默认读取配置信息
+        :param path: 下载文件夹路径，默认读取配置信息
         :return: 正在下载的文件列表
         """
         try:
-            path = download_path or self._drission.driver_options['experimental_options']['prefs'][
-                'download.default_directory']
+            path = path or self._drission.driver_options.experimental_options['prefs']['download.default_directory']
             if not path:
                 raise ValueError('未指定下载路径。')
         except Exception:
