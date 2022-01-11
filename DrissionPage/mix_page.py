@@ -52,7 +52,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self._drission.get_driver()  # 接管或创建浏览器
+            self._drission.driver  # 接管或创建浏览器
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
