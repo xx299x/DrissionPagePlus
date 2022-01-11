@@ -424,16 +424,16 @@ class DriverElement(DrissionElement):
     def input(self,
               vals: Union[str, tuple],
               clear: bool = True,
-              insure_input: bool = True,
+              insure: bool = True,
               timeout: float = None) -> bool:
         """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                          \n
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
-        :param insure_input: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
+        :param insure: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
         :param timeout: 尝试输入的超时时间，不指定则使用父页面的超时时间，只在insure_input为True时生效
         :return: bool
         """
-        if not insure_input:  # 普通输入
+        if not insure or self.tag != 'input' or self.prop('type') != 'text':  # 普通输入
             if clear:
                 self.inner_ele.clear()
 
