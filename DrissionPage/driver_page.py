@@ -173,6 +173,13 @@ class DriverPage(BasePage):
         self._timeout = second
         self._wait_object = None
 
+    @property
+    def timeouts(self) -> dict:
+        """返回三种超时时间，selenium4以上版本可用"""
+        return {'implicit': self.timeout,
+                'pageLoad': self.driver.timeouts.page_load,
+                'script': self.driver.timeouts.script}
+
     def _try_to_connect(self,
                         to_url: str,
                         times: int = 0,
@@ -250,6 +257,22 @@ class DriverPage(BasePage):
     def active_ele(self) -> DriverElement:
         """返回当前焦点所在元素"""
         return DriverElement(self.driver.switch_to.active_element, self)
+
+    def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> None:
+        """设置超时时间，单位为秒，selenium4以上版本有效       \n
+        :param implicit: 查找元素超时时间
+        :param pageLoad: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: None
+        """
+        if implicit is not None:
+            self.timeout = implicit
+
+        if pageLoad is not None:
+            self.driver.set_page_load_timeout(pageLoad)
+
+        if script is not None:
+            self.driver.set_script_timeout(script)
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, DriverElement, WebElement],

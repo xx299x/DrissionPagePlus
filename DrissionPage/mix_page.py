@@ -46,14 +46,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
 
-        if driver_options:
-            try:
-                timeout = driver_options.timeouts.get('implicit', None)
-            except Exception:
-                timeout = None
-        timeout = timeout if timeout is not None else 10
-
-        super(DriverPage, self).__init__(timeout)  # BasePage的__init__()
+        super(DriverPage, self).__init__(timeout)
         self._driver, self._session = (None, True) if self._mode == 's' else (True, None)
         self._drission = drission or Drission(driver_options, session_options)
         self._wait_object = None
@@ -61,6 +54,14 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
         if self._mode == 'd':
             self._drission.driver  # 接管或创建浏览器
+
+        try:
+            timeouts = self.drission.driver_options.timeouts
+            t = timeout if timeout is not None else timeouts['implicit'] / 1000
+            self.set_timeouts(t, timeouts['pageLoad'] / 1000, timeouts['script'] / 1000)
+
+        except Exception:
+            self.timeout = timeout if timeout is not None else 10
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
@@ -351,20 +352,6 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._session = None
         self._response = None
         self.drission.close_session()
-
-    def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> None:
-        """设置超时时间，selenium4以上版本有效       \n
-        :param implicit: 查找元素超时时间
-        :param pageLoad: 页面加载超时时间
-        :param script: 脚本运行超时时间
-        :return: 当前对象
-        """
-        if implicit is not None:
-            self.timeout = implicit
-        if pageLoad is not None:
-            self.driver.timeouts.page_load = pageLoad
-        if script is not None:
-            self.driver.timeouts.script = script
 
     # ----------------重写SessionPage的函数-----------------------
     def post(self,

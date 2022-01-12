@@ -449,22 +449,23 @@ class DriverOptions(Options):
         """
         super().__init__()
         self._driver_path = None
-        self.ini_path = None
+        self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
 
         if read_file:
-            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.chrome_options
 
+            self._driver_path = om.paths.get('chromedriver_path', None)
             self._binary_location = options_dict.get('binary_location', '')
             self._arguments = options_dict.get('arguments', [])
             self._extensions = options_dict.get('extensions', [])
             self._experimental_options = options_dict.get('experimental_options', {})
             self._debugger_address = options_dict.get('debugger_address', None)
-            self._driver_path = om.paths.get('chromedriver_path', None)
             self.set_window_rect = options_dict.get('set_window_rect', None)
-            self.page_load_strategy = om.paths.get('page_load_strategy', 'normal')
+            self.page_load_strategy = options_dict.get('page_load_strategy', 'normal')
+
             self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 30, 'script': 30})
+            self.timeouts['implicit'] *= 1000
             self.timeouts['pageLoad'] *= 1000
             self.timeouts['script'] *= 1000
 
@@ -557,19 +558,19 @@ class DriverOptions(Options):
         return self
 
     def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> 'DriverOptions':
-        """设置超时时间，selenium4以上版本有效       \n
+        """设置超时时间，设置单位为秒，selenium4以上版本有效       \n
         :param implicit: 查找元素超时时间
         :param pageLoad: 页面加载超时时间
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
-        timeouts = self.timeouts
+        timeouts = self._caps.get('timeouts', {'implicit': 10, 'pageLoad': 3000, 'script': 3000})
         if implicit is not None:
             timeouts['implicit'] = implicit
         if pageLoad is not None:
-            timeouts['pageLoad'] = pageLoad
+            timeouts['pageLoad'] = pageLoad * 1000
         if script is not None:
-            timeouts['script'] = script
+            timeouts['script'] = script * 1000
         self.timeouts = timeouts
 
         return self
@@ -629,7 +630,7 @@ class DriverOptions(Options):
         :param value: 可接收 'normal', 'eager', 'none'
         :return: 当前对象
         """
-        self.page_load_strategy = value
+        self.page_load_strategy = value.lower()
         return self
 
     def set_paths(self,
@@ -699,7 +700,7 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
         except Exception:
             pass
 
-    if 'timeouts' in options_dir:
+    if 'timeouts' in options_dir and 'timeouts' in options._caps:
         timeouts = options.__getattribute__('timeouts')
         timeouts['pageLoad'] /= 1000
         timeouts['script'] /= 1000
