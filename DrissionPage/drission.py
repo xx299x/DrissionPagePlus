@@ -98,8 +98,6 @@ class Drission(object):
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
         if self._driver is None:
-            # options = _dict_to_chrome_options(self._driver_options)
-
             if not self.driver_options.debugger_address and self._proxy:
                 self.driver_options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
@@ -482,28 +480,24 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
 
     # 若版本不对，获取对应 chromedriver 再试
     except (WebDriverException, SessionNotCreatedException):
+        print('打开失败，尝试获取driver。\n')
         from .easy_set import get_match_driver
-        chrome_path = None if chrome_path == 'chrome.exe' else chrome_path
-        driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
+        from DrissionPage.easy_set import _get_chrome_path
+
+        if chrome_path == 'chrome.exe':
+            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_system_path=False)
+        if not chrome_path:
+            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
+
+        if chrome_path:
+            driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=True)
 
         if driver_path:
             try:
+                options.binary_location = chrome_path
                 return webdriver.Chrome(driver_path, options=options)
             except Exception:
                 pass
-
-        # 当找不到 driver 且 chrome_path 为 None 时，说明安装的版本过高，改在系统路径中查找
-        elif chrome_path is None and driver_path is None:
-            from DrissionPage.easy_set import _get_chrome_path
-            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
-            driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=False)
-
-            if driver_path:
-                options.binary_location = chrome_path
-                try:
-                    return webdriver.Chrome(driver_path, options=options)
-                except Exception:
-                    pass
 
     print('无法启动，请检查浏览器路径，或手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
     exit(0)

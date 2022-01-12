@@ -690,7 +690,7 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
 
     re_dict = dict()
     attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path',
-             'timeouts', 'set_window_rect', 'page_load_strategy']
+             'set_window_rect', 'page_load_strategy']
 
     options_dir = options.__dir__()
     for attr in attrs:
@@ -698,6 +698,12 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
             re_dict[attr] = options.__getattribute__(f'{attr}') if attr in options_dir else None
         except Exception:
             pass
+
+    if 'timeouts' in options_dir:
+        timeouts = options.__getattribute__('timeouts')
+        timeouts['pageLoad'] /= 1000
+        timeouts['script'] /= 1000
+        re_dict['timeouts'] = timeouts
 
     return re_dict
 
