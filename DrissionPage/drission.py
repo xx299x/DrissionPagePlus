@@ -485,19 +485,16 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
         from DrissionPage.easy_set import _get_chrome_path
 
         if chrome_path == 'chrome.exe':
-            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_system_path=False)
-        if not chrome_path:
-            chrome_path = _get_chrome_path(show_msg=False, from_ini=False, from_regedit=False)
+            chrome_path = _get_chrome_path(show_msg=False, from_ini=False)
 
         if chrome_path:
             driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=True)
-
-        if driver_path:
-            try:
-                options.binary_location = chrome_path
-                return webdriver.Chrome(driver_path, options=options)
-            except Exception:
-                pass
+            if driver_path:
+                try:
+                    options.binary_location = chrome_path
+                    return webdriver.Chrome(driver_path, options=options)
+                except Exception:
+                    pass
 
     print('无法启动，请检查浏览器路径，或手动设置chromedriver。\n下载地址：http://npm.taobao.org/mirrors/chromedriver/')
     exit(0)
