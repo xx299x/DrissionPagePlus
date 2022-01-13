@@ -142,11 +142,12 @@ set_headless()
 text = webdriver.execute_script('return window.getComputedStyle(arguments[0], "::after").getPropertyValue("content");', element)
 
 # 使用 DrissionPage：
-text = element.after
+text = element.pseudo_after
 ```
 
-- 获取 shadow-root
+- shadow-root 操作
 
+selenium 新增了 ShadowRoot，但功能实在是太少。
 ```python
 # 使用 selenium：
 shadow_element = webdriver.execute_script('return arguments[0].shadowRoot', element)
@@ -156,6 +157,7 @@ shadow_element = element.sr
 
 # 在 shadow_root 下可继续执行查找，获取普通元素
 ele = shadow_element.ele('tag:div')
+ele.click()
 ```
 
 - 用 xpath 直接获取属性或文本节点（返回文本）
