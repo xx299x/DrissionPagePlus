@@ -410,8 +410,13 @@ class SessionOptions(object):
         """
         if path == 'default':
             path = (Path(__file__).parent / 'configs.ini').absolute()
+
         elif path is None:
-            path = Path(self.ini_path).absolute()
+            if self.ini_path:
+                path = Path(self.ini_path).absolute()
+            else:
+                path = (Path(__file__).parent / 'configs.ini').absolute()
+
         else:
             path = Path(path).absolute()
 
@@ -449,9 +454,10 @@ class DriverOptions(Options):
         """
         super().__init__()
         self._driver_path = None
-        self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+        self.ini_path = None
 
         if read_file:
+            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.chrome_options
 
@@ -471,21 +477,28 @@ class DriverOptions(Options):
 
     @property
     def driver_path(self) -> str:
+        """chromedriver文件路径"""
         return self._driver_path
 
     @property
     def chrome_path(self) -> str:
+        """浏览器启动文件路径"""
         return self.binary_location
 
     def save(self, path: str = None) -> str:
-        """保存设置到文件                                              \n
-        :param path: ini文件的路径，传入 'default' 保存到默认ini文件
+        """保存设置到文件                                                                        \n
+        :param path: ini文件的路径， None 保存到当前读取的配置文件，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
         """
         if path == 'default':
             path = (Path(__file__).parent / 'configs.ini').absolute()
+
         elif path is None:
-            path = Path(self.ini_path).absolute()
+            if self.ini_path:
+                path = Path(self.ini_path).absolute()
+            else:
+                path = (Path(__file__).parent / 'configs.ini').absolute()
+
         else:
             path = Path(path).absolute()
 
@@ -675,6 +688,7 @@ class DriverOptions(Options):
         return self
 
     def as_dict(self) -> dict:
+        """已dict方式返回所有配置信息"""
         return _chrome_options_to_dict(self)
 
 
