@@ -716,6 +716,7 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
 
     if 'timeouts' in options_dir and 'timeouts' in options._caps:
         timeouts = options.__getattribute__('timeouts')
+        timeouts['implicit'] /= 1000
         timeouts['pageLoad'] /= 1000
         timeouts['script'] /= 1000
         re_dict['timeouts'] = timeouts
