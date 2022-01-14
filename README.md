@@ -10,6 +10,8 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 可兼顾 selenium 的便利性和 requests 的高效率，  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。
 
+点击打开：[使用文档](http://g1879.gitee.io/drissionpage)  
+
 **交流QQ群：**  897838127            **联系邮箱：**  g1879@qq.com
 
 ## 背景
@@ -265,11 +267,11 @@ Git 命令学习
 
 # 使用方法
 
-请在 Wiki中查看：[点击跳转到wiki](https://gitee.com/g1879/DrissionPage/wikis/%E5%AE%89%E8%A3%85%E4%B8%8E%E5%AF%BC%E5%85%A5?sort_id=3201408)
+[点击跳转到使用文档](http://g1879.gitee.io/drissionpage)
 
 # 版本历史
 
-请在 Wiki中查看：[点击查看版本历史](https://gitee.com/g1879/DrissionPage/wikis/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2?sort_id=3201403)
+[点击查看版本历史](http://g1879.gitee.io/drissionpage/#/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2)
 
 # 免责声明
 请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
