@@ -2,8 +2,6 @@
 
 # 简介
 
-***
-
 DrissionPage，即 driver 和 session 组合而成的 page。  
 是个基于 python 的 Web 自动化操作集成工具。  
 它用 POM 模式封装了页面和元素常用的方法，  
@@ -22,8 +20,6 @@ requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，�
 一切从简，尽量提供简单直接的使用方法，对新手更友好。
 
 # 特性和亮点
-
-***
 
 作者有多年自动化和爬虫经验，踩过无数坑，总结出的经验全写到这个库里了。内置了N多实用功能，对常用功能作了整合和优化。
 
@@ -63,8 +59,6 @@ requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，�
 - 还有很多这里不一一列举…………
 
 # 简单演示
-
-***
 
 **与 selenium 代码对比**
 
@@ -271,21 +265,14 @@ Git 命令学习
 
 # 使用方法
 
-***
-
 请在 Wiki中查看：[点击跳转到wiki](https://gitee.com/g1879/DrissionPage/wikis/%E5%AE%89%E8%A3%85%E4%B8%8E%E5%AF%BC%E5%85%A5?sort_id=3201408)
 
 # 版本历史
 
-***
-
 请在 Wiki中查看：[点击查看版本历史](https://gitee.com/g1879/DrissionPage/wikis/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2?sort_id=3201403)
 
-# APIs
-
-***
-
-请在 Wiki中查看：[点击查看APIs](https://gitee.com/g1879/DrissionPage/wikis/Drission%20%E7%B1%BB?sort_id=3159323)
+# 免责声明
+请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
 
 # 请我喝咖啡
 
