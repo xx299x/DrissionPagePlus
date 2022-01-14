@@ -53,15 +53,13 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self._drission.driver  # 接管或创建浏览器
+            try:
+                timeouts = self.drission.driver_options.timeouts
+                t = timeout if timeout is not None else timeouts['implicit'] / 1000
+                self.set_timeouts(t, timeouts['pageLoad'] / 1000, timeouts['script'] / 1000)
 
-        try:
-            timeouts = self.drission.driver_options.timeouts
-            t = timeout if timeout is not None else timeouts['implicit'] / 1000
-            self.set_timeouts(t, timeouts['pageLoad'] / 1000, timeouts['script'] / 1000)
-
-        except Exception:
-            self.timeout = timeout if timeout is not None else 10
+            except Exception:
+                self.timeout = timeout if timeout is not None else 10
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
