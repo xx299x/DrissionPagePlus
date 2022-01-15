@@ -51,6 +51,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._drission = drission or Drission(driver_options, session_options)
         self._wait_object = None
         self._response = None
+        self._scroll = None
 
         if self._mode == 'd':
             try:

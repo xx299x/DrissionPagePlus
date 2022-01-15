@@ -18,7 +18,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import BasePage
 from .common import get_usable_path
-from .driver_element import DriverElement, make_driver_ele, _wait_ele
+from .driver_element import DriverElement, make_driver_ele, _wait_ele, Scroll
 from .session_element import make_session_ele
 
 
@@ -30,6 +30,7 @@ class DriverPage(BasePage):
         super().__init__(timeout)
         self._driver = driver
         self._wait_object = None
+        self._scroll = None
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, DriverElement, WebElement],
                  timeout: float = None) -> Union[DriverElement, List[DriverElement], str]:
@@ -60,6 +61,13 @@ class DriverPage(BasePage):
         """当返回内容是json格式时，返回对应的字典"""
         from json import loads
         return loads(self('t:pre').text)
+
+    @property
+    def scroll(self) -> Scroll:
+        """用于滚动滚动条的对象"""
+        if self._scroll is None:
+            self._scroll = Scroll(self)
+        return self._scroll
 
     def get(self,
             url: str,
@@ -442,36 +450,34 @@ class DriverPage(BasePage):
         :param pixel: 滚动的像素
         :return: None
         """
+        from warnings import warn
+        warn("此方法下个版本将停用，请用scroll属性代替。", DeprecationWarning, stacklevel=2)
         if mode == 'top':
-            self.driver.execute_script("window.scrollTo(document.documentElement.scrollLeft,0);")
+            self.scroll.top()
 
         elif mode == 'bottom':
-            self.driver.execute_script(
-                "window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight);")
+            self.scroll.bottom()
 
         elif mode == 'half':
-            self.driver.execute_script(
-                "window.scrollTo(document.documentElement.scrollLeft,document.body.scrollHeight/2);")
+            self.scroll.half()
 
         elif mode == 'rightmost':
-            self.driver.execute_script("window.scrollTo(document.body.scrollWidth,document.documentElement.scrollTop);")
+            self.scroll.rightmost()
 
         elif mode == 'leftmost':
-            self.driver.execute_script("window.scrollTo(0,document.documentElement.scrollTop);")
+            self.scroll.leftmost()
 
         elif mode == 'up':
-            pixel = pixel if pixel >= 0 else -pixel
-            self.driver.execute_script(f"window.scrollBy(0,{pixel});")
+            self.scroll.up(pixel)
 
         elif mode == 'down':
-            self.driver.execute_script(f"window.scrollBy(0,{pixel});")
+            self.scroll.down(pixel)
 
         elif mode == 'left':
-            pixel = pixel if pixel >= 0 else -pixel
-            self.driver.execute_script(f"window.scrollBy({pixel},0);")
+            self.scroll.left(pixel)
 
         elif mode == 'right':
-            self.driver.execute_script(f"window.scrollBy({pixel},0);")
+            self.scroll.right(pixel)
 
         else:
             raise ValueError("mode参数只能是'top', 'bottom', 'half', 'rightmost', "

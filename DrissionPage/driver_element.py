@@ -30,6 +30,7 @@ class DriverElement(DrissionElement):
         """
         super().__init__(ele, page)
         self._select = None
+        self._scroll = None
 
     def __repr__(self) -> str:
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
@@ -239,6 +240,13 @@ class DriverElement(DrissionElement):
                 self._select = Select(self)
 
         return self._select
+
+    @property
+    def scroll(self) -> 'Scroll':
+        """用于滚动滚动条的对象"""
+        if self._scroll is None:
+            self._scroll = Scroll(self)
+        return self._scroll
 
     def left(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> 'DriverElement':
         """获取网页上显示在当前元素左边的某个元素，可设置选取条件，可指定结果中第几个               \n
@@ -483,34 +491,34 @@ class DriverElement(DrissionElement):
         :param pixel: 滚动的像素
         :return: None
         """
+        from warnings import warn
+        warn("此方法下个版本将停用，请用scroll属性代替。", DeprecationWarning, stacklevel=2)
         if mode == 'top':
-            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,0);")
+            self.scroll.top()
 
         elif mode == 'bottom':
-            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,arguments[0].scrollHeight);")
+            self.scroll.bottom()
 
         elif mode == 'half':
-            self.run_script("arguments[0].scrollTo(arguments[0].scrollLeft,arguments[0].scrollHeight/2);")
+            self.scroll.half()
 
         elif mode == 'rightmost':
-            self.run_script("arguments[0].scrollTo(arguments[0].scrollWidth,arguments[0].scrollTop);")
+            self.scroll.rightmost()
 
         elif mode == 'leftmost':
-            self.run_script("arguments[0].scrollTo(0,arguments[0].scrollTop);")
+            self.scroll.leftmost()
 
         elif mode == 'up':
-            pixel = pixel if pixel >= 0 else -pixel
-            self.run_script(f"arguments[0].scrollBy(0,{pixel});")
+            self.scroll.up(pixel)
 
         elif mode == 'down':
-            self.run_script(f"arguments[0].scrollBy(0,{pixel});")
+            self.scroll.down(pixel)
 
         elif mode == 'left':
-            pixel = pixel if pixel >= 0 else -pixel
-            self.run_script(f"arguments[0].scrollBy({pixel},0);")
+            self.scroll.left(pixel)
 
         elif mode == 'right':
-            self.run_script(f"arguments[0].scrollBy({pixel},0);")
+            self.scroll.right(pixel)
 
         else:
             raise ValueError("mode参数只能是'top', 'bottom', 'half', 'rightmost', "
@@ -1125,3 +1133,78 @@ def _wait_ele(page_or_ele,
 
         except Exception:
             return False
+
+
+class Scroll(object):
+    """用于滚动的对象"""
+
+    def __init__(self, page_or_ele):
+        """
+        :param page_or_ele: DriverPage或DriverElement
+        """
+        self.driver = page_or_ele
+        if isinstance(page_or_ele, DriverElement):
+            self.t1 = self.t2 = 'arguments[0]'
+        else:
+            self.t1 = 'window'
+            self.t2 = 'document.documentElement'
+
+    def top(self) -> None:
+        """滚动到顶端，水平位置不变"""
+        self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,0);')
+
+    def bottom(self) -> None:
+        """滚动到底端，水平位置不变"""
+        self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,{self.t2}.scrollHeight);')
+
+    def half(self) -> None:
+        """滚动到垂直中间位置，水平位置不变"""
+        self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,{self.t2}.scrollHeight/2);')
+
+    def rightmost(self) -> None:
+        """滚动到最右边，垂直位置不变"""
+        self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollWidth,{self.t2}.scrollTop);')
+
+    def leftmost(self) -> None:
+        """滚动到最左边，垂直位置不变"""
+        self.driver.run_script(f'{self.t1}.scrollTo(0,{self.t2}.scrollTop);')
+
+    def up(self, pixel: int = 300) -> None:
+        """向上滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if pixel < 0:
+            self.down(-pixel)
+        else:
+            self.driver.run_script(f'{self.t1}.scrollBy(0,-{pixel});')
+
+    def down(self, pixel: int = 300) -> None:
+        """向下滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if pixel < 0:
+            self.up(-pixel)
+        else:
+            self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
+
+    def left(self, pixel: int = 300) -> None:
+        """向左滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if pixel < 0:
+            self.right(-pixel)
+        else:
+            self.driver.run_script(f'{self.t1}.scrollBy(-{pixel},0);')
+
+    def right(self, pixel: int = 300) -> None:
+        """向右滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        if pixel < 0:
+            self.left(-pixel)
+        else:
+            self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
