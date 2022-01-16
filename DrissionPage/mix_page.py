@@ -380,7 +380,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                  rename: str = None,
                  file_exists: str = 'rename',
                  post_data: Union[str, dict] = None,
-                 show_msg: bool = False,
+                 show_msg: bool = True,
                  show_errmsg: bool = False,
                  retry: int = None,
                  interval: float = None,

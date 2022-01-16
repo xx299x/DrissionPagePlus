@@ -261,7 +261,7 @@ class SessionPage(BasePage):
                  file_exists: str = 'rename',
                  post_data: Union[str, dict] = None,
                  show_msg: bool = False,
-                 show_errmsg: bool = False,
+                 show_errmsg: bool = True,
                  retry: int = None,
                  interval: float = None,
                  **kwargs) -> tuple:

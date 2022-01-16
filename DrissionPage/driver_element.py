@@ -1174,37 +1174,27 @@ class Scroll(object):
         :param pixel: 滚动的像素
         :return: None
         """
-        if pixel < 0:
-            self.down(-pixel)
-        else:
-            self.driver.run_script(f'{self.t1}.scrollBy(0,-{pixel});')
+        pixel = -pixel
+        self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
 
     def down(self, pixel: int = 300) -> None:
         """向下滚动若干像素，水平位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        if pixel < 0:
-            self.up(-pixel)
-        else:
-            self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
+        self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
 
     def left(self, pixel: int = 300) -> None:
         """向左滚动若干像素，水平位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        if pixel < 0:
-            self.right(-pixel)
-        else:
-            self.driver.run_script(f'{self.t1}.scrollBy(-{pixel},0);')
+        pixel = -pixel
+        self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
 
     def right(self, pixel: int = 300) -> None:
         """向右滚动若干像素，水平位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        if pixel < 0:
-            self.left(-pixel)
-        else:
-            self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
+        self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
