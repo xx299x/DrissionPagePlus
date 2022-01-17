@@ -128,6 +128,10 @@ class OptionsManager(object):
 
         return path
 
+    def save_to_default(self) -> str:
+        """保存当前配置到默认ini文件"""
+        return self.save('default')
+
 
 class SessionOptions(object):
     def __init__(self, read_file: bool = True, ini_path: str = None):
@@ -437,6 +441,10 @@ class SessionOptions(object):
 
         return path
 
+    def save_to_default(self) -> str:
+        """保存当前配置到默认ini文件"""
+        return self.save('default')
+
     def as_dict(self) -> dict:
         """以字典形式返回本对象"""
         return _session_options_to_dict(self)
@@ -521,6 +529,10 @@ class DriverOptions(Options):
         om.save(path)
 
         return path
+
+    def save_to_default(self) -> str:
+        """保存当前配置到默认ini文件"""
+        return self.save('default')
 
     def remove_argument(self, value: str) -> 'DriverOptions':
         """移除一个argument项                                    \n

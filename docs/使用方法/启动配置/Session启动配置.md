@@ -13,6 +13,8 @@ SessionOptions 对象创建时默认读取默认 ini 文件配置信息，也可
 - read_file：是否从默认 ini 文件中读取配置信息
 - ini_path：ini 文件路径，为 None 则读取默认 ini 文件
 
+
+
 ## headers
 
 该属性返回 headers 设置信息，可传入字典赋值。
@@ -124,7 +126,15 @@ print(so.headers)
 
 参数：
 
-- path：配置文件的路径，传入 None 保存到当前读取的配置文件，传入 'default' 保存到默认 ini 文件
+- path：配置文件的路径，默认保存到当前读取的配置文件，传入 'default' 保存到默认 ini 文件
+
+返回：配置文件绝对路径
+
+## save_to_default()
+
+此方法用于保存当前配置对象的信息到默认 ini 文件。
+
+参数：无
 
 返回：配置文件绝对路径
 

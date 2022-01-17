@@ -330,15 +330,13 @@ class DriverElement(DrissionElement):
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, DrissionElement, WebElement],
-                 mode: str,
-                 timeout: float = None) -> bool:
+                 timeout: float = None) -> 'ElementWaiter':
         """等待子元素从dom删除、显示、隐藏                             \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
-        :param mode: 等待方式，可选：'del', 'display', 'hidden'
         :param timeout: 等待超时时间
         :return: 等待是否成功
         """
-        return _wait_ele(self, loc_or_ele, mode, timeout)
+        return ElementWaiter(self, loc_or_ele, timeout)
 
     def style(self, style: str, pseudo_ele: str = '') -> str:
         """返回元素样式属性值，可获取伪元素属性值                \n
@@ -494,19 +492,19 @@ class DriverElement(DrissionElement):
         from warnings import warn
         warn("此方法下个版本将停用，请用scroll属性代替。", DeprecationWarning, stacklevel=2)
         if mode == 'top':
-            self.scroll.top()
+            self.scroll.to_top()
 
         elif mode == 'bottom':
-            self.scroll.bottom()
+            self.scroll.to_bottom()
 
         elif mode == 'half':
-            self.scroll.half()
+            self.scroll.to_half()
 
         elif mode == 'rightmost':
-            self.scroll.rightmost()
+            self.scroll.to_rightmost()
 
         elif mode == 'leftmost':
-            self.scroll.leftmost()
+            self.scroll.to_leftmost()
 
         elif mode == 'up':
             self.scroll.up(pixel)
@@ -1058,81 +1056,91 @@ class Select(object):
             i.click()
 
 
-def _wait_ele(page_or_ele,
-              loc_or_ele: Union[str, tuple, DriverElement, WebElement],
-              mode: str,
-              timeout: float = None) -> bool:
-    """等待元素从dom删除、显示、隐藏                             \n
-    :param page_or_ele: 要等待子元素的页面或元素
-    :param loc_or_ele: 可以是元素、查询字符串、loc元组
-    :param mode: 等待方式，可选：'del', 'display', 'hidden'
-    :param timeout: 等待超时时间
-    :return: 等待是否成功
-    """
-    if mode.lower() not in ('del', 'display', 'hidden'):
-        raise ValueError('mode参数只能是"del"、"display"或"hidden"。')
+class ElementWaiter(object):
+    """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
-    if isinstance(page_or_ele, BaseElement):
-        page = page_or_ele.page
-        ele_or_driver = page_or_ele.inner_ele
-    else:
-        page = page_or_ele
-        ele_or_driver = page_or_ele.driver
+    def __init__(self,
+                 page_or_ele,
+                 loc_or_ele: Union[str, tuple, DriverElement, WebElement],
+                 timeout: float = None):
+        """等待元素在dom中某种状态，如删除、显示、隐藏                         \n
+        :param page_or_ele: 页面或父元素
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        """
+        if isinstance(page_or_ele, DriverElement):
+            page = page_or_ele.page
+            self.driver = page_or_ele.inner_ele
+        else:
+            page = page_or_ele
+            self.driver = page_or_ele.driver
 
-    timeout = timeout or page.timeout
-    is_ele = False
+        if isinstance(loc_or_ele, DriverElement):
+            self.target = loc_or_ele.inner_ele
 
-    if isinstance(loc_or_ele, DriverElement):
-        loc_or_ele = loc_or_ele.inner_ele
-        is_ele = True
+        elif isinstance(loc_or_ele, WebElement):
+            self.target = loc_or_ele
 
-    elif isinstance(loc_or_ele, WebElement):
-        is_ele = True
+        elif isinstance(loc_or_ele, str):
+            self.target = str_to_loc(loc_or_ele)
 
-    elif isinstance(loc_or_ele, str):
-        loc_or_ele = str_to_loc(loc_or_ele)
+        elif isinstance(loc_or_ele, tuple):
+            self.target = loc_or_ele
 
-    elif isinstance(loc_or_ele, tuple):
-        pass
+        else:
+            raise TypeError('loc_or_ele参数只能是str、tuple、DriverElement 或 WebElement类型。')
 
-    else:
-        raise TypeError('loc_or_ele参数只能是str、tuple、DriverElement 或 WebElement类型')
+        self.timeout = timeout if timeout is not None else page.timeout
 
-    # 当传入参数是元素对象时
-    if is_ele:
-        end_time = time() + timeout
+    def delete(self) -> bool:
+        """等待元素从dom删除"""
+        return self._wait_ele('del')
 
-        while time() < end_time:
-            if mode == 'del':
-                try:
-                    loc_or_ele.is_enabled()
-                except Exception:
+    def display(self) -> bool:
+        """等待元素从dom显示"""
+        return self._wait_ele('display')
+
+    def hidden(self) -> bool:
+        """等待元素从dom隐藏"""
+        return self._wait_ele('hidden')
+
+    def _wait_ele(self, mode: str) -> bool:
+        """执行等待
+        :param mode: 等待模式
+        :return: 是否等待成功
+        """
+        if isinstance(self.target, WebElement):
+            end_time = time() + self.timeout
+            while time() < end_time:
+                if mode == 'del':
+                    try:
+                        self.target.is_enabled()
+                    except Exception:
+                        return True
+
+                elif mode == 'display' and self.target.is_displayed():
                     return True
 
-            elif mode == 'display' and loc_or_ele.is_displayed():
-                return True
+                elif mode == 'hidden' and not self.target.is_displayed():
+                    return True
 
-            elif mode == 'hidden' and not loc_or_ele.is_displayed():
-                return True
-
-        return False
-
-    # 当传入参数是控制字符串或元组时
-    else:
-        try:
-            if mode == 'del':
-                WebDriverWait(ele_or_driver, timeout).until_not(ec.presence_of_element_located(loc_or_ele))
-
-            elif mode == 'display':
-                WebDriverWait(ele_or_driver, timeout).until(ec.visibility_of_element_located(loc_or_ele))
-
-            elif mode == 'hidden':
-                WebDriverWait(ele_or_driver, timeout).until_not(ec.visibility_of_element_located(loc_or_ele))
-
-            return True
-
-        except Exception:
             return False
+
+        else:
+            try:
+                if mode == 'del':
+                    WebDriverWait(self.driver, self.timeout).until_not(ec.presence_of_element_located(self.target))
+
+                elif mode == 'display':
+                    WebDriverWait(self.driver, self.timeout).until(ec.visibility_of_element_located(self.target))
+
+                elif mode == 'hidden':
+                    WebDriverWait(self.driver, self.timeout).until_not(ec.visibility_of_element_located(self.target))
+
+                return True
+
+            except Exception:
+                return False
 
 
 class Scroll(object):
@@ -1149,25 +1157,33 @@ class Scroll(object):
             self.t1 = 'window'
             self.t2 = 'document.documentElement'
 
-    def top(self) -> None:
+    def to_top(self) -> None:
         """滚动到顶端，水平位置不变"""
         self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,0);')
 
-    def bottom(self) -> None:
+    def to_bottom(self) -> None:
         """滚动到底端，水平位置不变"""
         self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,{self.t2}.scrollHeight);')
 
-    def half(self) -> None:
+    def to_half(self) -> None:
         """滚动到垂直中间位置，水平位置不变"""
         self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollLeft,{self.t2}.scrollHeight/2);')
 
-    def rightmost(self) -> None:
+    def to_rightmost(self) -> None:
         """滚动到最右边，垂直位置不变"""
         self.driver.run_script(f'{self.t1}.scrollTo({self.t2}.scrollWidth,{self.t2}.scrollTop);')
 
-    def leftmost(self) -> None:
+    def to_leftmost(self) -> None:
         """滚动到最左边，垂直位置不变"""
         self.driver.run_script(f'{self.t1}.scrollTo(0,{self.t2}.scrollTop);')
+
+    def to_location(self, x: int, y: int) -> None:
+        """滚动到指定位置                 \n
+        :param x: 水平距离
+        :param y: 垂直距离
+        :return: None
+        """
+        self.driver.run_script(f'{self.t1}.scrollTo({x},{y});')
 
     def up(self, pixel: int = 300) -> None:
         """向上滚动若干像素，水平位置不变    \n
@@ -1185,7 +1201,7 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
 
     def left(self, pixel: int = 300) -> None:
-        """向左滚动若干像素，水平位置不变    \n
+        """向左滚动若干像素，垂直位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1193,7 +1209,7 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
 
     def right(self, pixel: int = 300) -> None:
-        """向右滚动若干像素，水平位置不变    \n
+        """向右滚动若干像素，垂直位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """

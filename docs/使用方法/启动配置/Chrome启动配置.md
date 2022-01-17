@@ -16,6 +16,8 @@ DriverOptions 类继承自 Options 类，保留了原来所有功能，原生功
 - read_file：是否从默认 ini 文件中读取配置信息
 - ini_path：ini 文件路径，为 None 则读取默认 ini 文件
 
+
+
 ## driver_path
 
 此属性返回 chromedriver 文件路径。
@@ -47,7 +49,15 @@ DriverOptions 类继承自 Options 类，保留了原来所有功能，原生功
 
 参数：
 
-- path：配置文件的路径，传入 None 保存到当前读取的配置文件，传入 'default' 保存到默认 ini 文件
+- path：配置文件的路径，默认保存到当前读取的配置文件，传入 'default' 保存到默认 ini 文件
+
+返回：配置文件绝对路径
+
+## save_to_default()
+
+此方法用于保存当前配置对象的信息到默认 ini 文件。
+
+参数：无
 
 返回：配置文件绝对路径
 
