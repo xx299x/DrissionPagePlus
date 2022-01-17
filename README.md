@@ -1,6 +1,6 @@
-# 简洁！易用 ！方便！
+# ✨️简洁！易用 ！方便！✨️
 
-# 简介
+# ⭐️ 简介
 
 DrissionPage，即 driver 和 session 组合而成的 page。  
 是个基于 python 的 Web 自动化操作集成工具。  
@@ -10,22 +10,24 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 可兼顾 selenium 的便利性和 requests 的高效率，  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。
 
-点击打开：[使用文档](http://g1879.gitee.io/drissionpage)  
+点击打开：📒[使用文档](http://g1879.gitee.io/drissionpage)
 
-**交流QQ群：**  897838127            **联系邮箱：**  g1879@qq.com
+**交流QQ群：**  897838127
 
-## 背景
+**联系邮箱：**  g1879@qq.com
+
+## 📔 背景
 
 requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，构造复杂的请求，往往还要应付验证码、JS 混淆、签名参数等反爬手段，门槛较高。若数据是由 JS 计算生成的，还须重现计算过程，体验不好，开发效率不高。  
 使用 selenium，可以很大程度上绕过这些坑，但 selenium 效率不高。因此，这个库将 selenium 和 requests 合而为一，不同须要时切换相应模式，并提供一种人性化的使用方法，提高开发和运行效率。  
 除了合并两者，本库还以网页为单位封装了常用功能，简化了 selenium 的操作和语句，在用于网页自动化操作时，减少考虑细节，专注功能实现，使用更方便。  
 一切从简，尽量提供简单直接的使用方法，对新手更友好。
 
-# 特性和亮点
+# 💡 特性和亮点
 
-作者有多年自动化和爬虫经验，踩过无数坑，总结出的经验全写到这个库里了。内置了N多实用功能，对常用功能作了整合和优化。
+作者有多年自动化和爬虫经验，踩过无数坑，总结出的经验全写到这个库里了。内置了 N 多实用功能，对常用功能作了整合和优化。
 
-## 特性
+## 🔮 特性
 
 - 代码高度集成，以简洁的代码为第一追求。
 - 页面对象可在 selenium 和 requests 模式间任意切换，保留登录状态。
@@ -33,16 +35,16 @@ requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，�
 - 两种模式提供一致的 API，使用体验一致。
 - 人性化设计，集成众多实用功能，大大降低开发工作量。
 
-## 亮点功能
+## 🎇 亮点功能
 
 - 每次运行程序可以反复使用已经打开的浏览器。如手动设置网页到某个状态，再用程序接管，或手动处理登录，再用程序爬内容。无须每次运行从头启动浏览器，超级方便。
-- 使用 ini 文件保存常用配置，自动调用，也提供便捷的设置api，远离繁杂的配置项。
+- 使用 ini 文件保存常用配置，自动调用，也提供便捷的设置 API，远离繁杂的配置项。
 - 极致简明的定位语法，支持直接按文本定位元素，支持直接获取前后兄弟元素和父元素等。
 - 强大的下载工具，操作浏览器时也能享受快捷可靠的下载功能。
 - 下载工具支持多种方式处理文件名冲突、自动创建目标路径、断链重试等。
 - 访问网址带自动重试功能，可设置间隔和超时时间。
 - 访问网页能自动识别编码，无须手动设置。
-- 链接参数默认自动生成 Host 和 Referer 属性。
+- 链接参数默认自动生成`Host`和`Referer`属性。
 - 可随时直接隐藏或显示浏览器进程窗口，非 headless 或最小化。
 - 可自动下载合适版本的 chromedriver，免去麻烦的配置。
 - d 模式查找元素内置等待，可任意设置全局等待时间或单次查找等待时间。
@@ -50,23 +52,23 @@ requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，�
 - 点击支持失败重试，可用于保证点击成功、判读网页遮罩层是否消失等。
 - 输入文本能自动判断是否成功并重试，避免某些情况下输入或清空失效的情况。
 - d 模式下支持全功能的 xpath，可直接获取元素的某个属性，selenium 原生无此功能。
-- 支持直接获取 shadow-root，和普通元素一样操作其下的元素。
-- 支持直接获取 after 和 before 伪元素的内容。
+- 支持直接获取`shadow-root`，和普通元素一样操作其下的元素。
+- 支持直接获取`after`和`before`伪元素的内容。
 - 可以在元素下直接使用 > 以 css selector 方式获取当前元素直接子元素。原生不支持这种写法。
 - 可简单地使用 lxml 来解析 d 模式的页面或元素，爬取复杂页面数据时速度大幅提高。
 - 输出的数据均已转码及处理基本排版，减少重复劳动。
 - 可方便地与 selenium 或 requests 原生代码对接，便于项目迁移。
 - 使用 POM 模式封装，可直接用于测试，便于扩展。
-- d 模式配置可同时兼容 debugger 和其它参数，原生不能兼容。
+- d 模式配置可同时兼容`debugger_address`和其它参数，原生不能兼容。
 - 还有很多这里不一一列举…………
 
-# 简单演示
+# 🪄 简单演示
 
 **与 selenium 代码对比**
 
 以下代码实现一模一样的功能，对比两者的代码量：
 
-- 用显性等待方式定位第一个文本包含 some text 的元素
+- 用显性等待方式定位第一个文本包含`some text`的元素
 
 ```python
 # 使用 selenium：
@@ -115,7 +117,7 @@ ele1.drag_to(ele2)
 driver.execute_script("window.scrollTo(document.documentElement.scrollLeft, document.body.scrollHeight);")
 
 # 使用 DrissionPage：
-page.scroll_to('bottom')
+page.scroll.to_bottom()
 ```
 
 - 设置 headless 模式
@@ -141,7 +143,7 @@ text = element.pseudo_after
 
 - shadow-root 操作
 
-selenium 新增了 ShadowRoot，但功能实在是太少。
+selenium 新增了`ShadowRoot`，但功能实在是太少。
 ```python
 # 使用 selenium：
 shadow_element = webdriver.execute_script('return arguments[0].shadowRoot', element)
@@ -168,14 +170,14 @@ text = element('xpath://div[@id="div_id"]/text()[2]')
 - 随时让浏览器窗口消失和显示
 
 ```python
-# selenium无此功能
+# selenium 无此功能
 
 # 使用 DrissionPage
 page.hide_browser()  # 让浏览器窗口消失
 page.show_browser()  # 重新显示浏览器窗口
 ```
 
-注：本功能只支持 Windows，且须设置了 debugger_address 参数时才能生效
+注：本功能只支持 Windows，且须设置了`local_port`或`debugger_address`参数时才能生效。
 
 **与 requests 代码对比**
 
@@ -200,7 +202,7 @@ page.get(url)
 title = page('tag:h1').text
 ```
 
-Tips: DrissionPage 自带默认 headers
+Tips: DrissionPage 自带默认`headers`
 
 - 下载文件
 
@@ -265,18 +267,18 @@ Git 命令学习 https://oschina.gitee.io/learn-git-branching/
 Git 命令学习
 ```
 
-# 使用方法
+# 🔠 使用方法
 
 [点击跳转到使用文档](http://g1879.gitee.io/drissionpage)
 
-# 版本历史
+# 🎯️ 版本历史
 
 [点击查看版本历史](http://g1879.gitee.io/drissionpage/#/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2)
 
-# 免责声明
+# 🖐🏻 免责声明
 请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
 
-# 请我喝咖啡
+# ☕ 请我喝咖啡
 
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
