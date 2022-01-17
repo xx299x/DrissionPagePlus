@@ -438,7 +438,7 @@ class DriverElement(DrissionElement):
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :param insure: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
-        :param timeout: 尝试输入的超时时间，不指定则使用父页面的超时时间，只在insure_input为True时生效
+        :param timeout: 尝试输入的超时时间，不指定则使用父页面的超时时间，只在insure为True时生效
         :return: bool
         """
         if not insure or self.tag != 'input' or self.prop('type') != 'text':  # 普通输入
@@ -450,7 +450,7 @@ class DriverElement(DrissionElement):
 
         else:  # 确保输入正确
             if not isinstance(vals, str):
-                raise TypeError('insure_input参数生效时vals只能接收str数据。')
+                raise TypeError('insure参数生效时vals只能接收str数据。')
             enter = '\n' if vals.endswith('\n') else None
             full_txt = vals if clear else f'{self.attr("value")}{vals}'
             full_txt = full_txt.rstrip('\n')
