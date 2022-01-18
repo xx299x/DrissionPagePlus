@@ -1,4 +1,4 @@
-MixPage 支持获取和设置 cookies，具体使用方法如下：
+MixPage 支持获取和设置`cookies`，具体使用方法如下：
 
 ```python
 # 以字典形式返回 cookies，只会返回当前域名可用的 cookies
@@ -16,6 +16,6 @@ page.set_cookies(cookies)
 
 **Tips:**
 
-- d 模式设置 cookies 后要刷新页面才能看到效果。
-- s 模式可在 ini 文件、SessionOptions、配置字典中设置 cookies，在 MixPage 初始化时即可传入，d 模式只能用 set_cookies() 函数设置。
+- d 模式设置`cookies`后要刷新页面才能看到效果。
+- s 模式可在 ini 文件、`SessionOptions`、配置字典中设置`cookies`，在`MixPage`初始化时即可传入，d 模式只能用`set_cookies()`函数设置。
 

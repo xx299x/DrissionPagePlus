@@ -1,5 +1,5 @@
-DrissionPage 代码可无缝拼接 selenium 及 requests 代码。既可直接使用 selenium 的 WebDriver 对象，也可导出自身的 WebDriver 给 selenium 代码使用。requests 的
-Session 对象也可直接传递。便于已有项目的迁移。
+DrissionPage 代码可无缝拼接 selenium 及 requests 代码。既可直接使用 selenium 的`WebDriver`对象，也可导出自身的`WebDriver`给 selenium 代码使用。requests 的
+`Session`对象也可直接传递。便于已有项目的迁移。
 
 # selenium 转 DrissionPage
 

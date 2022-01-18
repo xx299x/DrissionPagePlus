@@ -1,26 +1,26 @@
 ## 全局
 
-- 切换模式时会自动复制 cookies 到目标模式，并在目标模式下重新访问当前网址，可在参数中禁止自动访问。
-- 访问网址时如遇到异常，会自动重试3次，也可在对象属性或连接参数里设置重试次数和间隔时间。d 模式这个功能要重载了 check_page() 方法才有效。
-- 获取到的文本会自动替换 & nbsp; 为空格。
-- 可以在元素下直接使用 > 以 css selector 方式获取当前元素直接子元素。如 ele1.ele('css:>div')。原生不支持这种写法。
-- 用 xpath 获取元素的子元素时，可省略前面的 .。如 ele1.ele('div') 和 ele1.ele('.//div'） 是一致的。
+- 切换模式时会自动复制`cookies`到目标模式，并在目标模式下重新访问当前网址，可在参数中禁止自动访问。
+- 访问网址时如遇到异常，会自动重试 3 次，也可在对象属性或连接参数里设置重试次数和间隔时间。d 模式这个功能要重载了`check_page()`方法才有效。
+- 获取到的文本会自动替换`&nbsp;`为空格。
+- 可以在元素下直接使用`>`以 css selector 方式获取当前元素直接子元素。如`ele1.ele('css:>div')`。原生不支持这种写法。
+- 用 xpath 获取元素的子元素时，可省略前面的`.`。如`ele1.ele('div')`和`ele1.ele('.//div'）`是一致的。
 - 保存空的配置对象时，如没有指定路径，会保存到默认 ini 文件。
-- download() 方法会自动创建 goal_path 参数的文件夹，因此可直接传入不存在的文件夹路径。
-- set_cookies()可以接收RequestsCookieJar, list, tuple, str, dict，只要格式对扔进去它会自动调整。其中 list 和 tuple 的内容可为 Cookie对象、dict、str。
+- `download()`方法会自动创建`goal_path`参数的文件夹，因此可直接传入不存在的文件夹路径。
+- `set_cookies()`可以接收`RequestsCookieJar`、`list`、`tuple`、`str`、`dict`，只要格式对扔进去它会自动调整。其中`list`和`tuple`的内容可为`Cookie`、`dict`、`str`。
 
 ## s 模式
 
-- 在创建 MixPage 对象时传入的 Session 配置是全局有效的，一般无须每次连接传入。
-- ini 文件里设置了默认 s 模式的 headers，一般情况可直接使用，也可手动设置。
-- s 模式访问网页时会自动纠正编码，具体为先从 headers 获取，再从页面 meta 标签获取，都找不到就执行 r.apparent_encoding。因此无须手动设置。
-- 如果没有传入 referer 和 host 值，s 模式在连接时会自动根据当前域名自动填写 Host 和 Referer 属性。
+- 在创建`MixPage`对象时传入的`Session`配置是全局有效的，一般无须每次连接传入。
+- ini 文件里设置了默认 s 模式的`headers`，一般情况可直接使用，也可手动设置。
+- s 模式访问网页时会自动纠正编码，具体为先从`headers`获取，再从页面`meta`标签获取，都找不到就执行`r.apparent_encoding`。因此无须手动设置。
+- 如果没有传入`referer`和`host`值，s 模式在连接时会自动根据当前域名自动填写`Host`和`Referer`属性。
 
 ## d 模式
 
-- d 模式查找元素默认设置等待超时10秒，10秒内找到立即返回元素，超时返回 None。也可指定超时时间。
-- cilck() 方法用 selenium 点击失败时会用 js 方式重试，也可在参数里指定直接用 js 或不用 js 重试。
-- click() 方法可设置 timeout 参数，在时间内会不断重试点击目标，click(by_js=False) 可用于等待覆盖在元素上的遮罩层消失。
-- 可以用 xpath 直接获取元素属性或文本节点内容，如ele1.ele('xpath://div/@class')或ele1.ele('xpath://div/text()[2]')。原生不支持这种用法。
-- 在 MixPage 对象设置 timeout 后，该页面下所有元素的查找都会遵循该设置，该值默认为 10。也可以每次查找元素时单独设置，单独设置不影响页面对象的 timeout 属性。
-- 若设置了 debugger_address，创建 driver 时程序会自动检测该端口，如为空，则自动在该端口启动一个浏览器进程并接入。程序完毕该浏览器不自动关闭，以便后续使用。
+- d 模式查找元素默认设置等待超时 10 秒，10 秒内找到立即返回元素，超时返回`None`。也可指定超时时间。
+- `cilck()`方法用 selenium 点击失败时会用 js 方式重试，也可在参数里指定直接用 js 或不用 js 重试。
+- `click()`方法可设置`timeout`参数，在时间内会不断重试点击目标，`click(by_js=False)`可用于等待覆盖在元素上的遮罩层消失。
+- 可以用 xpath 直接获取元素属性或文本节点内容，如`ele1.ele('xpath://div/@class')`或`ele1.ele('xpath://div/text()[2]')`。原生不支持这种用法。
+- 在`MixPage`对象设置`timeout`后，该页面下所有元素的查找都会遵循该设置，该值默认为 10。也可以每次查找元素时单独设置，单独设置不影响页面对象的`timeout`属性。
+- 若设置了`local_port`或`debugger_address`，创建 driver 时程序会自动检测该端口，如为空，则自动在该端口启动一个浏览器进程并接入。程序完毕该浏览器不自动关闭，以便后续使用。

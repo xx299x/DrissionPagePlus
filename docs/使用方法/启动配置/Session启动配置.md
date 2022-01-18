@@ -1,37 +1,37 @@
-SessionOptions 对象用于管理 Session 对象连接配置。  
-其使用逻辑与 DriverOptions 相似。
+`SessionOptions`对象用于管理`Session`对象连接配置。  
+其使用逻辑与`DriverOptions`相似。
 
-**注意：** SessionOptions 仅用于管理启动配置，程序启动后再修改无效。
+!> **注意：** `SessionOptions`仅用于管理启动配置，程序启动后再修改无效。
 
-# SessionOptions 类
+# `SessionOptions`类
 
-SessionOptions 对象创建时默认读取默认 ini 文件配置信息，也可手动设置所需信息。  
+`SessionOptions`对象创建时默认读取默认 ini 文件配置信息，也可手动设置所需信息。  
 该类的方法支持链式操作。
 
 初始化参数：
 
 - read_file：是否从默认 ini 文件中读取配置信息
-- ini_path：ini 文件路径，为 None 则读取默认 ini 文件
+- ini_path：ini 文件路径，为`None`则读取默认 ini 文件
 
 
 
 ## headers
 
-该属性返回 headers 设置信息，可传入字典赋值。
+该属性返回`headers`设置信息，可传入字典赋值。
 
 ## set_headers()
 
-该方法与 headers 参数赋值功能一致。
+该方法与`headers`参数赋值功能一致。
 
 参数：
 
-- headers：headers 字典
+- headers：`headers`字典
 
 返回：当前对象
 
 ## set_a_header()
 
-该方法用于设置 headers 中的一个项。
+该方法用于设置`headers`中的一个项。
 
 参数：
 
@@ -56,7 +56,7 @@ print(so.headers)
 
 ## remove_a_header()
 
-此方法用于从 headers 中移除一个设置项。
+此方法用于从`headers`中移除一个设置项。
 
 参数：
 
@@ -66,8 +66,8 @@ print(so.headers)
 
 ## cookies
 
-此属性返回 cookies 设置信息，可赋值。  
-可接收 dict、list、tuple、str、RequestsCookieJar 等格式的信息。
+此属性返回`cookies`设置信息，可赋值。  
+可接收`dict`、`list`、`tuple`、`str`、`RequestsCookieJar`等格式的信息。
 
 ## proxies
 
@@ -76,49 +76,49 @@ print(so.headers)
 
 ## set_proxies()
 
-此方法与 proxies 属性赋值功能一致。
+此方法与`proxies`属性赋值功能一致。
 
 参数：
 
-- dict 格式的代理参数
+- `dict`格式的代理参数
 
 返回：当前对象
 
 ## auth
 
-此属性用于返回和设置 auth 参数，接收 tuple 类型参数。
+此属性用于返回和设置`auth`参数，接收`tuple`类型参数。
 
 ## hooks
 
-此属性用于返回和设置 hooks 参数，接收 dict 类型参数。
+此属性用于返回和设置`hooks`参数，接收`dict`类型参数。
 
 ## params
 
-此属性用于返回和设置 params 参数，接收 dict 类型参数。
+此属性用于返回和设置`params`参数，接收`dict`类型参数。
 
 ## verify
 
-此属性用于返回和设置 verify 参数，接收 bool 类型参数。
+此属性用于返回和设置`verify`参数，接收`bool`类型参数。
 
 ## cert
 
-此属性用于返回和设置 cert 参数，接收 str 或 tuple 类型参数。
+此属性用于返回和设置`cert`参数，接收`str`或`tuple`类型参数。
 
 ## adapters
 
-此属性用于返回和设置 adapters 参数。
+此属性用于返回和设置`adapters`参数。
 
 ## stream
 
-此属性用于返回和设置 stream 参数，接收 bool 类型参数。
+此属性用于返回和设置`stream`参数，接收`bool`类型参数。
 
 ## trust_env
 
-此属性用于返回和设置 trust_env 参数，接收 bool 类型参数。
+此属性用于返回和设置`trust_env`参数，接收`bool`类型参数。
 
 ## max_redirects
 
-此属性用于返回和设置 max_redirects 参数，接收 int 类型参数。
+此属性用于返回和设置`max_redirects`参数，接收`int`类型参数。
 
 ## save()
 
@@ -126,7 +126,7 @@ print(so.headers)
 
 参数：
 
-- path：配置文件的路径，默认保存到当前读取的配置文件，传入 'default' 保存到默认 ini 文件
+- path：配置文件的路径，默认保存到当前读取的配置文件，传入`'default'`保存到默认 ini 文件
 
 返回：配置文件绝对路径
 
@@ -140,7 +140,7 @@ print(so.headers)
 
 ## as_dict()
 
-该方法以 dict 方式返回所有配置信息。
+该方法以`dict`方式返回所有配置信息。
 
 参数：无
 
