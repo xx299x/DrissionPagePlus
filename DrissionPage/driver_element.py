@@ -916,17 +916,12 @@ class Select(object):
         self.inner_ele = ele
         self.select_ele = Select(ele.inner_ele)
 
-    def __call__(self,
-                 text_value_index: Union[str, int, list, tuple] = None,
-                 para_type: str = 'text',
-                 deselect: bool = False) -> bool:
-        """选定或取消选定下拉列表中子元素                                                             \n
-        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选 'text'、'value'、'index'
-        :param deselect: 是否取消选择
-        :return: 是否选择成功
+    def __call__(self, text_or_index: Union[str, int, list, tuple]) -> bool:
+        """选定下拉列表中子元素                                                             \n
+        :param text_or_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
+        :return: None
         """
-        return self.select(text_value_index, para_type, deselect)
+        return self.select(text_or_index)
 
     @property
     def is_multi(self) -> bool:
@@ -957,10 +952,48 @@ class Select(object):
         """清除所有已选项"""
         self.select_ele.deselect_all()
 
-    def select(self,
-               text_value_index: Union[str, int, list, tuple] = None,
-               para_type: str = 'text',
-               deselect: bool = False) -> bool:
+    def select(self, text_or_index: Union[str, int, list, tuple]) -> bool:
+        """选定下拉列表中子元素                                                             \n
+        :param text_or_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
+        :return: 是否选择成功
+        """
+        i = 'index' if isinstance(text_or_index, int) else 'text'
+        return self._select(text_or_index, i, False)
+
+    def select_by_value(self, value: Union[str, list, tuple]) -> bool:
+        """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple  \n
+        :param value: value属性值，传入list或tuple可选择多项
+        :return: None
+        """
+        return self._select(value, 'value', False)
+
+    def deselect(self, text_or_index: Union[str, int, list, tuple]) -> bool:
+        """取消选定下拉列表中子元素                                                             \n
+        :param text_or_index: 根据文本或序号取消择选项，若允许多选，传入list或tuple可取消多项
+        :return: None
+        """
+        i = 'index' if isinstance(text_or_index, int) else 'text'
+        return self._select(text_or_index, i, True)
+
+    def deselect_by_value(self, value: Union[str, list, tuple]) -> bool:
+        """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
+        :param value: value属性值，传入list或tuple可取消多项
+        :return: None
+        """
+        return self._select(value, 'value', True)
+
+    def invert(self) -> None:
+        """反选"""
+        if not self.is_multi:
+            raise NotImplementedError("只能对多项选框执行反选。")
+
+        for i in self.options:
+            i.click(by_js=True)
+
+    def _select(self,
+                text_value_index: Union[str, int, list, tuple] = None,
+                para_type: str = 'text',
+                deselect: bool = False) -> bool:
         """选定或取消选定下拉列表中子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选 'text'、'value'、'index'
@@ -995,15 +1028,15 @@ class Select(object):
                 return False
 
         elif isinstance(text_value_index, (list, tuple)):
-            self.select_multi(text_value_index, para_type, deselect)
+            return self._select_multi(text_value_index, para_type, deselect)
 
         else:
             raise TypeError('只能传入str、int、list和tuple类型。')
 
-    def select_multi(self,
-                     text_value_index: Union[list, tuple] = None,
-                     para_type: str = 'text',
-                     deselect: bool = False) -> Union[bool, list]:
+    def _select_multi(self,
+                      text_value_index: Union[list, tuple] = None,
+                      para_type: str = 'text',
+                      deselect: bool = False) -> bool:
         """选定或取消选定下拉列表中多个子元素                                                             \n
         :param text_value_index: 根据文本、值选或序号择选多项
         :param para_type: 参数类型，可选 'text'、'value'、'index'
@@ -1013,47 +1046,19 @@ class Select(object):
         if para_type not in ('text', 'value', 'index'):
             raise ValueError('para_type参数只能传入“text”、“value”或“index”')
 
-        if isinstance(text_value_index, (list, tuple)):
-            fail_list = []
-            for i in text_value_index:
-                if not isinstance(i, (int, str)):
-                    raise TypeError('列表只能由str或int组成')
-
-                if not self.select(i, para_type, deselect):
-                    fail_list.append(i)
-
-            return fail_list or True
-
-        else:
+        if not isinstance(text_value_index, (list, tuple)):
             raise TypeError('只能传入list或tuple类型。')
 
-    def deselect(self,
-                 text_value_index: Union[str, int, list, tuple] = None,
-                 para_type: str = 'text') -> bool:
-        """取消选定下拉列表中子元素                                                             \n
-        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选 'text'、'value'、'index'
-        :return: 是否选择成功
-        """
-        return self.select(text_value_index, para_type, True)
+        success = True
+        for i in text_value_index:
+            if not isinstance(i, (int, str)):
+                raise TypeError('列表只能由str或int组成')
 
-    def deselect_multi(self,
-                       text_value_index: Union[list, tuple] = None,
-                       para_type: str = 'text') -> Union[bool, list]:
-        """取消选定下拉列表中多个子元素                                                             \n
-        :param text_value_index: 根据文本、值选或序号取消择选多项
-        :param para_type: 参数类型，可选 'text'、'value'、'index'
-        :return: 是否选择成功
-        """
-        return self.select_multi(text_value_index, para_type, True)
+            p = 'index' if isinstance(i, int) else para_type
+            if not self._select(i, p, deselect):
+                success = False
 
-    def invert(self) -> None:
-        """反选"""
-        if not self.is_multi:
-            raise NotImplementedError("只能对多项选框执行反选。")
-
-        for i in self.options:
-            i.click()
+        return success
 
 
 class ElementWaiter(object):
