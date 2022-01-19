@@ -529,15 +529,11 @@ class ToFrame(object):
         self.page = page
 
     def __call__(self, condition: Union[int, str, tuple, WebElement, DriverElement] = 'main'):
-        """用于兼容旧版，以后的版本会删除"""
-        from warnings import warn
-        warn("建议用to_frame.main()等方式使用此功能。", DeprecationWarning, stacklevel=2)
-
-        if condition == 'main':
-            self.main()
-        elif condition == 'parent':
-            self.parent()
-        elif isinstance(condition, (DriverElement, WebElement)):
+        """跳转到(i)frame，可传入id、name、序号、元素对象、定位符                  \n
+        :param condition: (i)frame，可传入id、name、序号、元素对象、定位符
+        :return: 当前页面对象
+        """
+        if isinstance(condition, (DriverElement, WebElement)):
             self.by_ele(condition)
         elif isinstance(condition, int):
             self.by_index(condition)
