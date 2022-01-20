@@ -17,7 +17,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
 from .common import str_to_loc, get_usable_path, format_html, get_ele_txt, get_loc
-from .session_element import make_session_ele
+from .session_element import make_session_ele, SessionElement
 
 
 class DriverElement(DrissionElement):
@@ -38,7 +38,7 @@ class DriverElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = None):
+                 timeout: float = None) -> Union['DriverElement', str, None]:
         """在内部查找元素                                             \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -110,7 +110,7 @@ class DriverElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None):
+            timeout: float = None) -> Union['DriverElement', str, None]:
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -120,7 +120,7 @@ class DriverElement(DrissionElement):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None):
+             timeout: float = None) -> List[Union['DriverElement', str]]:
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -128,14 +128,14 @@ class DriverElement(DrissionElement):
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None):
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, None]:
         """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高        \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self, loc_or_str)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None):
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
         """查找所有符合条件的元素以SessionElement列表形式返回                         \n
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
@@ -145,7 +145,7 @@ class DriverElement(DrissionElement):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             single: bool = True):
+             single: bool = True) -> Union['DriverElement', str, None, List[Union['DriverElement', str]]]:
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
@@ -738,7 +738,7 @@ class DriverElement(DrissionElement):
 def make_driver_ele(page_or_ele,
                     loc: Union[str, Tuple[str, str]],
                     single: bool = True,
-                    timeout: float = None) -> Union[DriverElement, List[DriverElement], str, None]:
+                    timeout: float = None) -> Union[DriverElement, str, None, List[Union[DriverElement, str]]]:
     """执行driver模式元素的查找                               \n
     页面查找元素及元素查找下级元素皆使用此方法                   \n
     :param page_or_ele: DriverPage对象或DriverElement对象

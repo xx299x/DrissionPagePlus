@@ -64,8 +64,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-                 timeout: float = None) \
-            -> Union[DriverElement, SessionElement, str, List[DriverElement], List[SessionElement]]:
+                 timeout: float = None) -> Union[DriverElement, SessionElement, str, None]:
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -133,8 +132,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-            timeout: float = None) \
-            -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
+            timeout: float = None) -> Union[DriverElement, SessionElement, str, None]:
         """返回第一个符合条件的元素、属性或节点文本                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -147,7 +145,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> Union[List[DriverElement], List[SessionElement], List[str]]:
+             timeout: float = None) -> List[Union[DriverElement, SessionElement, str]]:
         """返回页面中所有符合条件的元素、属性或节点文本                                \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -159,7 +157,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
     def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement] = None) \
-            -> Union[SessionElement, List[SessionElement], List[str]]:
+            -> Union[SessionElement, str, None]:
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -169,8 +167,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_ele(loc_or_ele)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) \
-            -> Union[SessionElement, List[SessionElement], List[str]]:
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
         """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
@@ -183,7 +180,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
              timeout: float = None, single: bool = True) \
-            -> Union[DriverElement, SessionElement, str, List[SessionElement], List[DriverElement]]:
+            -> Union[DriverElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
+                Union[DriverElement, str]]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
