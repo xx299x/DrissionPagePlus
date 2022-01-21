@@ -72,6 +72,101 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union['SessionElement', None]:
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
+        :return: 上级元素对象
+        """
+        return super().parent(level_or_loc)
+
+    def prev(self,
+             index: int = 1,
+             filter_loc: Union[tuple, str] = '',
+             timeout: float = 0) -> Union['SessionElement', str, None]:
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素
+        """
+        return super().prev(index, filter_loc, timeout)
+
+    def next(self,
+             index: int = 1,
+             filter_loc: Union[tuple, str] = '',
+             timeout: float = 0) -> Union['SessionElement', str, None]:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素
+        """
+        return super().next(index, filter_loc, timeout)
+
+    def before(self,
+               index: int = 1,
+               filter_loc: Union[tuple, str] = '',
+               timeout: float = None) -> Union['SessionElement', str, None]:
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 本元素前面的某个元素或节点
+        """
+        return super().before(index, filter_loc, timeout)
+
+    def after(self,
+              index: int = 1,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = None) -> Union['SessionElement', str, None]:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 本元素后面的某个元素或节点
+        """
+        return super().after(index, filter_loc, timeout)
+
+    def prevs(self,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = 0) -> List[Union['SessionElement', str]]:
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素或节点文本组成的列表
+        """
+        return super().prevs(filter_loc, timeout)
+
+    def nexts(self,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = 0) -> List[Union['SessionElement', str]]:
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素或节点文本组成的列表
+        """
+        return super().nexts(filter_loc, timeout)
+
+    def befores(self,
+                filter_loc: Union[tuple, str] = '',
+                timeout: float = None) -> List[Union['SessionElement', str]]:
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 本元素前面的元素或节点组成的列表
+        """
+        return super().befores(filter_loc, timeout)
+
+    def afters(self,
+               filter_loc: Union[tuple, str] = '',
+               timeout: float = None) -> List[Union['SessionElement', str]]:
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 本元素后面的元素或节点组成的列表
+        """
+        return super().afters(filter_loc, timeout)
+
     def attr(self, attr: str) -> Union[str, None]:
         """返回attribute属性值                           \n
         :param attr: 属性名

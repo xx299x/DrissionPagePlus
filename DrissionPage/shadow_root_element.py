@@ -72,7 +72,9 @@ class ShadowRootElement(BaseElement):
 
         return self.parent_ele.ele(loc, timeout=0)
 
-    def next(self, index: int = 1, filter_loc: Union[tuple, str] = '') -> Union[DriverElement, None]:
+    def next(self,
+             index: int = 1,
+             filter_loc: Union[tuple, str] = '') -> Union[DriverElement, str, None]:
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -81,7 +83,28 @@ class ShadowRootElement(BaseElement):
         nodes = self.nexts(filter_loc=filter_loc)
         return nodes[index - 1] if nodes else None
 
-    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[DriverElement]:
+    def before(self,
+               index: int = 1,
+               filter_loc: Union[tuple, str] = '') -> Union[DriverElement, str, None]:
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素前面的某个元素或节点
+        """
+        nodes = self.befores(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
+
+    def after(self, index: int = 1,
+              filter_loc: Union[tuple, str] = '') -> Union[DriverElement, str, None]:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素后面的某个元素或节点
+        """
+        nodes = self.afters(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
+
+    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[Union[DriverElement, str]]:
         """返回后面所有兄弟元素或节点组成的列表        \n
         :param filter_loc: 用于筛选元素的查询语法
         :return: DriverElement对象组成的列表
@@ -93,6 +116,29 @@ class ShadowRootElement(BaseElement):
         loc = loc[1].lstrip('./')
         xpath = f'xpath:./{loc}'
         return self.parent_ele.eles(xpath, timeout=0.1)
+
+    def befores(self, filter_loc: Union[tuple, str] = '') -> List[Union[DriverElement, str]]:
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素前面的元素或节点组成的列表
+        """
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./preceding::{loc}'
+        return self.parent_ele.eles(xpath, timeout=0.1)
+
+    def afters(self, filter_loc: Union[tuple, str] = '') -> List[Union[DriverElement, str]]:
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素后面的元素或节点组成的列表
+        """
+        eles1 = self.nexts(filter_loc)
+        loc = get_loc(filter_loc, True)[1].lstrip('./')
+        xpath = f'xpath:./following::{loc}'
+        return eles1 + self.parent_ele.eles(xpath, timeout=0.1)
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
