@@ -385,6 +385,13 @@ class DriverPage(BasePage):
         tab = self.driver.window_handles[tab] if isinstance(tab, int) else tab
         self.driver.switch_to.window(tab)
 
+    def set_ua_to_tab(self, ua: str) -> None:
+        """为当前tab设置user agent，只在当前tab有效          \n
+        :param ua: user agent字符串
+        :return: None
+        """
+        self.driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": ua})
+
     def screenshot(self, path: str, filename: str = None) -> str:
         """截取页面可见范围截图                                  \n
         :param path: 保存路径

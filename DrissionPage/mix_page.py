@@ -37,7 +37,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                  session_options: Union[dict, SessionOptions, bool] = None) -> None:
         """初始化函数                                                                                            \n
         :param mode: 'd' 或 's'，即driver模式和session模式
-        :param drission: Drission对象，不传入时会自动创建
+        :param drission: Drission对象，不传入时会自动创建，有传入时driver_options和session_options参数无效
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
         :param driver_options: 浏览器设置，没传入drission参数时会用这个设置新建Drission对象中的WebDriver对象，传入False则不创建
         :param session_options: requests设置，没传入drission参数时会用这个设置新建Drission对象中的Session对象，传入False则不创建
