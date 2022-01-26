@@ -293,7 +293,7 @@ class SessionPage(BasePage):
                 kwargs['timeout'] = 20
 
             # 生成临时的response
-            mode = 'post' if post_data is not None else 'get'
+            mode = 'post' if post_data is not None or kwargs.get('json', None) else 'get'
             r, info = self._make_response(file_url, mode=mode, data=post_data, show_errmsg=show_errmsg, **kwargs)
 
             if r is None:
