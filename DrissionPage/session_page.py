@@ -201,7 +201,7 @@ class SessionPage(BasePage):
                 print(f'重试 {to_url}')
 
         if not r and show_errmsg:
-            raise err if err is not None else ConnectionError('连接异常。')
+            raise err if err is not None else ConnectionError(f'连接异常。{r.status_code if r is not None else ""}')
 
         return r
 
@@ -282,7 +282,14 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组，跳过时第一位为None
         """
-        if file_exists == 'skip' and Path(f'{goal_path}{sep}{rename}').exists():
+        goal_Path = Path(goal_path)
+
+        # 按windows规则去除路径中的非法字符
+        goal_path = goal_Path.anchor + sub(r'[*:|<>?"]', '', goal_path.lstrip(goal_Path.anchor)).strip()
+        goal_path = Path(goal_path).absolute()
+        goal_path.mkdir(parents=True, exist_ok=True)
+
+        if file_exists == 'skip' and rename and (goal_path / rename).exists():
             if show_msg:
                 print(f'{file_url}\n{goal_path}{sep}{rename}\n存在同名文件，已跳过。\n')
             return None, '已跳过，因存在同名文件。'
@@ -322,17 +329,12 @@ class SessionPage(BasePage):
             full_name = make_valid_name(full_name)
 
             # -------------------生成路径-------------------
-            goal_Path = Path(goal_path)
+            full_path = goal_path / full_name
             skip = False
-
-            # 按windows规则去除路径中的非法字符
-            goal = goal_Path.anchor + sub(r'[*:|<>?"]', '', goal_path.lstrip(goal_Path.anchor)).strip()
-            Path(goal).absolute().mkdir(parents=True, exist_ok=True)
-            full_path = Path(f'{goal}{sep}{full_name}')
 
             if full_path.exists():
                 if file_exists == 'rename':
-                    full_path = get_usable_path(f'{goal}{sep}{full_name}')
+                    full_path = get_usable_path(full_path)
                     full_name = full_path.name
 
                 elif file_exists == 'skip':
@@ -348,7 +350,7 @@ class SessionPage(BasePage):
             if show_msg:
                 print(file_url)
                 print(full_name if file_name == full_name else f'{file_name} -> {full_name}')
-                print(f'正在下载到：{goal}')
+                print(f'正在下载到：{goal_path}')
                 if skip:
                     print('存在同名文件，已跳过。\n')
 
@@ -398,7 +400,7 @@ class SessionPage(BasePage):
             if show_msg:
                 print(info, '\n')
 
-            info = f'{goal}{sep}{full_name}' if download_status else info
+            info = str(full_path) if download_status else info
             return download_status, info
 
         retry_times = retry or self.retry_times
