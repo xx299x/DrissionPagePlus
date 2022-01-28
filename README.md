@@ -16,14 +16,14 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 
 ## 📕 背景
 
-requests 爬虫面对要登录的网站时，要分析数据包、JS 源码，构造复杂的请求，往往还要应付验证码、JS 混淆、签名参数等反爬手段，门槛较高。若数据是由 JS 计算生成的，还须重现计算过程，体验不好，开发效率不高。  
+用 requests 做数据采集面对要登录的网站时，要分析数据包、JS 源码，构造复杂的请求，往往还要应付验证码、JS 混淆、签名参数等反爬手段，门槛较高。若数据是由 JS 计算生成的，还须重现计算过程，体验不好，开发效率不高。  
 使用 selenium，可以很大程度上绕过这些坑，但 selenium 效率不高。因此，这个库将 selenium 和 requests 合而为一，不同须要时切换相应模式，并提供一种人性化的使用方法，提高开发和运行效率。  
 除了合并两者，本库还以网页为单位封装了常用功能，简化了 selenium 的操作和语句，在用于网页自动化操作时，减少考虑细节，专注功能实现，使用更方便。  
 一切从简，尽量提供简单直接的使用方法，对新手更友好。
 
 # 💡 特性和亮点
 
-作者有多年自动化和爬虫经验，踩过无数坑，总结出的经验全写到这个库里了。内置了 N 多实用功能，对常用功能作了整合和优化。
+作者踩过无数坑，总结出的经验全写到这个库里了。内置了 N 多实用功能，对常用功能作了整合和优化。
 
 ## 🎉 特性
 
@@ -91,6 +91,7 @@ page.to_tab(0)
 ```python
 # 使用 selenium：
 from selenium.webdriver.support.select import Select
+
 select_element = Select(element)
 select_element.select_by_visible_text('text')
 
@@ -133,7 +134,8 @@ set_headless()
 
 ```python
 # 使用 selenium：
-text = webdriver.execute_script('return window.getComputedStyle(arguments[0], "::after").getPropertyValue("content");', element)
+text = webdriver.execute_script('return window.getComputedStyle(arguments[0], "::after").getPropertyValue("content");',
+                                element)
 
 # 使用 DrissionPage：
 text = element.pseudo_after
@@ -142,6 +144,7 @@ text = element.pseudo_after
 🌿 shadow-root 操作
 
 selenium 新增了`ShadowRoot`，但功能实在是太少。
+
 ```python
 # 使用 selenium：
 shadow_element = webdriver.execute_script('return arguments[0].shadowRoot', element)
@@ -188,8 +191,10 @@ url = 'https://baike.baidu.com/item/python'
 
 # 使用 requests：
 from lxml import etree
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36'}
-response = requests.get(url, headers = headers)
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36'}
+response = requests.get(url, headers=headers)
 html = etree.HTML(response.text)
 element = html.xpath('//h1')[0]
 title = element.text
@@ -274,7 +279,9 @@ Git 命令学习
 [点击查看版本历史](http://g1879.gitee.io/drissionpage/#/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2)
 
 # 🖐🏻 免责声明
-请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
+
+请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage
+即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
 
 # ☕ 请我喝咖啡
 
