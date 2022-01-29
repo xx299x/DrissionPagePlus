@@ -3,3 +3,4 @@ requests
 tldextract
 lxml
 cssselect
+DownloadKit

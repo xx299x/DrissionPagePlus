@@ -578,45 +578,6 @@ class DriverElement(DrissionElement):
         """
         return self.inner_ele.parent.execute_script(script, self.inner_ele, *args)
 
-    def scroll_to(self, mode: str = 'bottom', pixel: int = 300) -> None:
-        """按参数指示方式滚动元素                                                                                    \n
-        :param mode: 可选滚动方向：'top', 'bottom', 'half', 'rightmost', 'leftmost', 'up', 'down', 'left', 'right'
-        :param pixel: 滚动的像素
-        :return: None
-        """
-        from warnings import warn
-        warn("此方法下个版本将停用，请用scroll属性代替。", DeprecationWarning, stacklevel=2)
-        if mode == 'top':
-            self.scroll.to_top()
-
-        elif mode == 'bottom':
-            self.scroll.to_bottom()
-
-        elif mode == 'half':
-            self.scroll.to_half()
-
-        elif mode == 'rightmost':
-            self.scroll.to_rightmost()
-
-        elif mode == 'leftmost':
-            self.scroll.to_leftmost()
-
-        elif mode == 'up':
-            self.scroll.up(pixel)
-
-        elif mode == 'down':
-            self.scroll.down(pixel)
-
-        elif mode == 'left':
-            self.scroll.left(pixel)
-
-        elif mode == 'right':
-            self.scroll.right(pixel)
-
-        else:
-            raise ValueError("mode参数只能是'top', 'bottom', 'half', 'rightmost', "
-                             "'leftmost', 'up', 'down', 'left', 'right'。")
-
     def submit(self) -> Union[bool, None]:
         """提交表单"""
         try:
