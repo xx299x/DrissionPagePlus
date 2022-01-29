@@ -6,6 +6,7 @@
 """
 from typing import Union, List, Tuple
 
+from DownloadKit import DownloadKit
 from requests import Response, Session
 from requests.cookies import RequestsCookieJar
 from selenium.webdriver.chrome.options import Options
@@ -52,6 +53,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._wait_object = None
         self._response = None
         self._scroll = None
+        self._download_kit = None
 
         if self._mode == 'd':
             try:
@@ -372,38 +374,12 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self.change_mode('s', go=False)
         return super().post(url, data, go_anyway, show_errmsg, retry, interval, **kwargs)
 
-    def download(self,
-                 file_url: str,
-                 goal_path: str,
-                 rename: str = None,
-                 file_exists: str = 'rename',
-                 post_data: Union[str, dict] = None,
-                 show_msg: bool = True,
-                 show_errmsg: bool = False,
-                 retry: int = None,
-                 interval: float = None,
-                 **kwargs) -> Tuple[bool, str]:
-        """下载一个文件                                                                      \n
-        d模式下下载前先同步cookies                                                            \n
-        :param file_url: 文件url
-        :param goal_path: 存放路径
-        :param rename: 重命名文件，可不写扩展名
-        :param file_exists: 若存在同名文件，可选择 'rename', 'overwrite', 'skip' 方式处理
-        :param post_data: post方式的数据，这个参数不为None时自动转成post方式
-        :param show_msg: 是否显示下载信息
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔时间
-        :param kwargs: 连接参数
-        :return: 下载是否成功（bool）和状态信息（成功时信息为文件路径）的元组，跳过时第一位返回None
-        """
+    @property
+    def download(self) -> DownloadKit:
         if self.mode == 'd':
             self.cookies_to_session()
+        return super().download
 
-        return super().download(file_url, goal_path, rename, file_exists, post_data, show_msg, show_errmsg, retry,
-                                interval, **kwargs)
-
-    # ----------------重写DriverPage的函数-----------------------
     def chrome_downloading(self, path: str = None) -> list:
         """返回浏览器下载中的文件列表                             \n
         :param path: 下载文件夹路径，默认读取配置信息
