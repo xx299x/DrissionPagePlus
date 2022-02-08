@@ -356,7 +356,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def post(self,
              url: str,
              data: Union[dict, str] = None,
-             go_anyway: bool = False,
+             go_anyway: bool = True,
              show_errmsg: bool = False,
              retry: int = None,
              interval: float = None,
