@@ -113,7 +113,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def get(self,
             url: str,
-            go_anyway=True,
+            go_anyway: bool = False,
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None,

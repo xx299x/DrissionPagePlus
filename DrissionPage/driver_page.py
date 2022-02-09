@@ -329,6 +329,14 @@ class DriverPage(BasePage):
         """
         return self.driver.execute_async_script(script, *args)
 
+    def run_cdp(self, cmd: str, cmd_args: dict) -> Any:
+        """执行Chrome DevTools Protocol语句
+        :param cmd: 协议项目
+        :param cmd_args: 参数
+        :return: 执行的结果
+        """
+        return self.driver.execute_cdp_cmd(cmd, cmd_args)
+
     def create_tab(self, url: str = '') -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
