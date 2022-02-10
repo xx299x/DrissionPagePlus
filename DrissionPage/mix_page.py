@@ -113,24 +113,22 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def get(self,
             url: str,
-            go_anyway: bool = False,
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None,
             **kwargs) -> Union[bool, None]:
         """跳转到一个url                                         \n
         :param url: 目标url
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
         :param kwargs: 连接参数，s模式专用
-        :return: url是否可用
+        :return: url是否可用，d模式返回None时表示不确定
         """
         if self._mode == 'd':
-            return super(SessionPage, self).get(url, go_anyway, show_errmsg, retry, interval)
+            return super(SessionPage, self).get(url, show_errmsg, retry, interval)
         elif self._mode == 's':
-            return super().get(url, go_anyway, show_errmsg, retry, interval, **kwargs)
+            return super().get(url, show_errmsg, retry, interval, **kwargs)
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
@@ -220,7 +218,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :param interval: 重试间隔（秒）
         :param show_errmsg: 是否抛出异常
         :param kwargs: 连接参数
-        :return: s模式为Response对象，d模式为bool
+        :return: s模式为Response对象，d模式为bool或None
         """
         if self._mode == 'd':
             return super(SessionPage, self)._try_to_connect(to_url, times, interval, show_errmsg)
@@ -356,15 +354,13 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def post(self,
              url: str,
              data: Union[dict, str] = None,
-             go_anyway: bool = True,
              show_errmsg: bool = False,
              retry: int = None,
              interval: float = None,
-             **kwargs) -> Union[bool, None]:
+             **kwargs) -> bool:
         """用post方式跳转到url，会切换到s模式                        \n
         :param url: 目标url
         :param data: post方式时提交的数据
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
@@ -372,7 +368,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :return: url是否可用
         """
         self.change_mode('s', go=False)
-        return super().post(url, data, go_anyway, show_errmsg, retry, interval, **kwargs)
+        return super().post(url, data, show_errmsg, retry, interval, **kwargs)
 
     @property
     def download(self) -> DownloadKit:

@@ -59,14 +59,12 @@ class SessionPage(BasePage):
 
     def get(self,
             url: str,
-            go_anyway: bool = False,
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None,
-            **kwargs) -> Union[bool, None]:
+            **kwargs) -> bool:
         """用get方式跳转到url                                 \n
         :param url: 目标url
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
@@ -74,11 +72,11 @@ class SessionPage(BasePage):
         :return: url是否可用
         """
         to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = int(retry) if retry is not None else int(self.retry_times)
-        interval = int(interval) if interval is not None else int(self.retry_interval)
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
 
-        if not url or (not go_anyway and self.url == to_url):
-            return
+        if not url:
+            raise ValueError('没有传入url。')
 
         self._url = to_url
         self._response = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg, **kwargs)
@@ -198,7 +196,8 @@ class SessionPage(BasePage):
 
             if _ < times:
                 sleep(interval)
-                print(f'重试 {to_url}')
+                if show_errmsg:
+                    print(f'重试 {to_url}')
 
         if not r and show_errmsg:
             raise err if err is not None else ConnectionError(f'连接异常。{r.status_code if r is not None else ""}')
@@ -226,15 +225,13 @@ class SessionPage(BasePage):
     def post(self,
              url: str,
              data: Union[dict, str] = None,
-             go_anyway: bool = True,
              show_errmsg: bool = False,
              retry: int = None,
              interval: float = None,
-             **kwargs) -> Union[bool, None]:
+             **kwargs) -> bool:
         """用post方式跳转到url                                 \n
         :param url: 目标url
         :param data: 提交的数据
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
@@ -242,11 +239,11 @@ class SessionPage(BasePage):
         :return: url是否可用
         """
         to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = int(retry) if retry is not None else int(self.retry_times)
-        interval = int(interval) if interval is not None else int(self.retry_interval)
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
 
-        if not url or (not go_anyway and self._url == to_url):
-            return
+        if not url:
+            raise ValueError('没有传入url。')
 
         self._url = to_url
         self._response = self._try_to_connect(to_url, retry, interval, 'post', data, show_errmsg, **kwargs)

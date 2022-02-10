@@ -64,24 +64,22 @@ class DriverPage(BasePage):
 
     def get(self,
             url: str,
-            go_anyway: bool = False,
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None) -> Union[None, bool]:
         """访问url                                            \n
         :param url: 目标url
-        :param go_anyway: 若目标url与当前url一致，是否强制跳转
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
-        :return: 目标url是否可用
+        :return: 目标url是否可用，返回None表示不确定
         """
         to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = int(retry) if retry is not None else int(self.retry_times)
-        interval = int(interval) if interval is not None else int(self.retry_interval)
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
 
-        if not url or (not go_anyway and self.url == to_url):
-            return
+        if not url:
+            raise ValueError('没有传入url。')
 
         self._url = to_url
         self._url_available = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg)
@@ -178,13 +176,13 @@ class DriverPage(BasePage):
                         to_url: str,
                         times: int = 0,
                         interval: float = 1,
-                        show_errmsg: bool = False):
+                        show_errmsg: bool = False) -> Union[bool, None]:
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
         :param show_errmsg: 是否抛出异常
-        :return: 是否成功
+        :return: 是否成功，返回None表示不确定
         """
         err = None
         is_ok = False
@@ -204,7 +202,8 @@ class DriverPage(BasePage):
 
             if _ < times:
                 sleep(interval)
-                print(f'重试 {to_url}')
+                if show_errmsg:
+                    print(f'重试 {to_url}')
 
         if is_ok is False and show_errmsg:
             raise err if err is not None else ConnectionError('连接异常。')
