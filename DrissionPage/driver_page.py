@@ -353,7 +353,7 @@ class DriverPage(BasePage):
 
     def close_tabs(self, num_or_handles: Union[int, str, list, tuple] = None) -> None:
         """关闭传入的标签页，默认关闭当前页。可传入多个                                                     \n
-        注意：当程序使用的是截关的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                 \n
         :param num_or_handles:要关闭的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时关闭当前页
         :return: None
         """
@@ -366,12 +366,12 @@ class DriverPage(BasePage):
 
     def close_other_tabs(self, num_or_handles: Union[int, str, list, tuple] = None) -> None:
         """关闭传入的标签页以外标签页，默认保留当前页。可传入多个                                              \n
-        注意：当程序使用的是截关的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                   \n
         :param num_or_handles: 要保留的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时保存当前页
         :return: None
         """
         all_tabs = self.driver.window_handles
-        reserve_tabs = (self.current_tab_handle,) if num_or_handles is None else _get_handles(all_tabs, num_or_handles)
+        reserve_tabs = {self.current_tab_handle} if num_or_handles is None else _get_handles(all_tabs, num_or_handles)
 
         for i in set(all_tabs) - reserve_tabs:
             self.driver.switch_to.window(i)
@@ -381,6 +381,7 @@ class DriverPage(BasePage):
 
     def to_tab(self, num_or_handle: Union[int, str] = 0) -> None:
         """跳转到标签页                                                         \n
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致         \n
         :param num_or_handle: 标签页序号或handle字符串，序号第一个为0，最后为-1
         :return: None
         """
