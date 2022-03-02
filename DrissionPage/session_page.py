@@ -219,6 +219,8 @@ class SessionPage(BasePage):
     def download(self) -> DownloadKit:
         if self._download_kit is None:
             self._download_kit = DownloadKit(session=self.session, timeout=self.timeout)
+            self._download_kit.retry = self.retry_times
+            self._download_kit.interval = self.retry_interval
 
         return self._download_kit
 

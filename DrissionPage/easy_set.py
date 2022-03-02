@@ -275,8 +275,8 @@ def _get_chrome_path(ini_path: str = None,
         import winreg
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 # r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
-                                 r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon\version',
+                                 r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                                 # r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon\version',
                                  reserved=0, access=winreg.KEY_READ)
             k = winreg.EnumValue(key, 0)
             winreg.CloseKey(key)
