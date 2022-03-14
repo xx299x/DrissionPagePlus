@@ -688,7 +688,7 @@ class DriverElement(DrissionElement):
         except Exception:
             return False
 
-    def drag(self, x: int, y: int, speed: int = 40, shake: bool = True) -> bool:
+    def drag(self, x: int, y: int, speed: int = 40, shake: bool = True) -> None:
         """拖拽当前元素到相对位置                   \n
         :param x: x变化值
         :param y: y变化值
@@ -698,12 +698,12 @@ class DriverElement(DrissionElement):
         """
         x += self.location['x'] + self.size['width'] // 2
         y += self.location['y'] + self.size['height'] // 2
-        return self.drag_to((x, y), speed, shake)
+        self.drag_to((x, y), speed, shake)
 
     def drag_to(self,
                 ele_or_loc: Union[tuple, WebElement, DrissionElement],
                 speed: int = 40,
-                shake: bool = True) -> bool:
+                shake: bool = True) -> None:
         """拖拽当前元素，目标为另一个元素或坐标元组                     \n
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
@@ -733,7 +733,6 @@ class DriverElement(DrissionElement):
         from random import randint
         actions = ActionChains(self.page.driver)
         actions.click_and_hold(self.inner_ele)
-        loc1 = self.location
 
         # 逐个访问要经过的点
         for x, y in points:
@@ -743,8 +742,6 @@ class DriverElement(DrissionElement):
             actions.move_by_offset(x - current_x, y - current_y)
             current_x, current_y = x, y
         actions.release().perform()
-
-        return False if self.location == loc1 else True
 
     def hover(self, x: int = None, y: int = None) -> None:
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
