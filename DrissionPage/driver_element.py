@@ -586,12 +586,12 @@ class DriverElement(DrissionElement):
         except Exception:
             pass
 
-    def clear(self, insure_clear: bool = True) -> Union[None, bool]:
+    def clear(self, insure: bool = True) -> Union[None, bool]:
         """清空元素文本                                    \n
-        :param insure_clear: 是否确保清空
+        :param insure: 是否确保清空
         :return: 是否清空成功，不能清空的元素返回None
         """
-        if insure_clear:
+        if insure:
             return self.input('')
 
         else:
@@ -694,7 +694,7 @@ class DriverElement(DrissionElement):
         :param y: y变化值
         :param speed: 拖动的速度，传入0即瞬间到达
         :param shake: 是否随机抖动
-        :return: 是否推拽成功
+        :return: None
         """
         x += self.location['x'] + self.size['width'] // 2
         y += self.location['y'] + self.size['height'] // 2
@@ -708,7 +708,7 @@ class DriverElement(DrissionElement):
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
         :param shake: 是否随机抖动
-        :return: 是否拖拽成功
+        :return: None
         """
         # x, y：目标点坐标
         if isinstance(ele_or_loc, (DriverElement, WebElement)):

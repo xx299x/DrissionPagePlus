@@ -462,10 +462,10 @@ class DriverPage(BasePage):
         """
         return glob(f'{download_path}{sep}*.crdownload')
 
-    def process_alert(self, mode: str = 'ok', text: str = None, timeout: float = None) -> Union[str, None]:
+    def process_alert(self, ok: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
         """处理提示框                                                            \n
-        :param mode: 'ok' 或 'cancel'，若输入其它值，不会按按钮但依然返回文本值
-        :param text: 处理prompt提示框时可输入文本
+        :param ok: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
+        :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间
         :return: 提示框内容文本，未等到提示框则返回None
         """
@@ -479,23 +479,23 @@ class DriverPage(BasePage):
         timeout = timeout if timeout is not None else self.timeout
         t1 = perf_counter()
         alert = do_it()
-        while not alert and perf_counter() - t1 <= timeout:
+        while alert is False and perf_counter() - t1 <= timeout:
             alert = do_it()
 
-        if not alert:
+        if alert is False:
             return None
 
-        if text:
-            alert.send_keys(text)
+        res_text = alert.text
 
-        text = alert.text
+        if send is not None:
+            alert.send_keys(send)
 
-        if mode == 'cancel':
-            alert.dismiss()
-        elif mode == 'ok':
+        if ok is True:
             alert.accept()
+        elif ok is False:
+            alert.dismiss()
 
-        return text
+        return res_text
 
 
 class ToFrame(object):
