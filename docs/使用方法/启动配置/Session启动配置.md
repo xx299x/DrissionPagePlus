@@ -13,8 +13,6 @@
 - read_file：是否从默认 ini 文件中读取配置信息
 - ini_path：ini 文件路径，为`None`则读取默认 ini 文件
 
-
-
 ## headers
 
 该属性返回`headers`设置信息，可传入字典赋值。
@@ -162,4 +160,3 @@ so.set_a_header('Connection', 'keep-alive')
 # 以该配置创建页面对象
 page = MixPage(mode='s', session_options=so)
 ```
-
