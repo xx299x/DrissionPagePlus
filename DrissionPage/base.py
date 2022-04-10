@@ -350,11 +350,3 @@ class BasePage(BaseParser):
             retry: int = None,
             interval: float = None):
         pass
-
-    @abstractmethod
-    def _try_to_connect(self,
-                        to_url: str,
-                        times: int = 0,
-                        interval: float = 1,
-                        show_errmsg: bool = False, ):
-        pass

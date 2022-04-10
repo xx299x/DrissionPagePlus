@@ -9,6 +9,7 @@ from typing import Union
 
 from requests import Session
 from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
@@ -316,12 +317,13 @@ class Drission(object):
         if self._session is None:
             self._session = Session()
 
-        attrs = ['headers', 'auth', 'proxies', 'hooks', 'params', 'verify',
-                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
-
+        if 'headers' in data:
+            self._session.headers = CaseInsensitiveDict(data['headers'])
         if 'cookies' in data:
             self.set_cookies(data['cookies'], set_session=True)
 
+        attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
+                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
         for i in attrs:
             if i in data:
                 self._session.__setattr__(i, data[i])
