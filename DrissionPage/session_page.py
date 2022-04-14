@@ -70,31 +70,7 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = retry if retry is not None else self.retry_times
-        interval = interval if interval is not None else self.retry_interval
-
-        if not url:
-            raise ValueError('没有传入url。')
-
-        self._url = to_url
-        self._response, info = self._make_response(to_url, 'get', retry=retry, interval=interval,
-                                                   show_errmsg=show_errmsg, **kwargs)
-
-        if self._response is None:
-            self._url_available = False
-
-        else:
-            if self._response.ok:
-                self._url_available = True
-
-            else:
-                if show_errmsg:
-                    raise ConnectionError(f'{to_url}\n连接状态码：{self._response.status_code}.')
-
-                self._url_available = False
-
-        return self._url_available
+        return self._connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
@@ -163,47 +139,6 @@ class SessionPage(BasePage):
         else:
             return [_cookie_to_dict(cookie) for cookie in cookies]
 
-    # def _try_to_connect(self,
-    #                     to_url: str,
-    #                     times: int = 0,
-    #                     interval: float = 1,
-    #                     mode: str = 'get',
-    #                     data: Union[dict, str] = None,
-    #                     show_errmsg: bool = False,
-    #                     **kwargs) -> Union[Response, None]:
-    #     """尝试连接，重试若干次                            \n
-    #     :param to_url: 要访问的url
-    #     :param times: 重试次数
-    #     :param interval: 重试间隔（秒）
-    #     :param mode: 连接方式，'get' 或 'post'
-    #     :param data: post方式提交的数据
-    #     :param show_errmsg: 是否抛出异常
-    #     :param kwargs: 连接参数
-    #     :return: HTMLResponse对象
-    #     """
-    #     err = None
-    #     r = None
-    #
-    #     for _ in range(times + 1):
-    #         try:
-    #             r = self._make_response(to_url, mode=mode, data=data, show_errmsg=True, **kwargs)[0]
-    #         except Exception as e:
-    #             err = e
-    #             r = None
-    #
-    #         if r and (r.content != b'' or r.status_code in (403, 404)):
-    #             break
-    #
-    #         if _ < times:
-    #             sleep(interval)
-    #             if show_errmsg:
-    #                 print(f'重试 {to_url}')
-    #
-    #     if not r and show_errmsg:
-    #         raise err if err is not None else ConnectionError(f'连接异常。{r.status_code if r is not None else ""}')
-    #
-    #     return r
-
     # ----------------session独有属性和方法-----------------------
     @property
     def session(self) -> Session:
@@ -238,6 +173,26 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
+        return self._connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
+
+    def _connect(self,
+                 url: str,
+                 mode: str,
+                 data: Union[dict, str] = None,
+                 show_errmsg: bool = False,
+                 retry: int = None,
+                 interval: float = None,
+                 **kwargs) -> bool:
+        """执行get或post连接                                 \n
+        :param url: 目标url
+        :param mode: 'get' 或 'post'
+        :param data: 提交的数据
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
         to_url = quote(url, safe='/:&?=%;#@+!')
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
@@ -246,8 +201,7 @@ class SessionPage(BasePage):
             raise ValueError('没有传入url。')
 
         self._url = to_url
-        # self._response = self._try_to_connect(to_url, retry, interval, 'post', data, show_errmsg, **kwargs)
-        self._response, info = self._make_response(to_url, 'post', data, retry, interval, show_errmsg, **kwargs)
+        self._response, info = self._make_response(to_url, mode, data, retry, interval, show_errmsg, **kwargs)
 
         if self._response is None:
             self._url_available = False
@@ -258,7 +212,7 @@ class SessionPage(BasePage):
 
             else:
                 if show_errmsg:
-                    raise ConnectionError(f'连接状态码：{self._response.status_code}.')
+                    raise ConnectionError(f'状态码：{self._response.status_code}.')
                 self._url_available = False
 
         return self._url_available
@@ -271,9 +225,9 @@ class SessionPage(BasePage):
                        interval: float = None,
                        show_errmsg: bool = False,
                        **kwargs) -> tuple:
-        """生成response对象                     \n
+        """生成Response对象                                                    \n
         :param url: 目标url
-        :param mode: 'get', 'post' 中选择
+        :param mode: 'get' 或 'post'
         :param data: post方式要提交的数据
         :param show_errmsg: 是否显示和抛出异常
         :param kwargs: 其它参数
@@ -297,23 +251,21 @@ class SessionPage(BasePage):
         if not _check_headers(kwargs, self.session.headers, 'timeout'):
             kwargs['timeout'] = self.timeout
 
-        r = None
+        r = err = None
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         for i in range(retry + 1):
-            e = None
             try:
                 if mode == 'get':
                     r = self.session.get(url, **kwargs)
                 elif mode == 'post':
                     r = self.session.post(url, data=data, **kwargs)
-                raise ConnectionError
 
                 if r:
                     return _set_charset(r), 'Success'
 
             except Exception as e:
-                pass
+                err = e
 
             # if r and (r.content != b'' or r.status_code in (403, 404)):
             #     break
@@ -325,11 +277,11 @@ class SessionPage(BasePage):
 
         if r is None:
             if show_errmsg:
-                if e:
-                    raise e
+                if err:
+                    raise err
                 else:
                     raise ConnectionError('连接失败')
-            return None, '连接失败' if e is None else e
+            return None, '连接失败' if err is None else err
 
         if not r.ok:
             if show_errmsg:
