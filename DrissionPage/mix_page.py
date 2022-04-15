@@ -315,7 +315,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         # 使用requests访问url并判断可用性
         if by_requests:
             self.cookies_to_session()
-            r = self._make_response(self.url)[0]
+            r = self._make_response(self.url, retry=0)[0]
             return r.ok if r else False
 
     def close_driver(self) -> None:

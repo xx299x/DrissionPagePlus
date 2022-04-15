@@ -7,7 +7,7 @@
 from re import search
 from time import sleep
 from typing import Union, List, Tuple
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse
 
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
@@ -70,7 +70,7 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        return self._connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
+        return self._s_connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
@@ -173,16 +173,16 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        return self._connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
+        return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
 
-    def _connect(self,
-                 url: str,
-                 mode: str,
-                 data: Union[dict, str] = None,
-                 show_errmsg: bool = False,
-                 retry: int = None,
-                 interval: float = None,
-                 **kwargs) -> bool:
+    def _s_connect(self,
+                   url: str,
+                   mode: str,
+                   data: Union[dict, str] = None,
+                   show_errmsg: bool = False,
+                   retry: int = None,
+                   interval: float = None,
+                   **kwargs) -> bool:
         """执行get或post连接                                 \n
         :param url: 目标url
         :param mode: 'get' 或 'post'
@@ -193,15 +193,8 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = retry if retry is not None else self.retry_times
-        interval = interval if interval is not None else self.retry_interval
-
-        if not url:
-            raise ValueError('没有传入url。')
-
-        self._url = to_url
-        self._response, info = self._make_response(to_url, mode, data, retry, interval, show_errmsg, **kwargs)
+        retry, interval = self._before_connect(url, retry, interval)
+        self._response, info = self._make_response(self._url, mode, data, retry, interval, show_errmsg, **kwargs)
 
         if self._response is None:
             self._url_available = False
@@ -267,7 +260,7 @@ class SessionPage(BasePage):
             except Exception as e:
                 err = e
 
-            # if r and (r.content != b'' or r.status_code in (403, 404)):
+            # if r and r.status_code in (403, 404):
             #     break
 
             if i < retry:

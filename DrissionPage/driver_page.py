@@ -9,7 +9,6 @@ from os import sep
 from pathlib import Path
 from time import sleep, perf_counter
 from typing import Union, List, Any, Tuple
-from urllib.parse import quote
 
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -75,15 +74,8 @@ class DriverPage(BasePage):
         :param interval: 重试间隔（秒）
         :return: 目标url是否可用，返回None表示不确定
         """
-        to_url = quote(url, safe='/:&?=%;#@+!')
-        retry = retry if retry is not None else self.retry_times
-        interval = interval if interval is not None else self.retry_interval
-
-        if not url:
-            raise ValueError('没有传入url。')
-
-        self._url = to_url
-        self._url_available = self._try_to_connect(to_url, times=retry, interval=interval, show_errmsg=show_errmsg)
+        retry, interval = self._before_connect(url, retry, interval)
+        self._url_available = self._d_connect(self._url, times=retry, interval=interval, show_errmsg=show_errmsg)
 
         try:
             self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
@@ -173,11 +165,11 @@ class DriverPage(BasePage):
         self._timeout = second
         self._wait_object = None
 
-    def _try_to_connect(self,
-                        to_url: str,
-                        times: int = 0,
-                        interval: float = 1,
-                        show_errmsg: bool = False) -> Union[bool, None]:
+    def _d_connect(self,
+                   to_url: str,
+                   times: int = 0,
+                   interval: float = 1,
+                   show_errmsg: bool = False) -> Union[bool, None]:
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
