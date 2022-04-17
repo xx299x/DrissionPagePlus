@@ -153,7 +153,7 @@ class SessionPage(BasePage):
     @property
     def download(self) -> DownloadKit:
         if self._download_kit is None:
-            self._download_kit = DownloadKit(session=self, timeout=self.timeout)
+            self._download_kit = DownloadKit(session=self)
 
         return self._download_kit
 
