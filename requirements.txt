@@ -1,4 +1,4 @@
-selenium
+selenium>=4.1
 requests
 tldextract
 lxml

@@ -118,6 +118,11 @@ class Drission(object):
             # -----------创建WebDriver对象-----------
             self._driver = _create_driver(chrome_path, driver_path, self.driver_options)
 
+            # -----------解决接管新版浏览器不能定位到正确的标签页的问题-----------
+            active_tab = self._driver.window_handles[0]
+            if active_tab != self._driver.current_window_handle:
+                self._driver.switch_to.window(active_tab)
+
             # 反反爬设置
             try:
                 self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
@@ -448,7 +453,7 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
 
     # ----------创建浏览器进程----------
     try:
-        debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
+        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
 
         if chrome_path == 'chrome.exe':
             from .common import get_exe_path_from_port

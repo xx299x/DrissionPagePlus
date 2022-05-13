@@ -764,10 +764,7 @@ class DriverElement(DrissionElement):
         :param loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        try:
-            from selenium.webdriver.support.relative_locator import RelativeBy
-        except ImportError:
-            raise ImportError('该方法只支持selenium4及以上版本。')
+        from selenium.webdriver.support.relative_locator import RelativeBy
 
         if isinstance(loc, str):
             loc = str_to_loc(loc)
