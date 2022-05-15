@@ -22,7 +22,8 @@ setup(
         "lxml",
         "tldextract",
         "requests",
-        "DownloadKit"
+        "DownloadKit",
+        "pychrome"
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",
