@@ -169,14 +169,14 @@ class Listener(object):
 
             self._a_response_loaded = True
 
-    def steps(self, response_num: int = 1) -> Iterable:
-        """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）                \n
+    def steps(self, gap: int = 1) -> Iterable:
+        """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）                 \n
         于是可以根据数据包是否加载完成来决定是否翻页，无须从页面dom去判断是否加载完成     \n
-        大大简化代码，提高可靠性                                                 \n
-        eg: for i in listener.steps(2):                                      \n
-                btn.click()                                                  \n
-        :param response_num: 每接收到多少个数据包触发
-        :return: None
+        大大简化代码，提高可靠性                                                   \n
+        eg: for i in listener.steps(2):                                        \n
+                btn.click()                                                    \n
+        :param gap: 每接收到多少个数据包触发
+        :return: 用于在接收到监听目标时触发动作的可迭代对象
         """
         count = 0
         while True:
@@ -186,7 +186,7 @@ class Listener(object):
             if self._a_response_loaded:
                 self._a_response_loaded = False
                 count += 1
-                if count % response_num == 0:
+                if count % gap == 0:
                     yield
 
     def _response_received(self, **kwargs) -> None:
