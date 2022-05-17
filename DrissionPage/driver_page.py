@@ -414,6 +414,10 @@ class DriverPage(BasePage):
         """刷新当前页面"""
         self.driver.refresh()
 
+    def stop_loading(self) -> None:
+        """强制停止页面加载"""
+        self.run_cdp('Page.stopLoading', {})
+
     def back(self) -> None:
         """在浏览历史中后退一步"""
         self.driver.back()

@@ -4,6 +4,7 @@
 """
 from json import loads, JSONDecodeError
 from threading import Thread
+from queue import Queue
 from time import perf_counter, sleep
 from typing import Union, Tuple, List, Iterable
 
@@ -61,10 +62,9 @@ class Listener(object):
         self.targets = True
         self.results = {}
 
-        self._response_count = 0
-        self._requestIds = {}
-        self._a_response_loaded = False
-        self._all_response = []  # 捕捉到的所有数据格式[(target, ResponseData), ...]
+        self._response_count = None
+        self._requestIds = None
+        self._tmp_response = None  # 捕捉到的所有数据格式[(target, ResponseData), ...]
 
     def set_targets(self, targets: Union[str, List[str], Tuple[str], bool, None]) -> None:
         """设置要拦截的目标，可以设置多个                     \n
@@ -102,7 +102,7 @@ class Listener(object):
     def listen(self, targets: Union[str, List[str], Tuple[str], bool, None] = None,
                count: int = None,
                timeout: float = None,
-               asyn: bool = False) -> None:
+               asyn: bool = True) -> None:
         """拦截目标请求，直到超时或达到拦截个数，每次拦截前清空结果                                     \n
         可监听多个目标，请求url包含这些字符串就会被记录                                               \n
         :param targets: 要监听的目标字符串或其组成的列表，True监听所有，None则保留之前的目标不变
@@ -114,13 +114,16 @@ class Listener(object):
         if targets:
             self.set_targets(targets)
 
-        self.tab.Network.responseReceived = self._response_received
-        self.tab.Network.loadingFinished = self._loading_finished
-
         self.tab.start()
         self.tab.Network.enable()
         self.listening = True
+        self.results = {}
         self._response_count = 0
+        self._requestIds = {}
+        self._tmp_response = Queue(maxsize=0)
+
+        self.tab.Network.responseReceived = self._response_received
+        self.tab.Network.loadingFinished = self._loading_finished
 
         if asyn:
             Thread(target=self._do_listen, args=(count, timeout)).start()
@@ -143,26 +146,6 @@ class Listener(object):
         """
         return self.results.get(next(iter(self.results))) if target is None else self.results.get(target, None)
 
-    def _do_listen(self,
-                   count: int = None,
-                   timeout: float = None) -> None:
-        """执行监听                                                         \n
-        :param count: 要记录的个数，到达个数停止监听
-        :param timeout: 监听最长时间，到时间即使未达到记录个数也停止，None为无限长
-        :return: None
-        """
-        t1 = perf_counter()
-        while True:  # 当收到停止信号、到达须获取结果数、到时间就停止
-            if not self.listening \
-                    or (count is not None and self._response_count >= count) \
-                    or (timeout is not None and perf_counter() - t1 >= timeout):
-                break
-            sleep(.5)
-
-        self.tab.Network.responseReceived = self._null_function
-        self.tab.Network.loadingFinished = self._null_function
-        self.listening = False
-
     def steps(self, gap: int = 1) -> Iterable:
         """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）                 \n
         于是可以根据数据包是否加载完成来决定是否翻页，无须从页面dom去判断是否加载完成     \n
@@ -172,16 +155,30 @@ class Listener(object):
         :param gap: 每接收到多少个数据包触发
         :return: 用于在接收到监听目标时触发动作的可迭代对象
         """
-        count = 0
-        while True:
-            if not self.listening:
-                return
+        while self.listening:
+            while self._tmp_response.qsize() >= gap:
+                yield [self._tmp_response.get(False) for _ in range(gap)]
 
-            if self._a_response_loaded:
-                self._a_response_loaded = False
-                count += 1
-                if count % gap == 0:
-                    yield self._all_response[-gap:]
+            sleep(.1)
+
+    def _do_listen(self,
+                   count: int = None,
+                   timeout: float = None) -> None:
+        """执行监听                                                         \n
+        :param count: 要记录的个数，到达个数停止监听
+        :param timeout: 监听最长时间，到时间即使未达到记录个数也停止，None为无限长
+        :return: None
+        """
+        t1 = perf_counter()
+        # 当收到停止信号、到达须获取结果数、到时间就停止
+        while self.listening \
+                and (count is None or self._response_count < count) \
+                and (timeout is None or perf_counter() - t1 < timeout):
+            sleep(.5)
+
+        self.tab.Network.responseReceived = self._null_function
+        self.tab.Network.loadingFinished = self._null_function
+        self.listening = False
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
@@ -192,14 +189,12 @@ class Listener(object):
             response = ResponseData(target['response'], self._get_response_body(requestId))
             target = target['target']
             self._response_count += 1
+            self._tmp_response.put((target, response))
 
             if target in self.results:
                 self.results[target].append(response)
             else:
                 self.results[target] = [response]
-
-            self._all_response.append((target, response))
-            self._a_response_loaded = True
 
     def _response_received(self, **kwargs) -> None:
         """接收到返回信息时处理方法"""
