@@ -58,14 +58,15 @@ class Listener(object):
         self.set_tab(tab_handle)
 
         self.listening = False
-        self.targets = None
+        self.targets = True
         self.results = {}
 
         self._response_count = 0
         self._requestIds = {}
         self._a_response_loaded = False
+        self._all_response = []  # 捕捉到的所有数据格式[(target, ResponseData), ...]
 
-    def set_targets(self, targets: Union[str, List[str], Tuple[str]]) -> None:
+    def set_targets(self, targets: Union[str, List[str], Tuple[str], bool, None]) -> None:
         """设置要拦截的目标，可以设置多个                     \n
         :param targets: 字符串或字符串组成的列表
         :return: None
@@ -74,6 +75,10 @@ class Listener(object):
             self.targets = [targets]
         elif isinstance(targets, tuple):
             self.targets = list(targets)
+        elif isinstance(targets, list) or targets is True:
+            self.targets = targets
+        else:
+            raise TypeError('targets参数只接收字符串、字符串组成的列表、True、None')
 
     def set_tab(self, tab_handle: str) -> None:
         """设置要监听的标签页                                \n
@@ -83,8 +88,10 @@ class Listener(object):
         url = self.page.drission.driver_options.debugger_address
         if not url:
             raise RuntimeError('必须设置debugger_address参数才能使用此功能。')
+
         if tab_handle is None:
             tab_handle = self.page.current_tab_handle
+
         tab_id = tab_handle.split('-')[-1]
 
         tab_data = {"id": tab_id, "type": "page",
@@ -92,18 +99,20 @@ class Listener(object):
 
         self.tab = Tab(**tab_data)
 
-    def listen(self, targets: Union[str, List[str], Tuple[str]] = None,
+    def listen(self, targets: Union[str, List[str], Tuple[str], bool, None] = None,
                count: int = None,
                timeout: float = None,
                asyn: bool = False) -> None:
-        """拦截目标请求，直到超时或达到拦截个数，每次拦截前清空结果                        \n
-        :param targets: 要监听的目标字符串，可输入多个，请求url包含这些字符串就会被记录
+        """拦截目标请求，直到超时或达到拦截个数，每次拦截前清空结果                                     \n
+        可监听多个目标，请求url包含这些字符串就会被记录                                               \n
+        :param targets: 要监听的目标字符串或其组成的列表，True监听所有，None则保留之前的目标不变
         :param count: 要记录的个数，到达个数停止监听
         :param timeout: 监听最长时间，到时间即使未达到记录个数也停止，None为无限长
         :param asyn: 是否异步执行
         :return: None
         """
-        self.set_targets(targets)
+        if targets:
+            self.set_targets(targets)
 
         self.tab.Network.responseReceived = self._response_received
         self.tab.Network.loadingFinished = self._loading_finished
@@ -150,24 +159,9 @@ class Listener(object):
                 break
             sleep(.5)
 
-        self.listening = False
         self.tab.Network.responseReceived = self._null_function
         self.tab.Network.loadingFinished = self._null_function
-
-    def _loading_finished(self, **kwargs):
-        """请求完成时处理方法"""
-        requestId = kwargs['requestId']
-        target = self._requestIds.pop(requestId, None)
-        if target is not None:
-            response = ResponseData(target['response'], self._get_response_body(requestId))
-            target = target['target']
-            if target in self.results:
-                self.results[target].append(response)
-            else:
-                self.results[target] = [response]
-            self._response_count += 1
-
-            self._a_response_loaded = True
+        self.listening = False
 
     def steps(self, gap: int = 1) -> Iterable:
         """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）                 \n
@@ -187,13 +181,35 @@ class Listener(object):
                 self._a_response_loaded = False
                 count += 1
                 if count % gap == 0:
-                    yield
+                    yield self._all_response[-gap:]
+
+    def _loading_finished(self, **kwargs):
+        """请求完成时处理方法"""
+        requestId = kwargs['requestId']
+        target = self._requestIds.pop(requestId, None)
+
+        if target is not None:
+            response = ResponseData(target['response'], self._get_response_body(requestId))
+            target = target['target']
+            self._response_count += 1
+
+            if target in self.results:
+                self.results[target].append(response)
+            else:
+                self.results[target] = [response]
+
+            self._all_response.append((target, response))
+            self._a_response_loaded = True
 
     def _response_received(self, **kwargs) -> None:
         """接收到返回信息时处理方法"""
-        for target in self.targets:
-            if target in kwargs['response']['url']:
-                self._requestIds[kwargs['requestId']] = {'target': target, 'response': kwargs['response']}
+        if self.targets is True:
+            self._requestIds[kwargs['requestId']] = {'target': True, 'response': kwargs['response']}
+
+        else:
+            for target in self.targets:
+                if target in kwargs['response']['url']:
+                    self._requestIds[kwargs['requestId']] = {'target': target, 'response': kwargs['response']}
 
     def _null_function(self, **kwargs) -> None:
         """空方法，用于清除绑定的方法"""
