@@ -49,14 +49,15 @@ class ResponseData(object):
 class Listener(object):
     """浏览器的数据包监听器"""
 
-    def __init__(self, page: MixPage, tab_handle: str = None):
+    def __init__(self,
+                 page_or_url: Union[str, MixPage, None] = None,
+                 tab_handle: str = None):
         """初始化                                                  \n
-        :param page: MixPage对象
+        :param page_or_url: 要MixPage对象
         :param tab_handle: 要监听的标签页的handle，不输入读取当前的
         """
         self.tab = None
-        self.page = page
-        self.set_tab(tab_handle)
+        self.set_tab(page_or_url, tab_handle)
 
         self.listening = False
         self.targets = True
@@ -80,22 +81,28 @@ class Listener(object):
         else:
             raise TypeError('targets参数只接收字符串、字符串组成的列表、True、None')
 
-    def set_tab(self, tab_handle: str) -> None:
+    def set_tab(self,
+                page_or_url: Union[str, MixPage, None] = None,
+                tab_handle: str = None) -> None:
         """设置要监听的标签页                                \n
+        :param page_or_url:
         :param tab_handle: 标签页的handle
         :return: None
         """
-        url = self.page.drission.driver_options.debugger_address
-        if not url:
-            raise RuntimeError('必须设置debugger_address参数才能使用此功能。')
+        if isinstance(page_or_url, MixPage):
+            url = page_or_url.drission.driver_options.debugger_address
+            if url is not None and tab_handle is None:
+                tab_handle = page_or_url.current_tab_handle
+            page_or_url = url
 
-        if tab_handle is None:
-            tab_handle = self.page.current_tab_handle
+        page_or_url = page_or_url or find_chrome()
 
-        tab_id = tab_handle.split('-')[-1]
+        if page_or_url is None:
+            raise RuntimeError('未找到可监听的浏览器。')
 
+        tab_id = tab_handle.split('-')[-1] if tab_handle else get_tab_id(page_or_url)
         tab_data = {"id": tab_id, "type": "page",
-                    "webSocketDebuggerUrl": f"ws://{url}/devtools/page/{tab_id}"}
+                    "webSocketDebuggerUrl": f"ws://{page_or_url}/devtools/page/{tab_id}"}
 
         self.tab = Tab(**tab_data)
 
@@ -216,3 +223,11 @@ class Listener(object):
         :return: 返回内容的文本
         """
         return self.tab.call_method('Network.getResponseBody', requestId=requestId)['body']
+
+
+def find_chrome():
+    return ''
+
+
+def get_tab_id(url):
+    pass
