@@ -685,7 +685,7 @@ class DriverOptions(Options):
         :param user_agent: user agent文本
         :return: 当前对象
         """
-        return self.set_argument('user-agent', user_agent)
+        return self.set_argument('--user-agent', user_agent)
 
     def set_proxy(self, proxy: str) -> 'DriverOptions':
         """设置代理                    \n

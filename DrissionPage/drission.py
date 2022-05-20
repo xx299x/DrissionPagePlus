@@ -443,6 +443,8 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
         if arg.startswith(('--user-data-dir', '--disk-cache-dir')):
             index = arg.find('=') + 1
             args1.append(f'{arg[:index]}"{arg[index:].strip()}"')
+        elif arg.startswith('--user-agent='):
+            args1.append(f'--user-agent="{arg[13:]}"')
         else:
             args1.append(arg)
 

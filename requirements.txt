@@ -4,4 +4,4 @@ tldextract
 lxml
 cssselect
 DownloadKit
-pychrome
+FlowViewer
