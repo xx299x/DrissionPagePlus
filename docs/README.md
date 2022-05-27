@@ -8,7 +8,7 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 可兼顾 selenium 的便利性和 requests 的高效率，  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。
 
-点击打开：📒[使用文档](http://g1879.gitee.io/drissionpage)
+
 
 **交流QQ群：**  897838127
 

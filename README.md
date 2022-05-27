@@ -8,9 +8,9 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 可兼顾 selenium 的便利性和 requests 的高效率，  
 更棒的是，它的使用方式非常简洁和人性化，代码量少，对新手友好。
 
-点击打开：📒[使用文档](http://g1879.gitee.io/drissionpage)
+**使用文档：** 📒[点击打开](http://g1879.gitee.io/drissionpage)
 
-**交流QQ群：**  897838127
+**QQ群：**  897838127
 
 **联系邮箱：**  g1879@qq.com
 
@@ -218,7 +218,7 @@ r = requests.get(url)
 with open(f'{save_path}\\img.png', 'wb') as fd:
    for chunk in r.iter_content():
        fd.write(chunk)
-        
+
 # 使用 DrissionPage：
 page.download(url, save_path, 'img')  # 支持重命名，处理文件名冲突，自动创建目标文件夹
 ```
@@ -288,4 +288,3 @@ Git 命令学习
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
 ![](https://gitee.com/g1879/DrissionPage-demos/raw/master/pics/code.jpg)
-
