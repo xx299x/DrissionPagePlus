@@ -447,7 +447,7 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
 
     # ----------创建浏览器进程----------
     try:
-        debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
+        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
 
         if chrome_path == 'chrome.exe':
             from .common import get_exe_path_from_port
