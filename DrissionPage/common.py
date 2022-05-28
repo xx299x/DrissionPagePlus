@@ -356,20 +356,34 @@ def get_exe_path_from_port(port: Union[str, int]) -> Union[str, None]:
     :return: 可执行文件的绝对路径
     """
     from os import popen
-    from time import perf_counter
-    process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-    t = perf_counter()
 
-    while not process and perf_counter() - t < 10:
-        process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-
-    processid = process.split(' ')[-1]
-
-    if not processid:
+    pid = get_pid_from_port(port)
+    if not pid:
         return
     else:
-        file_lst = popen(f'wmic process where processid={processid} get executablepath').read().split('\n')
+        file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
         return file_lst[2].strip() if len(file_lst) > 2 else None
+
+
+def get_pid_from_port(port: Union[str, int]) -> Union[str, None]:
+    """获取端口号第一条进程的pid           \n
+    :param port: 端口号
+    :return: 进程id
+    """
+    from os import popen
+    from platform import system
+    from time import perf_counter
+
+    if system().lower() != 'windows' or port is None:
+        return
+
+    process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+
+    t = perf_counter()
+    while not process and perf_counter() - t < 5:
+        process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+
+    return process.split(' ')[-1] or None
 
 
 def get_usable_path(path: Union[str, Path]) -> Path:

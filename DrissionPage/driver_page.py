@@ -321,7 +321,7 @@ class DriverPage(BasePage):
         """
         return self.driver.execute_async_script(script, *args)
 
-    def run_cdp(self, cmd: str, cmd_args: dict) -> Any:
+    def run_cdp(self, cmd: str, **cmd_args) -> Any:
         """执行Chrome DevTools Protocol语句
         :param cmd: 协议项目
         :param cmd_args: 参数
@@ -387,6 +387,61 @@ class DriverPage(BasePage):
         """
         self.driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": ua})
 
+    def get_session_storage(self, item: str = None) -> Union[str, dict, None]:
+        """获取sessionStorage信息，不设置item则获取全部       \n
+        :param item: 要获取的项，不设置则返回全部
+        :return: sessionStorage一个或所有项内容
+        """
+        js = f'return sessionStorage.getItem("{item}");' if item else 'return sessionStorage;'
+        return self.run_script(js)
+
+    def get_local_storage(self, item: str = None) -> Union[str, dict, None]:
+        """获取localStorage信息，不设置item则获取全部       \n
+        :param item: 要获取的项目，不设置则返回全部
+        :return: localStorage一个或所有项内容
+        """
+        js = f'return localStorage.getItem("{item}");' if item else 'return localStorage;'
+        return self.run_script(js)
+
+    def set_session_storage(self, item: str, value: Union[str, bool]) -> None:
+        """设置或删除某项sessionStorage信息                         \n
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        s = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
+        self.run_script(s)
+
+    def set_local_storage(self, item: str, value: Union[str, bool]) -> None:
+        """设置或删除某项localStorage信息                           \n
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        s = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
+        self.run_script(s)
+
+    def clean_cache(self,
+                    session_storage: bool = True,
+                    local_storage: bool = True,
+                    cache: bool = True,
+                    cookies: bool = True) -> None:
+        """清除缓存，可选要清除的项                            \n
+        :param session_storage: 是否清除sessionStorage
+        :param local_storage: 是否清除localStorage
+        :param cache: 是否清除cache
+        :param cookies: 是否清除cookies
+        :return: None
+        """
+        if session_storage:
+            self.run_script('sessionStorage.clear();')
+        if local_storage:
+            self.run_script('localStorage.clear();')
+        if cache:
+            self.run_cdp('Network.clearBrowserCache')
+        if cookies:
+            self.run_cdp('Network.clearBrowserCookies')
+
     def screenshot(self, path: str, filename: str = None) -> str:
         """截取页面可见范围截图                                  \n
         :param path: 保存路径
@@ -416,7 +471,7 @@ class DriverPage(BasePage):
 
     def stop_loading(self) -> None:
         """强制停止页面加载"""
-        self.run_cdp('Page.stopLoading', {})
+        self.run_cdp('Page.stopLoading')
 
     def back(self) -> None:
         """在浏览历史中后退一步"""

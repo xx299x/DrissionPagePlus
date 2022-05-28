@@ -17,6 +17,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
+from .common import get_pid_from_port
 from .config import _session_options_to_dict, SessionOptions, DriverOptions, _cookies_to_tuple
 
 
@@ -188,19 +189,8 @@ class Drission(object):
 
     def kill_browser(self) -> None:
         """关闭浏览器进程（如果可以）"""
-        if self.debugger_progress:
-            self.debugger_progress.kill()
-            return
-
         pid = self.get_browser_progress_id()
-        from os import popen
-        from platform import system
-
-        if pid and system().lower() == 'windows' \
-                and popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
-            popen(f'taskkill /pid {pid} /F')
-
-        else:
+        if not _kill_progress(pid):
             self._driver.quit()
 
     def get_browser_progress_id(self) -> Union[str, None]:
@@ -369,6 +359,8 @@ class Drission(object):
     def close_driver(self, kill: bool = False) -> None:
         """关闭driver和浏览器"""
         if self._driver:
+            _kill_progress(port=self._driver.service.port)  # 关闭chromedriver.exe进程
+
             if kill:
                 self.kill_browser()
             else:
@@ -455,7 +447,7 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
 
     # ----------创建浏览器进程----------
     try:
-        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
+        debugger = Popen(f'{chrome_path} --remote-debugging-port={port} {args}', shell=False)
 
         if chrome_path == 'chrome.exe':
             from .common import get_exe_path_from_port
@@ -529,3 +521,25 @@ def _get_chrome_hwnds_from_pid(pid) -> list:
     hwnds = []
     EnumWindows(callback, hwnds)
     return hwnds
+
+
+def _kill_progress(pid: str = None, port: int = None) -> bool:
+    """获取端口号第一条进程的pid                        \n
+    :param pid: 进程id
+    :param port: 端口号，如没有进程id，从端口号获取
+    :return: 是否成功
+    """
+    from os import popen
+    from platform import system
+    if system().lower() != 'windows':
+        return False
+
+    pid = pid or get_pid_from_port(port)
+    if not pid:
+        return False
+
+    if popen(f'tasklist | findstr {pid}').read().lower().startswith('chrome.exe'):
+        popen(f'taskkill /pid {pid} /F')
+        return True
+    else:
+        return False
