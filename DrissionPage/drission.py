@@ -504,7 +504,7 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
 
 
 def _get_chrome_hwnds_from_pid(pid) -> list:
-    # 通过PID查询句柄ID
+    """通过PID查询句柄ID"""
     try:
         from win32gui import IsWindow, GetWindowText, EnumWindows
         from win32process import GetWindowThreadProcessId
@@ -524,7 +524,7 @@ def _get_chrome_hwnds_from_pid(pid) -> list:
 
 
 def _kill_progress(pid: str = None, port: int = None) -> bool:
-    """获取端口号第一条进程的pid                        \n
+    """关闭浏览器进程                                 \n
     :param pid: 进程id
     :param port: 端口号，如没有进程id，从端口号获取
     :return: 是否成功

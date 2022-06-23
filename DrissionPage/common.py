@@ -370,20 +370,24 @@ def get_pid_from_port(port: Union[str, int]) -> Union[str, None]:
     :param port: 端口号
     :return: 进程id
     """
-    from os import popen
     from platform import system
+    if system().lower() != 'windows' or port is None:
+        return None
+
+    from os import popen
     from time import perf_counter
 
-    if system().lower() != 'windows' or port is None:
-        return
-
-    process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-
-    t = perf_counter()
-    while not process and perf_counter() - t < 5:
+    try:  # 避免Anaconda中可能产生的报错
         process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
 
-    return process.split(' ')[-1] or None
+        t = perf_counter()
+        while not process and perf_counter() - t < 5:
+            process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+
+        return process.split(' ')[-1] or None
+
+    except AttributeError:
+        return None
 
 
 def get_usable_path(path: Union[str, Path]) -> Path:
