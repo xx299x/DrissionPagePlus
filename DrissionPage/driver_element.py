@@ -647,6 +647,10 @@ class DriverElement(DrissionElement):
 
         return img_path
 
+    def screenshot_as_bytes(self) -> bytes:
+        """以字节方式返回元素截图"""
+        return self.inner_ele.screenshot_as_png
+
     def prop(self, prop: str) -> str:
         """获取property属性值            \n
         :param prop: 属性名

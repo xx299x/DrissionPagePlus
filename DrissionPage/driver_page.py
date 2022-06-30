@@ -457,6 +457,10 @@ class DriverPage(BasePage):
         self.driver.save_screenshot(img_path)
         return img_path
 
+    def screenshot_as_bytes(self) -> bytes:
+        """以字节方式返回页面截图"""
+        return self.driver.get_screenshot_as_png()
+
     def scroll_to_see(self, loc_or_ele: Union[str, tuple, WebElement, DriverElement]) -> None:
         """滚动页面直到元素可见                                                        \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
