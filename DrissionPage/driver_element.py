@@ -537,6 +537,8 @@ class DriverElement(DrissionElement):
         :return: bool
         """
         if not insure or self.tag != 'input' or self.prop('type') != 'text':  # 普通输入
+            if not isinstance(vals, (str, tuple)):
+                vals = str(vals)
             if clear:
                 self.inner_ele.clear()
 
@@ -545,7 +547,7 @@ class DriverElement(DrissionElement):
 
         else:  # 确保输入正确
             if not isinstance(vals, str):
-                raise TypeError('insure参数生效时vals只能接收str数据。')
+                vals = str(vals)
             enter = '\n' if vals.endswith('\n') else None
             full_txt = vals if clear else f'{self.attr("value")}{vals}'
             full_txt = full_txt.rstrip('\n')
@@ -623,33 +625,35 @@ class DriverElement(DrissionElement):
         except Exception:
             return False
 
-    def screenshot(self, path: str, filename: str = None) -> str:
-        """对元素进行截图                                          \n
+    def screenshot(self, path: str = None, filename: str = None, as_bytes: bool = False) -> Union[str, bytes]:
+        """对元素进行截图                                              \n
         :param path: 保存路径
         :param filename: 图片文件名，不传入时以元素tag name命名
-        :return: 图片完整路径
+        :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
+        :return: 图片完整路径或字节文本
         """
-        name = filename or self.tag
-        path = Path(path).absolute()
-        path.mkdir(parents=True, exist_ok=True)
-        if not name.lower().endswith('.png'):
-            name = f'{name}.png'
-
         # 等待元素加载完成
         if self.tag == 'img':
             js = ('return arguments[0].complete && typeof arguments[0].naturalWidth != "undefined" '
-                  '&& arguments[0].naturalWidth > 0')
-            while not self.run_script(js):
+                  '&& arguments[0].naturalWidth > 0 && typeof arguments[0].naturalHeight != "undefined" '
+                  '&& arguments[0].naturalHeight > 0')
+            t1 = perf_counter()
+            while not self.run_script(js) and perf_counter() - t1 < self.page.timeout:
                 pass
+
+        if as_bytes:
+            return self.inner_ele.screenshot_as_png
+
+        name = filename or self.tag
+        path = Path(path or '.').absolute()
+        path.mkdir(parents=True, exist_ok=True)
+        if not name.lower().endswith('.png'):
+            name = f'{name}.png'
 
         img_path = str(get_usable_path(f'{path}{sep}{name}'))
         self.inner_ele.screenshot(img_path)
 
         return img_path
-
-    def screenshot_as_bytes(self) -> bytes:
-        """以字节方式返回元素截图"""
-        return self.inner_ele.screenshot_as_png
 
     def prop(self, prop: str) -> str:
         """获取property属性值            \n

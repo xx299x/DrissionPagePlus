@@ -442,24 +442,24 @@ class DriverPage(BasePage):
         if cookies:
             self.run_cdp('Network.clearBrowserCookies')
 
-    def screenshot(self, path: str, filename: str = None) -> str:
-        """截取页面可见范围截图                                  \n
+    def screenshot(self, path: str = None, filename: str = None, as_bytes: bool = False) -> Union[str, bytes]:
+        """截取页面可见范围截图                                           \n
         :param path: 保存路径
         :param filename: 图片文件名，不传入时以页面title命名
-        :return: 图片完整路径
+        :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
+        :return: 图片完整路径或字节文本
         """
+        if as_bytes:
+            return self.driver.get_screenshot_as_png()
+
         name = filename or self.title
         if not name.lower().endswith('.png'):
             name = f'{name}.png'
-        path = Path(path).absolute()
+        path = Path(path or '.').absolute()
         path.mkdir(parents=True, exist_ok=True)
         img_path = str(get_usable_path(f'{path}{sep}{name}'))
         self.driver.save_screenshot(img_path)
         return img_path
-
-    def screenshot_as_bytes(self) -> bytes:
-        """以字节方式返回页面截图"""
-        return self.driver.get_screenshot_as_png()
 
     def scroll_to_see(self, loc_or_ele: Union[str, tuple, WebElement, DriverElement]) -> None:
         """滚动页面直到元素可见                                                        \n
