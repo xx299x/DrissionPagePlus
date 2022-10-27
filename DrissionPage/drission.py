@@ -4,10 +4,12 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
+from subprocess import Popen
 from sys import exit
 from typing import Union
 
-from requests import Session
+from platform import system
+from requests import Session, get as requests_get
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 from selenium import webdriver
@@ -17,7 +19,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
-from .common import get_pid_from_port
+from .common import get_pid_from_port, get_exe_path_from_port
 from .config import _session_options_to_dict, SessionOptions, DriverOptions, _cookies_to_tuple
 
 
@@ -108,12 +110,9 @@ class Drission(object):
             chrome_path = self.driver_options.binary_location or 'chrome.exe'
 
             # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
-            if self.driver_options.debugger_address and _check_port(self.driver_options.debugger_address) is False:
-                from subprocess import Popen
-                port = self.driver_options.debugger_address.split(':')[-1]
-
+            if self.driver_options.debugger_address:
                 # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
-                chrome_path, self._debugger = _create_chrome(chrome_path, port,
+                chrome_path, self._debugger = connect_chrome(chrome_path, self.driver_options.debugger_address,
                                                              self.driver_options.arguments, self._proxy)
 
             # -----------创建WebDriver对象-----------
@@ -129,10 +128,6 @@ class Drission(object):
                 self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
             except Exception:
                 pass
-
-            # self._driver.execute_cdp_cmd(
-            #     'Page.addScriptToEvaluateOnNewDocument',
-            #     {'source': 'Object.defineProperty(navigator,"webdriver",{get:() => Chrome,});'})
 
         return self._driver
 
@@ -225,7 +220,6 @@ class Drission(object):
         self._show_or_hide_browser(False)
 
     def _show_or_hide_browser(self, hide: bool = True) -> None:
-        from platform import system
         if system().lower() != 'windows':
             raise OSError('该方法只能在Windows系统使用。')
 
@@ -395,18 +389,13 @@ def user_agent_to_session(driver: RemoteWebDriver, session: Session) -> None:
     session.headers.update({"User-Agent": selenium_user_agent})
 
 
-def _check_port(debugger_address: str) -> Union[bool, None]:
-    """检查端口是否被占用                               \n
-    :param debugger_address: 浏览器地址及端口
+def _port_is_using(ip: str, port: str) -> Union[bool, None]:
+    """检查端口是否被占用               \n
+    :param ip: 浏览器地址
+    :param port: 浏览器端口
     :return: bool
     """
     import socket
-
-    ip, port = debugger_address.split(':')
-
-    if ip not in ('127.0.0.1', 'localhost'):
-        return
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
@@ -420,16 +409,25 @@ def _check_port(debugger_address: str) -> Union[bool, None]:
             s.close()
 
 
-def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tuple:
-    """创建 chrome 进程                          \n
+def connect_chrome(chrome_path: str, debugger_address: str, args: list = None, proxy: dict = None) -> tuple:
+    """连接或启动chrome                           \n
     :param chrome_path: chrome.exe 路径
-    :param port: 进程运行的端口号
+    :param debugger_address: 进程运行的ip和端口号
     :param args: chrome 配置参数
-    :return: chrome.exe 路径和进程对象组成的元组
+    :param proxy: 代理配置
+    :return: chrome 路径和进程对象组成的元组
     """
-    from subprocess import Popen
+    debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
+    ip, port = debugger_address.split(':')
+    if ip not in ('127.0.0.1', 'localhost'):
+        return None, None
+
+    if _port_is_using(ip, port):
+        chrome_path = get_exe_path_from_port(port) if chrome_path == 'chrome.exe' else chrome_path
+        return chrome_path, None
 
     # ----------为路径加上双引号，避免路径中的空格产生异常----------
+    args = [] if args is None else args
     args1 = []
     for arg in args:
         if arg.startswith(('--user-data-dir', '--disk-cache-dir')):
@@ -440,17 +438,15 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
         else:
             args1.append(arg)
 
-    args = ' '.join(set(args1))
+    args = set(args1)
 
     if proxy:
-        args = f'{args} --proxy-server={proxy["http"]}'
+        args.add(f'--proxy-server={proxy["http"]}')
 
     # ----------创建浏览器进程----------
     try:
-        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
-
+        debugger = _run_browser(port, chrome_path, args)
         if chrome_path == 'chrome.exe':
-            from .common import get_exe_path_from_port
             chrome_path = get_exe_path_from_port(port)
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
@@ -461,9 +457,36 @@ def _create_chrome(chrome_path: str, port: str, args: list, proxy: dict) -> tupl
         if not chrome_path:
             raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
 
-        debugger = Popen(f'"{chrome_path}" --remote-debugging-port={port} {args}', shell=False)
+        debugger = _run_browser(port, chrome_path, args)
 
     return chrome_path, debugger
+
+
+def _run_browser(port, path: str, args: set) -> Popen:
+    """创建chrome进程          \n
+    :param port: 端口号
+    :param path: 浏览器地址
+    :param args: 启动参数
+    :return: 进程对象
+    """
+    sys = system().lower()
+    if sys == 'windows':
+        args = ' '.join(args)
+        debugger = Popen(f'"{path}" --remote-debugging-port={port} {args}', shell=False)
+    elif sys == 'linux':
+        arguments = [path, f'--remote-debugging-port={port}'] + list(args)
+        debugger = Popen(arguments, shell=False)
+    else:
+        raise OSError('只支持Windows和Linux系统。')
+
+    while True:
+        try:
+            requests_get(f'http://127.0.0.1:{port}/json')
+            break
+        except ConnectionError:
+            pass
+
+    return debugger
 
 
 def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebDriver:
@@ -530,7 +553,6 @@ def _kill_progress(pid: str = None, port: int = None) -> bool:
     :return: 是否成功
     """
     from os import popen
-    from platform import system
     if system().lower() != 'windows':
         return False
 

@@ -270,6 +270,10 @@ def _get_chrome_path(ini_path: str = None,
             print('ini文件中', end='')
         return str(path)
 
+    from platform import system
+    if system().lower() != 'windows':
+        return None
+
     # -----------从注册表中获取--------------
     if from_regedit:
         import winreg
