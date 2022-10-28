@@ -30,9 +30,10 @@ class DriverElement(DrissionElement):
         :param ele: 被包装的WebElement元素
         :param page: 元素所在页面
         """
-        super().__init__(ele, page)
+        super().__init__(page)
         self._select = None
         self._scroll = None
+        self._inner_ele = ele
 
     def __repr__(self) -> str:
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
@@ -50,6 +51,10 @@ class DriverElement(DrissionElement):
         return self.ele(loc_or_str, timeout)
 
     # -----------------共有属性和方法-------------------
+    @property
+    def inner_ele(self) -> WebElement:
+        return self._inner_ele
+
     @property
     def tag(self) -> str:
         """返回元素类型"""

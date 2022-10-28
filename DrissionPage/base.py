@@ -46,13 +46,8 @@ class BaseParser(object):
 class BaseElement(BaseParser):
     """各元素类的基类"""
 
-    def __init__(self, ele: Union[WebElement, HtmlElement], page=None):
-        self._inner_ele = ele
+    def __init__(self, page=None):
         self.page = page
-
-    @property
-    def inner_ele(self) -> Union[WebElement, HtmlElement]:
-        return self._inner_ele
 
     # ----------------以下属性或方法由后代实现----------------
     @property

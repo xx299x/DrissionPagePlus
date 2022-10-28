@@ -70,6 +70,10 @@ class ChromePage(BasePage):
         """返回当前页面加载状态，"""
         return self.driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
 
+    @property
+    def active_ele(self):
+        pass
+
     def get(self,
             url: str,
             show_errmsg: bool = False,
@@ -90,6 +94,7 @@ class ChromePage(BasePage):
                                               interval=interval,
                                               show_errmsg=show_errmsg,
                                               timeout=timeout)
+        self.driver.DOM.getDocument()
         return self._url_available
 
     def get_cookies(self, as_dict: bool = False):
@@ -100,6 +105,12 @@ class ChromePage(BasePage):
 
     def eles(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement], timeout: float = None):
         return self._ele(loc_or_ele, timeout=timeout, single=False)
+
+    def s_ele(self):
+        pass
+
+    def s_eles(self):
+        pass
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
@@ -164,6 +175,47 @@ class ChromePage(BasePage):
         """
         return self.driver.call_method(cmd, **cmd_args)
 
+    def set_user_agent(self, ua: str) -> None:
+        """为当前tab设置user agent，只在当前tab有效          \n
+        :param ua: user agent字符串
+        :return: None
+        """
+        self.driver.Network.setUserAgentOverride(userAgent=ua)
+
+    def get_session_storage(self, item: str = None) -> Union[str, dict, None]:
+        """获取sessionStorage信息，不设置item则获取全部       \n
+        :param item: 要获取的项，不设置则返回全部
+        :return: sessionStorage一个或所有项内容
+        """
+        js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
+        return self.driver.Runtime.evaluate(js)
+
+    def get_local_storage(self, item: str = None) -> Union[str, dict, None]:
+        """获取localStorage信息，不设置item则获取全部       \n
+        :param item: 要获取的项目，不设置则返回全部
+        :return: localStorage一个或所有项内容
+        """
+        js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
+        return self.driver.Runtime.evaluate(js)
+
+    def set_session_storage(self, item: str, value: Union[str, bool]) -> None:
+        """设置或删除某项sessionStorage信息                         \n
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        s = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
+        return self.driver.Runtime.evaluate(s)
+
+    def set_local_storage(self, item: str, value: Union[str, bool]) -> None:
+        """设置或删除某项localStorage信息                           \n
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        s = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
+        return self.driver.Runtime.evaluate(s)
+
     def create_tab(self, url: str = None) -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
@@ -193,6 +245,10 @@ class ChromePage(BasePage):
 
         if activate:
             requests_get(f'http://{self.debugger_address}/json/activate/{tab}')
+
+    def to_front(self) -> None:
+        """激活当前标签页使其处于最前面"""
+        requests_get(f'http://{self.debugger_address}/json/activate/{self.current_tab_handle}')
 
     def close_tabs(self, num_or_handles: Union[int, str, list, tuple, set] = None, others: bool = False) -> None:
         """关闭传入的标签页，默认关闭当前页。可传入多个                                                        \n

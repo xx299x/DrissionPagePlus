@@ -10,6 +10,7 @@ from re import split, search, sub
 from shutil import rmtree
 from typing import Union
 from zipfile import ZipFile
+from urllib.parse import urlparse, urljoin, urlunparse
 
 
 def get_ele_txt(e) -> str:
@@ -451,3 +452,28 @@ def get_long(txt) -> int:
     """
     txt_len = len(txt)
     return int((len(txt.encode('utf-8')) - txt_len) / 2 + txt_len)
+
+
+def make_absolute_link(link, page=None) -> str:
+    """获取绝对url
+    :param link: 超链接
+    :param page: 页面对象
+    :return: 绝对链接
+    """
+    if not link:
+        return link
+
+    parsed = urlparse(link)._asdict()
+
+    # 是相对路径，与页面url拼接并返回
+    if not parsed['netloc']:
+        return urljoin(page.url, link) if page else link
+
+    # 是绝对路径但缺少协议，从页面url获取协议并修复
+    if not parsed['scheme'] and page:
+        parsed['scheme'] = urlparse(page.url).scheme
+        parsed = tuple(v for v in parsed.values())
+        return urlunparse(parsed)
+
+    # 绝对路径且不缺协议，直接返回
+    return link

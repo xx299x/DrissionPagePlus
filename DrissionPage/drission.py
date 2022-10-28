@@ -12,11 +12,13 @@ from platform import system
 from requests import Session, get as requests_get
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
+from requests.exceptions import ConnectionError as requests_connection_err
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from time import perf_counter
 from tldextract import extract
 
 from .common import get_pid_from_port, get_exe_path_from_port
@@ -479,14 +481,15 @@ def _run_browser(port, path: str, args: set) -> Popen:
     else:
         raise OSError('只支持Windows和Linux系统。')
 
-    while True:
+    t1 = perf_counter()
+    while perf_counter() - t1 < 10:
         try:
             requests_get(f'http://127.0.0.1:{port}/json')
-            break
-        except ConnectionError:
+            return debugger
+        except requests_connection_err:
             pass
 
-    return debugger
+    raise ConnectionError('无法连接浏览器。')
 
 
 def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebDriver:

@@ -12,7 +12,7 @@ from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
 from .base import DrissionElement, BasePage, BaseElement
-from .common import get_ele_txt, get_loc
+from .common import get_ele_txt, get_loc, make_absolute_link
 
 
 class SessionElement(DrissionElement):
@@ -23,7 +23,12 @@ class SessionElement(DrissionElement):
         :param ele: 被包装的HtmlElement元素
         :param page: 元素所在页面对象，如果是从 html 文本生成的元素，则为 None
         """
-        super().__init__(ele, page)
+        super().__init__(page)
+        self._inner_ele = ele
+
+    @property
+    def inner_ele(self) -> HtmlElement:
+        return self._inner_ele
 
     def __repr__(self) -> str:
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
@@ -180,10 +185,10 @@ class SessionElement(DrissionElement):
                 return link
 
             else:  # 其它情况直接返回绝对url
-                return self._make_absolute(link)
+                return make_absolute_link(link, self.page)
 
         elif attr == 'src':
-            return self._make_absolute(self.inner_ele.get('src'))
+            return make_absolute_link(self.inner_ele.get('src'), self.page)
 
         elif attr == 'text':
             return self.text
@@ -267,30 +272,6 @@ class SessionElement(DrissionElement):
             ele = ele.parent()
 
         return f':root{path_str[1:]}' if mode == 'css' else path_str
-
-    # ----------------session独有方法-----------------------
-    def _make_absolute(self, link) -> str:
-        """获取绝对url
-        :param link: 超链接
-        :return: 绝对链接
-        """
-        if not link:
-            return link
-
-        parsed = urlparse(link)._asdict()
-
-        # 是相对路径，与页面url拼接并返回
-        if not parsed['netloc']:
-            return urljoin(self.page.url, link) if self.page else link
-
-        # 是绝对路径但缺少协议，从页面url获取协议并修复
-        if not parsed['scheme'] and self.page:
-            parsed['scheme'] = urlparse(self.page.url).scheme
-            parsed = tuple(v for v in parsed.values())
-            return urlunparse(parsed)
-
-        # 绝对路径且不缺协议，直接返回
-        return link
 
 
 def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],

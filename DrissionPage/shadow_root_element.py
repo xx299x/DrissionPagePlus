@@ -19,8 +19,13 @@ class ShadowRootElement(BaseElement):
     """ShadowRootElement是用于处理ShadowRoot的类，使用方法和DriverElement基本一致"""
 
     def __init__(self, inner_ele: WebElement, parent_ele: DriverElement):
-        super().__init__(inner_ele, parent_ele.page)
+        super().__init__(parent_ele.page)
         self.parent_ele = parent_ele
+        self._inner_ele = inner_ele
+
+    @property
+    def inner_ele(self) -> WebElement:
+        return self._inner_ele
 
     def __repr__(self) -> str:
         return f'<ShadowRootElement in {self.parent_ele} >'
