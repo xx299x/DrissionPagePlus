@@ -6,7 +6,6 @@
 """
 from re import match, DOTALL
 from typing import Union, List, Tuple
-from urllib.parse import urlparse, urljoin, urlunparse
 
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring

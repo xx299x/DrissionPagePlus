@@ -1,15 +1,17 @@
 # -*- coding:utf-8 -*-
+from os import sep
+from pathlib import Path
 from time import perf_counter, sleep
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 from pychrome import Tab
 from requests import get as requests_get
 from json import loads
 
 from .base import BasePage
-from .common import get_loc
+from .common import get_loc, get_usable_path
 from .drission import connect_chrome
-from .chrome_element import ChromeElement
+from .chrome_element import ChromeElement, ChromeScroll
 
 
 class ChromePage(BasePage):
@@ -23,18 +25,21 @@ class ChromePage(BasePage):
         connect_chrome(path, self.debugger_address)
         tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
         self._connect_debugger(tab_handle)
+        self._scroll = None
 
-    def _connect_debugger(self, tab_handle: str):
-        self.driver = Tab(id=tab_handle, type='page',
-                          webSocketDebuggerUrl=f'ws://{self.debugger_address}/devtools/page/{tab_handle}')
-        self.driver.start()
-        self.driver.DOM.enable()
-        self.driver.DOM.getDocument()
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
+                 timeout: float = None) -> Union['ChromeElement', str, None]:
+        """在内部查找元素                                           \n
+        例：ele = page('@id=ele_id')                              \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 超时时间
+        :return: DriverElement对象或属性、文本
+        """
+        return self.ele(loc_or_str, timeout)
 
     @property
     def url(self) -> str:
         """返回当前页面url"""
-        # todo: 是否有更好的方法？
         json = loads(requests_get(f'http://{self.debugger_address}/json').text)
         return [i['url'] for i in json if i['id'] == self.driver.id][0]
 
@@ -48,6 +53,14 @@ class ChromePage(BasePage):
     def json(self) -> dict:
         """当返回内容是json格式时，返回对应的字典"""
         return loads(self('t:pre').text)
+
+    @property
+    def tabs_count(self) -> int:
+        """返回标签页数量"""
+        try:
+            return len(self.tab_handles)
+        except Exception:
+            return 0
 
     @property
     def tab_handles(self) -> list:
@@ -71,8 +84,18 @@ class ChromePage(BasePage):
         return self.driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
 
     @property
-    def active_ele(self):
-        pass
+    def scroll(self) -> ChromeScroll:
+        """用于滚动滚动条的对象"""
+        if self._scroll is None:
+            self._scroll = ChromeScroll(self)
+        return self._scroll
+
+    @property
+    def size(self) -> dict:
+        """返回页面总长宽"""
+        w = self.driver.Runtime.evaluate(expression='document.body.scrollWidth;')['result']['value']
+        h = self.driver.Runtime.evaluate(expression='document.body.scrollHeight;')['result']['value']
+        return {'height': h, 'width': w}
 
     def get(self,
             url: str,
@@ -97,25 +120,33 @@ class ChromePage(BasePage):
         self.driver.DOM.getDocument()
         return self._url_available
 
-    def get_cookies(self, as_dict: bool = False):
-        return self.driver.Network.getCookies()
+    def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
+        cookies = self.driver.Network.getCookies()['cookies']
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in cookies}
+        else:
+            return cookies
 
-    def ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement], timeout: float = None):
+    def ele(self,
+            loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
+            timeout: float = None) -> Union[ChromeElement, str, None]:
         return self._ele(loc_or_ele, timeout=timeout)
 
-    def eles(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement], timeout: float = None):
+    def eles(self,
+             loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
+             timeout: float = None) -> List[Union[ChromeElement, str]]:
         return self._ele(loc_or_ele, timeout=timeout, single=False)
 
-    def s_ele(self):
-        pass
-
-    def s_eles(self):
-        pass
+    # def s_ele(self):
+    #     pass
+    #
+    # def s_eles(self):
+    #     pass
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
              timeout: float = None,
-             single: bool = True):
+             single: bool = True) -> Union[ChromeElement, str, None, List[Union[ChromeElement, str]]]:
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
         elif isinstance(loc_or_ele, ChromeElement):
@@ -142,6 +173,49 @@ class ChromePage(BasePage):
                 return ChromeElement(self, node_id=nodeIds['nodeIds'][0])
             else:
                 return [ChromeElement(self, node_id=i) for i in nodeIds['nodeIds']]
+
+    def screenshot(self, path: str = None,
+                   filename: str = None,
+                   as_bytes: bool = False,
+                   full_page: bool = True) -> Union[str, bytes]:
+        """截取页面可见范围截图                                           \n
+        :param path: 保存路径
+        :param filename: 图片文件名，不传入时以页面title命名
+        :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
+        :param full_page: 是否整页截图
+        :return: 图片完整路径或字节文本
+        """
+        from base64 import b64decode
+        hw = self.size
+        if full_page:
+            vp = {'x': 0, 'y': 0, 'width': hw['width'], 'height': hw['height'], 'scale': 1}
+            png = self.driver.Page.captureScreenshot(captureBeyondViewport=True, clip=vp)['data']
+        else:
+            png = self.driver.Page.captureScreenshot(captureBeyondViewport=True)['data']
+        png = b64decode(png)
+
+        if as_bytes:
+            return png
+
+        from DataRecorder import ByteRecorder
+        name = filename or self.title
+        if not name.lower().endswith('.png'):
+            name = f'{name}.png'
+        path = Path(path or '.').absolute()
+        path.mkdir(parents=True, exist_ok=True)
+        img_path = str(get_usable_path(f'{path}{sep}{name}'))
+        b = ByteRecorder(img_path)
+        b.add_data(png)
+        b.record()
+        return img_path
+
+    def scroll_to_see(self, loc_or_ele: Union[str, tuple, ChromeElement]) -> None:
+        """滚动页面直到元素可见                                                        \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
+        :return: None
+        """
+        node_id = self.ele(loc_or_ele).node_id
+        self.driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
 
     def refresh(self, ignore_cache: bool = False) -> None:
         """刷新当前页面                      \n
@@ -309,6 +383,20 @@ class ChromePage(BasePage):
         if cookies:
             self.driver.Network.clearBrowserCookies()
 
+    def check_page(self):
+        pass
+
+    # @property
+    # def active_ele(self):
+    #     pass
+
+    def _connect_debugger(self, tab_handle: str):
+        self.driver = Tab(id=tab_handle, type='page',
+                          webSocketDebuggerUrl=f'ws://{self.debugger_address}/devtools/page/{tab_handle}')
+        self.driver.start()
+        self.driver.DOM.enable()
+        self.driver.DOM.getDocument()
+
     def _d_connect(self,
                    to_url: str,
                    times: int = 0,
@@ -355,9 +443,6 @@ class ChromePage(BasePage):
             raise err if err is not None else ConnectionError('连接异常。')
 
         return is_ok
-
-    def check_page(self):
-        pass
 
 
 def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:

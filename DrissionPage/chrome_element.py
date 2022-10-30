@@ -1,15 +1,22 @@
 # -*- coding:utf-8 -*-
-# 问题：跨iframe查找元素可能出现同名元素如何解决
-# 须用DOM.documentUpdated检测元素有效性
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+@File    :   chrome_element.py
+"""
 from typing import Union, Tuple, List
+from time import perf_counter
 
+from .session_element import make_session_ele
 from .base import DrissionElement
-from .common import make_absolute_link, get_loc
+from .common import make_absolute_link, get_loc, get_ele_txt, format_html
 
 
 class ChromeElement(DrissionElement):
     def __init__(self, page, node_id: str = None, obj_id: str = None):
         super().__init__(page)
+        self._select = None
+        self._scroll = None
         if not node_id and not obj_id:
             raise TypeError('node_id或obj_id必须传入一个。')
 
@@ -20,21 +27,84 @@ class ChromeElement(DrissionElement):
             self._node_id = self._get_node_id(obj_id)
             self._obj_id = obj_id
 
+    def __repr__(self) -> str:
+        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        return f'<ChromeElement {self.tag} {" ".join(attrs)}>'
+
+    @property
+    def obj_id(self) -> str:
+        return self._obj_id
+
+    @property
+    def node_id(self) -> str:
+        return self._node_id
+
     @property
     def html(self) -> str:
         """返回元素outerHTML文本"""
         return self.page.driver.DOM.getOuterHTML(nodeId=self._node_id)['outerHTML']
 
     @property
+    def tag(self) -> str:
+        return self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName']
+
+    @property
     def inner_html(self) -> str:
         """返回元素innerHTML文本"""
-        return self.page.driver.Runtime.callFunctionOn('function(){this.innerHTML;}')
+        return self.page.driver.Runtime.callFunctionOn(functionDeclaration='function(){return this.innerHTML;}',
+                                                       objectId=self._obj_id)['result']['value']
 
     @property
     def attrs(self) -> dict:
         attrs = self.page.driver.DOM.getAttributes(nodeId=self._node_id)['attributes']
         attrs_len = len(attrs)
         return {attrs[i]: attrs[i + 1] for i in range(0, attrs_len, 2)}
+
+    @property
+    def size(self) -> dict:
+        """返回元素宽和高"""
+        model = self.page.driver.DOM.getBoxModel(nodeId=self._node_id)['model']
+        return {"height": model['height'], "width": model['width']}
+
+    @property
+    def client_location(self) -> dict:
+        """返回元素左上角坐标"""
+        js = '''function(){
+        return this.getBoundingClientRect().left.toString()+" "+this.getBoundingClientRect().top.toString();}'''
+        xy = self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)['result']['value']
+        x, y = xy.split(' ')
+        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+
+    @property
+    def location(self) -> dict:
+        """返回元素左上角坐标"""
+        js = '''function(){
+function getElementPagePosition(element){
+  var actualLeft = element.offsetLeft;
+  var current = element.offsetParent;
+  while (current !== null){
+    actualLeft += current.offsetLeft;
+    current = current.offsetParent;
+  }
+  var actualTop = element.offsetTop;
+  var current = element.offsetParent;
+  while (current !== null){
+    actualTop += (current.offsetTop+current.clientTop);
+    current = current.offsetParent;
+  }
+  return actualLeft.toString() +' '+actualTop.toString();
+}
+        return getElementPagePosition(this);}'''
+        xy = self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)['result']['value']
+        x, y = xy.split(' ')
+        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+
+    @property
+    def scroll(self) -> 'ChromeScroll':
+        """用于滚动滚动条的对象"""
+        if self._scroll is None:
+            self._scroll = ChromeScroll(self)
+        return self._scroll
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -102,35 +172,114 @@ class ChromeElement(DrissionElement):
         else:
             return attrs[attr]
 
-    def click(self, by_js: bool = True):
+    def prop(self, prop: str) -> Union[str, int, None]:
+        """获取property属性值            \n
+        :param prop: 属性名
+        :return: 属性值文本
+        """
+        p = self.page.driver.Runtime.getProperties(objectId=self._obj_id)['result']
+        for i in p:
+            if i['name'] == prop:
+                if 'value' not in i or 'value' not in i['value']:
+                    return None
+
+                return format_html(i['value']['value'])
+
+    def set_prop(self, prop: str, value: str) -> None:
+        """设置元素property属性          \n
+        :param prop: 属性名
+        :param value: 属性值
+        :return: 是否设置成功
+        """
+        value = value.replace("'", "\\'")
+        r = self.page.driver.Runtime.callFunctionOn(functionDeclaration=f"function(){{this.{prop}='{value}';}}",
+                                                    objectId=self._obj_id)
+        if 'exceptionDetails' in r:
+            raise SyntaxError(r['result']['description'])
+
+    def click(self, by_js: bool = False) -> None:
+        """点击元素                                                                      \n
+        尝试点击直到超时，若都失败就改用js点击                                                \n
+        :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
+        :return: 是否点击成功
+        """
         if by_js:
             js = 'function(){this.click();}'
             self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)
+            return
 
-    def _get_obj_id(self, node_id):
+        self.page.driver.DOM.scrollIntoViewIfNeeded(nodeId=self._node_id)
+        xy = self.client_location
+        size = self.size
+        x = xy['x'] + size['width'] // 2
+        y = xy['y'] + size['height'] // 2
+        self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=x, y=y, button='left', clickCount=1)
+        self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=x, y=y, button='left')
+
+        # js = """function(){const event=new MouseEvent('click',{view:window, bubbles:true, cancelable:true});
+        # this.dispatchEvent(event);}"""
+        # self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)
+
+    def _get_obj_id(self, node_id) -> str:
         return self.page.driver.DOM.resolveNode(nodeId=node_id)['object']['objectId']
 
-    def _get_node_id(self, obj_id):
+    def _get_node_id(self, obj_id) -> str:
         return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
-
-    @property
-    def tag(self) -> str:
-        return self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName']
 
     @property
     def is_valid(self):
         return True
 
     @property
-    def text(self):
-        return
+    def text(self) -> str:
+        """返回元素内所有文本"""
+        return get_ele_txt(make_session_ele(self.html))
 
     @property
     def raw_text(self):
         return
 
-    def _get_ele_path(self, mode):
-        return ''
+    def _get_ele_path(self, mode) -> str:
+        """返获取css路径或xpath路径"""
+        if mode == 'xpath':
+            txt1 = 'var tag = el.nodeName.toLowerCase();'
+            # txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
+            txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
+            txt4 = '''
+            if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
+                    else{path = '/' + tag + path;}'''
+            txt5 = '''return path;'''
+
+        elif mode == 'css':
+            txt1 = ''
+            # txt2 = '''return '#' + el.id + path;'''
+            txt3 = ''
+            txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
+            txt5 = '''return path.substr(1);'''
+
+        else:
+            raise ValueError(f"mode参数只能是'xpath'或'css'，现在是：'{mode}'。")
+
+        js = '''function(){
+        function e(el) {
+            if (!(el instanceof Element)) return;
+            var path = '';
+            while (el.nodeType === Node.ELEMENT_NODE) {
+                ''' + txt1 + '''
+                    var sib = el, nth = 0;
+                    while (sib) {
+                        if(sib.nodeType === Node.ELEMENT_NODE''' + txt3 + '''){nth += 1;}
+                        sib = sib.previousSibling;
+                    }
+                    ''' + txt4 + '''
+                el = el.parentNode;
+            }
+            ''' + txt5 + '''
+        }
+        return e(this);}
+        '''
+        t = self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)['result']['value']
+        return f':root{t}' if mode == 'css' else t
 
 
 def make_chrome_ele(ele: ChromeElement,
@@ -161,60 +310,74 @@ def make_chrome_ele(ele: ChromeElement,
 
     # ---------------执行查找-----------------
     if loc[0] == 'xpath':
-        type_txt = '9' if single else '7'
-        node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
-        js = _make_js(loc[1], type_txt, node_txt)
-        print(js)
-        r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele._obj_id,)
-        # print(r)
-        if r['result']['type'] == 'string':
+        return _find_by_xpath(ele, loc[1], single, timeout)
+
+    else:
+        return _find_by_css(ele, loc[1], single, timeout)
+
+
+def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float):
+    type_txt = '9' if single else '7'
+    node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
+    js = _make_js(xpath, type_txt, node_txt)
+    r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele.obj_id)
+    if r['result']['type'] == 'string':
+        return r['result']['value']
+
+    if 'exceptionDetails' in r:
+        if 'The result is not a node set' in r['result']['description']:
+            js = _make_js(xpath, '1', node_txt)
+            r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele.obj_id)
             return r['result']['value']
+        else:
+            raise SyntaxError(f'查询语句错误：\n{r}')
+
+    t1 = perf_counter()
+    while (r['result']['subtype'] == 'null'
+           or r['result']['description'] == 'NodeList(0)') and perf_counter() - t1 < timeout:
+        r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele.obj_id)
+
+    if single:
         if r['result']['subtype'] == 'null':
-            return None if single else []
-        if r['result']['className'] == 'TypeError':
-            if 'The result is not a node set' in r['result']['description']:
-                js = _make_js(loc[1], '1', node_txt)
-                r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele._obj_id)
-                return r['result']['value']
+            return None
+        else:
+            return ChromeElement(ele.page, obj_id=r['result']['objectId'])
 
-            else:
-                raise RuntimeError(r['result']['description'])
+    else:
+        if r['result']['description'] == 'NodeList(0)':
+            return []
+        else:
+            r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+            return [ChromeElement(ele.page, obj_id=i['value']['objectId'])
+                    if i['value']['type'] == 'object' else i['value']['value']
+                    for i in r[:-1]]
 
-        elif 'objectId' in r['result']:
-            if not single:
-                r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'])['result']
-                result = []
-                for i in r:
-                    if not i['enumerable']:
-                        break
-                    result.append(ChromeElement(ele.page, obj_id=i['value']['objectId']))
-                r = result
 
-            return r
+def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float):
+    selector = selector.replace('"', r'\"')
+    find_all = '' if single else 'All'
+    js = f'function(){{return this.querySelector{find_all}("{selector}");}}'
+    r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele.obj_id)
+    if 'exceptionDetails' in r:
+        raise SyntaxError(f'查询语句错误：\n{r}')
 
-    # try:
-    #     # 使用xpath查找
-    #     if loc[0] == 'xpath':
-    #         js = _make_js()
-    #         r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js,
-    #                                                     objectId=self._obj_id)['result'].get('objectId', None)
-    #         return r if not r else _ele(self.page, obj_id=r)
-    #
-    #         return wait.until(ElementsByXpath(page, loc[1], single, timeout))
-    #
-    #     # 使用css selector查找
-    #     else:
-    #         if single:
-    #             return DriverElement(wait.until(ec.presence_of_element_located(loc)), page)
-    #         else:
-    #             eles = wait.until(ec.presence_of_all_elements_located(loc))
-    #             return [DriverElement(ele, page) for ele in eles]
-    #
-    # except TimeoutException:
-    #     return [] if not single else None
-    #
-    # except InvalidElementStateException:
-    #     raise ValueError(f'无效的查找语句：{loc}')
+    t1 = perf_counter()
+    while (r['result']['subtype'] == 'null'
+           or r['result']['description'] == 'NodeList(0)') and perf_counter() - t1 < timeout:
+        r = ele.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=ele.obj_id)
+
+    if single:
+        if r['result']['subtype'] == 'null':
+            return None
+        else:
+            return ChromeElement(ele.page, obj_id=r['result']['objectId'])
+
+    else:
+        if r['result']['description'] == 'NodeList(0)':
+            return []
+        else:
+            r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+            return [ChromeElement(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
 def _make_js(xpath: str, type_txt: str, node_txt: str):
@@ -251,99 +414,86 @@ else{a.push(e.snapshotItem(i));}}"""
 
     return js
 
-# class ElementsByXpath(object):
-#     """用js通过xpath获取元素、节点或属性，与WebDriverWait配合使用"""
-#
-#     def __init__(self, page, xpath: str = None, single: bool = False, timeout: float = 10):
-#         """
-#         :param page: DrissionPage对象
-#         :param xpath: xpath文本
-#         :param single: True则返回第一个，False则返回全部
-#         :param timeout: 超时时间
-#         """
-#         self.page = page
-#         self.xpath = xpath
-#         self.single = single
-#         self.timeout = timeout
-#
-#     def __call__(self, ele_or_driver: Union[RemoteWebDriver, WebElement]) \
-#             -> Union[str, DriverElement, None, List[str or DriverElement]]:
-#
-#         def get_nodes(node=None, xpath_txt=None, type_txt='7'):
-#             """用js通过xpath获取元素、节点或属性
-#             :param node: 'document' 或 元素对象
-#             :param xpath_txt: xpath语句
-#             :param type_txt: resultType,参考 https://developer.mozilla.org/zh-CN/docs/Web/API/Document/evaluate
-#             :return: 元素对象或属性、文本字符串
-#             """
-#             node_txt = 'document' if not node or node == 'document' else 'arguments[0]'
-#             for_txt = ''
-#
-#             # 获取第一个元素、节点或属性
-#             if type_txt == '9':
-#                 return_txt = '''
-#                     if(e.singleNodeValue.constructor.name=="Text"){return e.singleNodeValue.data;}
-#                     else if(e.singleNodeValue.constructor.name=="Attr"){return e.singleNodeValue.nodeValue;}
-#                     else if(e.singleNodeValue.constructor.name=="Comment"){return e.singleNodeValue.nodeValue;}
-#                     else{return e.singleNodeValue;}
-#                     '''
-#
-#             # 按顺序获取所有元素、节点或属性
-#             elif type_txt == '7':
-#                 for_txt = """
-#                     var a=new Array();
-#                     for(var i = 0; i <e.snapshotLength ; i++){
-#                         if(e.snapshotItem(i).constructor.name=="Text"){a.push(e.snapshotItem(i).data);}
-#                         else if(e.snapshotItem(i).constructor.name=="Attr"){a.push(e.snapshotItem(i).nodeValue);}
-#                         else if(e.snapshotItem(i).constructor.name=="Comment"){a.push(e.snapshotItem(i).nodeValue);}
-#                         else{a.push(e.snapshotItem(i));}
-#                     }
-#                     """
-#                 return_txt = 'return a;'
-#
-#             elif type_txt == '2':
-#                 return_txt = 'return e.stringValue;'
-#             elif type_txt == '1':
-#                 return_txt = 'return e.numberValue;'
-#             else:
-#                 return_txt = 'return e.singleNodeValue;'
-#
-#             js = """
-#                 var e=document.evaluate(arguments[1], """ + node_txt + """, null, """ + type_txt + """,null);
-#                 """ + for_txt + """
-#                 """ + return_txt + """
-#                 """
-#             return driver.execute_script(js, node, xpath_txt)
-#
-#         if isinstance(ele_or_driver, RemoteWebDriver):
-#             driver, the_node = ele_or_driver, 'document'
-#         else:
-#             driver, the_node = ele_or_driver.parent, ele_or_driver
-#
-#         # 把lxml元素对象包装成DriverElement对象并按需要返回第一个或全部
-#         if self.single:
-#             try:
-#                 e = get_nodes(the_node, xpath_txt=self.xpath, type_txt='9')
-#
-#                 if isinstance(e, WebElement):
-#                     return DriverElement(e, self.page)
-#                 elif isinstance(e, str):
-#                     return format_html(e)
-#                 else:
-#                     return e
-#
-#             # 找不到目标时
-#             except JavascriptException as err:
-#                 if 'The result is not a node set' in err.msg:
-#                     try:
-#                         return get_nodes(the_node, xpath_txt=self.xpath, type_txt='1')
-#                     except JavascriptException:
-#                         return None
-#                 else:
-#                     return None
-#
-#         else:  # 返回全部
-#             return ([DriverElement(x, self.page) if isinstance(x, WebElement)
-#                      else format_html(x)
-#                      for x in get_nodes(the_node, xpath_txt=self.xpath)
-#                      if x != '\n'])
+
+class ChromeScroll(object):
+    """用于滚动的对象"""
+
+    def __init__(self, page_or_ele):
+        """
+        :param page_or_ele: ChromePage或ChromeElement
+        """
+        if isinstance(page_or_ele, ChromeElement):
+            self.t1 = self.t2 = 'this'
+            self.obj_id = page_or_ele.obj_id
+            self.page = page_or_ele.page
+        else:
+            self.t1 = 'window'
+            self.t2 = 'document.documentElement'
+            self.obj_id = None
+            self.page = page_or_ele
+
+    def _run_script(self, js: str):
+        js = js.format(self.t1, self.t2, self.t2)
+        if self.obj_id:
+            js = f'function(){{{js}}}'
+            self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self.obj_id)
+        else:
+            self.page.driver.Runtime.evaluate(expression=js)
+
+    def to_top(self) -> None:
+        """滚动到顶端，水平位置不变"""
+        self._run_script('{}.scrollTo({}.scrollLeft,0);')
+
+    def to_bottom(self) -> None:
+        """滚动到底端，水平位置不变"""
+        self._run_script('{}.scrollTo({}.scrollLeft,{}.scrollHeight);')
+
+    def to_half(self) -> None:
+        """滚动到垂直中间位置，水平位置不变"""
+        self._run_script('{}.scrollTo({}.scrollLeft,{}.scrollHeight/2);')
+
+    def to_rightmost(self) -> None:
+        """滚动到最右边，垂直位置不变"""
+        self._run_script('{}.scrollTo({}.scrollWidth,{}.scrollTop);')
+
+    def to_leftmost(self) -> None:
+        """滚动到最左边，垂直位置不变"""
+        self._run_script('{}.scrollTo(0,{}.scrollTop);')
+
+    def to_location(self, x: int, y: int) -> None:
+        """滚动到指定位置                 \n
+        :param x: 水平距离
+        :param y: 垂直距离
+        :return: None
+        """
+        self._run_script(f'{{}}.scrollTo({x},{y});')
+
+    def up(self, pixel: int = 300) -> None:
+        """向上滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        pixel = -pixel
+        self._run_script(f'{{}}.scrollBy(0,{pixel});')
+
+    def down(self, pixel: int = 300) -> None:
+        """向下滚动若干像素，水平位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        self._run_script(f'{{}}.scrollBy(0,{pixel});')
+
+    def left(self, pixel: int = 300) -> None:
+        """向左滚动若干像素，垂直位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        pixel = -pixel
+        self._run_script(f'{{}}.scrollBy({pixel},0);')
+
+    def right(self, pixel: int = 300) -> None:
+        """向右滚动若干像素，垂直位置不变    \n
+        :param pixel: 滚动的像素
+        :return: None
+        """
+        self._run_script(f'{{}}.scrollBy({pixel},0);')

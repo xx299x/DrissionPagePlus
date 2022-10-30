@@ -6,3 +6,4 @@ cssselect
 DownloadKit
 FlowViewer
 pychrome
+DataRecorder
