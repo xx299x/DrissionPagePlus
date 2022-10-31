@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 @File    :   chrome_element.py
 """
+from pathlib import Path
 from typing import Union, Tuple, List
 from time import perf_counter
 
@@ -196,6 +197,31 @@ function getElementPagePosition(element){
                                                     objectId=self._obj_id)
         if 'exceptionDetails' in r:
             raise SyntaxError(r['result']['description'])
+
+    def style(self, style: str, pseudo_ele: str = '') -> str:
+        """返回元素样式属性值，可获取伪元素属性值                \n
+        :param style: 样式属性名称
+        :param pseudo_ele: 伪元素名称（如有）
+        :return: 样式属性的值
+        """
+        if pseudo_ele:
+            pseudo_ele = f', "{pseudo_ele}"' if pseudo_ele.startswith(':') else f', "::{pseudo_ele}"'
+        js = f'function(){{return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");}}'
+        return self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)
+
+    def get_screenshot(self, path: [str, Path] = None,
+                       as_bytes: [bool, str] = None) -> Union[str, bytes]:
+        """对当前元素截图                                                                            \n
+        :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
+        :return: 图片完整路径或字节文本
+        """
+        left, top = self.location.values()
+        height, width = self.size.values()
+        left_top = (left, top)
+        right_bottom = (left + width, top + height)
+        return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
+                                        left_top=left_top, right_bottom=right_bottom)
 
     def click(self, by_js: bool = False) -> None:
         """点击元素                                                                      \n

@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from os import sep
+from base64 import b64decode
 from pathlib import Path
 from time import perf_counter, sleep
 from typing import Union, Tuple, List
@@ -9,7 +9,7 @@ from requests import get as requests_get
 from json import loads
 
 from .base import BasePage
-from .common import get_loc, get_usable_path
+from .common import get_loc
 from .drission import connect_chrome
 from .chrome_element import ChromeElement, ChromeScroll
 
@@ -174,40 +174,59 @@ class ChromePage(BasePage):
             else:
                 return [ChromeElement(self, node_id=i) for i in nodeIds['nodeIds']]
 
-    def screenshot(self, path: str = None,
-                   filename: str = None,
-                   as_bytes: bool = False,
-                   full_page: bool = True) -> Union[str, bytes]:
-        """截取页面可见范围截图                                           \n
-        :param path: 保存路径
-        :param filename: 图片文件名，不传入时以页面title命名
-        :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
-        :param full_page: 是否整页截图
+    def get_screenshot(self, path: [str, Path] = None,
+                       as_bytes: [bool, str] = None,
+                       full_page: bool = False,
+                       left_top: Tuple[int, int] = None,
+                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]:
+        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要新版浏览器支持             \n
+        :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
+        :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
+        :param left_top: 截取范围左上角坐标
+        :param right_bottom: 截取范围右下角角坐标
         :return: 图片完整路径或字节文本
         """
-        from base64 import b64decode
+        if as_bytes:
+            if as_bytes is True:
+                pic_type = 'png'
+            else:
+                if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
+                    raise ValueError("只能接收'jpg', 'jpeg', 'png', 'webp'四种格式。")
+                pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
+
+        else:
+            if not path:
+                raise ValueError('保存为文件时必须传入路径。')
+            path = Path(path)
+            pic_type = path.suffix.lower()
+            if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
+                raise TypeError(f'不支持的文件格式：{pic_type}。')
+            pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+
         hw = self.size
         if full_page:
             vp = {'x': 0, 'y': 0, 'width': hw['width'], 'height': hw['height'], 'scale': 1}
-            png = self.driver.Page.captureScreenshot(captureBeyondViewport=True, clip=vp)['data']
+            png = self.driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)['data']
         else:
-            png = self.driver.Page.captureScreenshot(captureBeyondViewport=True)['data']
+            if left_top and right_bottom:
+                x, y = left_top
+                w = right_bottom[0] - x
+                h = right_bottom[1] - y
+                vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
+                png = self.driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)['data']
+            else:
+                png = self.driver.Page.captureScreenshot(format=pic_type)['data']
+
         png = b64decode(png)
 
         if as_bytes:
             return png
 
-        from DataRecorder import ByteRecorder
-        name = filename or self.title
-        if not name.lower().endswith('.png'):
-            name = f'{name}.png'
-        path = Path(path or '.').absolute()
-        path.mkdir(parents=True, exist_ok=True)
-        img_path = str(get_usable_path(f'{path}{sep}{name}'))
-        b = ByteRecorder(img_path)
-        b.add_data(png)
-        b.record()
-        return img_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'wb')as f:
+            f.write(png)
+        return str(path.absolute())
 
     def scroll_to_see(self, loc_or_ele: Union[str, tuple, ChromeElement]) -> None:
         """滚动页面直到元素可见                                                        \n
