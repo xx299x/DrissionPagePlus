@@ -107,6 +107,11 @@ function getElementPagePosition(element){
             self._scroll = ChromeScroll(self)
         return self._scroll
 
+    def run_script(self, arg: 'ChromeElement'):
+        js = 'function(){alert(arguments[0].value);}'
+        return self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self.obj_id,
+                                                       arguments=[{'objectId': arg.obj_id}])
+
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None) -> Union['ChromeElement', str, None]:

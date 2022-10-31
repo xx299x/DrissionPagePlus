@@ -477,3 +477,13 @@ def make_absolute_link(link, page=None) -> str:
 
     # 绝对路径且不缺协议，直接返回
     return link
+
+
+def is_js_func(func: str) -> bool:
+    """检查文本是否js函数"""
+    func = func.strip()
+    if func.startswith('function') or func.startswith('async '):
+        return True
+    elif '=>' in func:
+        return True
+    return False

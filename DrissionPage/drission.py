@@ -428,7 +428,6 @@ def connect_chrome(chrome_path: str, debugger_address: str, args: list = None, p
         chrome_path = get_exe_path_from_port(port) if chrome_path == 'chrome.exe' else chrome_path
         return chrome_path, None
 
-    # ----------为路径加上双引号，避免路径中的空格产生异常----------
     args = [] if args is None else args
     args1 = []
     for arg in args:

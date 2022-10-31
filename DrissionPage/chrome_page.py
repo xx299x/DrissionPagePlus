@@ -1,15 +1,16 @@
 # -*- coding:utf-8 -*-
 from base64 import b64decode
+from math import inf
 from pathlib import Path
 from time import perf_counter, sleep
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Any
 
 from pychrome import Tab
 from requests import get as requests_get
 from json import loads
 
 from .base import BasePage
-from .common import get_loc
+from .common import get_loc, is_js_func
 from .drission import connect_chrome
 from .chrome_element import ChromeElement, ChromeScroll
 
@@ -19,13 +20,20 @@ class ChromePage(BasePage):
     def __init__(self, address: str,
                  path: str = 'chrome',
                  tab_handle: str = None,
+                 args: list = None,
                  timeout: float = 10):
         super().__init__(timeout)
         self.debugger_address = address[7:] if address.startswith('http://') else address
-        connect_chrome(path, self.debugger_address)
+        connect_chrome(path, self.debugger_address, args)
         tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
         self._connect_debugger(tab_handle)
+        self.version = self._get_version()
+        self._main_version = int(self.version.split('.')[0])
         self._scroll = None
+
+    def _get_version(self):
+        browser = requests_get(f'http://{self.debugger_address}/json/version').json()['Browser']
+        return browser.split('/')[1]
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
                  timeout: float = None) -> Union['ChromeElement', str, None]:
@@ -96,6 +104,28 @@ class ChromePage(BasePage):
         w = self.driver.Runtime.evaluate(expression='document.body.scrollWidth;')['result']['value']
         h = self.driver.Runtime.evaluate(expression='document.body.scrollHeight;')['result']['value']
         return {'height': h, 'width': w}
+
+    def run_script(self, script: str, *args: Any) -> Any:
+        if not args and not is_js_func(script):
+            res = self.run_cdp('Runtime.evaluate',
+                               expression=script,
+                               returnByValue=False,
+                               awaitPromise=True,
+                               userGesture=True)
+
+        else:
+            res = self.run_cdp('Runtime.callFunctionOn',
+                               functionDeclaration=script,
+                               # 'executionContextId': self._contextId,
+                               arguments=[convert_argument(arg) for arg in args],
+                               returnByValue=False,
+                               awaitPromise=True,
+                               userGesture=True)
+
+        exceptionDetails = res.get('exceptionDetails')
+        if exceptionDetails:
+            raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
+        return _parse_js_result(self, res.get('result'))
 
     def get(self,
             url: str,
@@ -204,6 +234,10 @@ class ChromePage(BasePage):
                 raise TypeError(f'不支持的文件格式：{pic_type}。')
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
+        if full_page and self._main_version < 90:
+            print('注意：版本号大于90的chrome才支持整页截图。')
+            full_page = False
+
         hw = self.size
         if full_page:
             vp = {'x': 0, 'y': 0, 'width': hw['width'], 'height': hw['height'], 'scale': 1}
@@ -224,7 +258,7 @@ class ChromePage(BasePage):
             return png
 
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'wb')as f:
+        with open(path, 'wb') as f:
             f.write(png)
         return str(path.absolute())
 
@@ -476,3 +510,40 @@ def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) 
         raise TypeError('num_or_handle参数只能是int、str、list、set 或 tuple类型。')
 
     return set(i if isinstance(i, str) else handles[i] for i in num_or_handles)
+
+
+def _parse_js_result(page: ChromePage, result: dict):
+    """解析js返回的结果"""
+    the_type = result['type']
+    if the_type in ('string', 'number', 'boolean'):
+        return result['value']
+    elif the_type == 'undefined':
+        return None
+    elif the_type == 'object':
+        sub_type = result['subtype']
+        if sub_type == 'null':
+            return None
+        elif sub_type == 'node':
+            return ChromeElement(page, obj_id=result['objectId'])
+        elif sub_type == 'array':
+
+
+def convert_argument(arg: Any) -> dict:
+    pass
+    """把参数转换成js能够接收的形式"""
+    # if arg == inf:
+    #     return {'unserializableValue': 'Infinity'}
+    # if arg == -inf:
+    #     return {'unserializableValue': '-Infinity'}
+    # objectHandle = arg if isinstance(arg, JSHandle) else None
+    # if objectHandle:
+    #     if objectHandle._context != self:
+    #         raise ElementHandleError('JSHandles can be evaluated only in the context they were created!')
+    #     if objectHandle._disposed:
+    #         raise ElementHandleError('JSHandle is disposed!')
+    #     if objectHandle._remoteObject.get('unserializableValue'):
+    #         return {'unserializableValue': objectHandle._remoteObject.get('unserializableValue')}  # noqa: E501
+    #     if not objectHandle._remoteObject.get('objectId'):
+    #         return {'value': objectHandle._remoteObject.get('value')}
+    #     return {'objectId': objectHandle._remoteObject.get('objectId')}
+    # return {'value': arg}
