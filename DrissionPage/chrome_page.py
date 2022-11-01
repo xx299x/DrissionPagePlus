@@ -1,6 +1,4 @@
 # -*- coding:utf-8 -*-
-from base64 import b64decode
-from math import inf
 from pathlib import Path
 from time import perf_counter, sleep
 from typing import Union, Tuple, List, Any
@@ -106,6 +104,11 @@ class ChromePage(BasePage):
         return {'height': h, 'width': w}
 
     def run_script(self, script: str, *args: Any) -> Any:
+        """运行javascript代码                                                 \n
+        :param script: js文本
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :return:
+        """
         if not args and not is_js_func(script):
             res = self.run_cdp('Runtime.evaluate',
                                expression=script,
@@ -116,6 +119,7 @@ class ChromePage(BasePage):
         else:
             res = self.run_cdp('Runtime.callFunctionOn',
                                functionDeclaration=script,
+                               objectId=self.root.obj_id,
                                # 'executionContextId': self._contextId,
                                arguments=[convert_argument(arg) for arg in args],
                                returnByValue=False,
@@ -252,6 +256,7 @@ class ChromePage(BasePage):
             else:
                 png = self.driver.Page.captureScreenshot(format=pic_type)['data']
 
+        from base64 import b64decode
         png = b64decode(png)
 
         if as_bytes:
@@ -448,7 +453,8 @@ class ChromePage(BasePage):
                           webSocketDebuggerUrl=f'ws://{self.debugger_address}/devtools/page/{tab_handle}')
         self.driver.start()
         self.driver.DOM.enable()
-        self.driver.DOM.getDocument()
+        root = self.driver.DOM.getDocument()
+        self.root = ChromeElement(self, node_id=root['root']['nodeId'])
 
     def _d_connect(self,
                    to_url: str,
@@ -514,27 +520,50 @@ def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) 
 
 def _parse_js_result(page: ChromePage, result: dict):
     """解析js返回的结果"""
+    if 'unserializableValue' in result:
+        return result['unserializableValue']
+
     the_type = result['type']
-    if the_type in ('string', 'number', 'boolean'):
-        return result['value']
-    elif the_type == 'undefined':
-        return None
-    elif the_type == 'object':
+
+    if the_type == 'object':
         sub_type = result['subtype']
         if sub_type == 'null':
             return None
+
         elif sub_type == 'node':
             return ChromeElement(page, obj_id=result['objectId'])
+
         elif sub_type == 'array':
+            r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']
+            return [_parse_js_result(page, result=i['value']) for i in r]
+
+        else:
+            return result['value']
+
+    elif the_type == 'undefined':
+        return None
+
+    # elif the_type in ('string', 'number', 'boolean'):
+    #     return result['value']
+
+    else:
+        return result['value']
 
 
 def convert_argument(arg: Any) -> dict:
-    pass
     """把参数转换成js能够接收的形式"""
-    # if arg == inf:
-    #     return {'unserializableValue': 'Infinity'}
-    # if arg == -inf:
-    #     return {'unserializableValue': '-Infinity'}
+    if isinstance(arg, ChromeElement):
+        return {'objectId': arg.obj_id}
+
+    elif isinstance(arg, int, float, str, bool):
+        return {'value': arg}
+
+    from math import inf
+    if arg == inf:
+        return {'unserializableValue': 'Infinity'}
+    if arg == -inf:
+        return {'unserializableValue': '-Infinity'}
+
     # objectHandle = arg if isinstance(arg, JSHandle) else None
     # if objectHandle:
     #     if objectHandle._context != self:

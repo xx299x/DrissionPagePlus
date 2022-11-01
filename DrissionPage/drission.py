@@ -483,8 +483,10 @@ def _run_browser(port, path: str, args: set) -> Popen:
     t1 = perf_counter()
     while perf_counter() - t1 < 10:
         try:
-            requests_get(f'http://127.0.0.1:{port}/json')
-            return debugger
+            tabs = requests_get(f'http://127.0.0.1:{port}/json').json()
+            for tab in tabs:
+                if tab['type'] == 'page':
+                    return debugger
         except requests_connection_err:
             pass
 

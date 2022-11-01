@@ -6,7 +6,7 @@
 """
 from pathlib import Path
 from typing import Union, Tuple, List
-from time import perf_counter
+from time import perf_counter, sleep
 
 from .session_element import make_session_ele
 from .base import DrissionElement
@@ -106,6 +106,19 @@ function getElementPagePosition(element){
         if self._scroll is None:
             self._scroll = ChromeScroll(self)
         return self._scroll
+
+    @property
+    def is_in_view(self) -> bool:
+        """返回元素是否出现在视口中，已元素中点为判断"""
+        js = """function(){
+const rect = this.getBoundingClientRect();
+x = rect.left+(rect.right-rect.left)/2;
+y = rect.top+(rect.bottom-rect.top)/2;
+const vWidth = window.innerWidth || document.documentElement.clientWidth;
+const vHeight = window.innerHeight || document.documentElement.clientHeight;
+if (x< 0 || y < 0 || x > vWidth || y > vHeight){return false;}
+return true;}"""
+        return self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self.obj_id)['result']['value']
 
     def run_script(self, arg: 'ChromeElement'):
         js = 'function(){alert(arguments[0].value);}'
@@ -228,28 +241,50 @@ function getElementPagePosition(element){
         return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
                                         left_top=left_top, right_bottom=right_bottom)
 
-    def click(self, by_js: bool = False) -> None:
+    def click(self, by_js: bool = None, timeout: float = None) -> None:
         """点击元素                                                                      \n
         尝试点击直到超时，若都失败就改用js点击                                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
+        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
         :return: 是否点击成功
         """
-        if by_js:
+
+        def do_it(x, y) -> bool:
+            r = self.page.driver.DOM.getNodeForLocation(x=x, y=y, includeUserAgentShadowDOM=True)
+            if r.get('nodeId') != self._node_id:
+                return False
+            self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=x, y=y, button='left', clickCount=1)
+            sleep(.1)
+            self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=x, y=y, button='left')
+            return True
+
+        if not by_js:
+            self.page.scroll_to_see(self)
+            if self.is_in_view:
+                timeout = timeout if timeout is not None else self.page.timeout
+                xy = self.client_location
+                size = self.size
+                ele_x = xy['x'] + size['width'] // 2
+                ele_y = xy['y'] + size['height'] // 2
+
+                t1 = perf_counter()
+                click = do_it(ele_x, ele_y)
+                while not click and perf_counter() - t1 <= timeout:
+                    print('ss')
+                    click = do_it(ele_x, ele_y)
+
+                if click:
+                    return True
+
+        if by_js is not False:
             js = 'function(){this.click();}'
             self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)
-            return
+            return True
 
-        self.page.driver.DOM.scrollIntoViewIfNeeded(nodeId=self._node_id)
-        xy = self.client_location
-        size = self.size
-        x = xy['x'] + size['width'] // 2
-        y = xy['y'] + size['height'] // 2
-        self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=x, y=y, button='left', clickCount=1)
-        self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=x, y=y, button='left')
+        return False
 
-        # js = """function(){const event=new MouseEvent('click',{view:window, bubbles:true, cancelable:true});
-        # this.dispatchEvent(event);}"""
-        # self.page.driver.Runtime.callFunctionOn(functionDeclaration=js, objectId=self._obj_id)
+    def click_at(self):
+        pass
 
     def _get_obj_id(self, node_id) -> str:
         return self.page.driver.DOM.resolveNode(nodeId=node_id)['object']['objectId']
