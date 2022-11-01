@@ -8,14 +8,14 @@ from requests import get as requests_get
 from json import loads
 
 from .base import BasePage
-from .common import get_loc, is_js_func
+from .common import get_loc
 from .drission import connect_chrome
-from .chrome_element import ChromeElement, ChromeScroll
+from .chrome_element import ChromeElement, ChromeScroll, run_script
 
 
 class ChromePage(BasePage):
 
-    def __init__(self, address: str,
+    def __init__(self, address: str = '127.0.0.1:9222',
                  path: str = 'chrome',
                  tab_handle: str = None,
                  args: list = None,
@@ -103,33 +103,14 @@ class ChromePage(BasePage):
         h = self.driver.Runtime.evaluate(expression='document.body.scrollHeight;')['result']['value']
         return {'height': h, 'width': w}
 
-    def run_script(self, script: str, *args: Any) -> Any:
+    def run_script(self, script: str, as_expr: bool = False, *args: Any) -> Any:
         """运行javascript代码                                                 \n
         :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
-        :return:
+        :return: 运行的结果
         """
-        if not args and not is_js_func(script):
-            res = self.run_cdp('Runtime.evaluate',
-                               expression=script,
-                               returnByValue=False,
-                               awaitPromise=True,
-                               userGesture=True)
-
-        else:
-            res = self.run_cdp('Runtime.callFunctionOn',
-                               functionDeclaration=script,
-                               objectId=self.root.obj_id,
-                               # 'executionContextId': self._contextId,
-                               arguments=[convert_argument(arg) for arg in args],
-                               returnByValue=False,
-                               awaitPromise=True,
-                               userGesture=True)
-
-        exceptionDetails = res.get('exceptionDetails')
-        if exceptionDetails:
-            raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
-        return _parse_js_result(self, res.get('result'))
+        return run_script(self, script, as_expr, *args)
 
     def get(self,
             url: str,
@@ -516,63 +497,3 @@ def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) 
         raise TypeError('num_or_handle参数只能是int、str、list、set 或 tuple类型。')
 
     return set(i if isinstance(i, str) else handles[i] for i in num_or_handles)
-
-
-def _parse_js_result(page: ChromePage, result: dict):
-    """解析js返回的结果"""
-    if 'unserializableValue' in result:
-        return result['unserializableValue']
-
-    the_type = result['type']
-
-    if the_type == 'object':
-        sub_type = result['subtype']
-        if sub_type == 'null':
-            return None
-
-        elif sub_type == 'node':
-            return ChromeElement(page, obj_id=result['objectId'])
-
-        elif sub_type == 'array':
-            r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']
-            return [_parse_js_result(page, result=i['value']) for i in r]
-
-        else:
-            return result['value']
-
-    elif the_type == 'undefined':
-        return None
-
-    # elif the_type in ('string', 'number', 'boolean'):
-    #     return result['value']
-
-    else:
-        return result['value']
-
-
-def convert_argument(arg: Any) -> dict:
-    """把参数转换成js能够接收的形式"""
-    if isinstance(arg, ChromeElement):
-        return {'objectId': arg.obj_id}
-
-    elif isinstance(arg, int, float, str, bool):
-        return {'value': arg}
-
-    from math import inf
-    if arg == inf:
-        return {'unserializableValue': 'Infinity'}
-    if arg == -inf:
-        return {'unserializableValue': '-Infinity'}
-
-    # objectHandle = arg if isinstance(arg, JSHandle) else None
-    # if objectHandle:
-    #     if objectHandle._context != self:
-    #         raise ElementHandleError('JSHandles can be evaluated only in the context they were created!')
-    #     if objectHandle._disposed:
-    #         raise ElementHandleError('JSHandle is disposed!')
-    #     if objectHandle._remoteObject.get('unserializableValue'):
-    #         return {'unserializableValue': objectHandle._remoteObject.get('unserializableValue')}  # noqa: E501
-    #     if not objectHandle._remoteObject.get('objectId'):
-    #         return {'value': objectHandle._remoteObject.get('value')}
-    #     return {'objectId': objectHandle._remoteObject.get('objectId')}
-    # return {'value': arg}
