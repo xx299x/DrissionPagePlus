@@ -235,12 +235,30 @@ return true;}"""
         :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
         """
+        if self.tag == 'img':  # 等待图片加载完成
+            js = ('arguments[0].complete && typeof arguments[0].naturalWidth != "undefined" '
+                  '&& arguments[0].naturalWidth > 0 && typeof arguments[0].naturalHeight != "undefined" '
+                  '&& arguments[0].naturalHeight > 0')
+            t1 = perf_counter()
+            while not self.run_script(js) and perf_counter() - t1 < self.page.timeout:
+                pass
+
         left, top = self.location.values()
         height, width = self.size.values()
         left_top = (left, top)
         right_bottom = (left + width, top + height)
         return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
                                         left_top=left_top, right_bottom=right_bottom)
+
+    def clean(self, by_js: bool = True):
+        if by_js:
+            js = "this.value='';"
+            self.run_script(js)
+
+        else:
+            self.page.driver.DOM.focus(nodeId=self._node_id)
+            self.page.driver.Input.dispatchKeyEvent(type='char',
+                                                    modifiers=2, code='KeyA')
 
     # def input(self,
     #           vals: Union[str, tuple],
@@ -558,7 +576,8 @@ def run_script(page_or_ele, script: str, as_expr: bool = False, *args: Any) -> A
                            userGesture=True)
     else:
         if not is_js_func(script):
-            script = f'function(){{return {script}}}'
+            script = script if script.strip().startswith('return') else f'return {script}'
+            script = f'function(){{{script}}}'
         res = page.run_cdp('Runtime.callFunctionOn',
                            functionDeclaration=script,
                            objectId=obj_id,
