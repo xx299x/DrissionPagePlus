@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from pathlib import Path
+from re import search
 from time import perf_counter, sleep
 from typing import Union, Tuple, List, Any
 
@@ -7,6 +8,9 @@ from pychrome import Tab
 from requests import get as requests_get
 from json import loads
 
+from requests.cookies import RequestsCookieJar
+
+from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
 from .common import get_loc
 from .drission import connect_chrome
@@ -15,23 +19,30 @@ from .chrome_element import ChromeElement, ChromeScroll, run_script
 
 class ChromePage(BasePage):
 
-    def __init__(self, address: str = '127.0.0.1:9222',
-                 path: str = 'chrome',
+    def __init__(self, Tab_or_Options: Union[Tab, DriverOptions] = None,
                  tab_handle: str = None,
-                 args: list = None,
                  timeout: float = 10):
         super().__init__(timeout)
-        self.debugger_address = address[7:] if address.startswith('http://') else address
-        connect_chrome(path, self.debugger_address, args)
-        tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
-        self._connect_debugger(tab_handle)
-        self.version = self._get_version()
-        self._main_version = int(self.version.split('.')[0])
-        self._scroll = None
+        self._connect_debugger(Tab_or_Options, tab_handle)
 
-    def _get_version(self):
-        browser = requests_get(f'http://{self.debugger_address}/json/version').json()['Browser']
-        return browser.split('/')[1]
+    def _connect_debugger(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_handle: str = None):
+        if isinstance(Tab_or_Options, Tab):
+            self._driver = Tab_or_Options
+            self.address = search(r'ws://(.*?)/dev', Tab_or_Options._websocket_url).group(1)
+
+        else:
+            if Tab_or_Options is None:
+                Tab_or_Options = DriverOptions()  # 从ini文件读取
+            connect_chrome(Tab_or_Options)
+            self.address = Tab_or_Options.debugger_address
+            tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
+            self._driver = Tab(id=tab_handle, type='page',
+                               webSocketDebuggerUrl=f'ws://{Tab_or_Options.debugger_address}/devtools/page/{tab_handle}')
+
+        self._driver.start()
+        self._driver.DOM.enable()
+        root = self._driver.DOM.getDocument()
+        self.root = ChromeElement(self, node_id=root['root']['nodeId'])
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
                  timeout: float = None) -> Union['ChromeElement', str, None]:
@@ -44,10 +55,15 @@ class ChromePage(BasePage):
         return self.ele(loc_or_str, timeout)
 
     @property
+    def driver(self):
+        return self._driver
+
+    @property
     def url(self) -> str:
         """返回当前页面url"""
-        json = loads(requests_get(f'http://{self.debugger_address}/json').text)
-        return [i['url'] for i in json if i['id'] == self.driver.id][0]
+        tab_id = self.driver.id  # 用于WebPage时激活浏览器
+        json = loads(requests_get(f'http://{self.address}/json').text)
+        return [i['url'] for i in json if i['id'] == tab_id][0]
 
     @property
     def html(self) -> str:
@@ -71,7 +87,7 @@ class ChromePage(BasePage):
     @property
     def tab_handles(self) -> list:
         """返回所有标签页id"""
-        json = loads(requests_get(f'http://{self.debugger_address}/json').text)
+        json = loads(requests_get(f'http://{self.address}/json').text)
         return [i['id'] for i in json if i['type'] == 'page']
 
     @property
@@ -92,7 +108,7 @@ class ChromePage(BasePage):
     @property
     def scroll(self) -> ChromeScroll:
         """用于滚动滚动条的对象"""
-        if self._scroll is None:
+        if not hasattr(self, '_scroll'):
             self._scroll = ChromeScroll(self)
         return self._scroll
 
@@ -142,6 +158,18 @@ class ChromePage(BasePage):
         else:
             return cookies
 
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]):
+        cookies = _cookies_to_tuple(cookies)
+        result_cookies = []
+        for cookie in cookies:
+            if not cookie.get('domain', None):
+                continue
+            c = {'value': '' if cookie['value'] is None else cookie['value'],
+                 'name': cookie['name'],
+                 'domain': cookie['domain']}
+            result_cookies.append(c)
+        self.driver.Network.setCookies(cookies=result_cookies)
+
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
             timeout: float = None) -> Union[ChromeElement, str, None]:
@@ -170,20 +198,20 @@ class ChromePage(BasePage):
             raise ValueError('loc_or_str参数只能是tuple、str、ChromeElement类型。')
 
         timeout = timeout if timeout is not None else self.timeout
-        search = self.driver.DOM.performSearch(query=loc)
-        count = search['resultCount']
+        search_result = self.driver.DOM.performSearch(query=loc)
+        count = search_result['resultCount']
 
         t1 = perf_counter()
         while count == 0 and perf_counter() - t1 < timeout:
-            search = self.driver.DOM.performSearch(query=loc)
-            count = search['resultCount']
+            search_result = self.driver.DOM.performSearch(query=loc)
+            count = search_result['resultCount']
 
         if count == 0:
             return None
 
         else:
             count = 1 if single else count
-            nodeIds = self.driver.DOM.getSearchResults(searchId=search['searchId'], fromIndex=0, toIndex=count)
+            nodeIds = self.driver.DOM.getSearchResults(searchId=search_result['searchId'], fromIndex=0, toIndex=count)
             if count == 1:
                 return ChromeElement(self, node_id=nodeIds['nodeIds'][0])
             else:
@@ -218,10 +246,6 @@ class ChromePage(BasePage):
             if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
                 raise TypeError(f'不支持的文件格式：{pic_type}。')
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
-
-        if full_page and self._main_version < 90:
-            print('注意：版本号大于90的chrome才支持整页截图。')
-            full_page = False
 
         hw = self.size
         if full_page:
@@ -335,7 +359,7 @@ class ChromePage(BasePage):
         :return: None
         """
         url = f'?{url}' if url else ''
-        requests_get(f'http://{self.debugger_address}/json/new{url}')
+        requests_get(f'http://{self.address}/json/new{url}')
 
     def to_tab(self, num_or_handle: Union[int, str] = 0, activate: bool = True) -> None:
         """跳转到标签页                                                         \n
@@ -357,11 +381,11 @@ class ChromePage(BasePage):
         self._connect_debugger(tab)
 
         if activate:
-            requests_get(f'http://{self.debugger_address}/json/activate/{tab}')
+            requests_get(f'http://{self.address}/json/activate/{tab}')
 
     def to_front(self) -> None:
         """激活当前标签页使其处于最前面"""
-        requests_get(f'http://{self.debugger_address}/json/activate/{self.current_tab_handle}')
+        requests_get(f'http://{self.address}/json/activate/{self.current_tab_handle}')
 
     def close_tabs(self, num_or_handles: Union[int, str, list, tuple, set] = None, others: bool = False) -> None:
         """关闭传入的标签页，默认关闭当前页。可传入多个                                                        \n
@@ -388,7 +412,7 @@ class ChromePage(BasePage):
             is_alive = False
 
         for tab in tabs:
-            requests_get(f'http://{self.debugger_address}/json/close/{tab}')
+            requests_get(f'http://{self.address}/json/close/{tab}')
 
         if is_alive:
             self.to_tab(0)
@@ -428,14 +452,6 @@ class ChromePage(BasePage):
     # @property
     # def active_ele(self):
     #     pass
-
-    def _connect_debugger(self, tab_handle: str):
-        self.driver = Tab(id=tab_handle, type='page',
-                          webSocketDebuggerUrl=f'ws://{self.debugger_address}/devtools/page/{tab_handle}')
-        self.driver.start()
-        self.driver.DOM.enable()
-        root = self.driver.DOM.getDocument()
-        self.root = ChromeElement(self, node_id=root['root']['nodeId'])
 
     def _d_connect(self,
                    to_url: str,

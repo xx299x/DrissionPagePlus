@@ -27,7 +27,6 @@ class SessionPage(BasePage):
         super().__init__(timeout)
         self._session = session
         self._response = None
-        self._download_kit = None
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
@@ -61,12 +60,14 @@ class SessionPage(BasePage):
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None,
+            timeout: float = None,
             **kwargs) -> bool:
         """用get方式跳转到url                                 \n
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
+        :param timeout: 连接超时时间（秒）
         :param kwargs: 连接参数
         :return: url是否可用
         """
@@ -152,7 +153,7 @@ class SessionPage(BasePage):
 
     @property
     def download(self) -> DownloadKit:
-        if self._download_kit is None:
+        if not hasattr(self, '_download_kit'):
             self._download_kit = DownloadKit(session=self)
 
         return self._download_kit

@@ -6,11 +6,18 @@
 """
 from html import unescape
 from pathlib import Path
+from platform import system
 from re import split, search, sub
 from shutil import rmtree
+from subprocess import Popen
+from time import perf_counter
 from typing import Union
 from zipfile import ZipFile
 from urllib.parse import urlparse, urljoin, urlunparse
+from requests import get as requests_get
+from requests.exceptions import ConnectionError as requests_connection_err
+
+from .config import DriverOptions
 
 
 def get_ele_txt(e) -> str:
@@ -487,3 +494,104 @@ def is_js_func(func: str) -> bool:
     elif '=>' in func:
         return True
     return False
+
+
+def _port_is_using(ip: str, port: str) -> Union[bool, None]:
+    """检查端口是否被占用               \n
+    :param ip: 浏览器地址
+    :param port: 浏览器端口
+    :return: bool
+    """
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        s.connect((ip, int(port)))
+        s.shutdown(2)
+        return True
+    except socket.error:
+        return False
+    finally:
+        if s:
+            s.close()
+
+
+def connect_chrome(option: DriverOptions) -> tuple:
+    """连接或启动chrome                           \n
+    :param option: DriverOptions对象
+    :return: chrome 路径和进程对象组成的元组
+    """
+    system_type = system().lower()
+    debugger_address = option.debugger_address
+    chrome_path = option.chrome_path
+    args = option.arguments
+
+    debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
+    ip, port = debugger_address.split(':')
+    if ip not in ('127.0.0.1', 'localhost'):
+        return None, None
+
+    if _port_is_using(ip, port):
+        chrome_path = get_exe_path_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' \
+            else chrome_path
+        return chrome_path, None
+
+    args = [] if args is None else args
+    args1 = []
+    for arg in args:
+        if arg.startswith(('--user-data-dir', '--disk-cache-dir', '--user-agent')) and system().lower() == 'windows':
+            index = arg.find('=') + 1
+            args1.append(f'{arg[:index]}"{arg[index:].strip()}"')
+        else:
+            args1.append(arg)
+
+    args = set(args1)
+
+    # if proxy:
+    #     args.add(f'--proxy-server={proxy["http"]}')
+
+    # ----------创建浏览器进程----------
+    try:
+        debugger = _run_browser(port, chrome_path, args)
+        if chrome_path == 'chrome' and system_type == 'windows':
+            chrome_path = get_exe_path_from_port(port)
+
+    # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
+    except FileNotFoundError:
+        from DrissionPage.easy_set import _get_chrome_path
+        chrome_path = _get_chrome_path(show_msg=False)
+
+        if not chrome_path:
+            raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
+
+        debugger = _run_browser(port, chrome_path, args)
+
+    return chrome_path, debugger
+
+
+def _run_browser(port, path: str, args: set) -> Popen:
+    """创建chrome进程          \n
+    :param port: 端口号
+    :param path: 浏览器地址
+    :param args: 启动参数
+    :return: 进程对象
+    """
+    sys = system().lower()
+    if sys == 'windows':
+        args = ' '.join(args)
+        debugger = Popen(f'"{path}" --remote-debugging-port={port} {args}', shell=False)
+    else:
+        arguments = [path, f'--remote-debugging-port={port}'] + list(args)
+        debugger = Popen(arguments, shell=False)
+
+    t1 = perf_counter()
+    while perf_counter() - t1 < 10:
+        try:
+            tabs = requests_get(f'http://127.0.0.1:{port}/json').json()
+            for tab in tabs:
+                if tab['type'] == 'page':
+                    return debugger
+        except requests_connection_err:
+            pass
+
+    raise ConnectionError('无法连接浏览器。')

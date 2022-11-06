@@ -494,7 +494,7 @@ class DriverOptions(Options):
     @property
     def chrome_path(self) -> str:
         """浏览器启动文件路径"""
-        return self.binary_location
+        return self.binary_location or 'chrome'
 
     # -------------重写父类方法，实现链式操作-------------
     def add_argument(self, argument) -> 'DriverOptions':

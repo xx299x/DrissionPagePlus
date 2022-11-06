@@ -4,24 +4,21 @@
 @Contact :   g1879@qq.com
 @File    :   drission.py
 """
-from subprocess import Popen
 from sys import exit
 from typing import Union
 
 from platform import system
-from requests import Session, get as requests_get
+from requests import Session
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
-from requests.exceptions import ConnectionError as requests_connection_err
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
-from time import perf_counter
 from tldextract import extract
 
-from .common import get_pid_from_port, get_exe_path_from_port
+from .common import get_pid_from_port, connect_chrome
 from .config import _session_options_to_dict, SessionOptions, DriverOptions, _cookies_to_tuple
 
 
@@ -109,13 +106,12 @@ class Drission(object):
                 self.driver_options.add_argument(f'--proxy-server={self._proxy["http"]}')
 
             driver_path = self.driver_options.driver_path or 'chromedriver'
-            chrome_path = self.driver_options.binary_location or 'chrome.exe'
+            chrome_path = self.driver_options.chrome_path
 
             # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
             if self.driver_options.debugger_address:
                 # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
-                chrome_path, self._debugger = connect_chrome(chrome_path, self.driver_options.debugger_address,
-                                                             self.driver_options.arguments, self._proxy)
+                chrome_path, self._debugger = connect_chrome(self.driver_options)
 
             # -----------创建WebDriver对象-----------
             self._driver = _create_driver(chrome_path, driver_path, self.driver_options)
@@ -391,108 +387,6 @@ def user_agent_to_session(driver: RemoteWebDriver, session: Session) -> None:
     session.headers.update({"User-Agent": selenium_user_agent})
 
 
-def _port_is_using(ip: str, port: str) -> Union[bool, None]:
-    """检查端口是否被占用               \n
-    :param ip: 浏览器地址
-    :param port: 浏览器端口
-    :return: bool
-    """
-    import socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    try:
-        s.connect((ip, int(port)))
-        s.shutdown(2)
-        return True
-    except socket.error:
-        return False
-    finally:
-        if s:
-            s.close()
-
-
-def connect_chrome(chrome_path: str, debugger_address: str, args: list = None, proxy: dict = None) -> tuple:
-    """连接或启动chrome                           \n
-    :param chrome_path: chrome.exe 路径
-    :param debugger_address: 进程运行的ip和端口号
-    :param args: chrome 配置参数
-    :param proxy: 代理配置
-    :return: chrome 路径和进程对象组成的元组
-    """
-    debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
-    ip, port = debugger_address.split(':')
-    if ip not in ('127.0.0.1', 'localhost'):
-        return None, None
-
-    if _port_is_using(ip, port):
-        chrome_path = get_exe_path_from_port(port) if chrome_path == 'chrome.exe' else chrome_path
-        return chrome_path, None
-
-    args = [] if args is None else args
-    args1 = []
-    for arg in args:
-        if arg.startswith(('--user-data-dir', '--disk-cache-dir')):
-            index = arg.find('=') + 1
-            args1.append(f'{arg[:index]}"{arg[index:].strip()}"')
-        elif arg.startswith('--user-agent='):
-            args1.append(f'--user-agent="{arg[13:]}"')
-        else:
-            args1.append(arg)
-
-    args = set(args1)
-
-    if proxy:
-        args.add(f'--proxy-server={proxy["http"]}')
-
-    # ----------创建浏览器进程----------
-    try:
-        debugger = _run_browser(port, chrome_path, args)
-        if chrome_path == 'chrome.exe':
-            chrome_path = get_exe_path_from_port(port)
-
-    # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
-    except FileNotFoundError:
-        from DrissionPage.easy_set import _get_chrome_path
-        chrome_path = _get_chrome_path(show_msg=False)
-
-        if not chrome_path:
-            raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
-
-        debugger = _run_browser(port, chrome_path, args)
-
-    return chrome_path, debugger
-
-
-def _run_browser(port, path: str, args: set) -> Popen:
-    """创建chrome进程          \n
-    :param port: 端口号
-    :param path: 浏览器地址
-    :param args: 启动参数
-    :return: 进程对象
-    """
-    sys = system().lower()
-    if sys == 'windows':
-        args = ' '.join(args)
-        debugger = Popen(f'"{path}" --remote-debugging-port={port} {args}', shell=False)
-    elif sys == 'linux':
-        arguments = [path, f'--remote-debugging-port={port}'] + list(args)
-        debugger = Popen(arguments, shell=False)
-    else:
-        raise OSError('只支持Windows和Linux系统。')
-
-    t1 = perf_counter()
-    while perf_counter() - t1 < 10:
-        try:
-            tabs = requests_get(f'http://127.0.0.1:{port}/json').json()
-            for tab in tabs:
-                if tab['type'] == 'page':
-                    return debugger
-        except requests_connection_err:
-            pass
-
-    raise ConnectionError('无法连接浏览器。')
-
-
 def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebDriver:
     """创建 WebDriver 对象                            \n
     :param chrome_path: chrome.exe 路径
@@ -514,7 +408,7 @@ def _create_driver(chrome_path: str, driver_path: str, options: Options) -> WebD
         from .easy_set import get_match_driver
         from DrissionPage.easy_set import _get_chrome_path
 
-        if chrome_path == 'chrome.exe':
+        if chrome_path == 'chrome':
             chrome_path = _get_chrome_path(show_msg=False, from_ini=False)
 
         if chrome_path:
