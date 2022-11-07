@@ -322,7 +322,7 @@ return true;}"""
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return _run_script(self, script, as_expr, *args)
+        return _run_script(self, script, as_expr, args)
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -747,7 +747,7 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def _run_script(page_or_ele, script: str, as_expr: bool = False, *args: Any) -> Any:
+def _run_script(page_or_ele, script: str, as_expr: bool = False, args: tuple = None) -> Any:
     """运行javascript代码                                                 \n
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
@@ -769,6 +769,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, *args: Any) -> 
                            awaitPromise=True,
                            userGesture=True)
     else:
+        args = args or ()
         if not is_js_func(script):
             script = script if script.strip().startswith('return') else f'return {script}'
             script = f'function(){{{script}}}'
@@ -937,7 +938,7 @@ class ChromeSelect(object):
         :param ele: select 元素对象
         """
         if ele.tag != 'select':
-            raise TypeError(f"select方法只能在<select>元素使用，现在是：{ele.tag}。")
+            raise TypeError("select方法只能在<select>元素使用。")
 
         self._ele = ele
 
@@ -947,9 +948,9 @@ class ChromeSelect(object):
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
         """
-        i = 'index' if isinstance(text_or_index, int) else 'text'
+        para_type = 'index' if isinstance(text_or_index, int) else 'text'
         timeout = timeout if timeout is not None else self._ele.page.timeout
-        return self._select(text_or_index, timeout=timeout)
+        return self._select(text_or_index, para_type, timeout=timeout)
 
     @property
     def is_multi(self) -> bool:
@@ -979,9 +980,13 @@ class ChromeSelect(object):
 
     def clear(self) -> None:
         """清除所有已选项"""
-        self.select_ele.deselect_all()
+        if not self.is_multi:
+            raise NotImplementedError("只能在多选菜单执行此操作。")
+        for opt in self.options:
+            if opt.is_selected():
+                opt.click(by_js=True)
 
-    def select_by_text(self, text: Union[str, list, tuple], timeout=None) -> bool:
+    def by_text(self, text: Union[str, list, tuple], timeout=None) -> bool:
         """此方法用于根据text值选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param text: text属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
@@ -990,7 +995,7 @@ class ChromeSelect(object):
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', False, timeout)
 
-    def select_by_value(self, value: Union[str, list, tuple], timeout=None) -> bool:
+    def by_value(self, value: Union[str, list, tuple], timeout=None) -> bool:
         """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param value: value属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
@@ -999,7 +1004,7 @@ class ChromeSelect(object):
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', False, timeout)
 
-    def select_by_index(self, index: Union[int, list, tuple], timeout=None) -> bool:
+    def by_index(self, index: Union[int, list, tuple], timeout=None) -> bool:
         """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param index: index属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
@@ -1008,7 +1013,7 @@ class ChromeSelect(object):
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', False, timeout)
 
-    def deselect_by_text(self, text: Union[str, list, tuple], timeout=None) -> bool:
+    def cancel_by_text(self, text: Union[str, list, tuple], timeout=None) -> bool:
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param text: text属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
@@ -1017,7 +1022,7 @@ class ChromeSelect(object):
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', True, timeout)
 
-    def deselect_by_value(self, value: Union[str, list, tuple], timeout=None) -> bool:
+    def cancel_by_value(self, value: Union[str, list, tuple], timeout=None) -> bool:
         """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param value: value属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
@@ -1026,7 +1031,7 @@ class ChromeSelect(object):
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', True, timeout)
 
-    def deselect_by_index(self, index: Union[int, list, tuple], timeout=None) -> bool:
+    def cancel_by_index(self, index: Union[int, list, tuple], timeout=None) -> bool:
         """此方法用于根据index值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param index: value属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间

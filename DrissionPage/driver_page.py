@@ -512,9 +512,9 @@ class DriverPage(BasePage):
         """
         return glob(f'{download_path}{sep}*.crdownload')
 
-    def process_alert(self, ok: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
+    def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
         """处理提示框                                                            \n
-        :param ok: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
+        :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间
         :return: 提示框内容文本，未等到提示框则返回None
@@ -540,9 +540,9 @@ class DriverPage(BasePage):
         if send is not None:
             alert.send_keys(send)
 
-        if ok is True:
+        if accept is True:
             alert.accept()
-        elif ok is False:
+        elif accept is False:
             alert.dismiss()
 
         return res_text

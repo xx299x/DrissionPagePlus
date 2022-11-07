@@ -25,6 +25,11 @@ class ChromePage(BasePage):
         super().__init__(timeout)
         self._connect_debugger(Tab_or_Options, tab_handle)
 
+    def _ready(self):
+        self._alert = Alert()
+        self.driver.Page.javascriptDialogOpening = self._on_alert_open
+        self.driver.Page.javascriptDialogClosed = self._on_alert_close
+
     def _connect_debugger(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_handle: str = None):
         if isinstance(Tab_or_Options, Tab):
             self._driver = Tab_or_Options
@@ -41,6 +46,7 @@ class ChromePage(BasePage):
 
         self._driver.start()
         self._driver.DOM.enable()
+        self._driver.Page.enable()
         root = self._driver.DOM.getDocument()
         self.root = ChromeElement(self, node_id=root['root']['nodeId'])
 
@@ -123,7 +129,7 @@ class ChromePage(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return _run_script(self, script, as_expr, *args)
+        return _run_script(self, script, as_expr, args)
 
     def get(self,
             url: str,
@@ -496,6 +502,47 @@ class ChromePage(BasePage):
             raise err if err is not None else ConnectionError('连接异常。')
 
         return is_ok
+
+    def _on_alert_close(self, **kwargs):
+        self._alert.activated = False
+        self._alert.text = None
+        self._alert.type = None
+        self._alert.defaultPrompt = None
+
+    def _on_alert_open(self, **kwargs):
+        self._alert.activated = True
+        self._alert.text = kwargs['message']
+        self._alert.type = kwargs['message']
+        self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
+
+    def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
+        """处理提示框                                                            \n
+        :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
+        :param send: 处理prompt提示框时可输入文本
+        :param timeout: 等待提示框出现的超时时间
+        :return: 提示框内容文本，未等到提示框则返回None
+        """
+        timeout = timeout or self.timeout
+        t1 = perf_counter()
+        while not self._alert.activated and perf_counter() - t1 < timeout:
+            sleep(.1)
+        if not self._alert.activated:
+            return None
+
+        res_text = self._alert.text
+        if self._alert.type == 'prompt':
+            self.driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
+        else:
+            self.driver.Page.handleJavaScriptDialog(accept=accept)
+        return res_text
+
+
+class Alert(object):
+    def __init__(self):
+        self.activated = False
+        self.text = None
+        self.type = None
+        self.defaultPrompt = None
 
 
 def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:
