@@ -562,7 +562,7 @@ def connect_chrome(option: DriverOptions) -> tuple:
         chrome_path = _get_chrome_path(show_msg=False)
 
         if not chrome_path:
-            raise FileNotFoundError('无法找到chrome.exe路径，请手动配置。')
+            raise FileNotFoundError('无法找到chrome路径，请手动配置。')
 
         debugger = _run_browser(port, chrome_path, args)
 

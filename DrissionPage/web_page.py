@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
+from DownloadKit import DownloadKit
 from pychrome import Tab
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
@@ -125,6 +126,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         """返回Tab对象，如未初始化则按配置信息创建。         \n
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
+        self.change_mode('d')
         if self._driver is None:
             self._connect_debugger(self._driver_options, self._setting_handle)
 
@@ -155,6 +157,32 @@ class WebPage(SessionPage, ChromePage, BasePage):
             return super(SessionPage, self).get(url, show_errmsg, retry, interval, timeout)
         elif self._mode == 's':
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
+
+    def ele(self,
+            loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement],
+            timeout: float = None) -> Union[ChromeElement, SessionElement, str, None]:
+        """返回第一个符合条件的元素、属性或节点文本                               \n
+        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，默认与页面等待时间一致
+        :return: 元素对象或属性、文本节点文本
+        """
+        if self._mode == 's':
+            return super().ele(loc_or_ele)
+        elif self._mode == 'd':
+            return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
+
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None) -> List[Union[ChromeElement, SessionElement, str]]:
+        """返回页面中所有符合条件的元素、属性或节点文本                                \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，默认与页面等待时间一致
+        :return: 元素对象或属性、文本组成的列表
+        """
+        if self._mode == 's':
+            return super().eles(loc_or_str)
+        elif self._mode == 'd':
+            return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
     def change_mode(self, mode: str = None, go: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
@@ -248,6 +276,48 @@ class WebPage(SessionPage, ChromePage, BasePage):
                     kwargs['expires'] = cookie['expiry']
 
                 self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+
+    # ----------------重写SessionPage的函数-----------------------
+    def post(self,
+             url: str,
+             data: Union[dict, str] = None,
+             show_errmsg: bool = False,
+             retry: int = None,
+             interval: float = None,
+             **kwargs) -> bool:
+        """用post方式跳转到url，会切换到s模式                        \n
+        :param url: 目标url
+        :param data: post方式时提交的数据
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
+        self.change_mode('s', go=False)
+        return super().post(url, data, show_errmsg, retry, interval, **kwargs)
+
+    @property
+    def download(self) -> DownloadKit:
+        if self.mode == 'd':
+            self.cookies_to_session()
+        return super().download
+
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement],
+             timeout: float = None, single: bool = True) \
+            -> Union[ChromeElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
+                Union[ChromeElement, str]]]:
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
+        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，d模式专用
+        :param single: True则返回第一个，False则返回全部
+        :return: 元素对象或属性、文本节点文本
+        """
+        if self._mode == 's':
+            return super()._ele(loc_or_ele, single=single)
+        elif self._mode == 'd':
+            return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
 
     def _set_session(self, data: dict) -> None:
         """根据传入字典对session进行设置    \n

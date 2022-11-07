@@ -9,6 +9,7 @@ from typing import Union, List, Tuple
 
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
+# from lxml.etree import Element as HtmlElement, fromstring
 
 from .base import DrissionElement, BasePage, BaseElement
 from .common import get_ele_txt, get_loc, make_absolute_link

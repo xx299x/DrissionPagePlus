@@ -14,7 +14,7 @@ from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
 from .common import get_loc
 from .drission import connect_chrome
-from .chrome_element import ChromeElement, ChromeScroll, run_script
+from .chrome_element import ChromeElement, ChromeScroll, _run_script
 
 
 class ChromePage(BasePage):
@@ -55,7 +55,7 @@ class ChromePage(BasePage):
         return self.ele(loc_or_str, timeout)
 
     @property
-    def driver(self):
+    def driver(self) -> Tab:
         return self._driver
 
     @property
@@ -79,10 +79,7 @@ class ChromePage(BasePage):
     @property
     def tabs_count(self) -> int:
         """返回标签页数量"""
-        try:
-            return len(self.tab_handles)
-        except Exception:
-            return 0
+        return len(self.tab_handles)
 
     @property
     def tab_handles(self) -> list:
@@ -126,7 +123,7 @@ class ChromePage(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return run_script(self, script, as_expr, *args)
+        return _run_script(self, script, as_expr, *args)
 
     def get(self,
             url: str,
