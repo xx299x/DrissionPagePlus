@@ -5,4 +5,5 @@ from warnings import filterwarnings
 filterwarnings('ignore')
 from .mix_page import MixPage
 from .web_page import WebPage
+from .drission import Drission
 from .config import DriverOptions, SessionOptions

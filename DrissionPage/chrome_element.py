@@ -9,6 +9,7 @@ from re import search
 from typing import Union, Tuple, List, Any
 from time import perf_counter, sleep
 
+from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele, SessionElement
 from .base import DrissionElement
 from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func
@@ -296,13 +297,13 @@ function getElementPagePosition(element){
     def is_in_view(self) -> bool:
         """返回元素是否出现在视口中，已元素中点为判断"""
         js = """function(){
-const rect = this.getBoundingClientRect();
-x = rect.left+(rect.right-rect.left)/2;
-y = rect.top+(rect.bottom-rect.top)/2;
-const vWidth = window.innerWidth || document.documentElement.clientWidth;
-const vHeight = window.innerHeight || document.documentElement.clientHeight;
-if (x< 0 || y < 0 || x > vWidth || y > vHeight){return false;}
-return true;}"""
+            const rect = this.getBoundingClientRect();
+            x = rect.left+(rect.right-rect.left)/2;
+            y = rect.top+(rect.bottom-rect.top)/2;
+            const vWidth = window.innerWidth || document.documentElement.clientWidth;
+            const vHeight = window.innerHeight || document.documentElement.clientHeight;
+            if (x< 0 || y < 0 || x > vWidth || y > vHeight){return false;}
+            return true;}"""
         return self.run_script(js)
 
     def attr(self, attr: str) -> Union[str, None]:
@@ -466,26 +467,73 @@ return true;}"""
         return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
                                         left_top=left_top, right_bottom=right_bottom)
 
-    def clean(self, by_js: bool = True):
-        if by_js:
-            js = "this.value='';"
-            self.run_script(js)
+    def input(self, vals: Union[str, tuple, list],
+              clear: bool = True) -> None:
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                          \n
+        :param vals: 文本值或按键组合
+        :param clear: 输入前是否清空文本框
+        :return: None
+        """
+        combination_key = False
+        if not isinstance(vals, (str, tuple, list)):
+            vals = str(vals)
+        if isinstance(vals, str):
+            if '\n' in vals:
+                combination_key = True
+            vals = (vals,)
 
-        else:
-            self.page.driver.DOM.focus(nodeId=self._node_id)
-            self.page.driver.Input.dispatchKeyEvent(type='char',
-                                                    modifiers=2, code='KeyA')
-
-    def input(self) -> bool:
         try:
             self.page.driver.DOM.focus(nodeId=self._node_id)
         except Exception:
-            self.click(by_js=True)
+            self.click(by_js=False)
 
-        self.page.driver.Input.dispatchKeyEvent(type='keyDown', keyIdentifier="\ue009", )
-        self.page.driver.Input.dispatchKeyEvent(type='keyDown', code="KeyA", )
-        # self.page.driver.Input.dispatchKeyEvent(type='keyDown',
-        #                                         commands=["\ue009",'KeyA'])
+        if clear:
+            self.clear(by_js=True)
+
+        if not combination_key:
+            for i in ('\ue008', '\ue009', '\ue00a', '\ue03d'):  # ctrl alt shift command 四键
+                if i in vals:
+                    combination_key = True
+                    break
+
+        if not combination_key:
+            self.page.run_cdp('Input.insertText', text=''.join(vals))
+            return
+
+        modifier, typing = _keys_to_typing(vals)
+        for key in typing:
+            print([key])
+            if key not in _keyDefinitions:
+                self.page.run_cdp('Input.insertText', text=key)
+
+            else:
+                description = _keyDescriptionForString(modifier, key)
+                text = description['text']
+                data = {'type': 'keyDown' if text else 'rawKeyDown',
+                        'modifiers': modifier,
+                        'windowsVirtualKeyCode': description['keyCode'],
+                        'code': description['code'],
+                        'key': description['key'],
+                        'text': text,
+                        'autoRepeat': False,
+                        'unmodifiedText': text,
+                        'location': description['location'],
+                        'isKeypad': description['location'] == 3}
+
+                self.page.run_cdp('Input.dispatchKeyEvent', **data)
+                # data['type'] = 'keyUp'
+                # self.page.run_cdp('Input.dispatchKeyEvent', **data)
+
+    def clear(self, by_js: bool = True) -> None:
+        """清空元素文本                                    \n
+        :param by_js: 是否用js方式清空
+        :return: None
+        """
+        if by_js:
+            self.run_script("this.value='';")
+
+        else:
+            self.input(('\ue009', 'a', '\ue017'), clear=False)
 
     def click(self, by_js: bool = None, timeout: float = None) -> bool:
         """点击元素                                                                      \n
@@ -1016,7 +1064,7 @@ class ChromeSelect(object):
         if not self.is_multi:
             raise NotImplementedError("只能在多选菜单执行此操作。")
         for opt in self.options:
-            if opt.is_selected():
+            if opt.is_selected:
                 opt.click(by_js=True)
 
     def by_text(self, text: Union[str, list, tuple], timeout=None) -> bool:
@@ -1204,7 +1252,7 @@ class ChromeElementWaiter(object):
         """等待元素从dom隐藏"""
         return self._wait_ele('hidden')
 
-    def _wait_ele(self, mode: str) -> bool:
+    def _wait_ele(self, mode: str) -> Union[None, bool]:
         """执行等待
         :param mode: 等待模式
         :return: 是否等待成功
