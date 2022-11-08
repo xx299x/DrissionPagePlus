@@ -14,7 +14,7 @@ from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
 from .common import get_loc
 from .drission import connect_chrome
-from .chrome_element import ChromeElement, ChromeScroll, _run_script
+from .chrome_element import ChromeElement, ChromeScroll, _run_script, ChromeElementWaiter
 
 
 class ChromePage(BasePage):
@@ -25,10 +25,10 @@ class ChromePage(BasePage):
         super().__init__(timeout)
         self._connect_debugger(Tab_or_Options, tab_handle)
 
-    def _ready(self):
-        self._alert = Alert()
-        self.driver.Page.javascriptDialogOpening = self._on_alert_open
-        self.driver.Page.javascriptDialogClosed = self._on_alert_close
+    # def _ready(self):
+    #     self._alert = Alert()
+    #     self.driver.Page.javascriptDialogOpening = self._on_alert_open
+    #     self.driver.Page.javascriptDialogClosed = self._on_alert_close
 
     def _connect_debugger(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_handle: str = None):
         if isinstance(Tab_or_Options, Tab):
@@ -49,6 +49,10 @@ class ChromePage(BasePage):
         self._driver.Page.enable()
         root = self._driver.DOM.getDocument()
         self.root = ChromeElement(self, node_id=root['root']['nodeId'])
+
+        self._alert = Alert()
+        self.driver.Page.javascriptDialogOpening = self._on_alert_open
+        self.driver.Page.javascriptDialogClosed = self._on_alert_close
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
                  timeout: float = None) -> Union['ChromeElement', str, None]:
@@ -204,8 +208,8 @@ class ChromePage(BasePage):
         search_result = self.driver.DOM.performSearch(query=loc)
         count = search_result['resultCount']
 
-        t1 = perf_counter()
-        while count == 0 and perf_counter() - t1 < timeout:
+        end_time = perf_counter() + timeout
+        while count == 0 and perf_counter() < end_time:
             search_result = self.driver.DOM.performSearch(query=loc)
             count = search_result['resultCount']
 
@@ -219,6 +223,16 @@ class ChromePage(BasePage):
                 return ChromeElement(self, node_id=nodeIds['nodeIds'][0])
             else:
                 return [ChromeElement(self, node_id=i) for i in nodeIds['nodeIds']]
+
+    def wait_ele(self,
+                 loc_or_ele: Union[str, tuple, ChromeElement],
+                 timeout: float = None) -> ChromeElementWaiter:
+        """等待元素从dom删除、显示、隐藏                             \n
+        :param loc_or_ele: 可以是元素、查询字符串、loc元组
+        :param timeout: 等待超时时间
+        :return: 用于等待的ElementWaiter对象
+        """
+        return ChromeElementWaiter(self, loc_or_ele, timeout)
 
     def get_screenshot(self, path: [str, Path] = None,
                        as_bytes: [bool, str] = None,
@@ -476,8 +490,8 @@ class ChromePage(BasePage):
         for _ in range(times + 1):
             try:
                 result = self.driver.Page.navigate(url=to_url)
-                t1 = perf_counter()
-                while self.ready_state != 'complete' and perf_counter() - t1 < timeout:
+                end_time = perf_counter() + timeout
+                while self.ready_state != 'complete' and perf_counter() < end_time:
                     sleep(.5)
                 if self.ready_state != 'complete':
                     raise TimeoutError
@@ -508,12 +522,16 @@ class ChromePage(BasePage):
         self._alert.text = None
         self._alert.type = None
         self._alert.defaultPrompt = None
+        self._alert.response_accept = kwargs.get['result']
+        self._alert.response_text = kwargs['userInput']
 
     def _on_alert_open(self, **kwargs):
         self._alert.activated = True
         self._alert.text = kwargs['message']
         self._alert.type = kwargs['message']
         self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
+        self._alert.response_accept = None
+        self._alert.response_text = None
 
     def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
         """处理提示框                                                            \n
@@ -523,8 +541,8 @@ class ChromePage(BasePage):
         :return: 提示框内容文本，未等到提示框则返回None
         """
         timeout = timeout or self.timeout
-        t1 = perf_counter()
-        while not self._alert.activated and perf_counter() - t1 < timeout:
+        end_time = perf_counter() + timeout
+        while not self._alert.activated and perf_counter() < end_time:
             sleep(.1)
         if not self._alert.activated:
             return None
@@ -543,6 +561,8 @@ class Alert(object):
         self.text = None
         self.type = None
         self.defaultPrompt = None
+        self.response_accept = None
+        self.response_text = None
 
 
 def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:

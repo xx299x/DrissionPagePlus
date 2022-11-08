@@ -42,7 +42,8 @@ class WebPage(SessionPage, ChromePage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self._ready()
+            self.driver
+            # self._ready()
 
         # if self._mode == 'd':
         #     try:
@@ -199,8 +200,8 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
         # s模式转d模式
         if self._mode == 'd':
-            if not self._has_driver:
-                self._ready()
+            # if not self._has_driver:
+            #     self._ready()
             self._has_driver = True
             self._url = None if not self._has_driver else super(SessionPage, self).url
 
