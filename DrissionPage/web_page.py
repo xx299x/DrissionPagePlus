@@ -185,6 +185,27 @@ class WebPage(SessionPage, ChromePage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement] = None) \
+            -> Union[SessionElement, str, None]:
+        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        if self._mode == 's':
+            return super().s_ele(loc_or_ele)
+        elif self._mode == 'd':
+            return super(SessionPage, self).s_ele(loc_or_ele)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
+        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本组成的列表
+        """
+        if self._mode == 's':
+            return super().s_eles(loc_or_str)
+        elif self._mode == 'd':
+            return super(SessionPage, self).s_eles(loc_or_str)
+
     def change_mode(self, mode: str = None, go: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
         切换时会把当前模式的cookies复制到目标模式                   \n

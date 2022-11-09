@@ -10,6 +10,7 @@ from json import loads
 
 from requests.cookies import RequestsCookieJar
 
+from .session_element import SessionElement, make_session_ele
 from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
 from .common import get_loc
@@ -25,24 +26,27 @@ class ChromePage(BasePage):
         super().__init__(timeout)
         self._connect_debugger(Tab_or_Options, tab_handle)
 
-    # def _ready(self):
-    #     self._alert = Alert()
-    #     self.driver.Page.javascriptDialogOpening = self._on_alert_open
-    #     self.driver.Page.javascriptDialogClosed = self._on_alert_close
-
     def _connect_debugger(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_handle: str = None):
+        self.timeouts = Timeout(self)
+        self._page_load_strategy = 'normal'
         if isinstance(Tab_or_Options, Tab):
             self._driver = Tab_or_Options
             self.address = search(r'ws://(.*?)/dev', Tab_or_Options._websocket_url).group(1)
+            self.options = None
 
-        else:
-            if Tab_or_Options is None:
-                Tab_or_Options = DriverOptions()  # 从ini文件读取
-            connect_chrome(Tab_or_Options)
-            self.address = Tab_or_Options.debugger_address
+        elif isinstance(Tab_or_Options, DriverOptions):
+            self.options = Tab_or_Options or DriverOptions()  # 从ini文件读取
+            self.set_timeouts(page_load=self.options.timeouts['pageLoad'],
+                              script=self.options.timeouts['script'])
+            self._page_load_strategy = self.options.page_load_strategy
+            connect_chrome(self.options)
+            self.address = self.options.debugger_address
             tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
             self._driver = Tab(id=tab_handle, type='page',
-                               webSocketDebuggerUrl=f'ws://{Tab_or_Options.debugger_address}/devtools/page/{tab_handle}')
+                               webSocketDebuggerUrl=f'ws://{self.options.debugger_address}/devtools/page/{tab_handle}')
+
+        else:
+            raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
         self._driver.start()
         self._driver.DOM.enable()
@@ -110,7 +114,7 @@ class ChromePage(BasePage):
     @property
     def ready_state(self) -> str:
         """返回当前页面加载状态，"""
-        return self.driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
+        return self.run_script('document.readyState;', as_expr=True)
 
     @property
     def scroll(self) -> ChromeScroll:
@@ -122,9 +126,40 @@ class ChromePage(BasePage):
     @property
     def size(self) -> dict:
         """返回页面总长宽"""
-        w = self.driver.Runtime.evaluate(expression='document.body.scrollWidth;')['result']['value']
-        h = self.driver.Runtime.evaluate(expression='document.body.scrollHeight;')['result']['value']
+        w = self.run_script('document.body.scrollWidth;', as_expr=True)
+        h = self.run_script('document.body.scrollHeight;', as_expr=True)
         return {'height': h, 'width': w}
+
+    @property
+    def active_ele(self) -> ChromeElement:
+        return self.run_script('return document.activeElement;')
+
+    @property
+    def page_load_strategy(self) -> str:
+        """返回页面加载策略"""
+        return self._page_load_strategy
+
+    def set_page_load_strategy(self, value: str) -> None:
+        """设置页面加载策略，可选'normal', 'eager', 'none'"""
+        if value not in ('normal', 'eager', 'none'):
+            raise ValueError("只能选择'normal', 'eager', 'none'。")
+        self._page_load_strategy = value
+
+    def set_timeouts(self, implicit: float = None, page_load: float = None, script: float = None) -> None:
+        """设置超时时间，单位为秒，selenium4以上版本有效       \n
+        :param implicit: 查找元素超时时间
+        :param page_load: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: None
+        """
+        if implicit is not None:
+            self.timeout = implicit
+
+        if page_load is not None:
+            self.timeouts.page_load = page_load
+
+        if script is not None:
+            self.timeouts.script = script
 
     def run_script(self, script: str, as_expr: bool = False, *args: Any) -> Any:
         """运行javascript代码                                                 \n
@@ -133,7 +168,7 @@ class ChromePage(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return _run_script(self, script, as_expr, args)
+        return _run_script(self, script, as_expr, self.timeouts.script, args)
 
     def get(self,
             url: str,
@@ -187,11 +222,22 @@ class ChromePage(BasePage):
              timeout: float = None) -> List[Union[ChromeElement, str]]:
         return self._ele(loc_or_ele, timeout=timeout, single=False)
 
-    # def s_ele(self):
-    #     pass
-    #
-    # def s_eles(self):
-    #     pass
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement] = None) -> Union[SessionElement, str, None]:
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        if isinstance(loc_or_ele, ChromeElement):
+            return make_session_ele(loc_or_ele)
+        else:
+            return make_session_ele(self, loc_or_ele)
+
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
+        """查找所有符合条件的元素以SessionElement列表形式返回                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象组成的列表
+        """
+        return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
@@ -205,12 +251,12 @@ class ChromePage(BasePage):
             raise ValueError('loc_or_str参数只能是tuple、str、ChromeElement类型。')
 
         timeout = timeout if timeout is not None else self.timeout
-        search_result = self.driver.DOM.performSearch(query=loc)
+        search_result = self.driver.DOM.performSearch(query=loc, includeUserAgentShadowDOM=True)
         count = search_result['resultCount']
 
         end_time = perf_counter() + timeout
         while count == 0 and perf_counter() < end_time:
-            search_result = self.driver.DOM.performSearch(query=loc)
+            search_result = self.driver.DOM.performSearch(query=loc, includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
 
         if count == 0:
@@ -309,16 +355,17 @@ class ChromePage(BasePage):
         :param steps: 次数
         :return: None
         """
-        self.driver.Runtime.evaluate(expression=f'window.history.go({steps});')
+        self.run_script(f'window.history.go({steps});', as_expr=True)
 
     def back(self, steps: int = 1) -> None:
         """在浏览历史中后退若干步    \n
         :param steps: 次数
         :return: None
         """
-        self.driver.Runtime.evaluate(expression=f'window.history.go({-steps});')
+        self.run_script(f'window.history.go({-steps});', as_expr=True)
 
     def stop_loading(self) -> None:
+        """页面停止加载"""
         self.driver.Page.stopLoading()
 
     def run_cdp(self, cmd: str, **cmd_args):
@@ -342,7 +389,7 @@ class ChromePage(BasePage):
         :return: sessionStorage一个或所有项内容
         """
         js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
-        return self.driver.Runtime.evaluate(js)
+        return self.run_script(js, as_expr=True)
 
     def get_local_storage(self, item: str = None) -> Union[str, dict, None]:
         """获取localStorage信息，不设置item则获取全部       \n
@@ -350,7 +397,7 @@ class ChromePage(BasePage):
         :return: localStorage一个或所有项内容
         """
         js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
-        return self.driver.Runtime.evaluate(js)
+        return self.run_script(js, as_expr=True)
 
     def set_session_storage(self, item: str, value: Union[str, bool]) -> None:
         """设置或删除某项sessionStorage信息                         \n
@@ -358,8 +405,8 @@ class ChromePage(BasePage):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        s = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
-        return self.driver.Runtime.evaluate(s)
+        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
+        return self.run_script(js, as_expr=True)
 
     def set_local_storage(self, item: str, value: Union[str, bool]) -> None:
         """设置或删除某项localStorage信息                           \n
@@ -367,8 +414,8 @@ class ChromePage(BasePage):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        s = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self.driver.Runtime.evaluate(s)
+        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
+        return self.run_script(js, as_expr=True)
 
     def create_tab(self, url: str = None) -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
@@ -442,7 +489,7 @@ class ChromePage(BasePage):
         """
         self.close_tabs(num_or_handles, True)
 
-    def clean_cache(self,
+    def clear_cache(self,
                     session_storage: bool = True,
                     local_storage: bool = True,
                     cache: bool = True,
@@ -455,83 +502,13 @@ class ChromePage(BasePage):
         :return: None
         """
         if session_storage:
-            self.driver.Runtime.evaluate(expression='sessionStorage.clear();')
+            self.run_script('sessionStorage.clear();', as_expr=True)
         if local_storage:
-            self.driver.Runtime.evaluate(expression='localStorage.clear();')
+            self.run_script('localStorage.clear();', as_expr=True)
         if cache:
             self.driver.Network.clearBrowserCache()
         if cookies:
             self.driver.Network.clearBrowserCookies()
-
-    def check_page(self):
-        pass
-
-    # @property
-    # def active_ele(self):
-    #     pass
-
-    def _d_connect(self,
-                   to_url: str,
-                   times: int = 0,
-                   interval: float = 1,
-                   show_errmsg: bool = False,
-                   timeout: float = None) -> Union[bool, None]:
-        """尝试连接，重试若干次                            \n
-        :param to_url: 要访问的url
-        :param times: 重试次数
-        :param interval: 重试间隔（秒）
-        :param show_errmsg: 是否抛出异常
-        :return: 是否成功，返回None表示不确定
-        """
-        err = None
-        is_ok = False
-        timeout = timeout if timeout is not None else self.timeout
-
-        for _ in range(times + 1):
-            try:
-                result = self.driver.Page.navigate(url=to_url)
-                end_time = perf_counter() + timeout
-                while self.ready_state != 'complete' and perf_counter() < end_time:
-                    sleep(.5)
-                if self.ready_state != 'complete':
-                    raise TimeoutError
-                if 'errorText' in result:
-                    raise ConnectionError(result['errorText'])
-                go_ok = True
-            except Exception as e:
-                err = e
-                go_ok = False
-
-            is_ok = self.check_page() if go_ok else False
-
-            if is_ok is not False:
-                break
-
-            if _ < times:
-                sleep(interval)
-                if show_errmsg:
-                    print(f'重试 {to_url}')
-
-        if is_ok is False and show_errmsg:
-            raise err if err is not None else ConnectionError('连接异常。')
-
-        return is_ok
-
-    def _on_alert_close(self, **kwargs):
-        self._alert.activated = False
-        self._alert.text = None
-        self._alert.type = None
-        self._alert.defaultPrompt = None
-        self._alert.response_accept = kwargs.get['result']
-        self._alert.response_text = kwargs['userInput']
-
-    def _on_alert_open(self, **kwargs):
-        self._alert.activated = True
-        self._alert.text = kwargs['message']
-        self._alert.type = kwargs['message']
-        self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
-        self._alert.response_accept = None
-        self._alert.response_text = None
 
     def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
         """处理提示框                                                            \n
@@ -554,8 +531,86 @@ class ChromePage(BasePage):
             self.driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
+    def check_page(self) -> Union[bool, None]:
+        """检查页面是否符合预期            \n
+        由子类自行实现各页面的判定规则
+        """
+        return None
+
+    def _d_connect(self,
+                   to_url: str,
+                   times: int = 0,
+                   interval: float = 1,
+                   show_errmsg: bool = False,
+                   timeout: float = None) -> Union[bool, None]:
+        """尝试连接，重试若干次                            \n
+        :param to_url: 要访问的url
+        :param times: 重试次数
+        :param interval: 重试间隔（秒）
+        :param show_errmsg: 是否抛出异常
+        :param timeout: 连接超时时间
+        :return: 是否成功，返回None表示不确定
+        """
+        err = None
+        is_ok = False
+        timeout = timeout if timeout is not None else self.timeout
+
+        for _ in range(times + 1):
+            result = self.driver.Page.navigate(url=to_url)
+
+            is_timeout = True
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if ((self.page_load_strategy == 'normal' and self.ready_state == 'complete')
+                        or (self.page_load_strategy == 'eager' and self.ready_state in ('interactive', 'complete'))
+                        or (self.page_load_strategy == 'none' and self.ready_state
+                            in ('loading', 'interactive', 'complete'))):
+                    self.stop_loading()
+                    is_timeout = False
+                    break
+
+            if is_timeout:
+                raise TimeoutError('页面连接超时。')
+            if 'errorText' in result:
+                raise ConnectionError(result['errorText'])
+
+            is_ok = self.check_page()
+
+            if is_ok is not False:
+                break
+
+            if _ < times:
+                sleep(interval)
+                if show_errmsg:
+                    print(f'重试 {to_url}')
+
+        if is_ok is False and show_errmsg:
+            raise err if err is not None else ConnectionError('连接异常。')
+
+        return is_ok
+
+    def _on_alert_close(self, **kwargs):
+        """alert关闭时触发的方法"""
+        self._alert.activated = False
+        self._alert.text = None
+        self._alert.type = None
+        self._alert.defaultPrompt = None
+        self._alert.response_accept = kwargs.get['result']
+        self._alert.response_text = kwargs['userInput']
+
+    def _on_alert_open(self, **kwargs):
+        """alert出现时触发的方法"""
+        self._alert.activated = True
+        self._alert.text = kwargs['message']
+        self._alert.type = kwargs['message']
+        self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
+        self._alert.response_accept = None
+        self._alert.response_text = None
+
 
 class Alert(object):
+    """用于保存alert信息"""
+
     def __init__(self):
         self.activated = False
         self.text = None
@@ -563,6 +618,19 @@ class Alert(object):
         self.defaultPrompt = None
         self.response_accept = None
         self.response_text = None
+
+
+class Timeout(object):
+    """用于保存d模式timeout信息"""
+
+    def __init__(self, page: ChromePage):
+        self.page = page
+        self.page_load = 30
+        self.script = 30
+
+    @property
+    def implicit(self):
+        return self.page.timeout
 
 
 def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:

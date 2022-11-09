@@ -3,9 +3,7 @@ from typing import List, Tuple, Dict
 
 
 class Keys:
-    """
-    Set of special keys codes.
-    """
+    """特殊按键"""
 
     NULL = '\ue000'
     CANCEL = '\ue001'  # ^break
@@ -329,14 +327,18 @@ _keyDefinitions = {
     '}': {'keyCode': 221, 'key': '}', 'code': 'BracketRight'},
     '"': {'keyCode': 222, 'key': '"', 'code': 'Quote'},
 }
+_modifierBit = {'\ue00a': 1,
+                '\ue009': 2,
+                '\ue03d': 4,
+                '\ue008': 8}
 
 
-def _keys_to_typing(value) -> Tuple[int, list]:
+def _keys_to_typing(value) -> Tuple[int, str]:
     typing: List[str] = []
     modifier = 0
     for val in value:
-        if val in ('\ue008', '\ue009', '\ue00a', '\ue03d'):
-            modifier |= _modifierBit(val)
+        if val in ('\ue009', '\ue008', '\ue00a', '\ue03d'):
+            modifier |= _modifierBit.get(val, 0)
             continue
         if isinstance(val, (int, float)):
             val = str(val)
@@ -345,30 +347,17 @@ def _keys_to_typing(value) -> Tuple[int, list]:
         else:
             for i in range(len(val)):
                 typing.append(val[i])
-    return modifier, typing
 
-
-def _modifierBit(key: str) -> int:
-    if key == '\ue00a':
-        return 1
-    if key == '\ue009':
-        return 2
-    if key == '\ue03d':
-        return 4
-    if key == '\ue008':
-        return 8
-    return 0
+    return modifier, ''.join(typing)
 
 
 def _keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C901
     shift = _modifiers & 8
-    description = {
-        'key': '',
-        'keyCode': 0,
-        'code': '',
-        'text': '',
-        'location': 0,
-    }
+    description = {'key': '',
+                   'keyCode': 0,
+                   'code': '',
+                   'text': '',
+                   'location': 0}
 
     definition: Dict = _keyDefinitions.get(keyString)  # type: ignore
     if not definition:

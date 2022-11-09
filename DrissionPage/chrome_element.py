@@ -20,6 +20,7 @@ class ChromeElement(DrissionElement):
         super().__init__(page)
         self._select = None
         self._scroll = None
+        self._tag = None
         if not node_id and not obj_id:
             raise TypeError('node_id或obj_id必须传入一个。')
 
@@ -31,8 +32,9 @@ class ChromeElement(DrissionElement):
             self._obj_id = obj_id
 
     def __repr__(self) -> str:
-        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
-        return f'<ChromeElement {self.tag} {" ".join(attrs)}>'
+        # attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        # return f'<ChromeElement {self.tag} {" ".join(attrs)}>'
+        return f'<ChromeElement {self.tag} >'
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
@@ -58,14 +60,18 @@ class ChromeElement(DrissionElement):
 
     @property
     def tag(self) -> str:
-        return self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName']
+        """返回元素tag"""
+        # print(self.page.driver.DOM.describeNode(nodeId=self._node_id))
+        if self._tag is None:
+            self._tag = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName'].lower()
+        return self._tag
 
     @property
     def inner_html(self) -> str:
         """返回元素innerHTML文本"""
         if self.tag in ('iframe', 'frame'):
             return self.run_script('return this.contentDocument.documentElement;').html
-            # return _run_script(self, 'this.contentDocument.body;').html
+            # return run_script(self, 'this.contentDocument.body;').html
         return self.run_script('return this.innerHTML;')
 
     @property
@@ -111,38 +117,40 @@ class ChromeElement(DrissionElement):
     def location(self) -> dict:
         """返回元素左上角坐标"""
         js = '''function(){
-function getElementPagePosition(element){
-  var actualLeft = element.offsetLeft;
-  var current = element.offsetParent;
-  while (current !== null){
-    actualLeft += current.offsetLeft;
-    current = current.offsetParent;
-  }
-  var actualTop = element.offsetTop;
-  var current = element.offsetParent;
-  while (current !== null){
-    actualTop += (current.offsetTop+current.clientTop);
-    current = current.offsetParent;
-  }
-  return actualLeft.toString() +' '+actualTop.toString();
-}
-        return getElementPagePosition(this);}'''
+            function getElementPagePosition(element){
+              var actualLeft = element.offsetLeft;
+              var current = element.offsetParent;
+              while (current !== null){
+                actualLeft += current.offsetLeft;
+                current = current.offsetParent;
+              }
+              var actualTop = element.offsetTop;
+              var current = element.offsetParent;
+              while (current !== null){
+                actualTop += (current.offsetTop+current.clientTop);
+                current = current.offsetParent;
+              }
+              return actualLeft.toString() +' '+actualTop.toString();
+            }
+            return getElementPagePosition(this);}'''
         xy = self.run_script(js)
         x, y = xy.split(' ')
         return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
 
-    # @property
-    # def shadow_root(self):
-    #     """返回当前元素的shadow_root元素对象"""
-    #     shadow = self.run_script('return arguments[0].shadowRoot')
-    #     if shadow:
-    #         from .shadow_root_element import ShadowRootElement
-    #         return ShadowRootElement(shadow, self)
-    #
-    # @property
-    # def sr(self):
-    #     """返回当前元素的shadow_root元素对象"""
-    #     return self.shadow_root
+
+    @property
+    def shadow_root(self):
+        """返回当前元素的shadow_root元素对象"""
+        shadow = self.run_script('return this.shadowRoot;')
+        return shadow
+        # if shadow:
+        #     from .shadow_root_element import ShadowRootElement
+        #     return ShadowRootElement(shadow, self)
+
+    @property
+    def sr(self):
+        """返回当前元素的shadow_root元素对象"""
+        return self.shadow_root
 
     @property
     def pseudo_before(self) -> str:
@@ -345,7 +353,7 @@ function getElementPagePosition(element){
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return _run_script(self, script, as_expr, args)
+        return _run_script(self, script, as_expr, self.page.timeouts.script, args)
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
@@ -474,55 +482,38 @@ function getElementPagePosition(element){
         :param clear: 输入前是否清空文本框
         :return: None
         """
-        combination_key = False
-        if not isinstance(vals, (str, tuple, list)):
-            vals = str(vals)
-        if isinstance(vals, str):
-            if '\n' in vals:
-                combination_key = True
-            vals = (vals,)
+        if self.tag == 'input' and self.attr('type') == 'file':
+            return self._set_file_input(vals)
 
         try:
             self.page.driver.DOM.focus(nodeId=self._node_id)
         except Exception:
-            self.click(by_js=False)
+            self.click(by_js=True)
 
         if clear:
             self.clear(by_js=True)
 
-        if not combination_key:
-            for i in ('\ue008', '\ue009', '\ue00a', '\ue03d'):  # ctrl alt shift command 四键
-                if i in vals:
-                    combination_key = True
-                    break
+        # ------------处理字符-------------
+        if not isinstance(vals, (tuple, list)):
+            vals = (str(vals),)
+        modifier, vals = _keys_to_typing(vals)
 
-        if not combination_key:
-            self.page.run_cdp('Input.insertText', text=''.join(vals))
+        if modifier != 0:  # 包含组合键
+            for key in vals:
+                _send_key(self, modifier, key)
             return
 
-        modifier, typing = _keys_to_typing(vals)
-        for key in typing:
-            print([key])
-            if key not in _keyDefinitions:
-                self.page.run_cdp('Input.insertText', text=key)
+        if vals.endswith('\n'):
+            self.page.run_cdp('Input.insertText', text=vals[:-1])
+            _send_key(self, modifier, '\n')
+        else:
+            self.page.run_cdp('Input.insertText', text=vals)
 
-            else:
-                description = _keyDescriptionForString(modifier, key)
-                text = description['text']
-                data = {'type': 'keyDown' if text else 'rawKeyDown',
-                        'modifiers': modifier,
-                        'windowsVirtualKeyCode': description['keyCode'],
-                        'code': description['code'],
-                        'key': description['key'],
-                        'text': text,
-                        'autoRepeat': False,
-                        'unmodifiedText': text,
-                        'location': description['location'],
-                        'isKeypad': description['location'] == 3}
-
-                self.page.run_cdp('Input.dispatchKeyEvent', **data)
-                # data['type'] = 'keyUp'
-                # self.page.run_cdp('Input.dispatchKeyEvent', **data)
+    def _set_file_input(self, files: Union[str, list, tuple]) -> None:
+        """设置上传控件值"""
+        if isinstance(files):
+            files = files.split('\n')
+        self.page.driver.DOM.setFileInputFiles(files=files, nodeId=self._node_id)
 
     def clear(self, by_js: bool = True) -> None:
         """清空元素文本                                    \n
@@ -752,7 +743,8 @@ def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float)
 def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float):
     selector = selector.replace('"', r'\"')
     find_all = '' if single else 'All'
-    js = f'this.querySelector{find_all}("{selector}");'
+    node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
+    js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
@@ -815,7 +807,7 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def _run_script(page_or_ele, script: str, as_expr: bool = False, args: tuple = None) -> Any:
+def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float = None, args: tuple = None) -> Any:
     """运行javascript代码                                                 \n
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
@@ -835,7 +827,8 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, args: tuple = N
                            expression=script,
                            returnByValue=False,
                            awaitPromise=True,
-                           userGesture=True)
+                           userGesture=True,
+                           timeout=timeout * 1000)
     else:
         args = args or ()
         if not is_js_func(script):
@@ -851,7 +844,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, args: tuple = N
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
         raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
-    # print(res.get('result'))
+
     return _parse_js_result(page, res.get('result'))
 
 
@@ -926,6 +919,39 @@ def _offset_scroll(ele: ChromeElement, x: int, y: int):
     x = cl['x'] + int(x) if x is not None else cl['x'] + size['width'] // 2
     y = cl['y'] + int(y) if y is not None else cl['y'] + size['height'] // 2
     return x, y
+
+
+def _send_enter(ele: ChromeElement):
+    # todo:windows系统回车是否不一样
+    data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
+            'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
+
+    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+    data['type'] = 'keyUp'
+    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+
+
+def _send_key(ele: ChromeElement, modifier: int, key: str) -> None:
+    if key not in _keyDefinitions:
+        ele.page.run_cdp('Input.insertText', text=key)
+
+    else:
+        description = _keyDescriptionForString(modifier, key)
+        text = description['text']
+        data = {'type': 'keyDown' if text else 'rawKeyDown',
+                'modifiers': modifier,
+                'windowsVirtualKeyCode': description['keyCode'],
+                'code': description['code'],
+                'key': description['key'],
+                'text': text,
+                'autoRepeat': False,
+                'unmodifiedText': text,
+                'location': description['location'],
+                'isKeypad': description['location'] == 3}
+
+        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+        data['type'] = 'keyUp'
+        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
 class ChromeScroll(object):

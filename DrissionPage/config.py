@@ -703,6 +703,8 @@ class DriverOptions(Options):
         :param value: 可接收 'normal', 'eager', 'none'
         :return: 当前对象
         """
+        if value not in ('normal', 'eager', 'none'):
+            raise ValueError("只能选择'normal', 'eager', 'none'。")
         self.page_load_strategy = value.lower()
         return self
 
