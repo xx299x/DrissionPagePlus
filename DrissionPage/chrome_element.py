@@ -11,7 +11,7 @@ from time import perf_counter, sleep
 
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele, SessionElement
-from .base import DrissionElement
+from .base import DrissionElement, BaseElement
 from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func
 
 
@@ -61,7 +61,6 @@ class ChromeElement(DrissionElement):
     @property
     def tag(self) -> str:
         """返回元素tag"""
-        # print(self.page.driver.DOM.describeNode(nodeId=self._node_id))
         if self._tag is None:
             self._tag = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName'].lower()
         return self._tag
@@ -136,7 +135,6 @@ class ChromeElement(DrissionElement):
         xy = self.run_script(js)
         x, y = xy.split(' ')
         return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
-
 
     @property
     def shadow_root(self):
@@ -663,6 +661,238 @@ class ChromeElement(DrissionElement):
         return f':root{t}' if mode == 'css' else t
 
 
+class ChromeShadowRootElement(BaseElement):
+    """ChromeShadowRootElement是用于处理ShadowRoot的类，使用方法和ChromeElement基本一致"""
+
+    def __init__(self, parent_ele: ChromeElement, obj_id: str):
+        super().__init__(parent_ele.page)
+        self.parent_ele = parent_ele
+        self._node_id = self._get_node_id(obj_id)
+        self._obj_id = obj_id
+
+    def __repr__(self) -> str:
+        return f'<ShadowRootElement in {self.parent_ele} >'
+
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str],
+                 timeout: float = None) -> Union[ChromeElement, str, None]:
+        """在内部查找元素                                            \n
+        例：ele2 = ele1('@id=ele_id')                               \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 超时时间
+        :return: DriverElement对象或属性、文本
+        """
+        return self.ele(loc_or_str, timeout)
+
+    @property
+    def is_enabled(self) -> bool:
+        """返回元素是否可用"""
+        return not self.run_script('return this.disabled;')
+
+    @property
+    def is_alive(self) -> bool:
+        """返回元素是否仍在DOM中"""
+        try:
+            self.page.driver.DOM.describeNode(nodeId=self._node_id)
+            return True
+        except Exception:
+            return False
+
+    @property
+    def node_id(self):
+        return self._node_id
+
+    @property
+    def obj_id(self):
+        return self._obj_id
+
+    def _get_node_id(self, obj_id) -> str:
+        return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
+
+    @property
+    def tag(self) -> str:
+        """元素标签名"""
+        return 'shadow-root'
+
+    @property
+    def html(self) -> str:
+        return f'<shadow_root>{self.inner_html}</shadow_root>'
+
+    @property
+    def inner_html(self) -> str:
+        """返回内部的html文本"""
+        return self.run_script('return this.innerHTML;')
+
+    def run_script(self, script: str, as_expr: bool = False, *args: Any) -> Any:
+        """运行javascript代码                                                 \n
+        :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :return: 运行的结果
+        """
+        return _run_script(self, script, as_expr, self.page.timeouts.script, args)
+
+    def parent(self, level_or_loc: Union[str, int] = 1) -> ChromeElement:
+        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        :param level_or_loc: 第几级父元素，或定位符
+        :return: ChromeElement对象
+        """
+        if isinstance(level_or_loc, int):
+            loc = f'xpath:./ancestor-or-self::*[{level_or_loc}]'
+
+        elif isinstance(level_or_loc, (tuple, str)):
+            loc = get_loc(level_or_loc, True)
+
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}'
+
+        else:
+            raise TypeError('level_or_loc参数只能是tuple、int或str。')
+
+        return self.parent_ele.ele(loc, timeout=0)
+
+    def next(self,
+             index: int = 1,
+             filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: ChromeElement对象
+        """
+        nodes = self.nexts(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
+
+    def before(self,
+               index: int = 1,
+               filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 前面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素前面的某个元素或节点
+        """
+        nodes = self.befores(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
+
+    def after(self, index: int = 1,
+              filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        :param index: 后面第几个查询结果元素
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素后面的某个元素或节点
+        """
+        nodes = self.afters(filter_loc=filter_loc)
+        return nodes[index - 1] if nodes else None
+
+    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+        """返回后面所有兄弟元素或节点组成的列表        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: ChromeElement对象组成的列表
+        """
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./{loc}'
+        return self.parent_ele.eles(xpath, timeout=0.1)
+
+    def befores(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素前面的元素或节点组成的列表
+        """
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./preceding::{loc}'
+        return self.parent_ele.eles(xpath, timeout=0.1)
+
+    def afters(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :return: 本元素后面的元素或节点组成的列表
+        """
+        eles1 = self.nexts(filter_loc)
+        loc = get_loc(filter_loc, True)[1].lstrip('./')
+        xpath = f'xpath:./following::{loc}'
+        return eles1 + self.parent_ele.eles(xpath, timeout=0.1)
+
+
+    def ele(self,
+            loc_or_str: Union[Tuple[str, str], str],
+            timeout: float = None) -> Union[ChromeElement, str, None]:
+        """返回当前元素下级符合条件的第一个元素，默认返回                                   \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
+        :return: ChromeElement对象或属性、文本
+        """
+        return self._ele(loc_or_str, timeout)
+
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None) -> List[Union[ChromeElement, str]]:
+        """返回当前元素下级所有符合条件的子元素                                              \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
+        :return: ChromeElement对象或属性、文本组成的列表
+        """
+        return self._ele(loc_or_str, timeout=timeout, single=False)
+
+    def s_ele(self, loc_or_ele=None) -> Union[SessionElement, str, None]:
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return make_session_ele(self, loc_or_ele)
+
+    def s_eles(self, loc_or_ele) -> List[Union[SessionElement, str]]:
+        """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高                 \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        return make_session_ele(self, loc_or_ele, single=False)
+
+    def _ele(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None,
+             single: bool = True) -> Union['ChromeElement', str, None, List[Union['ChromeElement', str]]]:
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 查找元素超时时间
+        :param single: True则返回第一个，False则返回全部
+        :return: ChromeElement对象
+        """
+        loc = get_loc(loc_or_str)
+        if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
+            loc = loc[0], loc[1][5:]
+
+        timeout = timeout if timeout is not None else self.page.timeout
+        t1 = perf_counter()
+        eles = make_session_ele(self.html).eles(loc)
+        while not eles and perf_counter() - t1 <= timeout:
+            eles = make_session_ele(self.html).eles(loc)
+
+        if not eles:
+            return None if single else eles
+
+        css_paths = [i.css_path[47:] for i in eles]
+        if single:
+            node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=css_paths[0])['nodeId']
+            return ChromeElement(self.page, node_id) if node_id else None
+
+        else:
+            results = []
+            for i in css_paths:
+                node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=i)['nodeId']
+                if node_id:
+                    results.append(ChromeElement(self.page, node_id))
+            return results
+
+
 def make_chrome_ele(ele: ChromeElement,
                     loc: Union[str, Tuple[str, str]],
                     single: bool = True,
@@ -701,6 +931,7 @@ def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float)
     type_txt = '9' if single else '7'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
     js = _make_js(xpath, type_txt, node_txt)
+    # print(js)
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
@@ -743,7 +974,7 @@ def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float)
 def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float):
     selector = selector.replace('"', r'\"')
     find_all = '' if single else 'All'
-    node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
+    node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
@@ -751,6 +982,8 @@ def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float
     if 'exceptionDetails' in r:
         raise SyntaxError(f'查询语句错误：\n{r}')
 
+    print(js)
+    print(r)
     end_time = perf_counter() + timeout
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
@@ -815,7 +1048,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
     :return:
     """
-    if isinstance(page_or_ele, ChromeElement):
+    if isinstance(page_or_ele, BaseElement):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
     else:
@@ -833,6 +1066,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
         args = args or ()
         if not is_js_func(script):
             script = f'function(){{{script}}}'
+        # print(script)
         res = page.run_cdp('Runtime.callFunctionOn',
                            functionDeclaration=script,
                            objectId=obj_id,
@@ -845,10 +1079,11 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     if exceptionDetails:
         raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
 
-    return _parse_js_result(page, res.get('result'))
+    # print(res)
+    return _parse_js_result(page, page_or_ele, res.get('result'))
 
 
-def _parse_js_result(page, result: dict):
+def _parse_js_result(page, ele, result: dict):
     """解析js返回的结果"""
     if 'unserializableValue' in result:
         return result['unserializableValue']
@@ -861,11 +1096,14 @@ def _parse_js_result(page, result: dict):
             return None
 
         elif sub_type == 'node':
-            return ChromeElement(page, obj_id=result['objectId'])
+            if result['className'] == 'ShadowRoot':
+                return ChromeShadowRootElement(ele, obj_id=result['objectId'])
+            else:
+                return ChromeElement(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
             r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']
-            return [_parse_js_result(page, result=i['value']) for i in r]
+            return [_parse_js_result(page, ele, result=i['value']) for i in r]
 
         else:
             return result['value']
