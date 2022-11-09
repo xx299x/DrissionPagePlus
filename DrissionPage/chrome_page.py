@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from pathlib import Path
+from platform import system
 from re import search
 from time import perf_counter, sleep
 from typing import Union, Tuple, List, Any
@@ -33,13 +34,14 @@ class ChromePage(BasePage):
             self._driver = Tab_or_Options
             self.address = search(r'ws://(.*?)/dev', Tab_or_Options._websocket_url).group(1)
             self.options = None
+            self.process = None
 
         elif isinstance(Tab_or_Options, DriverOptions):
             self.options = Tab_or_Options or DriverOptions()  # 从ini文件读取
             self.set_timeouts(page_load=self.options.timeouts['pageLoad'],
                               script=self.options.timeouts['script'])
             self._page_load_strategy = self.options.page_load_strategy
-            connect_chrome(self.options)
+            self.process = connect_chrome(self.options)[1]
             self.address = self.options.debugger_address
             tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
             self._driver = Tab(id=tab_handle, type='page',
@@ -489,6 +491,29 @@ class ChromePage(BasePage):
         """
         self.close_tabs(num_or_handles, True)
 
+    def set_window_size(self, width: int = None, height: int = None) -> None:
+        """设置浏览器窗口大小，默认最大化，任一参数为0最小化  \n
+        :param width: 浏览器窗口高
+        :param height: 浏览器窗口宽
+        :return: None
+        """
+        self.driver.Emulation.setDeviceMetricsOverride(width=500, height=500,
+                                                       deviceScaleFactor=0, mobile=False,
+                                                       )
+        # if width is None and height is None:
+        #     self.driver.maximize_window()
+        #
+        # elif width == 0 or height == 0:
+        #     self.driver.minimize_window()
+        #
+        # else:
+        #     if width < 0 or height < 0:
+        #         raise ValueError('x 和 y参数必须大于0。')
+        #
+        #     new_x = width or self.driver.get_window_size()['width']
+        #     new_y = height or self.driver.get_window_size()['height']
+        #     self.driver.set_window_size(new_x, new_y)
+
     def clear_cache(self,
                     session_storage: bool = True,
                     local_storage: bool = True,
@@ -531,6 +556,14 @@ class ChromePage(BasePage):
             self.driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
+    def hide_browser(self) -> None:
+        """隐藏浏览器窗口，只在Windows系统可用"""
+        _show_or_hide_browser(self, hide=True)
+
+    def show_browser(self) -> None:
+        """显示浏览器窗口，只在Windows系统可用"""
+        _show_or_hide_browser(self, hide=False)
+
     def check_page(self) -> Union[bool, None]:
         """检查页面是否符合预期            \n
         由子类自行实现各页面的判定规则
@@ -553,7 +586,7 @@ class ChromePage(BasePage):
         """
         err = None
         is_ok = False
-        timeout = timeout if timeout is not None else self.timeout
+        timeout = timeout if timeout is not None else self.timeouts.page_load
 
         for _ in range(times + 1):
             result = self.driver.Page.navigate(url=to_url)
@@ -595,7 +628,7 @@ class ChromePage(BasePage):
         self._alert.text = None
         self._alert.type = None
         self._alert.defaultPrompt = None
-        self._alert.response_accept = kwargs.get['result']
+        self._alert.response_accept = kwargs.get('result')
         self._alert.response_text = kwargs['userInput']
 
     def _on_alert_open(self, **kwargs):
@@ -645,3 +678,68 @@ def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) 
         raise TypeError('num_or_handle参数只能是int、str、list、set 或 tuple类型。')
 
     return set(i if isinstance(i, str) else handles[i] for i in num_or_handles)
+
+
+def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
+    if system().lower() != 'windows':
+        raise OSError('该方法只能在Windows系统使用。')
+
+    try:
+        from win32gui import ShowWindow
+        from win32con import SW_HIDE, SW_SHOW
+    except ImportError:
+        raise ImportError('请先安装：pip install pypiwin32')
+
+    pid = _get_browser_progress_id(page.process, page.address)
+    if not pid:
+        return None
+    hds = _get_chrome_hwnds_from_pid(pid, page.title)
+    sw = SW_HIDE if hide else SW_SHOW
+    for hd in hds:
+        ShowWindow(hd, sw)
+
+
+def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
+    """获取浏览器进程id"""
+    if progress:
+        return progress.pid
+
+    address = address.split(':')
+    if len(address) != 2:
+        return None
+
+    ip, port = address
+    if ip not in ('127.0.0.1', 'localhost') or not port.isdigit():
+        return None
+
+    from os import popen
+    txt = ''
+    progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
+    for progress in progresses:
+        if 'LISTENING' in progress:
+            txt = progress
+            break
+    if not txt:
+        return None
+
+    return txt.split(' ')[-1]
+
+
+def _get_chrome_hwnds_from_pid(pid, title) -> list:
+    """通过PID查询句柄ID"""
+    try:
+        from win32gui import IsWindow, GetWindowText, EnumWindows
+        from win32process import GetWindowThreadProcessId
+    except ImportError:
+        raise ImportError('请先安装win32gui，pip install pypiwin32')
+
+    def callback(hwnd, hds):
+        if IsWindow(hwnd) and title in GetWindowText(hwnd):
+            _, found_pid = GetWindowThreadProcessId(hwnd)
+            if str(found_pid) == str(pid):
+                hds.append(hwnd)
+            return True
+
+    hwnds = []
+    EnumWindows(callback, hwnds)
+    return hwnds

@@ -43,16 +43,6 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
         if self._mode == 'd':
             self.driver
-            # self._ready()
-
-        # if self._mode == 'd':
-        #     try:
-        #         timeouts = self.drission.driver_options.timeouts
-        #         t = timeout if timeout is not None else timeouts['implicit'] / 1000
-        #         self.set_timeouts(t, timeouts['pageLoad'] / 1000, timeouts['script'] / 1000)
-        #
-        #     except Exception:
-        #         self.timeout = timeout if timeout is not None else 10
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromeElement, SessionElement],
@@ -221,10 +211,10 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
         # s模式转d模式
         if self._mode == 'd':
-            # if not self._has_driver:
-            #     self._ready()
-            self._has_driver = True
+            if not self._has_driver:
+                self.driver
             self._url = None if not self._has_driver else super(SessionPage, self).url
+            self._has_driver = True
 
             if self._session_url:
                 self.cookies_to_driver()
@@ -300,6 +290,39 @@ class WebPage(SessionPage, ChromePage, BasePage):
                     kwargs['expires'] = cookie['expiry']
 
                 self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+
+    def check_page(self, by_requests: bool = False) -> Union[bool, None]:
+        """d模式时检查网页是否符合预期                \n
+        默认由response状态检查，可重载实现针对性检查   \n
+        :param by_requests: 是否用内置response检查
+        :return: bool或None，None代表不知道结果
+        """
+        if self._session_url and self._session_url == self.url:
+            return self._response.ok
+
+        # 使用requests访问url并判断可用性
+        if by_requests:
+            self.cookies_to_session()
+            r = self._make_response(self.url, retry=0)[0]
+            return r.ok if r else False
+
+    def close_driver(self) -> None:
+        """关闭driver及浏览器"""
+        if self._has_driver:
+            self.change_mode('s')
+            try:
+                self.driver.Browser.close()
+            except Exception:
+                pass
+            self._has_driver = None
+
+    def close_session(self) -> None:
+        """关闭session"""
+        if self._has_session:
+            self.change_mode('d')
+            self._session = None
+            self._response = None
+            self._has_session = None
 
     # ----------------重写SessionPage的函数-----------------------
     def post(self,

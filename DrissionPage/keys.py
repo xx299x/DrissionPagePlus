@@ -334,6 +334,8 @@ _modifierBit = {'\ue00a': 1,
 
 
 def _keys_to_typing(value) -> Tuple[int, str]:
+    """把要输入的内容连成字符串，去掉其中 ctrl 等键。
+        返回的modifier表示是否有按下组合键"""
     typing: List[str] = []
     modifier = 0
     for val in value:

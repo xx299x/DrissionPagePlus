@@ -4,6 +4,8 @@
 @Contact :   g1879@qq.com
 @File    :   chrome_element.py
 """
+from os import sep
+from os.path import basename
 from pathlib import Path
 from re import search
 from typing import Union, Tuple, List, Any
@@ -320,14 +322,14 @@ class ChromeElement(DrissionElement):
         # 获取href属性时返回绝对url
         attrs = self.attrs
         if attr == 'href':
-            link = attrs['href']
+            link = attrs.get('href', None)
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
             else:
                 return make_absolute_link(link, self.page)
 
         elif attr == 'src':
-            return make_absolute_link(attrs['src'], self.page)
+            return make_absolute_link(attrs.get('src', None), self.page)
 
         elif attr == 'text':
             return self.text
@@ -451,6 +453,37 @@ class ChromeElement(DrissionElement):
         js = f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");'
         return self.run_script(js)
 
+    def save(self, path: [str, bool] = None, rename: str = None) -> Union[bytes, str, bool]:
+        """保存图片或其它有src属性的元素的资源                                \n
+        :param path: 文件保存路径，为None时保存到当前文件夹，为False时不保存
+        :param rename: 文件名称，为None时从资源url获取
+        :return: 资源内容文本
+        """
+        src = self.attr('src')
+        if not src:
+            return False
+        path = path or '.'
+
+        node = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']
+        frame = node.get('frameId', None)
+        frame = frame or self.page.current_tab_handle
+        result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
+        if result['base64Encoded']:
+            from base64 import b64decode
+            data = b64decode(result['content'])
+            write_type = 'wb'
+        else:
+            data = result['content']
+            write_type = 'w'
+
+        if path:
+            rename = rename or basename(src)
+            Path(path).mkdir(parents=True, exist_ok=True)
+            with open(f'{path}{sep}{rename}', write_type) as f:
+                f.write(data)
+
+        return data
+
     def get_screenshot(self, path: [str, Path] = None,
                        as_bytes: [bool, str] = None) -> Union[str, bytes]:
         """对当前元素截图                                                                            \n
@@ -509,7 +542,7 @@ class ChromeElement(DrissionElement):
 
     def _set_file_input(self, files: Union[str, list, tuple]) -> None:
         """设置上传控件值"""
-        if isinstance(files):
+        if isinstance(files, str):
             files = files.split('\n')
         self.page.driver.DOM.setFileInputFiles(files=files, nodeId=self._node_id)
 
@@ -821,7 +854,6 @@ class ChromeShadowRootElement(BaseElement):
         xpath = f'xpath:./following::{loc}'
         return eles1 + self.parent_ele.eles(xpath, timeout=0.1)
 
-
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None) -> Union[ChromeElement, str, None]:
@@ -1048,7 +1080,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
     :return:
     """
-    if isinstance(page_or_ele, BaseElement):
+    if isinstance(page_or_ele, (ChromeElement, ChromeShadowRootElement)):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
     else:
