@@ -355,6 +355,16 @@ class ChromeElement(DrissionElement):
         """
         return _run_script(self, script, as_expr, self.page.timeouts.script, args)
 
+    def run_async_script(self, script: str, as_expr: bool = False, *args: Any) -> None:
+        """以异步方式执行js代码                                                 \n
+        :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :return: None
+        """
+        from threading import Thread
+        Thread(target=_run_script, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
+
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None) -> Union['ChromeElement', str, None]:
@@ -636,13 +646,13 @@ class ChromeElement(DrissionElement):
         sleep(.1)
         self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=x, y=y, button=button)
 
-    def hover(self, x: int = None, y: int = None) -> None:
+    def hover(self, offset_x: int = None, offset_y: int = None) -> None:
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
-        :param x: 相对元素左上角坐标的x轴偏移量
-        :param y: 相对元素左上角坐标的y轴偏移量
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        x, y = _offset_scroll(self, x, y)
+        x, y = _offset_scroll(self, offset_x, offset_y)
         self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
 
     def _get_obj_id(self, node_id) -> str:
@@ -764,6 +774,16 @@ class ChromeShadowRootElement(BaseElement):
         :return: 运行的结果
         """
         return _run_script(self, script, as_expr, self.page.timeouts.script, args)
+
+    def run_async_script(self, script: str, as_expr: bool = False, *args: Any) -> None:
+        """以异步方式执行js代码                                                 \n
+        :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :return: None
+        """
+        from threading import Thread
+        Thread(target=_run_script, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
     def parent(self, level_or_loc: Union[str, int] = 1) -> ChromeElement:
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n

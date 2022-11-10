@@ -119,13 +119,6 @@ class ChromePage(BasePage):
         return self.run_script('document.readyState;', as_expr=True)
 
     @property
-    def scroll(self) -> ChromeScroll:
-        """用于滚动滚动条的对象"""
-        if not hasattr(self, '_scroll'):
-            self._scroll = ChromeScroll(self)
-        return self._scroll
-
-    @property
     def size(self) -> dict:
         """返回页面总长宽"""
         w = self.run_script('document.body.scrollWidth;', as_expr=True)
@@ -140,6 +133,27 @@ class ChromePage(BasePage):
     def page_load_strategy(self) -> str:
         """返回页面加载策略"""
         return self._page_load_strategy
+
+    @property
+    def process_id(self) -> Union[None, int]:
+        """获取浏览器进程id"""
+        try:
+            return self.driver.SystemInfo.getProcessInfo()['id']
+        except Exception:
+            return None
+
+    @property
+    def scroll(self) -> ChromeScroll:
+        """用于滚动滚动条的对象"""
+        if not hasattr(self, '_scroll'):
+            self._scroll = ChromeScroll(self)
+        return self._scroll
+
+    @property
+    def set_window(self) -> 'WindowSizeSetter':
+        if not hasattr(self, '_window_setter'):
+            self._window_setter = WindowSizeSetter(self)
+        return self._window_setter
 
     def set_page_load_strategy(self, value: str) -> None:
         """设置页面加载策略，可选'normal', 'eager', 'none'"""
@@ -171,6 +185,16 @@ class ChromePage(BasePage):
         :return: 运行的结果
         """
         return _run_script(self, script, as_expr, self.timeouts.script, args)
+
+    def run_async_script(self, script: str, as_expr: bool = False, *args: Any) -> None:
+        """以异步方式执行js代码                                                 \n
+        :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :return: None
+        """
+        from threading import Thread
+        Thread(target=_run_script, args=(self, script, as_expr, self.timeouts.script, args)).start()
 
     def get(self,
             url: str,
@@ -491,29 +515,6 @@ class ChromePage(BasePage):
         """
         self.close_tabs(num_or_handles, True)
 
-    def set_window_size(self, width: int = None, height: int = None) -> None:
-        """设置浏览器窗口大小，默认最大化，任一参数为0最小化  \n
-        :param width: 浏览器窗口高
-        :param height: 浏览器窗口宽
-        :return: None
-        """
-        self.driver.Emulation.setDeviceMetricsOverride(width=500, height=500,
-                                                       deviceScaleFactor=0, mobile=False,
-                                                       )
-        # if width is None and height is None:
-        #     self.driver.maximize_window()
-        #
-        # elif width == 0 or height == 0:
-        #     self.driver.minimize_window()
-        #
-        # else:
-        #     if width < 0 or height < 0:
-        #         raise ValueError('x 和 y参数必须大于0。')
-        #
-        #     new_x = width or self.driver.get_window_size()['width']
-        #     new_y = height or self.driver.get_window_size()['height']
-        #     self.driver.set_window_size(new_x, new_y)
-
     def clear_cache(self,
                     session_storage: bool = True,
                     local_storage: bool = True,
@@ -666,6 +667,61 @@ class Timeout(object):
         return self.page.timeout
 
 
+class WindowSizeSetter(object):
+    """用于设置窗口大小的类"""
+
+    def __init__(self, page: ChromePage):
+        self.driver = page.driver
+        self.window_id = self._get_info()['windowId']
+
+    def _get_info(self):
+        return self.driver.Browser.getWindowBounds()
+
+    def _perform(self, bounds: dict):
+        self.driver.Browser.setWindowBounds(windowId=self.window_id, bounds=bounds)
+
+    def maximized(self) -> None:
+        """最大化"""
+        self._perform({'windowState': 'maximized'})
+
+    def minimized(self) -> None:
+        """最小化"""
+        self._perform({'windowState': 'minimized'})
+
+    def fullscreen(self) -> None:
+        """全屏"""
+        self._perform({'windowState': 'fullscreen'})
+
+    def normal(self) -> None:
+        """常规"""
+        self._perform({'windowState': 'normal'})
+
+    def new_size(self, width: int = None, height: int = None) -> None:
+        """设置窗口大小             \n
+        :param width: 窗口宽度
+        :param height: 窗口高度
+        :return: None
+        """
+        if width or height:
+            info = self._get_info()['bounds']
+            width = width or info['width']
+            height = height or info['height']
+            self._perform({'width': width, 'height': height})
+
+    def to_location(self, x: int = None, y: int = None) -> None:
+        """设置在屏幕中的位置，相对左上角坐标  \n
+        :param x: 距离顶部距离
+        :param y: 距离左边距离
+        :return: None
+        """
+        if x or y:
+            self.normal()
+            info = self._get_info()['bounds']
+            x = x or info['left']
+            y = y or info['top']
+            self._perform({'left': x, 'top': y})
+
+
 def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:
     """返回指定标签页handle组成的set                           \n
     :param handles: handles列表
@@ -681,6 +737,9 @@ def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) 
 
 
 def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
+    if not page.address.startswith(('localhost', '127.0.0.1')):
+        return
+
     if system().lower() != 'windows':
         raise OSError('该方法只能在Windows系统使用。')
 
@@ -690,7 +749,7 @@ def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
     except ImportError:
         raise ImportError('请先安装：pip install pypiwin32')
 
-    pid = _get_browser_progress_id(page.process, page.address)
+    pid = page.process_id or _get_browser_progress_id(page.process, page.address)
     if not pid:
         return None
     hds = _get_chrome_hwnds_from_pid(pid, page.title)
@@ -704,15 +763,8 @@ def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
     if progress:
         return progress.pid
 
-    address = address.split(':')
-    if len(address) != 2:
-        return None
-
-    ip, port = address
-    if ip not in ('127.0.0.1', 'localhost') or not port.isdigit():
-        return None
-
     from os import popen
+    port = address.split(':')[-1]
     txt = ''
     progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
     for progress in progresses:
