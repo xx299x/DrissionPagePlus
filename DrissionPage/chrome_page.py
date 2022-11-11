@@ -20,14 +20,25 @@ from .chrome_element import ChromeElement, ChromeScroll, _run_script, ChromeElem
 
 
 class ChromePage(BasePage):
+    """用于管理浏览器的类"""
 
     def __init__(self, Tab_or_Options: Union[Tab, DriverOptions] = None,
-                 tab_handle: str = None,
+                 tab_id: str = None,
                  timeout: float = 10):
+        """初始化                                               \n
+        :param Tab_or_Options: Tab对象或DriverOptions对象
+        :param tab_id: 要控制的标签页id，不指定默认为激活的
+        :param timeout: 超时时间
+        """
         super().__init__(timeout)
-        self._connect_debugger(Tab_or_Options, tab_handle)
+        self._connect_browser(Tab_or_Options, tab_id)
 
-    def _connect_debugger(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_handle: str = None):
+    def _connect_browser(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_id: str = None) -> None:
+        """连接浏览器                                              \n
+        :param Tab_or_Options: Tab对象或DriverOptions对象
+        :param tab_id: 要控制的标签页id，不指定默认为激活的
+        :return: None
+        """
         self.timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
         if isinstance(Tab_or_Options, Tab):
@@ -43,9 +54,11 @@ class ChromePage(BasePage):
             self._page_load_strategy = self.options.page_load_strategy
             self.process = connect_chrome(self.options)[1]
             self.address = self.options.debugger_address
-            tab_handle = self.tab_handles[0] if not tab_handle else tab_handle
-            self._driver = Tab(id=tab_handle, type='page',
-                               webSocketDebuggerUrl=f'ws://{self.options.debugger_address}/devtools/page/{tab_handle}')
+            if not tab_id:
+                json = loads(requests_get(f'http://{self.address}/json').text)
+                tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+            self._driver = Tab(id=tab_id, type='page',
+                               webSocketDebuggerUrl=f'ws://{self.options.debugger_address}/devtools/page/{tab_id}')
 
         else:
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
@@ -61,17 +74,18 @@ class ChromePage(BasePage):
         self.driver.Page.javascriptDialogClosed = self._on_alert_close
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
-                 timeout: float = None) -> Union['ChromeElement', str, None]:
-        """在内部查找元素                                           \n
-        例：ele = page('@id=ele_id')                              \n
+                 timeout: float = None) -> Union['ChromeElement', None]:
+        """在内部查找元素                                              \n
+        例：ele = page('@id=ele_id')                                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
-        :return: DriverElement对象或属性、文本
+        :return: ChromeElement对象
         """
         return self.ele(loc_or_str, timeout)
 
     @property
     def driver(self) -> Tab:
+        """返回用于控制浏览器的Tab对象"""
         return self._driver
 
     @property
@@ -95,38 +109,40 @@ class ChromePage(BasePage):
     @property
     def tabs_count(self) -> int:
         """返回标签页数量"""
-        return len(self.tab_handles)
+        return len(self.tab_ids)
 
     @property
-    def tab_handles(self) -> list:
+    def tab_ids(self) -> list:
         """返回所有标签页id"""
+        self.driver
         json = loads(requests_get(f'http://{self.address}/json').text)
         return [i['id'] for i in json if i['type'] == 'page']
 
     @property
-    def current_tab_handle(self) -> str:
-        """返回当前标签页handle"""
+    def current_tab_id(self) -> str:
+        """返回当前标签页id"""
         return self.driver.id
 
     @property
     def current_tab_index(self) -> int:
         """返回当前标签页序号"""
-        return self.tab_handles.index(self.current_tab_handle)
+        return self.tab_ids.index(self.current_tab_id)
 
     @property
     def ready_state(self) -> str:
-        """返回当前页面加载状态，"""
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
         return self.run_script('document.readyState;', as_expr=True)
 
     @property
     def size(self) -> dict:
-        """返回页面总长宽"""
+        """返回页面总长宽，{'height': int, 'width': int}"""
         w = self.run_script('document.body.scrollWidth;', as_expr=True)
         h = self.run_script('document.body.scrollHeight;', as_expr=True)
         return {'height': h, 'width': w}
 
     @property
     def active_ele(self) -> ChromeElement:
+        """返回当前焦点所在元素"""
         return self.run_script('return document.activeElement;')
 
     @property
@@ -136,7 +152,7 @@ class ChromePage(BasePage):
 
     @property
     def process_id(self) -> Union[None, int]:
-        """获取浏览器进程id"""
+        """返回浏览器进程id"""
         try:
             return self.driver.SystemInfo.getProcessInfo()['id']
         except Exception:
@@ -144,25 +160,29 @@ class ChromePage(BasePage):
 
     @property
     def scroll(self) -> ChromeScroll:
-        """用于滚动滚动条的对象"""
+        """返回用于滚动滚动条的对象"""
         if not hasattr(self, '_scroll'):
             self._scroll = ChromeScroll(self)
         return self._scroll
 
     @property
     def set_window(self) -> 'WindowSizeSetter':
+        """返回用于设置窗口大小的对象"""
         if not hasattr(self, '_window_setter'):
             self._window_setter = WindowSizeSetter(self)
         return self._window_setter
 
     def set_page_load_strategy(self, value: str) -> None:
-        """设置页面加载策略，可选'normal', 'eager', 'none'"""
+        """设置页面加载策略                                    \n
+        :param value: 可选'normal', 'eager', 'none'
+        :return: None
+        """
         if value not in ('normal', 'eager', 'none'):
             raise ValueError("只能选择'normal', 'eager', 'none'。")
         self._page_load_strategy = value
 
     def set_timeouts(self, implicit: float = None, page_load: float = None, script: float = None) -> None:
-        """设置超时时间，单位为秒，selenium4以上版本有效       \n
+        """设置超时时间，单位为秒                   \n
         :param implicit: 查找元素超时时间
         :param page_load: 页面加载超时时间
         :param script: 脚本运行超时时间
@@ -220,13 +240,21 @@ class ChromePage(BasePage):
         return self._url_available
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
+        """获取cookies信息                                              \n
+        :param as_dict: 为True时返回由{name: value}键值对组成的dict
+        :return: cookies信息
+        """
         cookies = self.driver.Network.getCookies()['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
             return cookies
 
-    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]):
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None:
+        """设置cookies值                            \n
+        :param cookies: cookies信息
+        :return: None
+        """
         cookies = _cookies_to_tuple(cookies)
         result_cookies = []
         for cookie in cookies:
@@ -240,12 +268,22 @@ class ChromePage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
-            timeout: float = None) -> Union[ChromeElement, str, None]:
+            timeout: float = None) -> Union[ChromeElement, None]:
+        """获取第一个符合条件的元素对象                       \n
+        :param loc_or_ele: 定位符或元素对象
+        :param timeout: 查找超时时间
+        :return: ChromeElement对象
+        """
         return self._ele(loc_or_ele, timeout=timeout)
 
     def eles(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
-             timeout: float = None) -> List[Union[ChromeElement, str]]:
+             timeout: float = None) -> List[ChromeElement]:
+        """获取所有符合条件的元素对象                         \n
+        :param loc_or_ele: 定位符或元素对象
+        :param timeout: 查找超时时间
+        :return: ChromeElement对象组成的列表
+        """
         return self._ele(loc_or_ele, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement] = None) -> Union[SessionElement, str, None]:
@@ -268,7 +306,13 @@ class ChromePage(BasePage):
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
              timeout: float = None,
-             single: bool = True) -> Union[ChromeElement, str, None, List[Union[ChromeElement, str]]]:
+             single: bool = True) -> Union[ChromeElement, None, List[ChromeElement]]:
+        """执行元素查找
+        :param loc_or_ele: 定位符或元素对象
+        :param timeout: 查找超时时间
+        :param single: 是否只返回第一个
+        :return: ChromeElement对象或元素对象组成的列表
+        """
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
         elif isinstance(loc_or_ele, ChromeElement):
@@ -299,7 +343,7 @@ class ChromePage(BasePage):
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, ChromeElement],
                  timeout: float = None) -> ChromeElementWaiter:
-        """等待元素从dom删除、显示、隐藏                             \n
+        """返回用于等待元素到达某个状态的等待器对象                             \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
@@ -311,7 +355,7 @@ class ChromePage(BasePage):
                        full_page: bool = False,
                        left_top: Tuple[int, int] = None,
                        right_bottom: Tuple[int, int] = None) -> Union[str, bytes]:
-        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要新版浏览器支持             \n
+        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持             \n
         :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
         :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
@@ -378,14 +422,14 @@ class ChromePage(BasePage):
 
     def forward(self, steps: int = 1) -> None:
         """在浏览历史中前进若干步    \n
-        :param steps: 次数
+        :param steps: 前进步数
         :return: None
         """
         self.run_script(f'window.history.go({steps});', as_expr=True)
 
     def back(self, steps: int = 1) -> None:
         """在浏览历史中后退若干步    \n
-        :param steps: 次数
+        :param steps: 后退步数
         :return: None
         """
         self.run_script(f'window.history.go({-steps});', as_expr=True)
@@ -394,7 +438,7 @@ class ChromePage(BasePage):
         """页面停止加载"""
         self.driver.Page.stopLoading()
 
-    def run_cdp(self, cmd: str, **cmd_args):
+    def run_cdp(self, cmd: str, **cmd_args) -> dict:
         """执行Chrome DevTools Protocol语句     \n
         :param cmd: 协议项目
         :param cmd_args: 参数
@@ -448,51 +492,50 @@ class ChromePage(BasePage):
         :param url: 新标签页跳转到的网址
         :return: None
         """
+        self.driver
         url = f'?{url}' if url else ''
         requests_get(f'http://{self.address}/json/new{url}')
 
-    def to_tab(self, num_or_handle: Union[int, str] = 0, activate: bool = True) -> None:
+    def to_tab(self, num_or_id: Union[int, str] = 0, activate: bool = True) -> None:
         """跳转到标签页                                                         \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致         \n
-        :param num_or_handle: 标签页序号或handle字符串，序号第一个为0，最后为-1
+        注意：当程序使用的是接管的浏览器，获取到的 id 顺序和视觉效果不一致               \n
+        :param num_or_id: 标签页序号或id字符串，序号第一个为0，最后为-1
         :param activate: 切换后是否变为活动状态
         :return: None
         """
         try:
-            tab = int(num_or_handle)
+            tab = int(num_or_id)
         except (ValueError, TypeError):
-            tab = num_or_handle
+            tab = num_or_id
 
-        if not self.tab_handles:
-            return
-
-        tab = self.tab_handles[tab] if isinstance(tab, int) else tab
+        tab = self.tab_ids[tab] if isinstance(tab, int) else tab
         self.driver.stop()
-        self._connect_debugger(tab)
+        self._connect_browser(tab)
 
         if activate:
             requests_get(f'http://{self.address}/json/activate/{tab}')
 
     def to_front(self) -> None:
         """激活当前标签页使其处于最前面"""
-        requests_get(f'http://{self.address}/json/activate/{self.current_tab_handle}')
+        self.driver
+        requests_get(f'http://{self.address}/json/activate/{self.current_tab_id}')
 
-    def close_tabs(self, num_or_handles: Union[int, str, list, tuple, set] = None, others: bool = False) -> None:
+    def close_tabs(self, num_or_ids: Union[int, str, list, tuple, set] = None, others: bool = False) -> None:
         """关闭传入的标签页，默认关闭当前页。可传入多个                                                        \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                    \n
-        :param num_or_handles:要关闭的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时关闭当前页
+        注意：当程序使用的是接管的浏览器，获取到的 id 顺序和视觉效果不一致，不能按序号关闭。                         \n
+        :param num_or_ids:要关闭的标签页序号或id，可传入id和序号组成的列表或元组，为None时关闭当前页
         :param others: 是否关闭指定标签页之外的
         :return: None
         """
         if others:
-            all_tabs = self.tab_handles
-            reserve_tabs = {self.current_tab_handle} if num_or_handles is None else _get_tabs(all_tabs, num_or_handles)
+            all_tabs = self.tab_ids
+            reserve_tabs = {self.current_tab_id} if num_or_ids is None else _get_tabs(all_tabs, num_or_ids)
             tabs = set(all_tabs) - reserve_tabs
         else:
-            tabs = (self.current_tab_handle,) if num_or_handles is None else _get_tabs(self.tab_handles, num_or_handles)
+            tabs = (self.current_tab_id,) if num_or_ids is None else _get_tabs(self.tab_ids, num_or_ids)
 
         tabs_len = len(tabs)
-        all_len = len(self.tab_handles)
+        all_len = len(self.tab_ids)
         if tabs_len > all_len:
             raise ValueError('要关闭的页面数量不能大于总数量。')
 
@@ -507,13 +550,13 @@ class ChromePage(BasePage):
         if is_alive:
             self.to_tab(0)
 
-    def close_other_tabs(self, num_or_handles: Union[int, str, list, tuple] = None) -> None:
+    def close_other_tabs(self, num_or_ids: Union[int, str, list, tuple] = None) -> None:
         """关闭传入的标签页以外标签页，默认保留当前页。可传入多个                                              \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                   \n
-        :param num_or_handles: 要保留的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时保存当前页
+        注意：当程序使用的是接管的浏览器，获取到的 id 顺序和视觉效果不一致，不能按序号关闭。                        \n
+        :param num_or_ids: 要保留的标签页序号或id，可传入id和序号组成的列表或元组，为None时保存当前页
         :return: None
         """
-        self.close_tabs(num_or_handles, True)
+        self.close_tabs(num_or_ids, True)
 
     def clear_cache(self,
                     session_storage: bool = True,
@@ -537,10 +580,10 @@ class ChromePage(BasePage):
             self.driver.Network.clearBrowserCookies()
 
     def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
-        """处理提示框                                                            \n
+        """处理提示框，可以自动等待提示框出现                                                       \n
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
-        :param timeout: 等待提示框出现的超时时间
+        :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
         :return: 提示框内容文本，未等到提示框则返回None
         """
         timeout = timeout or self.timeout
@@ -643,7 +686,7 @@ class ChromePage(BasePage):
 
 
 class Alert(object):
-    """用于保存alert信息"""
+    """用于保存alert信息的类"""
 
     def __init__(self):
         self.activated = False
@@ -655,7 +698,7 @@ class Alert(object):
 
 
 class Timeout(object):
-    """用于保存d模式timeout信息"""
+    """用于保存d模式timeout信息的类"""
 
     def __init__(self, page: ChromePage):
         self.page = page
@@ -674,26 +717,20 @@ class WindowSizeSetter(object):
         self.driver = page.driver
         self.window_id = self._get_info()['windowId']
 
-    def _get_info(self):
-        return self.driver.Browser.getWindowBounds()
-
-    def _perform(self, bounds: dict):
-        self.driver.Browser.setWindowBounds(windowId=self.window_id, bounds=bounds)
-
     def maximized(self) -> None:
-        """最大化"""
+        """窗口最大化"""
         self._perform({'windowState': 'maximized'})
 
     def minimized(self) -> None:
-        """最小化"""
+        """窗口最小化"""
         self._perform({'windowState': 'minimized'})
 
     def fullscreen(self) -> None:
-        """全屏"""
+        """设置窗口为全屏"""
         self._perform({'windowState': 'fullscreen'})
 
     def normal(self) -> None:
-        """常规"""
+        """设置窗口为常规模式"""
         self._perform({'windowState': 'normal'})
 
     def new_size(self, width: int = None, height: int = None) -> None:
@@ -709,7 +746,7 @@ class WindowSizeSetter(object):
             self._perform({'width': width, 'height': height})
 
     def to_location(self, x: int = None, y: int = None) -> None:
-        """设置在屏幕中的位置，相对左上角坐标  \n
+        """设置窗口在屏幕中的位置，相对左上角坐标  \n
         :param x: 距离顶部距离
         :param y: 距离左边距离
         :return: None
@@ -721,22 +758,38 @@ class WindowSizeSetter(object):
             y = y or info['top']
             self._perform({'left': x, 'top': y})
 
+    def _get_info(self) -> dict:
+        """获取窗口位置及大小信息"""
+        return self.driver.Browser.getWindowBounds()
 
-def _get_tabs(handles: list, num_or_handles: Union[int, str, list, tuple, set]) -> set:
-    """返回指定标签页handle组成的set                           \n
-    :param handles: handles列表
-    :param num_or_handles: 指定的标签页，可以是多个
+    def _perform(self, bounds: dict) -> None:
+        """执行改变窗口大小操作
+        :param bounds: 控制数据
+        :return: None
+        """
+        self.driver.Browser.setWindowBounds(windowId=self.window_id, bounds=bounds)
+
+
+def _get_tabs(ids: list, num_or_ids: Union[int, str, list, tuple, set]) -> set:
+    """返回指定标签页id组成的set
+    :param ids: 所有页面id组成的列表
+    :param num_or_ids: 指定的标签页，可以是多个
     :return: 指定标签页组成的set
     """
-    if isinstance(num_or_handles, (int, str)):
-        num_or_handles = (num_or_handles,)
-    elif not isinstance(num_or_handles, (list, tuple, set)):
-        raise TypeError('num_or_handle参数只能是int、str、list、set 或 tuple类型。')
+    if isinstance(num_or_ids, (int, str)):
+        num_or_ids = (num_or_ids,)
+    elif not isinstance(num_or_ids, (list, tuple, set)):
+        raise TypeError('num_or_id参数只能是int、str、list、set 或 tuple类型。')
 
-    return set(i if isinstance(i, str) else handles[i] for i in num_or_handles)
+    return set(i if isinstance(i, str) else ids[i] for i in num_or_ids)
 
 
 def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
+    """执行显示或隐藏浏览器窗口
+    :param page: ChromePage对象
+    :param hide: 是否隐藏
+    :return: None
+    """
     if not page.address.startswith(('localhost', '127.0.0.1')):
         return
 
@@ -759,7 +812,11 @@ def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
 
 
 def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
-    """获取浏览器进程id"""
+    """获取浏览器进程id
+    :param progress: 已知的进程对象，没有时传入None
+    :param address: 浏览器管理地址，含端口
+    :return: 进程id
+    """
     if progress:
         return progress.pid
 
@@ -778,7 +835,11 @@ def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
 
 
 def _get_chrome_hwnds_from_pid(pid, title) -> list:
-    """通过PID查询句柄ID"""
+    """通过PID查询句柄ID
+    :param pid: 进程id
+    :param title: 窗口标题
+    :return: 进程句柄组成的列表
+    """
     try:
         from win32gui import IsWindow, GetWindowText, EnumWindows
         from win32process import GetWindowThreadProcessId

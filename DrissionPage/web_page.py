@@ -16,17 +16,19 @@ from .session_page import SessionPage
 
 
 class WebPage(SessionPage, ChromePage, BasePage):
+    """整合浏览器和request的页面类"""
+
     def __init__(self,
                  mode: str = 'd',
                  timeout: float = 10,
-                 tab_handle: str = None,
+                 tab_id: str = None,
                  driver_or_options: Union[Tab, DriverOptions, bool] = None,
-                 session_or_options: Union[SessionOptions, SessionOptions, bool] = None) -> None:
-        """初始化函数                                                                                            \n
+                 session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
+        """初始化函数                                                                        \n
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param driver_or_options: Tab对象或浏览器设置，只使用s模式时应传入False
-        :param session_or_options: Session对象或requests设置，只使用d模式时应传入False
+        :param driver_or_options: Tab对象或DriverOptions对象，只使用s模式时应传入False
+        :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
@@ -37,7 +39,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         self._driver = None
         self._set_session_options(session_or_options)
         self._set_driver_options(driver_or_options)
-        self._setting_handle = tab_handle
+        self._setting_tab_id = tab_id
         self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
         self._response = None
 
@@ -46,12 +48,12 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromeElement, SessionElement],
-                 timeout: float = None) -> Union[ChromeElement, SessionElement, str, None]:
+                 timeout: float = None) -> Union[ChromeElement, SessionElement, None]:
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
-        :return: 子元素对象或属性文本
+        :return: 子元素对象
         """
         if self._mode == 's':
             return super().__call__(loc_or_str)
@@ -119,7 +121,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         """
         self.change_mode('d')
         if self._driver is None:
-            self._connect_debugger(self._driver_options, self._setting_handle)
+            self._connect_browser(self._driver_options, self._setting_tab_id)
 
         return self._driver
 
@@ -395,7 +397,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
         elif isinstance(Tab_or_Options, Tab):
             self._driver = Tab_or_Options
-            self._connect_debugger(Tab_or_Options.id)
+            self._connect_browser(Tab_or_Options.id)
             self._has_driver = True
 
         elif isinstance(Tab_or_Options, DriverOptions):

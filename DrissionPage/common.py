@@ -524,7 +524,6 @@ def connect_chrome(option: DriverOptions) -> tuple:
     system_type = system().lower()
     debugger_address = option.debugger_address
     chrome_path = option.chrome_path
-    args = option.arguments
 
     debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
     ip, port = debugger_address.split(':')
@@ -536,19 +535,7 @@ def connect_chrome(option: DriverOptions) -> tuple:
             else chrome_path
         return chrome_path, None
 
-    args = [] if args is None else args
-    args1 = []
-    for arg in args:
-        if arg.startswith(('--user-data-dir', '--disk-cache-dir', '--user-agent')) and system().lower() == 'windows':
-            index = arg.find('=') + 1
-            args1.append(f'{arg[:index]}"{arg[index:].strip()}"')
-        else:
-            args1.append(arg)
-
-    args = set(args1)
-
-    # if proxy:
-    #     args.add(f'--proxy-server={proxy["http"]}')
+    args = _get_running_args(option)
 
     # ----------创建浏览器进程----------
     try:
@@ -569,7 +556,7 @@ def connect_chrome(option: DriverOptions) -> tuple:
     return chrome_path, debugger
 
 
-def _run_browser(port, path: str, args: set) -> Popen:
+def _run_browser(port, path: str, args) -> Popen:
     """创建chrome进程          \n
     :param port: 端口号
     :param path: 浏览器地址
@@ -595,3 +582,52 @@ def _run_browser(port, path: str, args: set) -> Popen:
             pass
 
     raise ConnectionError('无法连接浏览器。')
+
+
+def _get_running_args(opt: DriverOptions) -> list:
+    """从DriverOptions获取命令行启动参数"""
+    sys = system().lower()
+    result = []
+
+    # ----------处理arguments-----------
+    args = opt.arguments
+    for arg in args:
+        if arg.startswith(('--user-data-dir', '--disk-cache-dir', '--user-agent')) and sys == 'windows':
+            index = arg.find('=') + 1
+            result.append(f'{arg[:index]}"{arg[index:].strip()}"')
+        else:
+            result.append(arg)
+
+    # ----------处理extensions-------------
+    ext = opt.extensions
+    if ext:
+        ext = set(ext)
+        if sys == 'windows':
+            ext = '","'.join(ext)
+            ext = f'"{ext}"'
+        else:
+            ext = ','.join(ext)
+        ext = f'--load-extension={ext}'
+        result.append(ext)
+
+    # ----------处理experimental_options-------------
+
+    return result
+
+
+
+def _location_in_viewport(page, loc_x: int, loc_y: int) -> bool:
+    """判断给定的坐标是否在视口中          |n
+    :param page: ChromePage对象
+    :param loc_x: 页面绝对坐标x
+    :param loc_y: 页面绝对坐标y
+    :return:
+    """
+    js = f'''
+    function(){{var x = {loc_x};var y = {loc_y};
+    const vWidth = window.innerWidth || document.documentElement.clientWidth
+    const vHeight = window.innerHeight || document.documentElement.clientHeight
+    if (x< document.documentElement.scrollLeft || y < document.documentElement.scrollTop 
+    || x > vWidth || y > vHeight){{return false;}}
+    return true;}}'''
+    return page.run_script(js)

@@ -14,11 +14,18 @@ from time import perf_counter, sleep
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele, SessionElement
 from .base import DrissionElement, BaseElement
-from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func
+from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
 
 
 class ChromeElement(DrissionElement):
+    """ChromePage页面对象中的元素对象"""
+
     def __init__(self, page, node_id: str = None, obj_id: str = None):
+        """初始化，node_id和obj_id必须至少传入一个                       \n
+        :param page: 元素所在ChromePage页面对象
+        :param node_id: cdp中的node id
+        :param obj_id: js中的object id
+        """
         super().__init__(page)
         self._select = None
         self._scroll = None
@@ -34,9 +41,8 @@ class ChromeElement(DrissionElement):
             self._obj_id = obj_id
 
     def __repr__(self) -> str:
-        # attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
-        # return f'<ChromeElement {self.tag} {" ".join(attrs)}>'
-        return f'<ChromeElement {self.tag} >'
+        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        return f'<ChromeElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
@@ -77,46 +83,41 @@ class ChromeElement(DrissionElement):
 
     @property
     def attrs(self) -> dict:
+        """返回元素所有attribute属性"""
         attrs = self.page.driver.DOM.getAttributes(nodeId=self._node_id)['attributes']
         attrs_len = len(attrs)
         return {attrs[i]: attrs[i + 1] for i in range(0, attrs_len, 2)}
 
     @property
     def text(self) -> str:
-        """返回元素内所有文本"""
+        """返回元素内所有文本，文本已格式化"""
         return get_ele_txt(make_session_ele(self.html))
 
     @property
-    def raw_text(self):
+    def raw_text(self) -> str:
         """返回未格式化处理的元素内文本"""
         return self.prop('innerText')
 
     # -----------------driver独有属性-------------------
     @property
     def obj_id(self) -> str:
+        """返回js中的object id"""
         return self._obj_id
 
     @property
     def node_id(self) -> str:
+        """返回cdp中的node id"""
         return self._node_id
 
     @property
     def size(self) -> dict:
         """返回元素宽和高"""
         model = self.page.driver.DOM.getBoxModel(nodeId=self._node_id)['model']
-        return {"height": model['height'], "width": model['width']}
-
-    @property
-    def client_location(self) -> dict:
-        """返回元素左上角坐标"""
-        js = 'return this.getBoundingClientRect().left.toString()+" "+this.getBoundingClientRect().top.toString();'
-        xy = self.run_script(js)
-        x, y = xy.split(' ')
-        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+        return {'height': model['height'], 'width': model['width']}
 
     @property
     def location(self) -> dict:
-        """返回元素左上角坐标"""
+        """返回元素左上角的绝对坐标"""
         js = '''function(){
             function getElementPagePosition(element){
               var actualLeft = element.offsetLeft;
@@ -139,13 +140,36 @@ class ChromeElement(DrissionElement):
         return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
 
     @property
-    def shadow_root(self):
+    def client_location(self) -> dict:
+        """返回元素左上角在视口中的坐标"""
+        js = 'return this.getBoundingClientRect().left.toString()+" "+this.getBoundingClientRect().top.toString();'
+        xy = self.run_script(js)
+        x, y = xy.split(' ')
+        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+
+    @property
+    def midpoint(self) -> dict:
+        """返回元素中间点的绝对坐标"""
+        loc = self.location
+        size = self.size
+        lx = loc['x'] + size['width'] // 2
+        ly = loc['y'] + size['height'] // 2
+        return {'x': lx, 'y': ly}
+
+    @property
+    def client_midpoint(self) -> dict:
+        """返回元素中间点在视口中的坐标"""
+        loc = self.client_location
+        size = self.size
+        cx = loc['x'] + size['width'] // 2
+        cy = loc['y'] + size['height'] // 2
+        return {'x': cx, 'y': cy}
+
+    @property
+    def shadow_root(self) -> Union[None, 'ChromeShadowRootElement']:
         """返回当前元素的shadow_root元素对象"""
         shadow = self.run_script('return this.shadowRoot;')
         return shadow
-        # if shadow:
-        #     from .shadow_root_element import ShadowRootElement
-        #     return ShadowRootElement(shadow, self)
 
     @property
     def sr(self):
@@ -204,7 +228,7 @@ class ChromeElement(DrissionElement):
                index: int = 1,
                filter_loc: Union[tuple, str] = '',
                timeout: float = None) -> Union['ChromeElement', str, None]:
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -216,7 +240,7 @@ class ChromeElement(DrissionElement):
               index: int = 1,
               filter_loc: Union[tuple, str] = '',
               timeout: float = None) -> Union['ChromeElement', str, None]:
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -247,7 +271,7 @@ class ChromeElement(DrissionElement):
     def befores(self,
                 filter_loc: Union[tuple, str] = '',
                 timeout: float = None) -> List[Union['ChromeElement', str]]:
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -257,10 +281,10 @@ class ChromeElement(DrissionElement):
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, 'ChromeElement'],
                  timeout: float = None) -> 'ChromeElementWaiter':
-        """等待子元素从dom删除、显示、隐藏                             \n
+        """返回用于等待子元素到达某个状态的等待器对象                    \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
-        :return: 等待是否成功
+        :return: 用于等待的ElementWaiter对象
         """
         return ChromeElementWaiter(self, loc_or_ele, timeout)
 
@@ -296,32 +320,24 @@ class ChromeElement(DrissionElement):
     def is_alive(self) -> bool:
         """返回元素是否仍在DOM中"""
         try:
-            self.tag
+            self.attrs
             return True
         except Exception:
             return False
 
     @property
-    def is_in_view(self) -> bool:
-        """返回元素是否出现在视口中，已元素中点为判断"""
-        js = """function(){
-            const rect = this.getBoundingClientRect();
-            x = rect.left+(rect.right-rect.left)/2;
-            y = rect.top+(rect.bottom-rect.top)/2;
-            const vWidth = window.innerWidth || document.documentElement.clientWidth;
-            const vHeight = window.innerHeight || document.documentElement.clientHeight;
-            if (x< 0 || y < 0 || x > vWidth || y > vHeight){return false;}
-            return true;}"""
-        return self.run_script(js)
+    def is_in_viewport(self) -> bool:
+        """返回元素是否出现在视口中，以元素中点为判断"""
+        loc = self.midpoint
+        return _location_in_viewport(self.page, loc['x'], loc['y'])
 
     def attr(self, attr: str) -> Union[str, None]:
         """返回attribute属性值                           \n
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
-        # 获取href属性时返回绝对url
         attrs = self.attrs
-        if attr == 'href':
+        if attr == 'href':  # 获取href属性时返回绝对url
             link = attrs.get('href', None)
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
@@ -411,7 +427,7 @@ class ChromeElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
-        :return: ChromeElement对象
+        :return: ChromeElement对象或文本、属性或其组成的列表
         """
         return make_chrome_ele(self, loc_or_str, single, timeout)
 
@@ -432,7 +448,7 @@ class ChromeElement(DrissionElement):
         """设置元素property属性          \n
         :param prop: 属性名
         :param value: 属性值
-        :return: 是否设置成功
+        :return: None
         """
         value = value.replace("'", "\\'")
         self.run_script(f'this.{prop}="{value}";')
@@ -441,14 +457,14 @@ class ChromeElement(DrissionElement):
         """设置元素attribute属性          \n
         :param attr: 属性名
         :param value: 属性值
-        :return: 是否设置成功
+        :return: None
         """
         self.run_script(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
 
     def remove_attr(self, attr: str) -> None:
         """删除元素attribute属性          \n
         :param attr: 属性名
-        :return: 是否删除成功
+        :return: None
         """
         self.run_script(f'this.removeAttribute("{attr}");')
 
@@ -472,11 +488,19 @@ class ChromeElement(DrissionElement):
         src = self.attr('src')
         if not src:
             return False
+        if self.tag == 'img':  # 等待图片加载完成
+            js = ('return this.complete && typeof this.naturalWidth != "undefined" '
+                  '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
+                  '&& this.naturalHeight > 0')
+            end_time = perf_counter() + self.page.timeout
+            while not self.run_script(js) and perf_counter() < end_time:
+                sleep(.1)
+
         path = path or '.'
 
         node = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']
         frame = node.get('frameId', None)
-        frame = frame or self.page.current_tab_handle
+        frame = frame or self.page.current_tab_id
         result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
         if result['base64Encoded']:
             from base64 import b64decode
@@ -539,7 +563,7 @@ class ChromeElement(DrissionElement):
             vals = (str(vals),)
         modifier, vals = _keys_to_typing(vals)
 
-        if modifier != 0:  # 包含组合键
+        if modifier != 0:  # 包含修饰符
             for key in vals:
                 _send_key(self, modifier, key)
             return
@@ -551,12 +575,15 @@ class ChromeElement(DrissionElement):
             self.page.run_cdp('Input.insertText', text=vals)
 
     def _set_file_input(self, files: Union[str, list, tuple]) -> None:
-        """设置上传控件值"""
+        """设置上传控件值
+        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
+        :return: None
+        """
         if isinstance(files, str):
             files = files.split('\n')
         self.page.driver.DOM.setFileInputFiles(files=files, nodeId=self._node_id)
 
-    def clear(self, by_js: bool = True) -> None:
+    def clear(self, by_js: bool = False) -> None:
         """清空元素文本                                    \n
         :param by_js: 是否用js方式清空
         :return: None
@@ -567,9 +594,9 @@ class ChromeElement(DrissionElement):
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def click(self, by_js: bool = None, timeout: float = None) -> bool:
+    def click(self, by_js: bool = None, timeout: float = .2) -> bool:
         """点击元素                                                                      \n
-        尝试点击直到超时，若都失败就改用js点击                                                \n
+        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
         :return: 是否点击成功
@@ -586,19 +613,18 @@ class ChromeElement(DrissionElement):
         if not by_js:
             self.page.scroll_to_see(self)
             if self.is_in_view:
-                xy = self.client_location
-                location = self.location
-                size = self.size
-                client_x = xy['x'] + size['width'] // 2
-                client_y = xy['y'] + size['height'] // 2
-                loc_x = location['x'] + size['width'] // 2
-                loc_y = location['y'] + size['height'] // 2
+                midpoint = self.midpoint
+                client_midpoint = self.client_midpoint
+                client_x = client_midpoint['x']
+                client_y = client_midpoint['y']
+                loc_x = midpoint['x']
+                loc_y = midpoint['y']
 
                 timeout = timeout if timeout is not None else self.page.timeout
                 end_time = perf_counter() + timeout
                 click = do_it(client_x, client_y, loc_x, loc_y)
                 while not click and perf_counter() < end_time:
-                    click = do_it(client_x, client_y, location['x'], location['y'])
+                    click = do_it(client_x, client_y, loc_x, loc_y)
 
                 if click:
                     return True
@@ -611,40 +637,43 @@ class ChromeElement(DrissionElement):
         return False
 
     def click_at(self,
-                 x: Union[int, str] = None,
-                 y: Union[int, str] = None,
+                 offset_x: Union[int, str] = None,
+                 offset_y: Union[int, str] = None,
                  button: str = 'left') -> None:
         """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
-        :param x: 相对元素左上角坐标的x轴偏移量
-        :param y: 相对元素左上角坐标的y轴偏移量
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
         :param button: 左键还是右键
         :return: None
         """
-        x, y = _offset_scroll(self, x, y)
+        x, y = _offset_scroll(self, offset_x, offset_y)
         self._click(x, y, button)
 
     def r_click(self) -> None:
         """右键单击"""
         self.page.scroll_to_see(self)
-        xy = self.client_location
-        size = self.size
-        cx = xy['x'] + size['width'] // 2
-        cy = xy['y'] + size['height'] // 2
-        self._click(cx, cy, 'right')
+        xy = self.client_midpoint
+        self._click(xy['x'], xy['y'], 'right')
 
-    def r_click_at(self, x: Union[int, str], y: Union[int, str]) -> None:
+    def r_click_at(self, offset_x: Union[int, str], offset_y: Union[int, str]) -> None:
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
-        :param x: 相对元素左上角坐标的x轴偏移量
-        :param y: 相对元素左上角坐标的y轴偏移量
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        self.click_at(x, y, 'right')
+        self.click_at(offset_x, offset_y, 'right')
 
-    def _click(self, x: int, y: int, button: str = 'left') -> None:
-        """实施点击"""
-        self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=x, y=y, button=button, clickCount=1)
+    def _click(self, client_x: int, client_y: int, button: str = 'left') -> None:
+        """实施点击                        \n
+        :param client_x: 视口中的x坐标
+        :param client_y: 视口中的y坐标
+        :param button: 'left'或'right'
+        :return: None
+        """
+        self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=client_x, y=client_y, button=button,
+                                                  clickCount=1)
         sleep(.1)
-        self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=x, y=y, button=button)
+        self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=client_x, y=client_y, button=button)
 
     def hover(self, offset_x: int = None, offset_y: int = None) -> None:
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
@@ -655,10 +684,76 @@ class ChromeElement(DrissionElement):
         x, y = _offset_scroll(self, offset_x, offset_y)
         self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
 
+    def drag(self, offset_x: int = 0, offset_y: int = 0, speed: int = 40, shake: bool = True) -> None:
+        """拖拽当前元素到相对位置                   \n
+        :param offset_x: x变化值
+        :param offset_y: y变化值
+        :param speed: 拖动的速度，传入0即瞬间到达
+        :param shake: 是否随机抖动
+        :return: None
+        """
+        curr_xy = self.midpoint
+        offset_x += curr_xy['x']
+        offset_y += curr_xy['y']
+        self.drag_to((offset_x, offset_y), speed, shake)
+
+    def drag_to(self,
+                ele_or_loc: Union[tuple, 'ChromeElement'],
+                speed: int = 40,
+                shake: bool = True) -> None:
+        """拖拽当前元素，目标为另一个元素或坐标元组                     \n
+        :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
+        :param speed: 拖动的速度，传入0即瞬间到达
+        :param shake: 是否随机抖动
+        :return: None
+        """
+        # x, y：目标点坐标
+        if isinstance(ele_or_loc, ChromeElement):
+            midpoint = ele_or_loc.midpoint
+            target_x = midpoint['x']
+            target_y = midpoint['y']
+        elif isinstance(ele_or_loc, (list, tuple)):
+            target_x, target_y = ele_or_loc
+        else:
+            raise TypeError('需要ChromeElement对象或坐标。')
+
+        curr_xy = self.midpoint
+        current_x = curr_xy['x']
+        current_y = curr_xy['y']
+        width = target_x - current_x
+        height = target_y - current_y
+        num = 0 if not speed else int(((abs(width) ** 2 + abs(height) ** 2) ** .5) // speed)
+
+        # 将要经过的点存入列表
+        points = [(int(current_x + i * (width / num)), int(current_y + i * (height / num))) for i in range(1, num)]
+        points.append((target_x, target_y))
+
+        from .action_chains import ActionChains
+        from random import randint
+        actions = ActionChains(self.page)
+        actions.hold(self)
+
+        # 逐个访问要经过的点
+        for x, y in points:
+            if shake:
+                x += randint(-3, 4)
+                y += randint(-3, 4)
+            actions.move(x - current_x, y - current_y)
+            current_x, current_y = x, y
+        actions.release()
+
     def _get_obj_id(self, node_id) -> str:
+        """根据传入node id获取js中的object id          \n
+        :param node_id: cdp中的node id
+        :return: js中的object id
+        """
         return self.page.driver.DOM.resolveNode(nodeId=node_id)['object']['objectId']
 
     def _get_node_id(self, obj_id) -> str:
+        """根据传入object id获取cdp中的node id          \n
+        :param obj_id: js中的object id
+        :return: cdp中的node id
+        """
         return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
 
     def _get_ele_path(self, mode) -> str:
@@ -718,7 +813,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = None) -> Union[ChromeElement, str, None]:
+                 timeout: float = None) -> Union[ChromeElement, None]:
         """在内部查找元素                                            \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -742,23 +837,23 @@ class ChromeShadowRootElement(BaseElement):
             return False
 
     @property
-    def node_id(self):
+    def node_id(self) -> str:
+        """返回元素cdp中的node id"""
         return self._node_id
 
     @property
-    def obj_id(self):
+    def obj_id(self) -> str:
+        """返回元素js中的obect id"""
         return self._obj_id
-
-    def _get_node_id(self, obj_id) -> str:
-        return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
 
     @property
     def tag(self) -> str:
-        """元素标签名"""
+        """返回元素标签名"""
         return 'shadow-root'
 
     @property
     def html(self) -> str:
+        """返回outerHTML文本"""
         return f'<shadow_root>{self.inner_html}</shadow_root>'
 
     @property
@@ -876,21 +971,21 @@ class ChromeShadowRootElement(BaseElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union[ChromeElement, str, None]:
-        """返回当前元素下级符合条件的第一个元素，默认返回                                   \n
+            timeout: float = None) -> Union[ChromeElement, None]:
+        """返回当前元素下级符合条件的第一个元素                                   \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
-        :return: ChromeElement对象或属性、文本
+        :return: ChromeElement对象
         """
         return self._ele(loc_or_str, timeout)
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[ChromeElement, str]]:
+             timeout: float = None) -> List[ChromeElement]:
         """返回当前元素下级所有符合条件的子元素                                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
-        :return: ChromeElement对象或属性、文本组成的列表
+        :return: ChromeElement对象组成的列表
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
@@ -901,22 +996,22 @@ class ChromeShadowRootElement(BaseElement):
         """
         return make_session_ele(self, loc_or_ele)
 
-    def s_eles(self, loc_or_ele) -> List[Union[SessionElement, str]]:
+    def s_eles(self, loc_or_ele) -> List[SessionElement]:
         """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :return: SessionElement对象或属性、文本
+        :return: SessionElement对象
         """
         return make_session_ele(self, loc_or_ele, single=False)
 
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             single: bool = True) -> Union['ChromeElement', str, None, List[Union['ChromeElement', str]]]:
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+             single: bool = True) -> Union['ChromeElement', None, List[ChromeElement]]:
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
-        :return: ChromeElement对象
+        :return: ChromeElement对象或其组成的列表
         """
         loc = get_loc(loc_or_str)
         if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
@@ -943,6 +1038,10 @@ class ChromeShadowRootElement(BaseElement):
                 if node_id:
                     results.append(ChromeElement(self.page, node_id))
             return results
+
+    def _get_node_id(self, obj_id) -> str:
+        """返回元素node id"""
+        return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
 
 
 def make_chrome_ele(ele: ChromeElement,
@@ -979,11 +1078,20 @@ def make_chrome_ele(ele: ChromeElement,
         return _find_by_css(ele, loc[1], single, timeout)
 
 
-def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float):
+def _find_by_xpath(ele: ChromeElement,
+                   xpath: str,
+                   single: bool,
+                   timeout: float) -> Union[ChromeElement, List[ChromeElement]]:
+    """执行用xpath在元素中查找元素
+    :param ele: 在此元素中查找
+    :param xpath: 查找语句
+    :param single: 是否只返回第一个结果
+    :param timeout: 超时时间
+    :return: ChromeElement或其组成的列表
+    """
     type_txt = '9' if single else '7'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') else 'this'
-    js = _make_js(xpath, type_txt, node_txt)
-    # print(js)
+    js = _make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
@@ -992,7 +1100,7 @@ def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float)
 
     if 'exceptionDetails' in r:
         if 'The result is not a node set' in r['result']['description']:
-            js = _make_js(xpath, '1', node_txt)
+            js = _make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
             r = ele.page.run_cdp('Runtime.callFunctionOn',
                                  functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                                  userGesture=True)
@@ -1023,7 +1131,17 @@ def _find_by_xpath(ele: ChromeElement, xpath: str, single: bool, timeout: float)
                     for i in r[:-1]]
 
 
-def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float):
+def _find_by_css(ele: ChromeElement,
+                 selector: str,
+                 single: bool,
+                 timeout: float) -> Union[ChromeElement, List[ChromeElement]]:
+    """执行用css selector在元素中查找元素
+    :param ele: 在此元素中查找
+    :param selector: 查找语句
+    :param single: 是否只返回第一个结果
+    :param timeout: 超时时间
+    :return: ChromeElement或其组成的列表
+    """
     selector = selector.replace('"', r'\"')
     find_all = '' if single else 'All'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
@@ -1034,8 +1152,6 @@ def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float
     if 'exceptionDetails' in r:
         raise SyntaxError(f'查询语句错误：\n{r}')
 
-    print(js)
-    print(r)
     end_time = perf_counter() + timeout
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
@@ -1057,7 +1173,13 @@ def _find_by_css(ele: ChromeElement, selector: str, single: bool, timeout: float
             return [ChromeElement(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
-def _make_js(xpath: str, type_txt: str, node_txt: str):
+def _make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str:
+    """生成用xpath在元素中查找元素的js文本
+    :param xpath: xpath文本
+    :param type_txt: 查找类型
+    :param node_txt: 节点类型
+    :return: js文本
+    """
     for_txt = ''
 
     # 获取第一个元素、节点或属性
@@ -1098,7 +1220,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
-    :return:
+    :return: js执行结果
     """
     if isinstance(page_or_ele, (ChromeElement, ChromeShadowRootElement)):
         page = page_or_ele.page
@@ -1118,7 +1240,6 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
         args = args or ()
         if not is_js_func(script):
             script = f'function(){{{script}}}'
-        # print(script)
         res = page.run_cdp('Runtime.callFunctionOn',
                            functionDeclaration=script,
                            objectId=obj_id,
@@ -1131,7 +1252,6 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     if exceptionDetails:
         raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
 
-    # print(res)
     return _parse_js_result(page, page_or_ele, res.get('result'))
 
 
@@ -1163,9 +1283,6 @@ def _parse_js_result(page, ele, result: dict):
     elif the_type == 'undefined':
         return None
 
-    # elif the_type in ('string', 'number', 'boolean'):
-    #     return result['value']
-
     else:
         return result['value']
 
@@ -1184,34 +1301,9 @@ def _convert_argument(arg: Any) -> dict:
     if arg == -inf:
         return {'unserializableValue': '-Infinity'}
 
-    # objectHandle = arg if isinstance(arg, JSHandle) else None
-    # if objectHandle:
-    #     if objectHandle._context != self:
-    #         raise ElementHandleError('JSHandles can be evaluated only in the context they were created!')
-    #     if objectHandle._disposed:
-    #         raise ElementHandleError('JSHandle is disposed!')
-    #     if objectHandle._remoteObject.get('unserializableValue'):
-    #         return {'unserializableValue': objectHandle._remoteObject.get('unserializableValue')}  # noqa: E501
-    #     if not objectHandle._remoteObject.get('objectId'):
-    #         return {'value': objectHandle._remoteObject.get('value')}
-    #     return {'objectId': objectHandle._remoteObject.get('objectId')}
-    # return {'value': arg}
 
-
-def _offset_scroll(ele: ChromeElement, x: int, y: int):
-    location = ele.location
-    size = ele.size
-    lx = location['x'] + int(x) if x is not None else location['x'] + size['width'] // 2
-    ly = location['y'] + int(y) if y is not None else location['y'] + size['height'] // 2
-
-    ele.page.scroll.to_location(lx - 5, ly - 5)
-    cl = ele.client_location
-    x = cl['x'] + int(x) if x is not None else cl['x'] + size['width'] // 2
-    y = cl['y'] + int(y) if y is not None else cl['y'] + size['height'] // 2
-    return x, y
-
-
-def _send_enter(ele: ChromeElement):
+def _send_enter(ele: ChromeElement) -> None:
+    """发送回车"""
     # todo:windows系统回车是否不一样
     data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
             'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
@@ -1222,6 +1314,7 @@ def _send_enter(ele: ChromeElement):
 
 
 def _send_key(ele: ChromeElement, modifier: int, key: str) -> None:
+    """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in _keyDefinitions:
         ele.page.run_cdp('Input.insertText', text=key)
 
@@ -1242,6 +1335,27 @@ def _send_key(ele: ChromeElement, modifier: int, key: str) -> None:
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+
+
+def _offset_scroll(ele, offset_x: int, offset_y: int) -> tuple:
+    """接收元素及偏移坐标，滚动到偏移坐标，返回该点在视口中的坐标
+    :param ele: 元素对象
+    :param offset_x: 偏移量x
+    :param offset_y: 偏移量y
+    :return: 视口中的坐标
+    """
+    location = ele.location
+    midpoint = ele.midpoint
+    lx = location['x'] + offset_x if offset_x else midpoint['x']
+    ly = location['y'] + offset_y if offset_y else midpoint['y']
+
+    if not _location_in_viewport(ele.page, lx, ly):
+        ele.page.scroll.to_location(lx, ly)
+    cl = ele.client_location
+    cm = ele.client_midpoint
+    cx = cl['x'] + offset_x if offset_x else cm['x']
+    cy = cl['y'] + offset_y if offset_y else cm['y']
+    return cx, cy
 
 
 class ChromeScroll(object):
