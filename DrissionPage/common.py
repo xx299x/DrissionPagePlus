@@ -611,9 +611,54 @@ def _get_running_args(opt: DriverOptions) -> list:
         result.append(ext)
 
     # ----------处理experimental_options-------------
+    prefs = opt.experimental_options.get('prefs', None)
+    if prefs and opt.user_data_path:
+        prefs_file = Path(opt.user_data_path) / 'Default' / 'Preferences'
+        if not prefs_file.exists():
+            return result
+
+        from json import load, dump
+        with open(prefs_file, "r") as f:
+            j = load(f)
+
+            for pref in prefs:
+                value = prefs[pref]
+                pref = pref.split('.')
+                _make_leave_in_dict(j, pref, 0, len(pref))
+                _set_value_to_dict(j, pref, value)
+
+        with open(prefs_file, 'w') as f:
+            dump(j, f)
 
     return result
 
+
+def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:
+    """把prefs中a.b.c形式的属性转为a['b']['c']形式
+    :param target_dict: 要处理的dict
+    :param src: 属性层级列表[a, b, c]
+    :param num: 当前处理第几个
+    :param end: src长度
+    :return: None
+    """
+    if num == end:
+        return
+    if src[num] not in target_dict:
+        target_dict[src[num]] = {}
+    num += 1
+    _make_leave_in_dict(target_dict[src[num - 1]], src, num, end)
+
+
+def _set_value_to_dict(target_dict: dict, src: list, value) -> None:
+    """把a.b.c形式的属性的值赋值到a['b']['c']形式的字典中
+    :param target_dict: 要处理的dict
+    :param src: 属性层级列表[a, b, c]
+    :param value: 属性值
+    :return: None
+    """
+    src = "']['".join(src)
+    src = f"target_dict['{src}']=value"
+    exec(src)
 
 
 def _location_in_viewport(page, loc_x: int, loc_y: int) -> bool:

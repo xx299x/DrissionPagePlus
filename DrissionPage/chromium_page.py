@@ -16,10 +16,10 @@ from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
 from .common import get_loc
 from .drission import connect_chrome
-from .chrome_element import ChromeElement, ChromeScroll, _run_script, ChromeElementWaiter
+from .chromium_element import ChromiumElement, ChromeScroll, _run_script, ChromeElementWaiter
 
 
-class ChromePage(BasePage):
+class ChromiumPage(BasePage):
     """用于管理浏览器的类"""
 
     def __init__(self, Tab_or_Options: Union[Tab, DriverOptions] = None,
@@ -67,14 +67,14 @@ class ChromePage(BasePage):
         self._driver.DOM.enable()
         self._driver.Page.enable()
         root = self._driver.DOM.getDocument()
-        self.root = ChromeElement(self, node_id=root['root']['nodeId'])
+        self.root = ChromiumElement(self, node_id=root['root']['nodeId'])
 
         self._alert = Alert()
         self.driver.Page.javascriptDialogOpening = self._on_alert_open
         self.driver.Page.javascriptDialogClosed = self._on_alert_close
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromeElement'],
-                 timeout: float = None) -> Union['ChromeElement', None]:
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromiumElement'],
+                 timeout: float = None) -> Union['ChromiumElement', None]:
         """在内部查找元素                                              \n
         例：ele = page('@id=ele_id')                                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -114,7 +114,7 @@ class ChromePage(BasePage):
     @property
     def tab_ids(self) -> list:
         """返回所有标签页id"""
-        self.driver
+        d = self.driver
         json = loads(requests_get(f'http://{self.address}/json').text)
         return [i['id'] for i in json if i['type'] == 'page']
 
@@ -141,7 +141,7 @@ class ChromePage(BasePage):
         return {'height': h, 'width': w}
 
     @property
-    def active_ele(self) -> ChromeElement:
+    def active_ele(self) -> ChromiumElement:
         """返回当前焦点所在元素"""
         return self.run_script('return document.activeElement;')
 
@@ -267,8 +267,8 @@ class ChromePage(BasePage):
         self.driver.Network.setCookies(cookies=result_cookies)
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
-            timeout: float = None) -> Union[ChromeElement, None]:
+            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement],
+            timeout: float = None) -> Union[ChromiumElement, None]:
         """获取第一个符合条件的元素对象                       \n
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
@@ -277,8 +277,8 @@ class ChromePage(BasePage):
         return self._ele(loc_or_ele, timeout=timeout)
 
     def eles(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
-             timeout: float = None) -> List[ChromeElement]:
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement],
+             timeout: float = None) -> List[ChromiumElement]:
         """获取所有符合条件的元素对象                         \n
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
@@ -286,12 +286,13 @@ class ChromePage(BasePage):
         """
         return self._ele(loc_or_ele, timeout=timeout, single=False)
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement] = None) -> Union[SessionElement, str, None]:
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement] = None) -> Union[
+        SessionElement, str, None]:
         """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        if isinstance(loc_or_ele, ChromeElement):
+        if isinstance(loc_or_ele, ChromiumElement):
             return make_session_ele(loc_or_ele)
         else:
             return make_session_ele(self, loc_or_ele)
@@ -304,9 +305,9 @@ class ChromePage(BasePage):
         return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromeElement],
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement],
              timeout: float = None,
-             single: bool = True) -> Union[ChromeElement, None, List[ChromeElement]]:
+             single: bool = True) -> Union[ChromiumElement, None, List[ChromiumElement]]:
         """执行元素查找
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
@@ -315,7 +316,7 @@ class ChromePage(BasePage):
         """
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
-        elif isinstance(loc_or_ele, ChromeElement):
+        elif isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromeElement类型。')
@@ -336,12 +337,12 @@ class ChromePage(BasePage):
             count = 1 if single else count
             nodeIds = self.driver.DOM.getSearchResults(searchId=search_result['searchId'], fromIndex=0, toIndex=count)
             if count == 1:
-                return ChromeElement(self, node_id=nodeIds['nodeIds'][0])
+                return ChromiumElement(self, node_id=nodeIds['nodeIds'][0])
             else:
-                return [ChromeElement(self, node_id=i) for i in nodeIds['nodeIds']]
+                return [ChromiumElement(self, node_id=i) for i in nodeIds['nodeIds']]
 
     def wait_ele(self,
-                 loc_or_ele: Union[str, tuple, ChromeElement],
+                 loc_or_ele: Union[str, tuple, ChromiumElement],
                  timeout: float = None) -> ChromeElementWaiter:
         """返回用于等待元素到达某个状态的等待器对象                             \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
@@ -405,7 +406,7 @@ class ChromePage(BasePage):
             f.write(png)
         return str(path.absolute())
 
-    def scroll_to_see(self, loc_or_ele: Union[str, tuple, ChromeElement]) -> None:
+    def scroll_to_see(self, loc_or_ele: Union[str, tuple, ChromiumElement]) -> None:
         """滚动页面直到元素可见                                                        \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
         :return: None
@@ -492,7 +493,7 @@ class ChromePage(BasePage):
         :param url: 新标签页跳转到的网址
         :return: None
         """
-        self.driver
+        d = self.driver
         url = f'?{url}' if url else ''
         requests_get(f'http://{self.address}/json/new{url}')
 
@@ -517,7 +518,7 @@ class ChromePage(BasePage):
 
     def to_front(self) -> None:
         """激活当前标签页使其处于最前面"""
-        self.driver
+        d = self.driver
         requests_get(f'http://{self.address}/json/activate/{self.current_tab_id}')
 
     def close_tabs(self, num_or_ids: Union[int, str, list, tuple, set] = None, others: bool = False) -> None:
@@ -700,7 +701,7 @@ class Alert(object):
 class Timeout(object):
     """用于保存d模式timeout信息的类"""
 
-    def __init__(self, page: ChromePage):
+    def __init__(self, page: ChromiumPage):
         self.page = page
         self.page_load = 30
         self.script = 30
@@ -713,7 +714,7 @@ class Timeout(object):
 class WindowSizeSetter(object):
     """用于设置窗口大小的类"""
 
-    def __init__(self, page: ChromePage):
+    def __init__(self, page: ChromiumPage):
         self.driver = page.driver
         self.window_id = self._get_info()['windowId']
 
@@ -784,7 +785,7 @@ def _get_tabs(ids: list, num_or_ids: Union[int, str, list, tuple, set]) -> set:
     return set(i if isinstance(i, str) else ids[i] for i in num_or_ids)
 
 
-def _show_or_hide_browser(page: ChromePage, hide: bool = True) -> None:
+def _show_or_hide_browser(page: ChromiumPage, hide: bool = True) -> None:
     """执行显示或隐藏浏览器窗口
     :param page: ChromePage对象
     :param hide: 是否隐藏

@@ -17,7 +17,7 @@ from .base import DrissionElement, BaseElement
 from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
 
 
-class ChromeElement(DrissionElement):
+class ChromiumElement(DrissionElement):
     """ChromePage页面对象中的元素对象"""
 
     def __init__(self, page, node_id: str = None, obj_id: str = None):
@@ -46,7 +46,7 @@ class ChromeElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = None) -> Union['ChromeElement', str, None]:
+                 timeout: float = None) -> Union['ChromiumElement', str, None]:
         """在内部查找元素                                             \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -98,7 +98,7 @@ class ChromeElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return self.prop('innerText')
 
-    # -----------------driver独有属性-------------------
+    # -----------------d模式独有属性-------------------
     @property
     def obj_id(self) -> str:
         """返回js中的object id"""
@@ -193,7 +193,7 @@ class ChromeElement(DrissionElement):
             self._scroll = ChromeScroll(self)
         return self._scroll
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union['ChromeElement', None]:
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union['ChromiumElement', None]:
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
@@ -203,7 +203,7 @@ class ChromeElement(DrissionElement):
     def prev(self,
              index: int = 1,
              filter_loc: Union[tuple, str] = '',
-             timeout: float = 0) -> Union['ChromeElement', str, None]:
+             timeout: float = 0) -> Union['ChromiumElement', str, None]:
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -215,7 +215,7 @@ class ChromeElement(DrissionElement):
     def next(self,
              index: int = 1,
              filter_loc: Union[tuple, str] = '',
-             timeout: float = 0) -> Union['ChromeElement', str, None]:
+             timeout: float = 0) -> Union['ChromiumElement', str, None]:
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -227,7 +227,7 @@ class ChromeElement(DrissionElement):
     def before(self,
                index: int = 1,
                filter_loc: Union[tuple, str] = '',
-               timeout: float = None) -> Union['ChromeElement', str, None]:
+               timeout: float = None) -> Union['ChromiumElement', str, None]:
         """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -239,7 +239,7 @@ class ChromeElement(DrissionElement):
     def after(self,
               index: int = 1,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = None) -> Union['ChromeElement', str, None]:
+              timeout: float = None) -> Union['ChromiumElement', str, None]:
         """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -250,7 +250,7 @@ class ChromeElement(DrissionElement):
 
     def prevs(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['ChromeElement', str]]:
+              timeout: float = 0) -> List[Union['ChromiumElement', str]]:
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -260,7 +260,7 @@ class ChromeElement(DrissionElement):
 
     def nexts(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['ChromeElement', str]]:
+              timeout: float = 0) -> List[Union['ChromiumElement', str]]:
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -270,7 +270,7 @@ class ChromeElement(DrissionElement):
 
     def befores(self,
                 filter_loc: Union[tuple, str] = '',
-                timeout: float = None) -> List[Union['ChromeElement', str]]:
+                timeout: float = None) -> List[Union['ChromiumElement', str]]:
         """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -279,7 +279,7 @@ class ChromeElement(DrissionElement):
         return super().befores(filter_loc, timeout)
 
     def wait_ele(self,
-                 loc_or_ele: Union[str, tuple, 'ChromeElement'],
+                 loc_or_ele: Union[str, tuple, 'ChromiumElement'],
                  timeout: float = None) -> 'ChromeElementWaiter':
         """返回用于等待子元素到达某个状态的等待器对象                    \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
@@ -320,7 +320,7 @@ class ChromeElement(DrissionElement):
     def is_alive(self) -> bool:
         """返回元素是否仍在DOM中"""
         try:
-            self.attrs
+            d = self.attrs
             return True
         except Exception:
             return False
@@ -362,6 +362,50 @@ class ChromeElement(DrissionElement):
         else:
             return attrs.get(attr, None)
 
+    def set_attr(self, attr: str, value: str) -> None:
+        """设置元素attribute属性          \n
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        self.run_script(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
+
+    def remove_attr(self, attr: str) -> None:
+        """删除元素attribute属性          \n
+        :param attr: 属性名
+        :return: None
+        """
+        self.run_script(f'this.removeAttribute("{attr}");')
+
+    def prop(self, prop: str) -> Union[str, int, None]:
+        """获取property属性值            \n
+        :param prop: 属性名
+        :return: 属性值文本
+        """
+        p = self.page.driver.Runtime.getProperties(objectId=self._obj_id)['result']
+        for i in p:
+            if i['name'] == prop:
+                if 'value' not in i or 'value' not in i['value']:
+                    return None
+
+                return format_html(i['value']['value'])
+
+    def set_prop(self, prop: str, value: str) -> None:
+        """设置元素property属性          \n
+        :param prop: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        value = value.replace('"', r'\"')
+        self.run_script(f'this.{prop}="{value}";')
+
+    def set_innerHTML(self, html: str) -> None:
+        """设置元素innerHTML        \n
+        :param html: html文本
+        :return: None
+        """
+        self.set_prop('innerHTML', html)
+
     def run_script(self, script: str, as_expr: bool = False, *args: Any) -> Any:
         """运行javascript代码                                                 \n
         :param script: js文本
@@ -383,7 +427,7 @@ class ChromeElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union['ChromeElement', str, None]:
+            timeout: float = None) -> Union['ChromiumElement', str, None]:
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -393,7 +437,7 @@ class ChromeElement(DrissionElement):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union['ChromeElement', str]]:
+             timeout: float = None) -> List[Union['ChromiumElement', str]]:
         """返回当前元素下级所有符合条件的子元素、属性或节点文本                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -422,7 +466,7 @@ class ChromeElement(DrissionElement):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             single: bool = True) -> Union['ChromeElement', str, None, List[Union['ChromeElement', str]]]:
+             single: bool = True) -> Union['ChromiumElement', str, None, List[Union['ChromiumElement', str]]]:
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
@@ -430,43 +474,6 @@ class ChromeElement(DrissionElement):
         :return: ChromeElement对象或文本、属性或其组成的列表
         """
         return make_chrome_ele(self, loc_or_str, single, timeout)
-
-    def prop(self, prop: str) -> Union[str, int, None]:
-        """获取property属性值            \n
-        :param prop: 属性名
-        :return: 属性值文本
-        """
-        p = self.page.driver.Runtime.getProperties(objectId=self._obj_id)['result']
-        for i in p:
-            if i['name'] == prop:
-                if 'value' not in i or 'value' not in i['value']:
-                    return None
-
-                return format_html(i['value']['value'])
-
-    def set_prop(self, prop: str, value: str) -> None:
-        """设置元素property属性          \n
-        :param prop: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        value = value.replace("'", "\\'")
-        self.run_script(f'this.{prop}="{value}";')
-
-    def set_attr(self, attr: str, value: str) -> None:
-        """设置元素attribute属性          \n
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self.run_script(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
-
-    def remove_attr(self, attr: str) -> None:
-        """删除元素attribute属性          \n
-        :param attr: 属性名
-        :return: None
-        """
-        self.run_script(f'this.removeAttribute("{attr}");')
 
     def style(self, style: str, pseudo_ele: str = '') -> str:
         """返回元素样式属性值，可获取伪元素属性值                \n
@@ -612,7 +619,7 @@ class ChromeElement(DrissionElement):
 
         if not by_js:
             self.page.scroll_to_see(self)
-            if self.is_in_view:
+            if self.is_in_viewport:
                 midpoint = self.midpoint
                 client_midpoint = self.client_midpoint
                 client_x = client_midpoint['x']
@@ -698,7 +705,7 @@ class ChromeElement(DrissionElement):
         self.drag_to((offset_x, offset_y), speed, shake)
 
     def drag_to(self,
-                ele_or_loc: Union[tuple, 'ChromeElement'],
+                ele_or_loc: Union[tuple, 'ChromiumElement'],
                 speed: int = 40,
                 shake: bool = True) -> None:
         """拖拽当前元素，目标为另一个元素或坐标元组                     \n
@@ -708,7 +715,7 @@ class ChromeElement(DrissionElement):
         :return: None
         """
         # x, y：目标点坐标
-        if isinstance(ele_or_loc, ChromeElement):
+        if isinstance(ele_or_loc, ChromiumElement):
             midpoint = ele_or_loc.midpoint
             target_x = midpoint['x']
             target_y = midpoint['y']
@@ -802,7 +809,7 @@ class ChromeElement(DrissionElement):
 class ChromeShadowRootElement(BaseElement):
     """ChromeShadowRootElement是用于处理ShadowRoot的类，使用方法和ChromeElement基本一致"""
 
-    def __init__(self, parent_ele: ChromeElement, obj_id: str):
+    def __init__(self, parent_ele: ChromiumElement, obj_id: str):
         super().__init__(parent_ele.page)
         self.parent_ele = parent_ele
         self._node_id = self._get_node_id(obj_id)
@@ -813,7 +820,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = None) -> Union[ChromeElement, None]:
+                 timeout: float = None) -> Union[ChromiumElement, None]:
         """在内部查找元素                                            \n
         例：ele2 = ele1('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -880,7 +887,7 @@ class ChromeShadowRootElement(BaseElement):
         from threading import Thread
         Thread(target=_run_script, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
-    def parent(self, level_or_loc: Union[str, int] = 1) -> ChromeElement:
+    def parent(self, level_or_loc: Union[str, int] = 1) -> ChromiumElement:
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n
         :param level_or_loc: 第几级父元素，或定位符
         :return: ChromeElement对象
@@ -903,7 +910,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def next(self,
              index: int = 1,
-             filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+             filter_loc: Union[tuple, str] = '') -> Union[ChromiumElement, str, None]:
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -914,7 +921,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def before(self,
                index: int = 1,
-               filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+               filter_loc: Union[tuple, str] = '') -> Union[ChromiumElement, str, None]:
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -924,7 +931,7 @@ class ChromeShadowRootElement(BaseElement):
         return nodes[index - 1] if nodes else None
 
     def after(self, index: int = 1,
-              filter_loc: Union[tuple, str] = '') -> Union[ChromeElement, str, None]:
+              filter_loc: Union[tuple, str] = '') -> Union[ChromiumElement, str, None]:
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
@@ -933,7 +940,7 @@ class ChromeShadowRootElement(BaseElement):
         nodes = self.afters(filter_loc=filter_loc)
         return nodes[index - 1] if nodes else None
 
-    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromiumElement, str]]:
         """返回后面所有兄弟元素或节点组成的列表        \n
         :param filter_loc: 用于筛选元素的查询语法
         :return: ChromeElement对象组成的列表
@@ -946,7 +953,7 @@ class ChromeShadowRootElement(BaseElement):
         xpath = f'xpath:./{loc}'
         return self.parent_ele.eles(xpath, timeout=0.1)
 
-    def befores(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+    def befores(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromiumElement, str]]:
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :return: 本元素前面的元素或节点组成的列表
@@ -959,7 +966,7 @@ class ChromeShadowRootElement(BaseElement):
         xpath = f'xpath:./preceding::{loc}'
         return self.parent_ele.eles(xpath, timeout=0.1)
 
-    def afters(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromeElement, str]]:
+    def afters(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromiumElement, str]]:
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :return: 本元素后面的元素或节点组成的列表
@@ -971,7 +978,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union[ChromeElement, None]:
+            timeout: float = None) -> Union[ChromiumElement, None]:
         """返回当前元素下级符合条件的第一个元素                                   \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -981,7 +988,7 @@ class ChromeShadowRootElement(BaseElement):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[ChromeElement]:
+             timeout: float = None) -> List[ChromiumElement]:
         """返回当前元素下级所有符合条件的子元素                                              \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
@@ -1006,7 +1013,7 @@ class ChromeShadowRootElement(BaseElement):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             single: bool = True) -> Union['ChromeElement', None, List[ChromeElement]]:
+             single: bool = True) -> Union['ChromiumElement', None, List[ChromiumElement]]:
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
@@ -1029,14 +1036,14 @@ class ChromeShadowRootElement(BaseElement):
         css_paths = [i.css_path[47:] for i in eles]
         if single:
             node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=css_paths[0])['nodeId']
-            return ChromeElement(self.page, node_id) if node_id else None
+            return ChromiumElement(self.page, node_id) if node_id else None
 
         else:
             results = []
             for i in css_paths:
                 node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=i)['nodeId']
                 if node_id:
-                    results.append(ChromeElement(self.page, node_id))
+                    results.append(ChromiumElement(self.page, node_id))
             return results
 
     def _get_node_id(self, obj_id) -> str:
@@ -1044,10 +1051,10 @@ class ChromeShadowRootElement(BaseElement):
         return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
 
 
-def make_chrome_ele(ele: ChromeElement,
+def make_chrome_ele(ele: ChromiumElement,
                     loc: Union[str, Tuple[str, str]],
                     single: bool = True,
-                    timeout: float = None) -> Union[ChromeElement, str, None, List[Union[ChromeElement, str]]]:
+                    timeout: float = None) -> Union[ChromiumElement, str, None, List[Union[ChromiumElement, str]]]:
     """在chrome元素中查找                                   \n
     :param ele: ChromeElement对象
     :param loc: 元素定位元组
@@ -1078,10 +1085,10 @@ def make_chrome_ele(ele: ChromeElement,
         return _find_by_css(ele, loc[1], single, timeout)
 
 
-def _find_by_xpath(ele: ChromeElement,
+def _find_by_xpath(ele: ChromiumElement,
                    xpath: str,
                    single: bool,
-                   timeout: float) -> Union[ChromeElement, List[ChromeElement]]:
+                   timeout: float) -> Union[ChromiumElement, List[ChromiumElement], None]:
     """执行用xpath在元素中查找元素
     :param ele: 在此元素中查找
     :param xpath: 查找语句
@@ -1119,22 +1126,22 @@ def _find_by_xpath(ele: ChromeElement,
         if r['result']['subtype'] == 'null':
             return None
         else:
-            return ChromeElement(ele.page, obj_id=r['result']['objectId'])
+            return ChromiumElement(ele.page, obj_id=r['result']['objectId'])
 
     else:
         if r['result']['description'] == 'NodeList(0)':
             return []
         else:
             r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [ChromeElement(ele.page, obj_id=i['value']['objectId'])
+            return [ChromiumElement(ele.page, obj_id=i['value']['objectId'])
                     if i['value']['type'] == 'object' else i['value']['value']
                     for i in r[:-1]]
 
 
-def _find_by_css(ele: ChromeElement,
+def _find_by_css(ele: ChromiumElement,
                  selector: str,
                  single: bool,
-                 timeout: float) -> Union[ChromeElement, List[ChromeElement]]:
+                 timeout: float) -> Union[ChromiumElement, List[ChromiumElement], None]:
     """执行用css selector在元素中查找元素
     :param ele: 在此元素中查找
     :param selector: 查找语句
@@ -1163,14 +1170,14 @@ def _find_by_css(ele: ChromeElement,
         if r['result']['subtype'] == 'null':
             return None
         else:
-            return ChromeElement(ele.page, obj_id=r['result']['objectId'])
+            return ChromiumElement(ele.page, obj_id=r['result']['objectId'])
 
     else:
         if r['result']['description'] == 'NodeList(0)':
             return []
         else:
             r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [ChromeElement(ele.page, obj_id=i['value']['objectId']) for i in r]
+            return [ChromiumElement(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
 def _make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str:
@@ -1222,7 +1229,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
     :return: js执行结果
     """
-    if isinstance(page_or_ele, (ChromeElement, ChromeShadowRootElement)):
+    if isinstance(page_or_ele, (ChromiumElement, ChromeShadowRootElement)):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
     else:
@@ -1271,7 +1278,7 @@ def _parse_js_result(page, ele, result: dict):
             if result['className'] == 'ShadowRoot':
                 return ChromeShadowRootElement(ele, obj_id=result['objectId'])
             else:
-                return ChromeElement(page, obj_id=result['objectId'])
+                return ChromiumElement(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
             r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']
@@ -1289,7 +1296,7 @@ def _parse_js_result(page, ele, result: dict):
 
 def _convert_argument(arg: Any) -> dict:
     """把参数转换成js能够接收的形式"""
-    if isinstance(arg, ChromeElement):
+    if isinstance(arg, ChromiumElement):
         return {'objectId': arg.obj_id}
 
     elif isinstance(arg, (int, float, str, bool)):
@@ -1302,9 +1309,8 @@ def _convert_argument(arg: Any) -> dict:
         return {'unserializableValue': '-Infinity'}
 
 
-def _send_enter(ele: ChromeElement) -> None:
+def _send_enter(ele: ChromiumElement) -> None:
     """发送回车"""
-    # todo:windows系统回车是否不一样
     data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
             'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
 
@@ -1313,7 +1319,7 @@ def _send_enter(ele: ChromeElement) -> None:
     ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
-def _send_key(ele: ChromeElement, modifier: int, key: str) -> None:
+def _send_key(ele: ChromiumElement, modifier: int, key: str) -> None:
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in _keyDefinitions:
         ele.page.run_cdp('Input.insertText', text=key)
@@ -1365,7 +1371,7 @@ class ChromeScroll(object):
         """
         :param page_or_ele: ChromePage或ChromeElement
         """
-        if isinstance(page_or_ele, ChromeElement):
+        if isinstance(page_or_ele, ChromiumElement):
             self.t1 = self.t2 = 'this'
             self.obj_id = page_or_ele.obj_id
             self.page = page_or_ele.page
@@ -1444,7 +1450,7 @@ class ChromeScroll(object):
 class ChromeSelect(object):
     """ChromeSelect 类专门用于处理 d 模式下 select 标签"""
 
-    def __init__(self, ele: ChromeElement):
+    def __init__(self, ele: ChromiumElement):
         """初始化                      \n
         :param ele: select 元素对象
         """
@@ -1470,12 +1476,12 @@ class ChromeSelect(object):
         return multi and multi.lower() != "false"
 
     @property
-    def options(self) -> List[ChromeElement]:
+    def options(self) -> List[ChromiumElement]:
         """返回所有选项元素组成的列表"""
         return self._ele.eles('tag:option')
 
     @property
-    def selected_option(self) -> Union[ChromeElement, None]:
+    def selected_option(self) -> Union[ChromiumElement, None]:
         """返回第一个被选中的option元素        \n
         :return: ChromeElement对象或None
         """
@@ -1483,7 +1489,7 @@ class ChromeSelect(object):
         return ele
 
     @property
-    def selected_options(self) -> List[ChromeElement]:
+    def selected_options(self) -> List[ChromiumElement]:
         """返回所有被选中的option元素列表        \n
         :return: ChromeElement对象组成的列表
         """
@@ -1638,14 +1644,14 @@ class ChromeElementWaiter(object):
 
     def __init__(self,
                  page_or_ele,
-                 loc_or_ele: Union[str, tuple, ChromeElement],
+                 loc_or_ele: Union[str, tuple, ChromiumElement],
                  timeout: float = None):
         """等待元素在dom中某种状态，如删除、显示、隐藏                         \n
         :param page_or_ele: 页面或父元素
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
         """
-        if not isinstance(loc_or_ele, (str, tuple, ChromeElement)):
+        if not isinstance(loc_or_ele, (str, tuple, ChromiumElement)):
             raise TypeError('loc_or_ele只能接收定位符或元素对象。')
 
         self.driver = page_or_ele
@@ -1653,11 +1659,11 @@ class ChromeElementWaiter(object):
         if timeout is not None:
             self.timeout = timeout
         else:
-            self.timeout = page_or_ele.page.timeout if isinstance(page_or_ele, ChromeElement) else page_or_ele.timeout
+            self.timeout = page_or_ele.page.timeout if isinstance(page_or_ele, ChromiumElement) else page_or_ele.timeout
 
     def delete(self) -> bool:
         """等待元素从dom删除"""
-        if isinstance(self.loc_or_ele, ChromeElement):
+        if isinstance(self.loc_or_ele, ChromiumElement):
             end_time = perf_counter() + self.timeout
             while perf_counter() < end_time:
                 if not self.loc_or_ele.is_alive:

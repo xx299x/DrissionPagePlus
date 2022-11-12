@@ -7,15 +7,15 @@ from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
-from .chrome_element import ChromeElement
+from .chromium_element import ChromiumElement
 from .session_element import SessionElement
 from .base import BasePage
 from .config import DriverOptions, SessionOptions, _cookies_to_tuple
-from .chrome_page import ChromePage
+from .chromium_page import ChromiumPage
 from .session_page import SessionPage
 
 
-class WebPage(SessionPage, ChromePage, BasePage):
+class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
     def __init__(self,
@@ -34,7 +34,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
 
-        super(ChromePage, self).__init__(timeout)  # 调用Base的__init__()
+        super(ChromiumPage, self).__init__(timeout)  # 调用Base的__init__()
         self._session = None
         self._driver = None
         self._set_session_options(session_or_options)
@@ -44,11 +44,11 @@ class WebPage(SessionPage, ChromePage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self.driver
+            d = self.driver
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromeElement, SessionElement],
-                 timeout: float = None) -> Union[ChromeElement, SessionElement, None]:
+                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement, None]:
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -152,8 +152,8 @@ class WebPage(SessionPage, ChromePage, BasePage):
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement],
-            timeout: float = None) -> Union[ChromeElement, SessionElement, str, None]:
+            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+            timeout: float = None) -> Union[ChromiumElement, SessionElement, str, None]:
         """返回第一个符合条件的元素、属性或节点文本                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -166,7 +166,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[ChromeElement, SessionElement, str]]:
+             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, str]]:
         """返回页面中所有符合条件的元素、属性或节点文本                                \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -177,7 +177,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement] = None) \
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement] = None) \
             -> Union[SessionElement, str, None]:
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
@@ -214,7 +214,7 @@ class WebPage(SessionPage, ChromePage, BasePage):
         # s模式转d模式
         if self._mode == 'd':
             if not self._has_driver:
-                self.driver
+                d = self.driver
             self._url = None if not self._has_driver else super(SessionPage, self).url
             self._has_driver = True
 
@@ -353,10 +353,10 @@ class WebPage(SessionPage, ChromePage, BasePage):
         return super().download
 
     def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromeElement, SessionElement],
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
              timeout: float = None, single: bool = True) \
-            -> Union[ChromeElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
-                Union[ChromeElement, str]]]:
+            -> Union[ChromiumElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
+                Union[ChromiumElement, str]]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用

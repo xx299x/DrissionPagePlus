@@ -462,6 +462,7 @@ class DriverOptions(Options):
         """
         super().__init__()
         self._driver_path = None
+        self._user_data_path = None
         self.ini_path = None
 
         if read_file:
@@ -475,8 +476,12 @@ class DriverOptions(Options):
             self._extensions = options_dict.get('extensions', [])
             self._experimental_options = options_dict.get('experimental_options', {})
             self._debugger_address = options_dict.get('debugger_address', None)
-            self.set_window_rect = options_dict.get('set_window_rect', None)
             self.page_load_strategy = options_dict.get('page_load_strategy', 'normal')
+
+            for arg in self._arguments:
+                if arg.startswith('--user-data-dir='):
+                    self.set_paths(user_data_path=arg[16:])
+                    break
 
             self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 30, 'script': 30})
             self.timeouts['implicit'] *= 1000
@@ -495,6 +500,11 @@ class DriverOptions(Options):
     def chrome_path(self) -> str:
         """浏览器启动文件路径"""
         return self.binary_location or 'chrome'
+
+    @property
+    def user_data_path(self) -> str:
+        """返回用户文件夹路径"""
+        return self._user_data_path
 
     # -------------重写父类方法，实现链式操作-------------
     def add_argument(self, argument) -> 'DriverOptions':
@@ -727,10 +737,10 @@ class DriverOptions(Options):
         :return: 当前对象
         """
         if driver_path is not None:
-            self._driver_path = driver_path
+            self._driver_path = str(driver_path)
 
         if chrome_path is not None:
-            self.binary_location = chrome_path
+            self.binary_location = str(chrome_path)
 
         if local_port is not None:
             self.debugger_address = '' if local_port == '' else f'127.0.0.1:{local_port}'
@@ -739,13 +749,14 @@ class DriverOptions(Options):
             self.debugger_address = debugger_address
 
         if download_path is not None:
-            self.experimental_options['prefs']['download.default_directory'] = download_path
+            self.experimental_options['prefs']['download.default_directory'] = str(download_path)
 
         if user_data_path is not None:
-            self.set_argument('--user-data-dir', user_data_path)
+            self.set_argument('--user-data-dir', str(user_data_path))
+            self._user_data_path = user_data_path
 
         if cache_path is not None:
-            self.set_argument('--disk-cache-dir', cache_path)
+            self.set_argument('--disk-cache-dir', str(cache_path))
 
         return self
 

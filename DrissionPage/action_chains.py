@@ -36,6 +36,8 @@ class ActionChains:
             ele_loc = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
             lx = ele_loc['x'] + offset_x
             ly = ele_loc['y'] + offset_y
+        else:
+            raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 
         if not _location_in_viewport(self.page, lx, ly):
             self.page.scroll.to_location(lx, ly)
