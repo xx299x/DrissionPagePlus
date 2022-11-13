@@ -38,7 +38,7 @@ def set_paths(driver_path: str = None,
               user_data_path: str = None,
               cache_path: str = None,
               ini_path: str = None,
-              check_version: bool = True) -> None:
+              check_version: bool = False) -> None:
     """快捷的路径设置函数                                          \n
     :param driver_path: chromedriver.exe路径
     :param chrome_path: chrome.exe路径

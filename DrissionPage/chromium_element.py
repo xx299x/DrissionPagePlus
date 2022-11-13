@@ -1234,7 +1234,7 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
         obj_id = page_or_ele.obj_id
     else:
         page = page_or_ele
-        obj_id = page_or_ele.root.obj_id
+        obj_id = page_or_ele._root_id
 
     if as_expr:
         res = page.run_cdp('Runtime.evaluate',

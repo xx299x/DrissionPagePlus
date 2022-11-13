@@ -123,7 +123,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._driver is None:
             self._connect_browser(self._driver_options, self._setting_tab_id)
 
-        return self._driver
+        return super().driver
 
     @property
     def _session_url(self) -> str:

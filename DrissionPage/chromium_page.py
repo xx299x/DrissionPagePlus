@@ -31,6 +31,8 @@ class ChromiumPage(BasePage):
         :param timeout: 超时时间
         """
         super().__init__(timeout)
+        self._is_loading = None
+        self._root_id = None
         self._connect_browser(Tab_or_Options, tab_id)
 
     def _connect_browser(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_id: str = None) -> None:
@@ -39,6 +41,8 @@ class ChromiumPage(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
+        self._is_loading = False
+        self._root_id = None
         self.timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
         if isinstance(Tab_or_Options, Tab):
@@ -66,12 +70,28 @@ class ChromiumPage(BasePage):
         self._driver.start()
         self._driver.DOM.enable()
         self._driver.Page.enable()
-        root = self._driver.DOM.getDocument()
-        self.root = ChromiumElement(self, node_id=root['root']['nodeId'])
+        root_id = self._driver.DOM.getDocument()['root']['nodeId']
+        self._root_id = self._driver.DOM.resolveNode(nodeId=root_id)['object']['objectId']
 
         self._alert = Alert()
-        self.driver.Page.javascriptDialogOpening = self._on_alert_open
-        self.driver.Page.javascriptDialogClosed = self._on_alert_close
+        self._driver.Page.javascriptDialogOpening = self._on_alert_open
+        self._driver.Page.javascriptDialogClosed = self._on_alert_close
+
+        self._driver.Page.frameNavigated = self.onFrameNavigated
+        self._driver.Page.loadEventFired = self.onLoadEventFired
+
+    def onLoadEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        self._is_loading = True
+        self._driver.DOM.enable()
+        self._driver.Page.enable()
+        root_id = self._driver.DOM.getDocument()['root']['nodeId']
+        self._root_id = self._driver.DOM.resolveNode(nodeId=root_id)['object']['objectId']
+        self._is_loading = False
+
+    def onFrameNavigated(self, **kwargs):
+        if not kwargs['frame'].get('parentId', None):
+            self._is_loading = True
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromiumElement'],
                  timeout: float = None) -> Union['ChromiumElement', None]:
@@ -86,6 +106,8 @@ class ChromiumPage(BasePage):
     @property
     def driver(self) -> Tab:
         """返回用于控制浏览器的Tab对象"""
+        while self._is_loading:
+            sleep(.1)
         return self._driver
 
     @property
@@ -236,7 +258,6 @@ class ChromiumPage(BasePage):
                                               interval=interval,
                                               show_errmsg=show_errmsg,
                                               timeout=timeout)
-        self.driver.DOM.getDocument()
         return self._url_available
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
@@ -412,7 +433,10 @@ class ChromiumPage(BasePage):
         :return: None
         """
         node_id = self.ele(loc_or_ele).node_id
-        self.driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
+        try:
+            self.driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
+        except Exception:
+            self.ele(loc_or_ele).run_script("this.scrollIntoView();")
 
     def refresh(self, ignore_cache: bool = False) -> None:
         """刷新当前页面                      \n
@@ -590,6 +614,7 @@ class ChromiumPage(BasePage):
         timeout = timeout or self.timeout
         end_time = perf_counter() + timeout
         while not self._alert.activated and perf_counter() < end_time:
+            print('vvv')
             sleep(.1)
         if not self._alert.activated:
             return None

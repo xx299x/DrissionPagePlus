@@ -618,7 +618,7 @@ def _get_running_args(opt: DriverOptions) -> list:
             return result
 
         from json import load, dump
-        with open(prefs_file, "r") as f:
+        with open(prefs_file, "r", encoding='utf-8') as f:
             j = load(f)
 
             for pref in prefs:
@@ -627,7 +627,7 @@ def _get_running_args(opt: DriverOptions) -> list:
                 _make_leave_in_dict(j, pref, 0, len(pref))
                 _set_value_to_dict(j, pref, value)
 
-        with open(prefs_file, 'w') as f:
+        with open(prefs_file, 'w', encoding='utf-8') as f:
             dump(j, f)
 
     return result
@@ -668,8 +668,7 @@ def _location_in_viewport(page, loc_x: int, loc_y: int) -> bool:
     :param loc_y: 页面绝对坐标y
     :return:
     """
-    js = f'''
-    function(){{var x = {loc_x};var y = {loc_y};
+    js = f'''function(){{var x = {loc_x};var y = {loc_y};
     const vWidth = window.innerWidth || document.documentElement.clientWidth
     const vHeight = window.innerHeight || document.documentElement.clientHeight
     if (x< document.documentElement.scrollLeft || y < document.documentElement.scrollTop 
