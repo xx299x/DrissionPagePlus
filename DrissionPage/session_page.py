@@ -15,18 +15,60 @@ from tldextract import extract
 from DownloadKit import DownloadKit
 
 from .base import BasePage
-from .config import _cookie_to_dict
+from .config import _cookie_to_dict, SessionOptions, _cookies_to_tuple
 from .session_element import SessionElement, make_session_ele
 
 
 class SessionPage(BasePage):
     """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
-    def __init__(self, session: Session, timeout: float = 10):
+    def __init__(self, session_or_options: Union[Session, SessionOptions] = None,
+                 timeout: float = 10):
         """初始化函数"""
         super().__init__(timeout)
-        self._session = session
         self._response = None
+        self._create_session(session_or_options)
+
+    def _create_session(self, Session_or_Options) -> None:
+        if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
+            options = Session_or_Options or SessionOptions()
+            self._set_session(options.as_dict())
+        elif isinstance(Session_or_Options, Session):
+            self._session = Session_or_Options
+
+    def _set_session(self, data: dict) -> None:
+        """根据传入字典对session进行设置    \n
+        :param data: session配置字典
+        :return: None
+        """
+        if self._session is None:
+            self._session = Session()
+
+        if 'headers' in data:
+            self._session.headers = CaseInsensitiveDict(data['headers'])
+        if 'cookies' in data:
+            self.set_cookies(data['cookies'])
+
+        attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
+                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
+        for i in attrs:
+            if i in data:
+                self._session.__setattr__(i, data[i])
+
+    def set_cookies(self, cookies):
+        cookies = _cookies_to_tuple(cookies)
+        for cookie in cookies:
+            if cookie['value'] is None:
+                cookie['value'] = ''
+
+            kwargs = {x: cookie[x] for x in cookie
+                      if x.lower() in ('version', 'port', 'domain', 'path', 'secure',
+                                       'expires', 'discard', 'comment', 'comment_url', 'rest')}
+
+            if 'expiry' in cookie:
+                kwargs['expires'] = cookie['expiry']
+
+            self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],

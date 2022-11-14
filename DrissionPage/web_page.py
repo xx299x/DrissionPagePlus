@@ -4,7 +4,6 @@ from typing import Union, Tuple, List
 from DownloadKit import DownloadKit
 from pychrome import Tab
 from requests import Session, Response
-from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .chromium_element import ChromiumElement
@@ -210,7 +209,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return
 
         self._mode = 's' if self._mode == 'd' else 'd'
-
+        print(self._mode)
         # s模式转d模式
         if self._mode == 'd':
             if not self._has_driver:
@@ -246,7 +245,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             selenium_user_agent = self.run_script("navigator.userAgent;")
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        self.set_cookies(super(SessionPage, self).get_cookies(as_dict=True), set_session=True)
+        self.set_cookies(self._get_driver_cookies(as_dict=True), set_session=True)
 
     def cookies_to_driver(self) -> None:
         """把session对象的cookies复制到driver对象"""
@@ -270,28 +269,32 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super().get_cookies(as_dict, all_domains)
         elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict)
+            return self._get_driver_cookies(as_dict)
+
+    def _get_driver_cookies(self, as_dict: bool = False):
+        cookies = super(SessionPage, self).driver.Network.getCookies()['cookies']
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in cookies}
+        else:
+            return cookies
 
     def set_cookies(self, cookies, set_session: bool = False, set_driver: bool = False):
         # 添加cookie到driver
         if set_driver:
-            super(SessionPage, self).set_cookies(cookies)
+            cookies = _cookies_to_tuple(cookies)
+            result_cookies = []
+            for cookie in cookies:
+                if not cookie.get('domain', None):
+                    continue
+                c = {'value': '' if cookie['value'] is None else cookie['value'],
+                     'name': cookie['name'],
+                     'domain': cookie['domain']}
+                result_cookies.append(c)
+            super(SessionPage, self).driver.Network.setCookies(cookies=result_cookies)
 
         # 添加cookie到session
         if set_session:
-            cookies = _cookies_to_tuple(cookies)
-            for cookie in cookies:
-                if cookie['value'] is None:
-                    cookie['value'] = ''
-
-                kwargs = {x: cookie[x] for x in cookie
-                          if x.lower() in ('version', 'port', 'domain', 'path', 'secure',
-                                           'expires', 'discard', 'comment', 'comment_url', 'rest')}
-
-                if 'expiry' in cookie:
-                    kwargs['expires'] = cookie['expiry']
-
-                self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+            super().set_cookies(cookies)
 
     def check_page(self, by_requests: bool = False) -> Union[bool, None]:
         """d模式时检查网页是否符合预期                \n
@@ -367,25 +370,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super()._ele(loc_or_ele, single=single)
         elif self._mode == 'd':
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
-
-    def _set_session(self, data: dict) -> None:
-        """根据传入字典对session进行设置    \n
-        :param data: session配置字典
-        :return: None
-        """
-        if self._session is None:
-            self._session = Session()
-
-        if 'headers' in data:
-            self._session.headers = CaseInsensitiveDict(data['headers'])
-        if 'cookies' in data:
-            self.set_cookies(data['cookies'], set_session=True)
-
-        attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
-                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
-        for i in attrs:
-            if i in data:
-                self._session.__setattr__(i, data[i])
 
     def _set_driver_options(self, Tab_or_Options):
         """处理driver设置"""
