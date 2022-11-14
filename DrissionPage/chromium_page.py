@@ -35,7 +35,8 @@ class ChromiumPage(BasePage):
         self._root_id = None
         self._connect_browser(Tab_or_Options, tab_id)
 
-    def _connect_browser(self, Tab_or_Options: Union[Tab, DriverOptions] = None, tab_id: str = None) -> None:
+    def _connect_browser(self, Tab_or_Options: Union[Tab, DriverOptions] = None,
+                         tab_id: str = None) -> None:
         """连接浏览器                                              \n
         :param Tab_or_Options: Tab对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
@@ -58,14 +59,15 @@ class ChromiumPage(BasePage):
             self._page_load_strategy = self.options.page_load_strategy
             self.process = connect_chrome(self.options)[1]
             self.address = self.options.debugger_address
-            if not tab_id:
-                json = loads(requests_get(f'http://{self.address}/json').text)
-                tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
-            self._driver = Tab(id=tab_id, type='page',
-                               webSocketDebuggerUrl=f'ws://{self.options.debugger_address}/devtools/page/{tab_id}')
 
         else:
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
+
+        if not tab_id:
+            json = loads(requests_get(f'http://{self.address}/json').text)
+            tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+        self._driver = Tab(id=tab_id, type='page',
+                           webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
 
         self._driver.start()
         self._driver.DOM.enable()
@@ -79,6 +81,7 @@ class ChromiumPage(BasePage):
 
         self._driver.Page.frameNavigated = self.onFrameNavigated
         self._driver.Page.loadEventFired = self.onLoadEventFired
+        # todo:增加onDocumentUpdated
 
     def onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
@@ -512,7 +515,7 @@ class ChromiumPage(BasePage):
         js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
         return self.run_script(js, as_expr=True)
 
-    def create_tab(self, url: str = None) -> None:
+    def new_tab(self, url: str = None) -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
         :return: None
@@ -534,8 +537,8 @@ class ChromiumPage(BasePage):
             tab = num_or_id
 
         tab = self.tab_ids[tab] if isinstance(tab, int) else tab
-        self.driver.stop()
-        self._connect_browser(tab)
+        # self.driver.stop()
+        self._connect_browser(self.driver, tab)
 
         if activate:
             requests_get(f'http://{self.address}/json/activate/{tab}')
