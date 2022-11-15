@@ -380,8 +380,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._driver_options = DriverOptions(read_file=False)
 
         elif isinstance(Tab_or_Options, Tab):
-            self._driver = Tab_or_Options
-            self._connect_browser(Tab_or_Options.id)
+            self._connect_browser(Tab_or_Options)
             self._has_driver = True
 
         elif isinstance(Tab_or_Options, DriverOptions):

@@ -112,8 +112,11 @@ class ChromiumElement(DrissionElement):
     @property
     def size(self) -> dict:
         """返回元素宽和高"""
-        model = self.page.driver.DOM.getBoxModel(nodeId=self._node_id)['model']
-        return {'height': model['height'], 'width': model['width']}
+        try:
+            model = self.page.driver.DOM.getBoxModel(nodeId=self._node_id)['model']
+            return {'height': model['height'], 'width': model['width']}
+        except Exception:
+            return {'height': 0, 'width': 0}
 
     @property
     def location(self) -> dict:
