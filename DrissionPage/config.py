@@ -464,6 +464,7 @@ class DriverOptions(Options):
         self._driver_path = None
         self._user_data_path = None
         self.ini_path = None
+        self.timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
@@ -647,14 +648,14 @@ class DriverOptions(Options):
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
-        timeouts = self._caps.get('timeouts', {'implicit': 10, 'pageLoad': 3000, 'script': 3000})
+        # timeouts = self._caps.get('timeouts', {'implicit': 10, 'pageLoad': 3000, 'script': 3000})
         if implicit is not None:
-            timeouts['implicit'] = implicit
+            self.timeouts['implicit'] = implicit
         if pageLoad is not None:
-            timeouts['pageLoad'] = pageLoad * 1000
+            self.timeouts['pageLoad'] = pageLoad * 1000
         if script is not None:
-            timeouts['script'] = script * 1000
-        self.timeouts = timeouts
+            self.timeouts['script'] = script * 1000
+        # self.timeouts = timeouts
 
         return self
 
