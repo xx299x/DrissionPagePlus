@@ -90,6 +90,8 @@ class ChromiumPage(BasePage):
         else:
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
+        self._main_tab = self.tab_id
+
     def _init_page(self, tab_id: str = None) -> None:
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
@@ -113,7 +115,7 @@ class ChromiumPage(BasePage):
 
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
-        print('get doc')
+        # print('get doc')
         self._wait_loading()
         root_id = self._driver.DOM.getDocument()['root']['nodeId']
         self._root_id = self._driver.DOM.resolveNode(nodeId=root_id)['object']['objectId']
@@ -124,8 +126,7 @@ class ChromiumPage(BasePage):
         :param timeout: 超时时间
         :return: 是否成功，超时返回False
         """
-        # timeout = timeout if timeout is not None else self.timeouts.page_load
-        timeout = 100
+        timeout = timeout if timeout is not None else self.timeouts.page_load
 
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
@@ -143,12 +144,12 @@ class ChromiumPage(BasePage):
 
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        print('load complete')
+        # print('load complete')
         if self._first_run is False:
             self._get_document()
 
     def _onFrameNavigated(self, **kwargs):
-        print('nav')
+        # print('nav')
         # todo: 考虑frame的情况，修改别的判断方式
         if not kwargs['frame'].get('parentId', None):
             self._is_loading = True
@@ -582,25 +583,37 @@ class ChromiumPage(BasePage):
         """激活当前标签页使其处于最前面"""
         self._ss.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
+    def set_main_tab(self, tab_id: str = None) -> None:
+        """设置某个标签页为住标签页"""
+        self._main_tab = tab_id or self.tab_id
+
     def new_tab(self, url: str = None) -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
         :return: None
         """
-        d = self.driver
+        begin_len = len(self.tabs)
         url = f'?{url}' if url else ''
         self._ss.get(f'http://{self.address}/json/new{url}')
+        while len(self.tabs) < begin_len:
+            pass
         self.to_tab()
+
+    def to_main_tab(self) -> None:
+        """跳转到主标签页"""
+        self.to_tab('main')
 
     def to_tab(self, tab_id: str = None, activate: bool = True) -> None:
         """跳转到标签页                                           \n
-        :param tab_id: 标签页id字符串，默认跳转到活动状态的
+        :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
         :return: None
         """
         tabs = self.tabs
         if not tab_id:
             tab_id = tabs[0]
+        elif tab_id == 'main':
+            tab_id = self._main_tab
         if tab_id == self.tab_id or tab_id not in tabs:
             return
 
@@ -677,7 +690,6 @@ class ChromiumPage(BasePage):
         timeout = timeout or self.timeout
         end_time = perf_counter() + timeout
         while not self._alert.activated and perf_counter() < end_time:
-            print('vvv')
             sleep(.1)
         if not self._alert.activated:
             return None
