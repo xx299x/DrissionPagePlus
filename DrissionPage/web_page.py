@@ -44,7 +44,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self.driver
+            self._driver
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -125,13 +125,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @_driver.setter
     def _driver(self, tab):
         self._tab_obj = tab
-
-    @property
-    def driver(self) -> Tab:
-        """返回Tab对象，如未初始化则按配置信息创建。         \n
-        如设置了本地调试浏览器，可自动接入或打开浏览器进程。
-        """
-        return super().driver
 
     @property
     def _session_url(self) -> str:
@@ -281,7 +274,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self._get_driver_cookies(as_dict)
 
     def _get_driver_cookies(self, as_dict: bool = False):
-        cookies = super(SessionPage, self).driver.Network.getCookies()['cookies']
+        cookies = super(SessionPage, self)._wait_driver.Network.getCookies()['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
@@ -299,7 +292,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                      'name': cookie['name'],
                      'domain': cookie['domain']}
                 result_cookies.append(c)
-            super(SessionPage, self).driver.Network.setCookies(cookies=result_cookies)
+            super(SessionPage, self)._wait_driver.Network.setCookies(cookies=result_cookies)
 
         # 添加cookie到session
         if set_session:
