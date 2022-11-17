@@ -35,7 +35,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         super(ChromiumPage, self).__init__(timeout)  # 调用Base的__init__()
         self._session = None
-        self._driver = None
+        self._tab_obj = None
+        self._is_loading = False
         self._set_session_options(session_or_options)
         self._set_driver_options(driver_or_options)
         self._setting_tab_id = tab_id
@@ -43,7 +44,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            d = self.driver
+            self.driver
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -74,7 +75,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super().html
         elif self._mode == 'd':
-            return super(SessionPage, self).html
+            return super(SessionPage, self).html if self._has_driver else ''
 
     @property
     def json(self) -> dict:
@@ -114,14 +115,22 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return self._session
 
     @property
+    def _driver(self) -> Tab:
+        """返回纯粹的Tab对象，调用时切换到d模式，并连接浏览器"""
+        self.change_mode('d')
+        if self._tab_obj is None:
+            self._connect_browser(self._driver_options, self._setting_tab_id)
+        return self._tab_obj
+
+    @_driver.setter
+    def _driver(self, tab):
+        self._tab_obj = tab
+
+    @property
     def driver(self) -> Tab:
         """返回Tab对象，如未初始化则按配置信息创建。         \n
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
-        self.change_mode('d')
-        if self._driver is None:
-            self._connect_browser(self._driver_options, self._setting_tab_id)
-
         return super().driver
 
     @property
@@ -209,7 +218,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return
 
         self._mode = 's' if self._mode == 'd' else 'd'
-        print(self._mode)
+
         # s模式转d模式
         if self._mode == 'd':
             if not self._has_driver:

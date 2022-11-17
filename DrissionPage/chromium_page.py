@@ -38,7 +38,7 @@ class ChromiumPage(BasePage):
     def _connect_browser(self, addr_tab_opts: Union[str, Tab, DriverOptions] = None,
                          tab_id: str = None) -> None:
         """连接浏览器，在第一次时运行                                    \n
-        :param addr_tab_opts: Tab对象或DriverOptions对象
+        :param addr_tab_opts: 浏览器地址、Tab对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
@@ -83,7 +83,7 @@ class ChromiumPage(BasePage):
             self.process = None
             self.options = DriverOptions(read_file=False)
             self._set_options()
-            self._init_page(None)
+            self._init_page(tab_id)
             self._get_document()
             self._first_run = False
 
@@ -130,14 +130,14 @@ class ChromiumPage(BasePage):
 
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            state = self._driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
+            state = self.ready_state
             if state == 'complete':
                 return True
             elif self.page_load_strategy == 'eager' and state in ('interactive', 'complete'):
-                self._driver.Page.stopLoading()
+                self.stop_loading()
                 return True
             elif self.page_load_strategy == 'none':
-                self._driver.Page.stopLoading()
+                self.stop_loading()
                 return True
 
         return False
@@ -145,13 +145,14 @@ class ChromiumPage(BasePage):
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
         # print('load complete')
-        if self._first_run is False:
+        if self._first_run is False and self._is_loading:
             self._get_document()
 
     def _onFrameNavigated(self, **kwargs):
-        # print('nav')
+        """页面跳转时触发"""
         # todo: 考虑frame的情况，修改别的判断方式
         if not kwargs['frame'].get('parentId', None):
+            # print('nav')
             self._is_loading = True
 
     def _onDocumentUpdated(self, **kwargs):
@@ -159,6 +160,7 @@ class ChromiumPage(BasePage):
         pass
 
     def _set_options(self) -> None:
+        print(self.options.timeouts)
         self.set_timeouts(page_load=self.options.timeouts['pageLoad'] / 1000,
                           script=self.options.timeouts['script'] / 1000,
                           implicit=self.options.timeouts['implicit'] / 1000 if self.timeout is None else self.timeout)
@@ -220,7 +222,7 @@ class ChromiumPage(BasePage):
     @property
     def ready_state(self) -> str:
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        return self.run_script('document.readyState;', as_expr=True)
+        return self._driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
 
     @property
     def size(self) -> dict:
@@ -510,7 +512,7 @@ class ChromiumPage(BasePage):
         :param ignore_cache: 是否忽略缓存
         :return: None
         """
-        self.driver.Page.reload(ignoreCache=ignore_cache)
+        self._driver.Page.reload(ignoreCache=ignore_cache)
 
     def forward(self, steps: int = 1) -> None:
         """在浏览历史中前进若干步    \n
@@ -528,7 +530,8 @@ class ChromiumPage(BasePage):
 
     def stop_loading(self) -> None:
         """页面停止加载"""
-        self.driver.Page.stopLoading()
+        self._driver.Page.stopLoading()
+        self._get_document()
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict:
         """执行Chrome DevTools Protocol语句     \n
@@ -536,7 +539,7 @@ class ChromiumPage(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        return self.driver.call_method(cmd, **cmd_args)
+        return self._driver.call_method(cmd, **cmd_args)
 
     def set_user_agent(self, ua: str) -> None:
         """为当前tab设置user agent，只在当前tab有效          \n
@@ -622,8 +625,7 @@ class ChromiumPage(BasePage):
 
         self._driver.stop()
         self._init_page(tab_id)
-        state = self._driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
-        if state == 'complete':
+        if self.ready_state == 'complete':
             self._get_document()
 
     def close_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None, others: bool = False) -> None:
@@ -696,9 +698,9 @@ class ChromiumPage(BasePage):
 
         res_text = self._alert.text
         if self._alert.type == 'prompt':
-            self.driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
+            self._driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
         else:
-            self.driver.Page.handleJavaScriptDialog(accept=accept)
+            self._driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
     def hide_browser(self) -> None:
@@ -732,15 +734,13 @@ class ChromiumPage(BasePage):
         timeout = timeout if timeout is not None else self.timeouts.page_load
 
         for _ in range(times + 1):
-            result = self.driver.Page.navigate(url=to_url)
+            result = self._driver.Page.navigate(url=to_url)
             is_timeout = not self._wait_loading(timeout)
 
             if is_timeout:
                 err = TimeoutError('页面连接超时。')
-                continue
             if 'errorText' in result:
                 err = ConnectionError(result['errorText'])
-                continue
 
             if not err:
                 break
@@ -803,7 +803,7 @@ class WindowSizeSetter(object):
     """用于设置窗口大小的类"""
 
     def __init__(self, page: ChromiumPage):
-        self.driver = page.driver
+        self.driver = page._driver
         self.window_id = self._get_info()['windowId']
 
     def maximized(self) -> None:

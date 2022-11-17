@@ -464,7 +464,7 @@ class DriverOptions(Options):
         self._driver_path = None
         self._user_data_path = None
         self.ini_path = None
-        self.timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
+        self.timeouts = {'implicit': 10000, 'pageLoad': 30000, 'script': 30000}
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
