@@ -61,7 +61,7 @@ class ActionChains:
 
     def hold(self, on_ele=None) -> 'ActionChains':
         """点击并按住当前坐标或指定元素            \n
-        :param on_ele: ChromeElement对象
+        :param on_ele: ChromiumElement对象
         :return: self
         """
         if on_ele:
@@ -72,7 +72,7 @@ class ActionChains:
 
     def click(self, on_ele=None) -> 'ActionChains':
         """点击鼠标左键，可先移动到元素上      \n
-        :param on_ele: ChromeElement元素
+        :param on_ele: ChromiumElement元素
         :return: self
         """
         if on_ele:
@@ -85,7 +85,7 @@ class ActionChains:
 
     def r_click(self, on_ele=None) -> 'ActionChains':
         """点击鼠标右键，可先移动到元素上      \n
-        :param on_ele: ChromeElement元素
+        :param on_ele: ChromiumElement元素
         :return: self
         """
         if on_ele:
@@ -98,7 +98,7 @@ class ActionChains:
 
     def release(self, on_ele=None) -> 'ActionChains':
         """释放鼠标左键，可先移动到元素再释放            \n
-        :param on_ele: ChromeElement对象
+        :param on_ele: ChromiumElement对象
         :return: self
         """
         if on_ele:
@@ -111,7 +111,7 @@ class ActionChains:
         """滚动鼠标滚轮，可先移动到元素上                \n
         :param delta_x: 滚轮变化值x
         :param delta_y: 滚轮变化值y
-        :param on_ele: ChromeElement元素
+        :param on_ele: ChromiumElement元素
         :return: self
         """
         if on_ele:

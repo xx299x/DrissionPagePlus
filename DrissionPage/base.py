@@ -9,9 +9,6 @@ from re import sub
 from typing import Union, Tuple, List
 from urllib.parse import quote
 
-from lxml.html import HtmlElement
-from selenium.webdriver.remote.webelement import WebElement
-
 from .common import format_html, get_loc
 
 
@@ -59,7 +56,7 @@ class BaseElement(BaseParser):
         return True
 
     @abstractmethod
-    def _ele(self, loc_or_ele, timeout=None, single=True):
+    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
         pass
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1):
@@ -132,7 +129,7 @@ class DrissionElement(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self.ele(loc, timeout=0)
+        return self._ele(loc, timeout=0, relative=True)
 
     def prev(self,
              index: int = 1,
@@ -256,7 +253,7 @@ class DrissionElement(BaseElement):
 
         loc = f'xpath:./{direction}{brother}::{loc}'
 
-        nodes = self._ele(loc, timeout=timeout, single=False)
+        nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
         nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
         if nodes and index is not None:

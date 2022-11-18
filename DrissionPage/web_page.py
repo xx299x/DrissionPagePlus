@@ -6,7 +6,7 @@ from pychrome import Tab
 from requests import Session, Response
 from tldextract import extract
 
-from .chromium_element import ChromiumElement
+from .chromium_element import ChromiumElement, ChromiumFrame, ChromiumBase
 from .session_element import SessionElement
 from .base import BasePage
 from .config import DriverOptions, SessionOptions, _cookies_to_tuple
@@ -33,7 +33,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
 
-        super(ChromiumPage, self).__init__(timeout)  # 调用Base的__init__()
+        super(ChromiumBase, self).__init__(timeout)  # 调用Base的__init__()
         self._session = None
         self._tab_obj = None
         self._is_loading = False
@@ -48,7 +48,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement, None]:
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, None]:
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -154,7 +154,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, str, None]:
+            timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None]:
         """返回第一个符合条件的元素、属性或节点文本                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -167,7 +167,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, str]]:
+             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, ChromiumFrame, str]]:
         """返回页面中所有符合条件的元素、属性或节点文本                                \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -359,9 +359,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-             timeout: float = None, single: bool = True) \
-            -> Union[ChromiumElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
-                Union[ChromiumElement, str]]]:
+             timeout: float = None, single: bool = True, relative:bool=False) \
+            -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
+                Union[ChromiumElement, str, ChromiumFrame]]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
@@ -371,7 +371,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super()._ele(loc_or_ele, single=single)
         elif self._mode == 'd':
-            return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
+            return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single, relative=relative)
 
     def _set_driver_options(self, Tab_or_Options):
         """处理driver设置"""
