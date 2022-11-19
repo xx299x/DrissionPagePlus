@@ -1086,7 +1086,6 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._is_loading = False
         self._root_id = None
         self.timeouts = Timeout(self)
         self._control_session = Session()
@@ -1100,7 +1099,6 @@ class ChromiumBase(BasePage):
         self._set_options()
         self._init_page(tab_id)
         self._get_document()
-        self._first_run = False
 
     def _init_page(self, tab_id: str = None) -> None:
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -1109,23 +1107,23 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         if tab_id:
-            self._driver = Tab(id=tab_id, type='page',
-                               webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
+            self._tab_obj = Tab(id=tab_id, type='page',
+                                webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
 
-        self._driver.start()
-        self._driver.DOM.enable()
-        self._driver.Page.enable()
+        self._tab_obj.start()
+        self._tab_obj.DOM.enable()
+        self._tab_obj.Page.enable()
 
-        self._driver.Page.frameNavigated = self._onFrameNavigated
-        self._driver.Page.loadEventFired = self._onLoadEventFired
-        # self._driver.DOM.documentUpdated = self._onDocumentUpdated
+        self._tab_obj.Page.frameNavigated = self._onFrameNavigated
+        self._tab_obj.Page.loadEventFired = self._onLoadEventFired
+        # self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
 
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
         # print('get doc')
         self._wait_loading()
-        root_id = self._driver.DOM.getDocument()['root']['nodeId']
-        self._root_id = self._driver.DOM.resolveNode(nodeId=root_id)['object']['objectId']
+        root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
+        self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
         self._is_loading = False
 
     def _wait_loading(self, timeout: float = None) -> bool:
@@ -1146,7 +1144,9 @@ class ChromiumBase(BasePage):
             elif self.page_load_strategy == 'none':
                 self.stop_loading()
                 return True
+            sleep(.1)
 
+        self.stop_loading()
         return False
 
     def _onLoadEventFired(self, **kwargs):
@@ -1161,9 +1161,9 @@ class ChromiumBase(BasePage):
             # print('nav')
             self._is_loading = True
 
-    def _onDocumentUpdated(self, **kwargs):
-        # print('doc')
-        pass
+    # def _onDocumentUpdated(self, **kwargs):
+    #     # print('doc')
+    #     pass
 
     def _set_options(self) -> None:
         pass
@@ -1181,22 +1181,25 @@ class ChromiumBase(BasePage):
     @property
     def driver(self) -> Tab:
         """返回用于控制浏览器的Tab对象"""
-        return self._driver
+        return self._tab_obj
+
+    @property
+    def _driver(self):
+        return self._tab_obj
 
     @property
     def _wait_driver(self) -> Tab:
         """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
         while self._is_loading:
-            # print('loading')
             sleep(.1)
-        return self._driver
+        self._wait_loading()
+        return self._tab_obj
 
     @property
     def url(self) -> str:
         """返回当前页面url"""
-        tab_id = self._wait_driver.id  # 用于WebPage时激活浏览器
         json = loads(self._control_session.get(f'http://{self.address}/json').text)
-        return [i['url'] for i in json if i['id'] == tab_id][0]
+        return [i['url'] for i in json if i['id'] == self._tab_obj.id][0]  # change_mode要调用，不能用_driver
 
     @property
     def html(self) -> str:
@@ -1376,7 +1379,7 @@ class ChromiumBase(BasePage):
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
-             timeout: float = None, single: bool = True, relative:bool=False) \
+             timeout: float = None, single: bool = True, relative: bool = False) \
             -> Union[ChromiumElement, 'ChromiumFrame', None, List[Union[ChromiumElement, 'ChromiumFrame']]]:
         """执行元素查找
         :param loc_or_ele: 定位符或元素对象

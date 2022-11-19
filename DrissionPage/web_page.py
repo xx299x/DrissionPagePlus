@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from time import sleep
 from typing import Union, Tuple, List
 
 from DownloadKit import DownloadKit
@@ -65,7 +66,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def url(self) -> Union[str, None]:
         """返回当前url"""
         if self._mode == 'd':
-            return super(SessionPage, self).url if self._has_driver else None
+            return super(SessionPage, self).url if self._tab_obj else None
         elif self._mode == 's':
             return self._session_url
 
@@ -113,6 +114,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             #     self._session.proxies = self._proxy
 
         return self._session
+
+    @property
+    def driver(self) -> Tab:
+        """返回纯粹的Tab对象"""
+        return self._tab_obj
+
+    @property
+    def _wait_driver(self) -> Tab:
+        """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
+        while self._is_loading:
+            sleep(.1)
+        # self._wait_loading()
+        return self._driver
 
     @property
     def _driver(self) -> Tab:
@@ -214,8 +228,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         # s模式转d模式
         if self._mode == 'd':
-            if not self._has_driver:
-                d = self.driver
+            if self._tab_obj is None:
+                self._connect_browser(self._driver_options, self._setting_tab_id)
+
             self._url = None if not self._has_driver else super(SessionPage, self).url
             self._has_driver = True
 
@@ -274,7 +289,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self._get_driver_cookies(as_dict)
 
     def _get_driver_cookies(self, as_dict: bool = False):
-        cookies = super(SessionPage, self)._wait_driver.Network.getCookies()['cookies']
+        cookies = self._tab_obj.Network.getCookies()['cookies']
+        # cookies = super(WebPage, self)._wait_driver.Network.getCookies()['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
@@ -292,7 +308,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                      'name': cookie['name'],
                      'domain': cookie['domain']}
                 result_cookies.append(c)
-            super(SessionPage, self)._wait_driver.Network.setCookies(cookies=result_cookies)
+            # super(WebPage, self)._wait_driver.Network.setCookies(cookies=result_cookies)
+            self._tab_obj.Network.setCookies(cookies=result_cookies)
 
         # 添加cookie到session
         if set_session:

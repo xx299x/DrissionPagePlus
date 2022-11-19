@@ -55,7 +55,6 @@ class ChromiumPage(ChromiumBase):
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
             self._init_page(tab_id)
             self._get_document()
-            self._first_run = False
 
         # 接收浏览器地址和端口
         elif isinstance(addr_tab_opts, str):
@@ -69,22 +68,21 @@ class ChromiumPage(ChromiumBase):
                 tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
             self._init_page(tab_id)
             self._get_document()
-            self._first_run = False
 
         # 接收传递过来的Tab，浏览器
         elif isinstance(addr_tab_opts, Tab):
-            self._driver = addr_tab_opts
+            self._tab_obj = addr_tab_opts
             self.address = search(r'ws://(.*?)/dev', addr_tab_opts._websocket_url).group(1)
             self.process = None
             self.options = DriverOptions(read_file=False)
             self._set_options()
             self._init_page(tab_id)
             self._get_document()
-            self._first_run = False
 
         else:
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
+        self._first_run = False
         self._main_tab = self.tab_id
 
     def _init_page(self, tab_id: str = None) -> None:
@@ -94,8 +92,8 @@ class ChromiumPage(ChromiumBase):
         """
         super()._init_page(tab_id)
 
-        self._driver.Page.javascriptDialogOpening = self._on_alert_open
-        self._driver.Page.javascriptDialogClosed = self._on_alert_close
+        self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
+        self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
 
     def _set_options(self) -> None:
         self.set_timeouts(page_load=self.options.timeouts['pageLoad'] / 1000,
@@ -111,7 +109,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def tabs(self) -> list:
         """返回所有标签页id"""
-        d = self._wait_driver
+        self._driver
         json = loads(self._control_session.get(f'http://{self.address}/json').text)
         return [i['id'] for i in json if i['type'] == 'page']
 
@@ -119,7 +117,7 @@ class ChromiumPage(ChromiumBase):
     def process_id(self) -> Union[None, int]:
         """返回浏览器进程id"""
         try:
-            return self._wait_driver.SystemInfo.getProcessInfo()['id']
+            return self._driver.SystemInfo.getProcessInfo()['id']
         except Exception:
             return None
 
@@ -300,8 +298,8 @@ class ChromiumPage(ChromiumBase):
 
     def quit(self) -> None:
         """关闭浏览器"""
-        self._driver.Browser.close()
-        self._driver.stop()
+        self._tab_obj.Browser.close()
+        self._tab_obj.stop()
 
     def _on_alert_close(self, **kwargs):
         """alert关闭时触发的方法"""
