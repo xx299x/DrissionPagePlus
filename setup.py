@@ -18,7 +18,7 @@ setup(
     include_package_data=True,
     packages=find_packages(),
     install_requires=[
-        "selenium>=4.1",
+        "selenium",
         "lxml",
         "tldextract",
         "requests",
