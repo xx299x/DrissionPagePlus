@@ -84,7 +84,7 @@ class ChromiumPage(ChromiumBase):
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
         self._first_run = False
-        self._main_tab = self.tab_id
+        self.main_tab = self.tab_id
 
     def _init_page(self, tab_id: str = None) -> None:
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -193,10 +193,6 @@ class ChromiumPage(ChromiumBase):
         """激活当前标签页使其处于最前面"""
         self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
-    def set_main_tab(self, tab_id: str = None) -> None:
-        """设置某个标签页为住标签页"""
-        self._main_tab = tab_id or self.tab_id
-
     def new_tab(self, url: str = None) -> None:
         """新建并定位到一个标签页,该标签页在最后面       \n
         :param url: 新标签页跳转到的网址
@@ -211,7 +207,7 @@ class ChromiumPage(ChromiumBase):
 
     def to_main_tab(self) -> None:
         """跳转到主标签页"""
-        self.to_tab('main')
+        self.to_tab(self.main_tab)
 
     def to_tab(self, tab_id: str = None, activate: bool = True) -> None:
         """跳转到标签页                                           \n
