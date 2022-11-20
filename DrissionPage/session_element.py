@@ -244,11 +244,13 @@ class SessionElement(DrissionElement):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout=None,
-             single: bool = True) -> Union['SessionElement', str, None, List[Union['SessionElement', str]]]:
+             single: bool = True,
+             relative: bool = False) -> Union['SessionElement', str, None, List[Union['SessionElement', str]]]:
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个           \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
         :return: SessionElement对象
         """
         return make_session_ele(self, loc_or_str, single)

@@ -517,7 +517,7 @@ class ChromiumElement(DrissionElement):
 
         node = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']
         frame = node.get('frameId', None)
-        frame = frame or self.page.current_tab_id
+        frame = frame or self.page.tab_id
         result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
         if result['base64Encoded']:
             from base64 import b64decode
@@ -1091,6 +1091,7 @@ class ChromiumBase(BasePage):
         self._control_session = Session()
         self._control_session.keep_alive = False
         self._first_run = True
+        self._is_reading = False  # 用于避免不同线程重复读取document
 
         self.address = addr_tab_opts
         if not tab_id:
@@ -1121,10 +1122,13 @@ class ChromiumBase(BasePage):
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
         # print('get doc')
-        self._wait_loading()
-        root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
-        self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
-        self._is_loading = False
+        if not self._is_reading:
+            self._is_reading = True
+            self._wait_loading()
+            root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
+            self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
+            self._is_loading = False
+            self._is_reading = False
 
     def _wait_loading(self, timeout: float = None) -> bool:
         """等待页面加载完成
@@ -1778,6 +1782,7 @@ def make_chromium_ele(ele: ChromiumElement,
     :param loc: 元素定位元组
     :param single: True则返回第一个，False则返回全部
     :param timeout: 查找元素超时时间
+    :param relative: WebPage用于标记是否相对定位使用
     :return: 返回ChromiumElement元素或它们组成的列表
     """
     # ---------------处理定位符---------------

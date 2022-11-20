@@ -152,11 +152,13 @@ class DriverElement(DrissionElement):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             single: bool = True) -> Union['DriverElement', str, None, List[Union['DriverElement', str]]]:
+             single: bool = True,
+             relative: bool = False) -> Union['DriverElement', str, None, List[Union['DriverElement', str]]]:
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
         :return: DriverElement对象
         """
         return make_driver_ele(self, loc_or_str, single, timeout)

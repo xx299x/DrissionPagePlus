@@ -38,6 +38,7 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         self._is_loading = False
+        self._is_reading = False
         self._root_id = None
         self.timeouts = Timeout(self)
         self._control_session = Session()
