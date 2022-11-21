@@ -125,54 +125,40 @@ class ChromiumElement(DrissionElement):
             return {'height': 0, 'width': 0}
 
     @property
-    def location(self) -> dict:
-        """返回元素左上角的绝对坐标"""
-        js = '''function(){
-            function getElementPagePosition(element){
-              var actualLeft = element.offsetLeft;
-              var current = element.offsetParent;
-              while (current !== null){
-                actualLeft += current.offsetLeft;
-                current = current.offsetParent;
-              }
-              var actualTop = element.offsetTop;
-              var current = element.offsetParent;
-              while (current !== null){
-                actualTop += (current.offsetTop+current.clientTop);
-                current = current.offsetParent;
-              }
-              return actualLeft.toString() +' '+actualTop.toString();
-            }
-            return getElementPagePosition(this);}'''
-        xy = self.run_script(js)
-        x, y = xy.split(' ')
-        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+    def client_location(self) -> Union[dict, None]:
+        """返回元素左上角在视口中的坐标"""
+        m = self._get_client_rect('border')
+        return {'x': m[0], 'y': m[1]} if m else None
 
     @property
-    def client_location(self) -> dict:
-        """返回元素左上角在视口中的坐标"""
-        js = 'return this.getBoundingClientRect().left.toString()+" "+this.getBoundingClientRect().top.toString();'
-        xy = self.run_script(js)
-        x, y = xy.split(' ')
-        return {'x': int(x.split('.')[0]), 'y': int(y.split('.')[0])}
+    def client_midpoint(self) -> Union[dict, None]:
+        """返回元素中间点在视口中的坐标"""
+        m = self._get_client_rect('border')
+        return {'x': m[2] - m[0], 'y': m[5] - m[1]} if m else None
+
+    @property
+    def location(self) -> Union[dict, None]:
+        """返回元素左上角的绝对坐标"""
+        cl = self.client_location
+        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
 
     @property
     def midpoint(self) -> dict:
         """返回元素中间点的绝对坐标"""
-        loc = self.location
-        size = self.size
-        lx = loc['x'] + size['width'] // 2
-        ly = loc['y'] + size['height'] // 2
-        return {'x': lx, 'y': ly}
+        cl = self.client_midpoint
+        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
 
     @property
-    def client_midpoint(self) -> dict:
-        """返回元素中间点在视口中的坐标"""
-        loc = self.client_location
-        size = self.size
-        cx = loc['x'] + size['width'] // 2
-        cy = loc['y'] + size['height'] // 2
-        return {'x': cx, 'y': cy}
+    def _client_click_point(self) -> Union[dict, None]:
+        """返回元素左上角可接受点击的点视口坐标"""
+        m = self._get_client_rect('padding')
+        return {'x': m[0], 'y': m[1]} if m else None
+
+    @property
+    def _click_point(self) -> Union[dict, None]:
+        """返回元素左上角可接受点击的点的绝对坐标"""
+        cl = self._client_click_point
+        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
 
     @property
     def shadow_root(self) -> Union[None, 'ChromiumShadowRootElement']:
@@ -336,8 +322,8 @@ class ChromiumElement(DrissionElement):
 
     @property
     def is_in_viewport(self) -> bool:
-        """返回元素是否出现在视口中，以元素中点为判断"""
-        loc = self.midpoint
+        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
+        loc = self.location
         return _location_in_viewport(self.page, loc['x'], loc['y'])
 
     def attr(self, attr: str) -> Union[str, None]:
@@ -611,17 +597,23 @@ class ChromiumElement(DrissionElement):
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def click(self, by_js: bool = None, timeout: float = .2) -> bool:
+    def click(self, by_js: bool = None, retry: bool = False, timeout: float = .2) -> bool:
         """点击元素                                                                      \n
         如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
-        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
+        :param retry: 遇到其它元素遮挡时，是否重试
+        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
         :return: 是否点击成功
         """
 
-        def do_it(cx, cy, lx, ly) -> bool:
-            r = self.page.driver.DOM.getNodeForLocation(x=lx + 1, y=ly + 1)
-            if r.get('nodeId') != self._node_id:
+        def do_it(cx, cy, lx, ly) -> Union[None, bool]:
+            """无遮挡返回True，有遮挡返回False，无元素返回None"""
+            try:
+                r = self.page.driver.DOM.getNodeForLocation(x=lx, y=ly)
+            except Exception:
+                return None
+
+            if retry and r.get('nodeId') != self._node_id:
                 return False
 
             self._click(cx, cy)
@@ -630,25 +622,28 @@ class ChromiumElement(DrissionElement):
         if not by_js:
             self.page.scroll_to_see(self)
             if self.is_in_viewport:
-                midpoint = self.midpoint
-                client_midpoint = self.client_midpoint
-                client_x = client_midpoint['x']
-                client_y = client_midpoint['y']
-                loc_x = midpoint['x']
-                loc_y = midpoint['y']
+                client_point = self._client_click_point
+                if client_point:
+                    loc_point = self._click_point
+                    client_x = client_point['x']
+                    client_y = client_point['y']
+                    loc_x = loc_point['x']
+                    loc_y = loc_point['y']
 
-                timeout = timeout if timeout is not None else self.page.timeout
-                end_time = perf_counter() + timeout
-                click = do_it(client_x, client_y, loc_x, loc_y)
-                while not click and perf_counter() < end_time:
                     click = do_it(client_x, client_y, loc_x, loc_y)
+                    if click:
+                        return True
 
-                if click:
-                    return True
+                    timeout = timeout if timeout is not None else self.page.timeout
+                    end_time = perf_counter() + timeout
+                    while click is False and perf_counter() < end_time:
+                        click = do_it(client_x, client_y, loc_x, loc_y)
+
+                    if click is not None:
+                        return True
 
         if by_js is not False:
-            js = 'this.click();'
-            self.run_script(js)
+            self.run_script('this.click();')
             return True
 
         return False
@@ -657,7 +652,7 @@ class ChromiumElement(DrissionElement):
                  offset_x: Union[int, str] = None,
                  offset_y: Union[int, str] = None,
                  button: str = 'left') -> None:
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点    \n
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :param button: 左键还是右键
@@ -669,10 +664,10 @@ class ChromiumElement(DrissionElement):
     def r_click(self) -> None:
         """右键单击"""
         self.page.scroll_to_see(self)
-        xy = self.client_midpoint
+        xy = self._client_click_point
         self._click(xy['x'], xy['y'], 'right')
 
-    def r_click_at(self, offset_x: Union[int, str], offset_y: Union[int, str]) -> None:
+    def r_click_at(self, offset_x: Union[int, str] = None, offset_y: Union[int, str] = None) -> None:
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
@@ -814,6 +809,23 @@ class ChromiumElement(DrissionElement):
         '''
         t = self.run_script(js)
         return f':root{t}' if mode == 'css' else t
+
+    def _get_client_rect(self, quad: str) -> Union[dict, None]:
+        """按照类型返回坐标
+        :param quad: 方框类型，margin border padding
+        :return: 四个角坐标，大小为0时返回None
+        """
+        try:
+            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
+        except:
+            return None
+
+    def _get_absolute_rect(self, x, y) -> dict:
+        """根据绝对坐标获取窗口坐标"""
+        js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
+        xy = self.run_script(js)
+        sx, sy = xy.split(' ')
+        return {'x': x + int(sx), 'y': y + int(sy)}
 
 
 class ChromiumShadowRootElement(BaseElement):
@@ -1198,6 +1210,11 @@ class ChromiumBase(BasePage):
             sleep(.1)
         self._wait_loading()
         return self._tab_obj
+
+    @property
+    def is_loading(self) -> bool:
+        """返回页面是否正在加载状态"""
+        return self._is_loading
 
     @property
     def url(self) -> str:
@@ -1992,7 +2009,10 @@ def _run_script(page_or_ele, script: str, as_expr: bool = False, timeout: float 
     if exceptionDetails:
         raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
 
-    return _parse_js_result(page, page_or_ele, res.get('result'))
+    try:
+        return _parse_js_result(page, page_or_ele, res.get('result'))
+    except Exception:
+        return res
 
 
 def _parse_js_result(page, ele, result: dict):
@@ -2076,7 +2096,7 @@ def _send_key(ele: ChromiumElement, modifier: int, key: str) -> None:
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
-def _offset_scroll(ele, offset_x: int, offset_y: int) -> tuple:
+def _offset_scroll(ele: ChromiumElement, offset_x: int, offset_y: int) -> tuple:
     """接收元素及偏移坐标，滚动到偏移坐标，返回该点在视口中的坐标
     :param ele: 元素对象
     :param offset_x: 偏移量x
@@ -2084,14 +2104,14 @@ def _offset_scroll(ele, offset_x: int, offset_y: int) -> tuple:
     :return: 视口中的坐标
     """
     location = ele.location
-    midpoint = ele.midpoint
+    midpoint = ele._click_point
     lx = location['x'] + offset_x if offset_x else midpoint['x']
     ly = location['y'] + offset_y if offset_y else midpoint['y']
 
     if not _location_in_viewport(ele.page, lx, ly):
         ele.page.scroll.to_location(lx, ly)
     cl = ele.client_location
-    cm = ele.client_midpoint
+    cm = ele._client_click_point
     cx = cl['x'] + offset_x if offset_x else cm['x']
     cy = cl['y'] + offset_y if offset_y else cm['y']
     return cx, cy

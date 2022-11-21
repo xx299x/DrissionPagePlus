@@ -217,10 +217,10 @@ class ChromiumPage(ChromiumBase):
         """
         tabs = self.tabs
         if not tab_id:
+            tab_id = self.main_tab
+        if tab_id not in tabs:
             tab_id = tabs[0]
-        elif tab_id == 'main':
-            tab_id = self._main_tab
-        if tab_id == self.tab_id or tab_id not in tabs:
+        if tab_id == self.tab_id:
             return
 
         if activate:
@@ -238,7 +238,13 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         all_tabs = set(self.tabs)
-        tabs = set(tab_ids) if tab_ids else {self.tab_id}
+        if isinstance(tab_ids, str):
+            tabs = {tab_ids}
+        elif tab_ids is None:
+            tabs = {self.tab_id}
+        else:
+            tabs = set(tab_ids)
+
         if others:
             tabs = all_tabs - tabs
 
@@ -254,6 +260,9 @@ class ChromiumPage(ChromiumBase):
             self._control_session.get(f'http://{self.address}/json/close/{tab}')
         while len(self.tabs) != end_len:
             pass
+
+        if self.main_tab in tabs:
+            self.main_tab = self.tabs[0]
 
         self.to_tab()
 
