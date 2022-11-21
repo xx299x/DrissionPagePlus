@@ -65,7 +65,7 @@ class ChromiumElement(DrissionElement):
     def tag(self) -> str:
         """返回元素tag"""
         if self._tag is None:
-            self._tag = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']['localName'].lower()
+            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']['localName'].lower()
         return self._tag
 
     @property
@@ -73,11 +73,11 @@ class ChromiumElement(DrissionElement):
         """返回元素outerHTML文本"""
         tag = self.tag
         if tag in ('iframe', 'frame'):
-            out_html = self.page.driver.DOM.getOuterHTML(nodeId=self._node_id)['outerHTML']
+            out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
             in_html = self.inner_html
             sign = search(rf'<{tag}.*?>', out_html).group(0)
             return f'{sign}{in_html}</{tag}>'
-        return self.page.driver.DOM.getOuterHTML(nodeId=self._node_id)['outerHTML']
+        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
 
     @property
     def inner_html(self) -> str:
@@ -90,7 +90,7 @@ class ChromiumElement(DrissionElement):
     @property
     def attrs(self) -> dict:
         """返回元素所有attribute属性"""
-        attrs = self.page.driver.DOM.getAttributes(nodeId=self._node_id)['attributes']
+        attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
         attrs_len = len(attrs)
         return {attrs[i]: attrs[i + 1] for i in range(0, attrs_len, 2)}
 
@@ -119,7 +119,7 @@ class ChromiumElement(DrissionElement):
     def size(self) -> dict:
         """返回元素宽和高"""
         try:
-            model = self.page.driver.DOM.getBoxModel(nodeId=self._node_id)['model']
+            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
             return {'height': model['height'], 'width': model['width']}
         except Exception:
             return {'height': 0, 'width': 0}
@@ -377,7 +377,7 @@ class ChromiumElement(DrissionElement):
         :param prop: 属性名
         :return: 属性值文本
         """
-        p = self.page.driver.Runtime.getProperties(objectId=self._obj_id)['result']
+        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id)['result']
         for i in p:
             if i['name'] == prop:
                 if 'value' not in i or 'value' not in i['value']:
@@ -482,15 +482,12 @@ class ChromiumElement(DrissionElement):
         js = f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");'
         return self.run_script(js)
 
-    def save(self, path: [str, bool] = None, rename: str = None) -> Union[bytes, str, bool]:
-        """保存图片或其它有src属性的元素的资源                                \n
-        :param path: 文件保存路径，为None时保存到当前文件夹，为False时不保存
-        :param rename: 文件名称，为None时从资源url获取
-        :return: 资源内容文本
-        """
+    def get_src(self) -> Union[bytes, str, None]:
+        """返回元素src资源，base64的会转为bytes返回，其它返回str"""
         src = self.attr('src')
         if not src:
-            return False
+            return None
+
         if self.tag == 'img':  # 等待图片加载完成
             js = ('return this.complete && typeof this.naturalWidth != "undefined" '
                   '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
@@ -499,33 +496,41 @@ class ChromiumElement(DrissionElement):
             while not self.run_script(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        path = path or '.'
-
-        node = self.page.driver.DOM.describeNode(nodeId=self._node_id)['node']
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
         result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
         if result['base64Encoded']:
             from base64 import b64decode
             data = b64decode(result['content'])
-            write_type = 'wb'
         else:
             data = result['content']
-            write_type = 'w'
-
-        if path:
-            rename = rename or basename(src)
-            Path(path).mkdir(parents=True, exist_ok=True)
-            with open(f'{path}{sep}{rename}', write_type) as f:
-                f.write(data)
-
         return data
+
+    def save(self, path: [str, bool] = None, rename: str = None) -> None:
+        """保存图片或其它有src属性的元素的资源                                \n
+        :param path: 文件保存路径，为None时保存到当前文件夹，为False时不保存
+        :param rename: 文件名称，为None时从资源url获取
+        :return: None
+        """
+        src = self.attr('src')
+        if not src:
+            raise TypeError('该元素无可保存的内容。')
+
+        data = self.get_src()
+        path = path or '.'
+        rename = rename or basename(src)
+        write_type = 'wb' if isinstance(data, bytes) else 'w'
+
+        Path(path).mkdir(parents=True, exist_ok=True)
+        with open(f'{path}{sep}{rename}', write_type) as f:
+            f.write(data)
 
     def get_screenshot(self, path: [str, Path] = None,
                        as_bytes: [bool, str] = None) -> Union[str, bytes]:
         """对当前元素截图                                                                            \n
-        :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
+        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
         """
         if self.tag == 'img':  # 等待图片加载完成
@@ -554,7 +559,7 @@ class ChromiumElement(DrissionElement):
             return self._set_file_input(vals)
 
         try:
-            self.page.driver.DOM.focus(nodeId=self._node_id)
+            self.page.run_cdp('DOM.focus', nodeId=self._node_id)
         except Exception:
             self.click(by_js=True)
 
@@ -572,10 +577,10 @@ class ChromiumElement(DrissionElement):
             return
 
         if vals.endswith('\n'):
-            self.page.run_cdp('Input.insertText', text=vals[:-1])
+            self.page.driver.Input.insertText(text=vals[:-1])
             _send_key(self, modifier, '\n')
         else:
-            self.page.run_cdp('Input.insertText', text=vals)
+            self.page.driver.Input.insertText(text=vals)
 
     def _set_file_input(self, files: Union[str, list, tuple]) -> None:
         """设置上传控件值
@@ -584,7 +589,7 @@ class ChromiumElement(DrissionElement):
         """
         if isinstance(files, str):
             files = files.split('\n')
-        self.page.driver.DOM.setFileInputFiles(files=files, nodeId=self._node_id)
+        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
 
     def clear(self, by_js: bool = False) -> None:
         """清空元素文本                                    \n
@@ -759,14 +764,14 @@ class ChromiumElement(DrissionElement):
         :param node_id: cdp中的node id
         :return: js中的object id
         """
-        return self.page.driver.DOM.resolveNode(nodeId=node_id)['object']['objectId']
+        return self.page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
 
     def _get_node_id(self, obj_id) -> str:
         """根据传入object id获取cdp中的node id          \n
         :param obj_id: js中的object id
         :return: cdp中的node id
         """
-        return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
+        return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
 
     def _get_ele_path(self, mode) -> str:
         """返获取css路径或xpath路径"""
@@ -860,7 +865,7 @@ class ChromiumShadowRootElement(BaseElement):
     def is_alive(self) -> bool:
         """返回元素是否仍在DOM中"""
         try:
-            self.page.driver.DOM.describeNode(nodeId=self._node_id)
+            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)
             return True
         except Exception:
             return False
@@ -1057,20 +1062,20 @@ class ChromiumShadowRootElement(BaseElement):
 
         css_paths = [i.css_path[47:] for i in eles]
         if single:
-            node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=css_paths[0])['nodeId']
+            node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css_paths[0])['nodeId']
             return ChromiumElement(self.page, node_id) if node_id else None
 
         else:
             results = []
             for i in css_paths:
-                node_id = self.page.driver.DOM.querySelector(nodeId=self._node_id, selector=i)['nodeId']
+                node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
                 if node_id:
                     results.append(ChromiumElement(self.page, node_id))
             return results
 
     def _get_node_id(self, obj_id) -> str:
         """返回元素node id"""
-        return self.page.driver.DOM.requestNode(objectId=obj_id)['nodeId']
+        return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
 
 
 class ChromiumBase(BasePage):
@@ -1492,7 +1497,12 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        return self._driver.call_method(cmd, **cmd_args)
+        try:
+            return self._driver.call_method(cmd, **cmd_args)
+        except Exception as e:
+            if 'Could not find node with given id' in str(e):
+                raise RuntimeError('该元素已不在当前页面中。')
+            raise
 
     def set_user_agent(self, ua: str) -> None:
         """为当前tab设置user agent，只在当前tab有效          \n
@@ -1623,7 +1633,7 @@ class ChromiumFrame(ChromiumBase):
     def html(self) -> str:
         """返回元素outerHTML文本"""
         tag = self.tag
-        out_html = self.page.driver.DOM.getOuterHTML(nodeId=self._inner_ele.node_id)['outerHTML']
+        out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._inner_ele.node_id)['outerHTML']
         in_html = super().html
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{in_html}</{tag}>'
@@ -2067,15 +2077,15 @@ def _send_enter(ele: ChromiumElement) -> None:
     data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
             'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
 
-    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+    ele.page.driver.Input.dispatchKeyEvent(**data)
     data['type'] = 'keyUp'
-    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+    ele.page.driver.Input.dispatchKeyEvent(**data)
 
 
 def _send_key(ele: ChromiumElement, modifier: int, key: str) -> None:
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in _keyDefinitions:
-        ele.page.run_cdp('Input.insertText', text=key)
+        ele.page.driver.Input.insertText(text=key)
 
     else:
         description = _keyDescriptionForString(modifier, key)
@@ -2091,9 +2101,9 @@ def _send_key(ele: ChromiumElement, modifier: int, key: str) -> None:
                 'location': description['location'],
                 'isKeypad': description['location'] == 3}
 
-        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+        ele.page.driver.Input.dispatchKeyEvent(**data)
         data['type'] = 'keyUp'
-        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+        ele.page.driver.Input.dispatchKeyEvent(**data)
 
 
 def _offset_scroll(ele: ChromiumElement, offset_x: int, offset_y: int) -> tuple:
