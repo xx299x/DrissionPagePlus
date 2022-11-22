@@ -84,7 +84,7 @@ class ChromiumPage(ChromiumBase):
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
         self._first_run = False
-        self.main_tab = self.tab_id
+        self.main_tab: str = self.tab_id
 
     def _init_page(self, tab_id: str = None) -> None:
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -203,7 +203,7 @@ class ChromiumPage(ChromiumBase):
         self._control_session.get(f'http://{self.address}/json/new{url}')
         while len(self.tabs) < begin_len:
             pass
-        self.to_tab()
+        self.to_tab(self.tabs[0])
 
     def to_main_tab(self) -> None:
         """跳转到主标签页"""
@@ -220,11 +220,12 @@ class ChromiumPage(ChromiumBase):
             tab_id = self.main_tab
         if tab_id not in tabs:
             tab_id = tabs[0]
-        if tab_id == self.tab_id:
-            return
 
         if activate:
             self._control_session.get(f'http://{self.address}/json/activate/{tab_id}')
+
+        if tab_id == self.tab_id:
+            return
 
         self._driver.stop()
         self._init_page(tab_id)
