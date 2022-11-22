@@ -837,7 +837,7 @@ class ChromiumElement(DrissionElement):
         js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
         xy = self.run_script(js)
         sx, sy = xy.split(' ')
-        return {'x': x + int(sx), 'y': y + int(sy)}
+        return {'x': x + int(float(sx)), 'y': y + int(float(sy))}
 
 
 class ChromiumShadowRootElement(BaseElement):

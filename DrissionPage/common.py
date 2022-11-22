@@ -599,7 +599,7 @@ def _get_running_args(opt: DriverOptions) -> list:
             result.append(arg)
 
     # ----------处理extensions-------------
-    ext = opt.extensions
+    ext = opt._extension_files
     if ext:
         ext = set(ext)
         if sys == 'windows':
