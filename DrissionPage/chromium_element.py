@@ -11,6 +11,7 @@ from pathlib import Path
 from re import search
 from typing import Union, Tuple, List, Any
 from time import perf_counter, sleep
+from urllib.parse import urlparse
 
 from pychrome import Tab
 from requests import Session
@@ -1467,7 +1468,12 @@ class ChromiumBase(BasePage):
         for i in nodeIds['nodeIds']:
             ele = ChromiumElement(self, node_id=i)
             if ele.tag in ('iframe', 'frame'):
-                ele = ChromiumFrame(self, ele)
+                src = ele.attr('src')
+                if src:
+                    netloc1 = urlparse(src).netloc
+                    netloc2 = urlparse(self.url).netloc
+                    if netloc1 != netloc2:
+                        ele = ChromiumFrame(self, ele)
             eles.append(ele)
 
         return eles[0] if single else eles
