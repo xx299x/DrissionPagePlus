@@ -163,8 +163,11 @@ class ChromiumElement(DrissionElement):
     @property
     def shadow_root(self) -> Union[None, 'ChromiumShadowRootElement']:
         """返回当前元素的shadow_root元素对象"""
-        shadow = self.run_script('return this.shadowRoot;')
-        return shadow
+        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id)['node']
+        if not info.get('shadowRoots', None):
+            return None
+
+        return ChromiumShadowRootElement(self, backend_id=info['shadowRoots'][0]['backendNodeId'])
 
     @property
     def sr(self):
@@ -324,7 +327,7 @@ class ChromiumElement(DrissionElement):
     def is_in_viewport(self) -> bool:
         """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
         loc = self.location
-        return _location_in_viewport(self.page, loc['x'], loc['y'])
+        return _location_in_viewport(self.page, loc['x'], loc['y']) if loc else False
 
     def attr(self, attr: str) -> Union[str, None]:
         """返回attribute属性值                           \n
@@ -499,7 +502,11 @@ class ChromiumElement(DrissionElement):
         node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
-        result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
+        try:
+            result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
+        except Exception:
+            return None
+
         if result['base64Encoded']:
             from base64 import b64decode
             data = b64decode(result['content'])
@@ -513,13 +520,12 @@ class ChromiumElement(DrissionElement):
         :param rename: 文件名称，为None时从资源url获取
         :return: None
         """
-        src = self.attr('src')
-        if not src:
-            raise TypeError('该元素无可保存的内容。')
-
         data = self.get_src()
+        if not data:
+            raise TypeError('该元素无可保存的内容或保存失败。')
+
         path = path or '.'
-        rename = rename or basename(src)
+        rename = rename or basename(self.attr('src'))
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
         Path(path).mkdir(parents=True, exist_ok=True)
@@ -836,11 +842,25 @@ class ChromiumElement(DrissionElement):
 class ChromiumShadowRootElement(BaseElement):
     """ChromiumShadowRootElement是用于处理ShadowRoot的类，使用方法和ChromiumElement基本一致"""
 
-    def __init__(self, parent_ele: ChromiumElement, obj_id: str):
+    def __init__(self,
+                 parent_ele: ChromiumElement,
+                 obj_id: str = None,
+                 backend_id: str = None):
+        """
+        :param parent_ele: shadow root 所在父元素
+        :param obj_id: js中的object id
+        :param backend_id: cdp中的backend id
+        """
         super().__init__(parent_ele.page)
         self.parent_ele = parent_ele
-        self._node_id = self._get_node_id(obj_id)
-        self._obj_id = obj_id
+        if backend_id:
+            self._backend_id = backend_id
+            self._obj_id = self._get_obj_id(backend_id)
+            self._node_id = self._get_node_id(self._obj_id)
+        elif obj_id:
+            self._obj_id = obj_id
+            self._node_id = self._get_node_id(obj_id)
+            self._backend_id = self._get_backend_id(self._node_id)
 
     def __repr__(self) -> str:
         return f'<ShadowRootElement in {self.parent_ele} >'
@@ -1076,6 +1096,14 @@ class ChromiumShadowRootElement(BaseElement):
     def _get_node_id(self, obj_id) -> str:
         """返回元素node id"""
         return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
+
+    def _get_obj_id(self, back_id) -> str:
+        """返回元素object id"""
+        return self.page.run_cdp('DOM.resolveNode', backendNodeId=back_id)['object']['objectId']
+
+    def _get_backend_id(self, node_id) -> str:
+        """返回元素object id"""
+        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
 
 
 class ChromiumBase(BasePage):
