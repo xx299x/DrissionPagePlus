@@ -3,16 +3,16 @@ from time import sleep
 from typing import Union, Tuple, List
 
 from DownloadKit import DownloadKit
-from pychrome import Tab
 from requests import Session, Response
 from tldextract import extract
 
-from .chromium_element import ChromiumElement, ChromiumFrame, ChromiumBase
-from .session_element import SessionElement
 from .base import BasePage
-from .config import DriverOptions, SessionOptions, _cookies_to_tuple
+from .chromium_element import ChromiumElement, ChromiumFrame, ChromiumBase
 from .chromium_page import ChromiumPage
+from .config import DriverOptions, SessionOptions, _cookies_to_tuple
+from .session_element import SessionElement
 from .session_page import SessionPage
+from .tab import Tab
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):

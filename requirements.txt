@@ -5,4 +5,4 @@ lxml
 cssselect
 DownloadKit
 FlowViewer
-pychrome
+websocket-client

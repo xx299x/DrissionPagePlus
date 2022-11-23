@@ -6,13 +6,13 @@ from re import search
 from time import perf_counter, sleep
 from typing import Union, Tuple, List
 
-from pychrome import Tab
 from requests import Session
 
 from .chromium_element import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
 from .config import DriverOptions
 from .drission import connect_chrome
+from .tab import Tab
 
 
 class ChromiumPage(ChromiumBase):
@@ -129,8 +129,12 @@ class ChromiumPage(ChromiumBase):
             self._window_setter = WindowSizeSetter(self)
         return self._window_setter
 
-    def get_tab(self, tab_id: str) -> ChromiumTab:
-        """获取一个标签页对象"""
+    def get_tab(self, tab_id: str = None) -> ChromiumTab:
+        """获取一个标签页对象                                    \n
+        :param tab_id: 要获取的标签页id，为None时获取当前tab
+        :return: 标签页对象
+        """
+        tab_id = tab_id or self.tab_id
         return ChromiumTab(self, tab_id)
 
     def get_screenshot(self, path: [str, Path] = None,

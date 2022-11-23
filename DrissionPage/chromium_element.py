@@ -9,19 +9,19 @@ from os import sep
 from os.path import basename
 from pathlib import Path
 from re import search
-from typing import Union, Tuple, List, Any
 from time import perf_counter, sleep
+from typing import Union, Tuple, List, Any
 from urllib.parse import urlparse
 
-from pychrome import Tab
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
+from .base import DrissionElement, BaseElement, BasePage
+from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
 from .config import DriverOptions, _cookies_to_tuple
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele, SessionElement
-from .base import DrissionElement, BaseElement, BasePage
-from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
+from .tab import Tab
 
 
 class ChromiumElement(DrissionElement):
