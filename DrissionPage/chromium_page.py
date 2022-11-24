@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-from json import loads
 from pathlib import Path
 from platform import system
 from re import search
@@ -51,11 +50,8 @@ class ChromiumPage(ChromiumBase):
             self.options = addr_tab_opts or DriverOptions()  # 从ini文件读取
             self.address = self.options.debugger_address
             self.process = connect_chrome(self.options)[1]
-            self._set_options()
-            json = loads(self._control_session.get(f'http://{self.address}/json').text)
+            json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
-            self._init_page(tab_id)
-            self._get_document()
 
         # 接收浏览器地址和端口
         elif isinstance(addr_tab_opts, str):
@@ -63,12 +59,9 @@ class ChromiumPage(ChromiumBase):
             self.options = DriverOptions(read_file=False)
             self.options.debugger_address = addr_tab_opts
             self.process = connect_chrome(self.options)[1]
-            self._set_options()
             if not tab_id:
-                json = loads(self._control_session.get(f'http://{self.address}/json').text)
+                json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
-            self._init_page(tab_id)
-            self._get_document()
 
         # 接收传递过来的Tab，浏览器
         elif isinstance(addr_tab_opts, Tab):
@@ -76,13 +69,13 @@ class ChromiumPage(ChromiumBase):
             self.address = search(r'ws://(.*?)/dev', addr_tab_opts._websocket_url).group(1)
             self.process = None
             self.options = DriverOptions(read_file=False)
-            self._set_options()
-            self._init_page(tab_id)
-            self._get_document()
 
         else:
             raise TypeError('只能接收Tab或DriverOptions类型参数。')
 
+        self._set_options()
+        self._init_page(tab_id)
+        self._get_document()
         self._first_run = False
         self.main_tab: str = self.tab_id
 
@@ -111,7 +104,7 @@ class ChromiumPage(ChromiumBase):
     def tabs(self) -> list:
         """返回所有标签页id"""
         self._driver
-        json = loads(self._control_session.get(f'http://{self.address}/json').text)
+        json = self._control_session.get(f'http://{self.address}/json').json()
         return [i['id'] for i in json if i['type'] == 'page']
 
     @property
@@ -197,17 +190,29 @@ class ChromiumPage(ChromiumBase):
         """激活当前标签页使其处于最前面"""
         self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
-    def new_tab(self, url: str = None) -> None:
-        """新建并定位到一个标签页,该标签页在最后面       \n
+    def new_tab(self, url: str = None, switch_to: bool = True) -> None:
+        """新建并定位到一个标签页,该标签页在最后面         \n
         :param url: 新标签页跳转到的网址
+        :param switch_to: 新建标签页后是否把焦点移过去
         :return: None
         """
-        begin_len = len(self.tabs)
-        url = f'?{url}' if url else ''
-        self._control_session.get(f'http://{self.address}/json/new{url}')
-        while len(self.tabs) < begin_len:
-            pass
-        self.to_tab(self.tabs[0])
+        if switch_to:
+            begin_len = len(self.tabs)
+            self._control_session.get(f'http://{self.address}/json/new')
+
+            tabs = self.tabs
+            while len(tabs) <= begin_len:
+                tabs = self.tabs
+
+            self._to_tab(tabs[0], read_doc=False)
+            if url:
+                self.get(url)
+
+        elif url:
+            self._control_session.get(f'http://{self.address}/json/new?{url}')
+
+        else:
+            self._control_session.get(f'http://{self.address}/json/new')
 
     def to_main_tab(self) -> None:
         """跳转到主标签页"""
@@ -217,6 +222,15 @@ class ChromiumPage(ChromiumBase):
         """跳转到标签页                                           \n
         :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
+        :return: None
+        """
+        self._to_tab(tab_id, activate)
+
+    def _to_tab(self, tab_id: str = None, activate: bool = True, read_doc: bool = True) -> None:
+        """跳转到标签页                                           \n
+        :param tab_id: 标签页id字符串，默认跳转到main_tab
+        :param activate: 切换后是否变为活动状态
+        :param read_doc: 切换后是否读取文档
         :return: None
         """
         tabs = self.tabs
@@ -233,7 +247,7 @@ class ChromiumPage(ChromiumBase):
 
         self._driver.stop()
         self._init_page(tab_id)
-        if self.ready_state == 'complete':
+        if read_doc:
             self._get_document()
 
     def close_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None, others: bool = False) -> None:

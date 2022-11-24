@@ -41,8 +41,7 @@ class SessionPage(BasePage):
         :param data: session配置字典
         :return: None
         """
-        if self._session is None:
-            self._session = Session()
+        self._session = Session()
 
         if 'headers' in data:
             self._session.headers = CaseInsensitiveDict(data['headers'])

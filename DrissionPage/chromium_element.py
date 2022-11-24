@@ -1163,11 +1163,9 @@ class ChromiumBase(BasePage):
 
         self._tab_obj.Page.frameNavigated = self._onFrameNavigated
         self._tab_obj.Page.loadEventFired = self._onLoadEventFired
-        # self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
 
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
-        # print('get doc')
         if not self._is_reading:
             self._is_reading = True
             self._wait_loading()
@@ -1201,19 +1199,13 @@ class ChromiumBase(BasePage):
 
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        # print('load complete')
         if self._first_run is False and self._is_loading:
             self._get_document()
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
         if not kwargs['frame'].get('parentId', None):
-            # print('nav')
             self._is_loading = True
-
-    # def _onDocumentUpdated(self, **kwargs):
-    #     # print('doc')
-    #     pass
 
     def _set_options(self) -> None:
         pass
@@ -1253,7 +1245,7 @@ class ChromiumBase(BasePage):
     @property
     def url(self) -> str:
         """返回当前页面url"""
-        json = loads(self._control_session.get(f'http://{self.address}/json').text)
+        json = self._control_session.get(f'http://{self.address}/json').json()
         return [i['url'] for i in json if i['id'] == self._tab_obj.id][0]  # change_mode要调用，不能用_driver
 
     @property
@@ -1270,7 +1262,7 @@ class ChromiumBase(BasePage):
     @property
     def tab_id(self) -> str:
         """返回当前标签页id"""
-        return self._wait_driver.id
+        return self.driver.id if self.driver.status == 'started' else ''
 
     @property
     def ready_state(self) -> str:
