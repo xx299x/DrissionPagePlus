@@ -10,7 +10,7 @@ from platform import system
 from re import split, search, sub
 from shutil import rmtree
 from subprocess import Popen
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import Union
 from zipfile import ZipFile
 from urllib.parse import urlparse, urljoin, urlunparse
@@ -578,8 +578,8 @@ def _run_browser(port, path: str, args) -> Popen:
             for tab in tabs:
                 if tab['type'] == 'page':
                     return debugger
-        except requests_connection_err:
-            pass
+        except Exception:
+            sleep(.2)
 
     raise ConnectionError('无法连接浏览器。')
 
