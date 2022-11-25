@@ -7,7 +7,7 @@ from typing import Union, Tuple, List
 
 from requests import Session
 
-from .chromium_element import Timeout, ChromiumBase
+from .chromium_base import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
 from .config import DriverOptions
 from .drission import connect_chrome

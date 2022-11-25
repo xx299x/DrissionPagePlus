@@ -6,8 +6,9 @@ from DownloadKit import DownloadKit
 from requests import Session, Response
 from tldextract import extract
 
+from .chromium_base import ChromiumBase, ChromiumFrame
 from .base import BasePage
-from .chromium_element import ChromiumElement, ChromiumFrame, ChromiumBase
+from .chromium_element import ChromiumElement  # , ChromiumBase
 from .chromium_page import ChromiumPage
 from .config import DriverOptions, SessionOptions, _cookies_to_tuple
 from .session_element import SessionElement
@@ -56,10 +57,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param timeout: 超时时间
         :return: 子元素对象
         """
-        if self._mode == 's':
-            return super().__call__(loc_or_str)
-        elif self._mode == 'd':
+        if self._mode == 'd':
             return super(SessionPage, self).__call__(loc_or_str, timeout)
+        elif self._mode == 's':
+            return super().__call__(loc_or_str)
 
     # -----------------共有属性和方法-------------------
     @property

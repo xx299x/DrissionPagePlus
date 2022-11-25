@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from .chromium_element import ChromiumBase
+from .chromium_base import ChromiumBase
 
 
 class ChromiumTab(ChromiumBase):
