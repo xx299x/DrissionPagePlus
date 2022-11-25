@@ -247,7 +247,7 @@ class ChromiumPage(ChromiumBase):
 
         self._driver.stop()
         self._init_page(tab_id)
-        if read_doc:
+        if read_doc and self.ready_state == 'complete':
             self._get_document()
 
     def close_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None, others: bool = False) -> None:
