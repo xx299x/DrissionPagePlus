@@ -144,7 +144,6 @@ class ChromiumBase(BasePage):
         """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
-        self._wait_loading()
         return self._tab_obj
 
     @property
@@ -407,20 +406,34 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._driver.Page.reload(ignoreCache=ignore_cache)
+        self._get_document()
 
     def forward(self, steps: int = 1) -> None:
         """在浏览历史中前进若干步    \n
         :param steps: 前进步数
         :return: None
         """
-        self.run_script(f'window.history.go({steps});', as_expr=True)
+        self._forward_or_back(steps)
 
     def back(self, steps: int = 1) -> None:
         """在浏览历史中后退若干步    \n
         :param steps: 后退步数
         :return: None
         """
-        self.run_script(f'window.history.go({-steps});', as_expr=True)
+        self._forward_or_back(-steps)
+
+    def _forward_or_back(self, steps: int) -> None:
+        """执行浏览器前进或后退
+        :param steps: 步数
+        :return: None
+        """
+        self.run_script(f'window.history.go({steps});', as_expr=True)
+        while True:
+            try:
+                self._get_document()
+                break
+            except Exception:
+                sleep(.1)
 
     def stop_loading(self) -> None:
         """页面停止加载"""
