@@ -34,6 +34,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
+        self._debug = False
 
         super(ChromiumBase, self).__init__(timeout)  # 调用Base的__init__()
         self._session = None

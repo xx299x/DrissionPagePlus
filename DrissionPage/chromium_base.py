@@ -32,6 +32,7 @@ class ChromiumBase(BasePage):
         super().__init__(timeout)
         self._is_loading = None
         self._root_id = None
+        self._debug = False
         self._connect_browser(address, tab_id)
 
     def _connect_browser(self,
@@ -77,6 +78,8 @@ class ChromiumBase(BasePage):
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
         if not self._is_reading:
+            if self._debug:
+                print('getDoc')
             self._is_reading = True
             self._wait_loading()
             root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
@@ -94,6 +97,8 @@ class ChromiumBase(BasePage):
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             state = self.ready_state
+            if self._debug:
+                print(f'{state=}')
             if state == 'complete':
                 return True
             elif self.page_load_strategy == 'eager' and state in ('interactive', 'complete'):
@@ -110,11 +115,15 @@ class ChromiumBase(BasePage):
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
         if self._first_run is False and self._is_loading:
+            if self._debug:
+                print('loadComplete')
             self._get_document()
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
         if not kwargs['frame'].get('parentId', None):
+            if self._debug:
+                print('nav')
             self._is_loading = True
 
     def _set_options(self) -> None:
@@ -437,6 +446,8 @@ class ChromiumBase(BasePage):
 
     def stop_loading(self) -> None:
         """页面停止加载"""
+        if self._debug:
+            print('stopLoading')
         self._driver.Page.stopLoading()
         self._get_document()
 
@@ -546,6 +557,10 @@ class ChromiumBase(BasePage):
 
             if _ < times:
                 sleep(interval)
+                while self.is_loading:
+                    sleep(.1)
+                if self._debug:
+                    print('重试')
                 if show_errmsg:
                     print(f'重试 {to_url}')
 
