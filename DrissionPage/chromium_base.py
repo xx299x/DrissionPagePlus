@@ -72,15 +72,16 @@ class ChromiumBase(BasePage):
         self._tab_obj.DOM.enable()
         self._tab_obj.Page.enable()
 
-        self._tab_obj.Page.frameNavigated = self._onFrameNavigated
+        self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
         self._tab_obj.Page.loadEventFired = self._onLoadEventFired
+        # self._tab_obj.Page.frameNavigated = self._onFrameNavigated
 
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
         if not self._is_reading:
+            self._is_reading = True
             if self._debug:
                 print('getDoc')
-            self._is_reading = True
             self._wait_loading()
             root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
             self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
@@ -116,15 +117,21 @@ class ChromiumBase(BasePage):
         """在页面刷新、变化后重新读取页面内容"""
         if self._first_run is False and self._is_loading:
             if self._debug:
-                print('loadComplete')
+                print('loadEventFired')
             self._get_document()
 
-    def _onFrameNavigated(self, **kwargs):
+    def _onDocumentUpdated(self, **kwargs):
         """页面跳转时触发"""
-        if not kwargs['frame'].get('parentId', None):
-            if self._debug:
-                print('nav')
-            self._is_loading = True
+        self._is_loading = True
+        if self._debug:
+            print('docUpdated')
+
+    # def _onFrameNavigated(self, **kwargs):
+    #     """页面跳转时触发"""
+    #     if not kwargs['frame'].get('parentId', None):
+    #         self._is_loading = True
+    #         if self._debug:
+    #             print('nav')
 
     def _set_options(self) -> None:
         pass
@@ -414,8 +421,8 @@ class ChromiumBase(BasePage):
         :param ignore_cache: 是否忽略缓存
         :return: None
         """
+        self._is_loading = True
         self._driver.Page.reload(ignoreCache=ignore_cache)
-        self._get_document()
 
     def forward(self, steps: int = 1) -> None:
         """在浏览历史中前进若干步    \n
@@ -432,17 +439,30 @@ class ChromiumBase(BasePage):
         self._forward_or_back(-steps)
 
     def _forward_or_back(self, steps: int) -> None:
-        """执行浏览器前进或后退
+        """执行浏览器前进或后退，会跳过url相同的历史记录
         :param steps: 步数
         :return: None
         """
-        self.run_script(f'window.history.go({steps});', as_expr=True)
-        while True:
-            try:
-                self._get_document()
-                break
-            except Exception:
-                sleep(.1)
+        if steps == 0:
+            return
+
+        history = self.run_cdp('Page.getNavigationHistory')
+        index = history['currentIndex']
+        history = history['entries']
+        direction = 1 if steps > 0 else -1
+        curr_url = history[index]['userTypedURL']
+        nid = None
+        for num in range(abs(steps)):
+            for i in history[index::direction]:
+                index += direction
+                if i['userTypedURL'] != curr_url:
+                    nid = i['id']
+                    curr_url = i['userTypedURL']
+                    break
+
+        if nid:
+            self._is_loading = True
+            self.run_cdp('Page.navigateToHistoryEntry', entryId=nid)
 
     def stop_loading(self) -> None:
         """页面停止加载"""
@@ -544,6 +564,7 @@ class ChromiumBase(BasePage):
         timeout = timeout if timeout is not None else self.timeouts.page_load
 
         for _ in range(times + 1):
+            err = None
             result = self._driver.Page.navigate(url=to_url)
             is_timeout = not self._wait_loading(timeout)
 
@@ -557,15 +578,17 @@ class ChromiumBase(BasePage):
 
             if _ < times:
                 sleep(interval)
-                while self.is_loading:
+                while self.ready_state != 'complete':
                     sleep(.1)
                 if self._debug:
                     print('重试')
                 if show_errmsg:
                     print(f'重试 {to_url}')
 
-        if err and show_errmsg:
-            raise err if err is not None else ConnectionError('连接异常。')
+        if err:
+            if show_errmsg:
+                raise err if err is not None else ConnectionError('连接异常。')
+            self._get_document()
 
         return False if err else True
 
