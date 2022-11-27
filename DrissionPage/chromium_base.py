@@ -72,9 +72,11 @@ class ChromiumBase(BasePage):
         self._tab_obj.DOM.enable()
         self._tab_obj.Page.enable()
 
+        self._tab_obj.Page.frameStoppedLoading = self._onFrameStoppedLoading
+        self._tab_obj.Page.frameStartedLoading = self._onFrameStartedLoading
         self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
         self._tab_obj.Page.loadEventFired = self._onLoadEventFired
-        # self._tab_obj.Page.frameNavigated = self._onFrameNavigated
+        self._tab_obj.Page.frameNavigated = self._onFrameNavigated
 
     def _get_document(self) -> None:
         """刷新cdp使用的document数据"""
@@ -113,25 +115,47 @@ class ChromiumBase(BasePage):
         self.stop_loading()
         return False
 
+    def _onFrameStartedLoading(self, **kwargs):
+        """页面跳转时触发"""
+        # print('FrameStartedLoading')
+        if kwargs['frameId'] == self.tab_id:
+            self._is_loading = True
+            if self._debug:
+                print('FrameStartedLoading')
+
+    def _onFrameStoppedLoading(self, **kwargs):
+        """页面跳转时触发"""
+        # print('FrameStoppedLoading')
+        if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
+            if self._debug:
+                print('FrameStoppedLoading')
+            self._get_document()
+
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        if self._first_run is False and self._is_loading:
-            if self._debug:
-                print('loadEventFired')
-            self._get_document()
+        if self._debug:
+            print('loadEventFired')
+        # if self._first_run is False and self._is_loading:
+        #     if self._debug:
+        #         print('loadEventFired')
+        #     self._get_document()
 
     def _onDocumentUpdated(self, **kwargs):
         """页面跳转时触发"""
-        self._is_loading = True
         if self._debug:
             print('docUpdated')
+        # self._is_loading = True
+        # if self._debug:
+        #     print('docUpdated')
 
-    # def _onFrameNavigated(self, **kwargs):
-    #     """页面跳转时触发"""
-    #     if not kwargs['frame'].get('parentId', None):
-    #         self._is_loading = True
-    #         if self._debug:
-    #             print('nav')
+    def _onFrameNavigated(self, **kwargs):
+        """页面跳转时触发"""
+        if self._debug:
+            print('nav')
+        # if not kwargs['frame'].get('parentId', None):
+        #     self._is_loading = True
+        #     if self._debug:
+        #         print('nav')
 
     def _set_options(self) -> None:
         pass
@@ -588,7 +612,6 @@ class ChromiumBase(BasePage):
         if err:
             if show_errmsg:
                 raise err if err is not None else ConnectionError('连接异常。')
-            self._get_document()
 
         return False if err else True
 
