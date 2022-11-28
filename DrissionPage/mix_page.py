@@ -53,7 +53,6 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._wait_object = None
         self._response = None
         self._scroll = None
-        self._download_kit = None
 
         if self._mode == 'd':
             try:

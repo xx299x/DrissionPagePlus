@@ -317,6 +317,16 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if set_session:
             super().set_cookies(cookies)
 
+    # def set_headers(self, headers: dict) -> None:
+    #     """设置固定发送的headers                        \n
+    #     :param headers: dict格式的headers数据
+    #     :return: None
+    #     """
+    #     if self._mode == 's':
+    #         self.session.headers = headers
+    #     elif self._mode == 'd':
+    #         super(SessionPage, self).set_headers(headers)
+
     def check_page(self, by_requests: bool = False) -> Union[bool, None]:
         """d模式时检查网页是否符合预期                \n
         默认由response状态检查，可重载实现针对性检查   \n
@@ -346,6 +356,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """关闭session"""
         if self._has_session:
             self.change_mode('d')
+            self._session.close()
             self._session = None
             self._response = None
             self._has_session = None
@@ -378,7 +389,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-             timeout: float = None, single: bool = True, relative:bool=False) \
+             timeout: float = None, single: bool = True, relative: bool = False) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]:
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
@@ -430,3 +441,16 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         else:
             raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions或False。')
+
+    def quit(self) -> None:
+        """关闭浏览器，关闭session"""
+        if self._has_session:
+            self._session.close()
+            self._session = None
+            self._response = None
+            self._has_session = None
+        if self._has_driver:
+            self._tab_obj.Browser.close()
+            self._tab_obj.stop()
+            self._tab_obj = None
+            self._has_driver = None

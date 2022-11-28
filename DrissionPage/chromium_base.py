@@ -335,6 +335,13 @@ class ChromiumBase(BasePage):
             result_cookies.append(c)
         self._wait_driver.Network.setCookies(cookies=result_cookies)
 
+    # def set_headers(self, headers: dict) -> None:
+    #     """设置固定发送的headers                        \n
+    #     :param headers: dict格式的headers数据
+    #     :return: None
+    #     """
+    #     self.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
+
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
             timeout: float = None) -> Union[ChromiumElement, 'ChromiumFrame', None]:
