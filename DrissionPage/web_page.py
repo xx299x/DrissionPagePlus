@@ -255,13 +255,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                     if url.startswith('http'):
                         self.get(url)
 
-    def cookies_to_session(self, copy_user_agent: bool = False) -> None:
+    def cookies_to_session(self, copy_user_agent: bool = True) -> None:
         """把driver对象的cookies复制到session对象    \n
         :param copy_user_agent: 是否复制ua信息
         :return: None
         """
         if copy_user_agent:
-            selenium_user_agent = self.run_script("navigator.userAgent;")
+            selenium_user_agent = self._tab_obj.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
         self.set_cookies(self._get_driver_cookies(as_dict=True), set_session=True)
