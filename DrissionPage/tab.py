@@ -104,7 +104,7 @@ class Tab(object):
 
                     continue
 
-            raise UserAbortException("User abort, call stop() when calling %s" % message['method'])
+            # raise UserAbortException("User abort, call stop() when calling %s" % message['method'])
         finally:
             self.method_results.pop(message['id'], None)
 
