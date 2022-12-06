@@ -116,16 +116,14 @@ class ChromiumBase(BasePage):
         return False
 
     def _onFrameStartedLoading(self, **kwargs):
-        """页面跳转时触发"""
-        # print('FrameStartedLoading')
+        """页面开始加载时触发"""
         if kwargs['frameId'] == self.tab_id:
             self._is_loading = True
             if self._debug:
                 print('FrameStartedLoading')
 
     def _onFrameStoppedLoading(self, **kwargs):
-        """页面跳转时触发"""
-        # print('FrameStoppedLoading')
+        """页面加载完成后触发"""
         if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('FrameStoppedLoading')
@@ -216,7 +214,7 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self) -> str:
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        return self._driver.Runtime.evaluate(expression='document.readyState;')['result']['value']
+        return self._tab_obj.Runtime.evaluate(expression='document.readyState;')['result']['value']
 
     @property
     def size(self) -> dict:
@@ -300,13 +298,31 @@ class ChromiumBase(BasePage):
         :param timeout: 连接超时时间
         :return: 目标url是否可用，返回None表示不确定
         """
-        retry, interval = self._before_connect(url, retry, interval)
-        self._url_available = self._d_connect(self._url,
-                                              times=retry,
-                                              interval=interval,
-                                              show_errmsg=show_errmsg,
-                                              timeout=timeout)
+        self._url_available = self._get(url, show_errmsg, retry, interval, timeout)
         return self._url_available
+
+    def _get(self,
+             url: str,
+             show_errmsg: bool = False,
+             retry: int = None,
+             interval: float = None,
+             timeout: float = None,
+             frame_id: str = None) -> Union[None, bool]:
+        """访问url                                            \n
+        :param url: 目标url
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param timeout: 连接超时时间
+        :return: 目标url是否可用，返回None表示不确定
+        """
+        retry, interval = self._before_connect(url, retry, interval)
+        return self._d_connect(self._url,
+                               times=retry,
+                               interval=interval,
+                               show_errmsg=show_errmsg,
+                               timeout=timeout,
+                               frame_id=frame_id)
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]:
         """获取cookies信息                                              \n
@@ -499,7 +515,7 @@ class ChromiumBase(BasePage):
         """页面停止加载"""
         if self._debug:
             print('stopLoading')
-        self._driver.Page.stopLoading()
+        self._tab_obj.Page.stopLoading()
         self._get_document()
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict:
@@ -582,7 +598,8 @@ class ChromiumBase(BasePage):
                    times: int = 0,
                    interval: float = 1,
                    show_errmsg: bool = False,
-                   timeout: float = None) -> Union[bool, None]:
+                   timeout: float = None,
+                   frame_id: str = None) -> Union[bool, None]:
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
@@ -596,7 +613,10 @@ class ChromiumBase(BasePage):
 
         for _ in range(times + 1):
             err = None
-            result = self._driver.Page.navigate(url=to_url)
+            if frame_id:
+                result = self._driver.Page.navigate(url=to_url, frameId=frame_id)
+            else:
+                result = self._driver.Page.navigate(url=to_url)
             is_timeout = not self._wait_loading(timeout)
 
             if is_timeout:
@@ -638,7 +658,8 @@ class ChromiumFrame(ChromiumBase):
         super().__init__(page.address, frame_id, page.timeout)
 
     def __repr__(self) -> str:
-        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        attrs = self.attrs
+        attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.tag} {" ".join(attrs)}>'
 
     @property
