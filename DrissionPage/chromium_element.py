@@ -32,7 +32,7 @@ class ChromiumElement(DrissionElement):
         self._scroll = None
         self._tag = None
         if not node_id and not obj_id:
-            raise TypeError('node_id或obj_id必须传入一个。')
+            raise RuntimeError('元素可能已失效。')
 
         if node_id:
             self._node_id = node_id

@@ -116,16 +116,14 @@ class ChromiumBase(BasePage):
         return False
 
     def _onFrameStartedLoading(self, **kwargs):
-        """页面跳转时触发"""
-        # print('FrameStartedLoading')
+        """页面开始加载时触发"""
         if kwargs['frameId'] == self.tab_id:
             self._is_loading = True
             if self._debug:
                 print('FrameStartedLoading')
 
     def _onFrameStoppedLoading(self, **kwargs):
-        """页面跳转时触发"""
-        # print('FrameStoppedLoading')
+        """页面加载完成后触发"""
         if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('FrameStoppedLoading')

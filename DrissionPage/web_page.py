@@ -383,6 +383,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     @property
     def download(self) -> DownloadKit:
+        """返回下载器对象"""
         if self.mode == 'd':
             self.cookies_to_session()
         return super().download

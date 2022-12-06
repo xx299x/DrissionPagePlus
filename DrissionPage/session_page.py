@@ -194,6 +194,7 @@ class SessionPage(BasePage):
 
     @property
     def download(self) -> DownloadKit:
+        """返回下载器对象"""
         if not hasattr(self, '_download_kit'):
             self._download_kit = DownloadKit(session=self)
 
