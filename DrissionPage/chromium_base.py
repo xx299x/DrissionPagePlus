@@ -83,7 +83,7 @@ class ChromiumBase(BasePage):
         if not self._is_reading:
             self._is_reading = True
             if self._debug:
-                print('getDoc')
+                print('获取document')
             self._wait_loading()
             root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
             self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
@@ -100,8 +100,8 @@ class ChromiumBase(BasePage):
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             state = self.ready_state
-            if self._debug:
-                print(f'{state=}')
+            # if self._debug:
+            #     print(f'{state=}')
             if state == 'complete':
                 return True
             elif self.page_load_strategy == 'eager' and state in ('interactive', 'complete'):
@@ -120,13 +120,13 @@ class ChromiumBase(BasePage):
         if kwargs['frameId'] == self.tab_id:
             self._is_loading = True
             if self._debug:
-                print('FrameStartedLoading')
+                print('页面开始加载 FrameStartedLoading')
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
         if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
             if self._debug:
-                print('FrameStoppedLoading')
+                print('页面停止加载 FrameStoppedLoading')
             self._get_document()
 
     def _onLoadEventFired(self, **kwargs):
@@ -141,19 +141,12 @@ class ChromiumBase(BasePage):
     def _onDocumentUpdated(self, **kwargs):
         """页面跳转时触发"""
         if self._debug:
-            print('docUpdated')
-        # self._is_loading = True
-        # if self._debug:
-        #     print('docUpdated')
+            print('documentUpdated')
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
-        if self._debug:
-            print('nav')
-        # if not kwargs['frame'].get('parentId', None):
-        #     self._is_loading = True
-        #     if self._debug:
-        #         print('nav')
+        if self._debug and not kwargs['frame'].get('parentId', None):
+            print('navigated')
 
     def _set_options(self) -> None:
         pass
@@ -514,9 +507,11 @@ class ChromiumBase(BasePage):
     def stop_loading(self) -> None:
         """页面停止加载"""
         if self._debug:
-            print('stopLoading')
+            print('阻止页面加载')
         self._tab_obj.Page.stopLoading()
-        self._get_document()
+        while self.ready_state != 'complete':
+            pass
+        # self._get_document()
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict:
         """执行Chrome DevTools Protocol语句     \n
@@ -617,7 +612,10 @@ class ChromiumBase(BasePage):
                 result = self._driver.Page.navigate(url=to_url, frameId=frame_id)
             else:
                 result = self._driver.Page.navigate(url=to_url)
+
             is_timeout = not self._wait_loading(timeout)
+            while self.is_loading:
+                pass
 
             if is_timeout:
                 err = TimeoutError('页面连接超时。')
@@ -639,8 +637,9 @@ class ChromiumBase(BasePage):
         if err:
             if show_errmsg:
                 raise err if err is not None else ConnectionError('连接异常。')
+            return False
 
-        return False if err else True
+        return True
 
 
 class ChromiumFrame(ChromiumBase):
