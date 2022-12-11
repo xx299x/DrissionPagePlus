@@ -96,13 +96,7 @@ class SessionPage(BasePage):
         """当返回内容是json格式时，返回对应的字典"""
         return self.response.json()
 
-    def get(self,
-            url: str,
-            show_errmsg: bool = False,
-            retry: int = None,
-            interval: float = None,
-            timeout: float = None,
-            **kwargs) -> bool:
+    def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url                                 \n
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
@@ -286,6 +280,9 @@ class SessionPage(BasePage):
 
         if not _check_headers(kwargs, self.session.headers, 'timeout'):
             kwargs['timeout'] = self.timeout
+
+        if 'allow_redirects' not in kwargs:
+            kwargs['allow_redirects'] = False
 
         r = err = None
         retry = retry if retry is not None else self.retry_times

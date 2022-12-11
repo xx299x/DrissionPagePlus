@@ -646,7 +646,7 @@ class DriverElement(DrissionElement):
                   '&& arguments[0].naturalHeight > 0')
             t1 = perf_counter()
             while not self.run_script(js) and perf_counter() - t1 < self.page.timeout:
-                pass
+                sleep(.1)
 
         if as_bytes:
             return self.inner_ele.screenshot_as_png

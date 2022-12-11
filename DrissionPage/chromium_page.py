@@ -278,7 +278,7 @@ class ChromiumPage(ChromiumBase):
         for tab in tabs:
             self._control_session.get(f'http://{self.address}/json/close/{tab}')
         while len(self.tabs) != end_len:
-            pass
+            sleep(.1)
 
         if self.main_tab in tabs:
             self.main_tab = self.tabs[0]

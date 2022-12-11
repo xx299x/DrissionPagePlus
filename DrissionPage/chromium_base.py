@@ -510,7 +510,7 @@ class ChromiumBase(BasePage):
             print('阻止页面加载')
         self._tab_obj.Page.stopLoading()
         while self.ready_state != 'complete':
-            pass
+            sleep(.1)
         # self._get_document()
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict:
@@ -615,7 +615,7 @@ class ChromiumBase(BasePage):
 
             is_timeout = not self._wait_loading(timeout)
             while self.is_loading:
-                pass
+                sleep(.1)
 
             if is_timeout:
                 err = TimeoutError('页面连接超时。')

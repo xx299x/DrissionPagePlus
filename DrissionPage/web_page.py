@@ -215,13 +215,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_eles(loc_or_str)
 
-    def change_mode(self, mode: str = None, go: bool = True) -> None:
+    def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None:
         """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
         切换时会把当前模式的cookies复制到目标模式                   \n
         切换后，如果go是True，调用相应的get函数使访问的页面同步        \n
         注意：s转d时，若浏览器当前网址域名和s模式不一样，必须会跳转      \n
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
+        :param copy_cookies: 是否复制cookies到目标模式
         """
         if mode is not None and mode.lower() == self._mode:
             return
@@ -237,7 +238,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_driver = True
 
             if self._session_url:
-                self.cookies_to_driver()
+                if copy_cookies:
+                    self.cookies_to_driver()
 
                 if go:
                     self.get(self._session_url)
@@ -248,7 +250,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._url = self._session_url
 
             if self._has_driver:
-                self.cookies_to_session()
+                if copy_cookies:
+                    self.cookies_to_session()
 
                 if go:
                     url = super(SessionPage, self).url
