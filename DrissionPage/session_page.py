@@ -1,9 +1,4 @@
 # -*- coding:utf-8 -*-
-"""
-@Author  :   g1879
-@Contact :   g1879@qq.com
-@File    :   session_page.py
-"""
 from re import search
 from time import sleep
 from typing import Union, List, Tuple

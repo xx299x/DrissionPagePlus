@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*-
 from time import sleep
-from typing import Union, Tuple
 
 from .common import _location_in_viewport
-from .base import DrissionElement
 from .keys import _modifierBit, _keyDescriptionForString
 
 
@@ -12,7 +10,7 @@ class ActionChains:
 
     def __init__(self, page):
         """初始化                          \n
-        :param page: ChromePage对象 
+        :param page: ChromiumPage对象
         """
         self.page = page
         self._dr = page.driver
@@ -20,7 +18,7 @@ class ActionChains:
         self.curr_x = 0  # 视口坐标
         self.curr_y = 0
 
-    def move_to(self, ele_or_loc: Union[DrissionElement, Tuple[int, int]],
+    def move_to(self, ele_or_loc,
                 offset_x: int = 0, offset_y: int = 0) -> 'ActionChains':
         """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量          \n
         当带偏移量时，偏移量相对于元素左上角坐标
@@ -32,7 +30,7 @@ class ActionChains:
         if isinstance(ele_or_loc, (tuple, list)):
             lx = ele_or_loc[0] + offset_x
             ly = ele_or_loc[1] + offset_y
-        elif isinstance(ele_or_loc, DrissionElement):
+        elif 'ChromiumElement' in str(type(ele_or_loc)):
             ele_loc = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
             lx = ele_loc['x'] + offset_x
             ly = ele_loc['y'] + offset_y

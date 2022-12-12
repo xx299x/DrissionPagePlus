@@ -1,9 +1,4 @@
 # -*- coding:utf-8 -*-
-"""
-@Author  :   g1879
-@Contact :   g1879@qq.com
-@File    :   session_element.py
-"""
 from typing import Union, List, Tuple
 
 from lxml.html import HtmlElement
@@ -78,47 +73,37 @@ class SessionElement(DrissionElement):
 
     def befores(self,
                 filter_loc: Union[tuple, str] = ...,
-                timeout: float = ...) -> List[Union['SessionElement', str]]:
-        ...
+                timeout: float = ...) -> List[Union['SessionElement', str]]: ...
 
     def afters(self,
                filter_loc: Union[tuple, str] = ...,
-               timeout: float = ...) -> List[Union['SessionElement', str]]:
-        ...
+               timeout: float = ...) -> List[Union['SessionElement', str]]: ...
 
-    def attr(self, attr: str) -> Union[str, None]:
-        ...
+    def attr(self, attr: str) -> Union[str, None]: ...
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = ...) -> Union['SessionElement', str, None]:
-        ...
+            timeout: float = ...) -> Union['SessionElement', str, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...) -> List[Union['SessionElement', str]]:
-        ...
+             timeout: float = ...) -> List[Union['SessionElement', str]]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = ...) -> Union['SessionElement', str, None]:
-        ...
+              loc_or_str: Union[Tuple[str, str], str] = ...) -> Union['SessionElement', str, None]: ...
 
     def s_eles(self,
-               loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union['SessionElement', str]]:
-        ...
+               loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union['SessionElement', str]]: ...
 
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = ...,
              single: bool = ...,
-             relative: bool = ...) -> Union['SessionElement', str, None, List[Union['SessionElement', str]]]:
-        ...
+             relative: bool = ...) -> Union['SessionElement', str, None, List[Union['SessionElement', str]]]: ...
 
-    def _get_ele_path(self, mode: str) -> str:
-        ...
+    def _get_ele_path(self, mode: str) -> str: ...
 
 
 def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
                      loc: Union[str, Tuple[str, str]] = ...,
-                     single: bool = ...) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]:
-    ...
+                     single: bool = ...) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...

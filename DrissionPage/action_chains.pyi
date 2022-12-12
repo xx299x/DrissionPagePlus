@@ -1,18 +1,22 @@
 # -*- coding:utf-8 -*-
-from time import sleep
 from typing import Union, Tuple
 
-from .common import _location_in_viewport
-from .base import DrissionElement
-from .keys import _modifierBit, _keyDescriptionForString
+from .tab import Tab
+from .chromium_element import ChromiumElement
+from .chromium_page import ChromiumPage
 
 
 class ActionChains:
     """用于实现动作链的类"""
 
-    def __init__(self, page):...
+    def __init__(self, page):
+        self.page: ChromiumPage = ...
+        self._dr: Tab = ...
+        self.curr_x: int = ...
+        self.curr_y: int = ...
+        self.modifier: int = ...
 
-    def move_to(self, ele_or_loc: Union[DrissionElement, Tuple[int, int]],
+    def move_to(self, ele_or_loc: Union[ChromiumElement, Tuple[int, int]],
                 offset_x: int = ..., offset_y: int = ...) -> 'ActionChains': ...
 
     def move(self, offset_x: int = ..., offset_y: int = ...) -> 'ActionChains': ...

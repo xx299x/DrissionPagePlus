@@ -1,16 +1,14 @@
 # -*- coding:utf-8 -*-
-from time import sleep
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Any
 
 from DownloadKit import DownloadKit
 from requests import Session, Response
-from tldextract import extract
 
-from .chromium_base import ChromiumBase, ChromiumFrame
 from .base import BasePage
-from .chromium_element import ChromiumElement  # , ChromiumBase
+from .chromium_base import ChromiumFrame
+from .chromium_element import ChromiumElement
 from .chromium_page import ChromiumPage
-from .config import DriverOptions, SessionOptions, _cookies_to_tuple
+from .config import DriverOptions, SessionOptions
 from .session_element import SessionElement
 from .session_page import SessionPage
 from .tab import Tab
@@ -24,7 +22,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                  timeout: float = ...,
                  tab_id: str = ...,
                  driver_or_options: Union[Tab, DriverOptions, bool] = ...,
-                 session_or_options: Union[Session, SessionOptions, bool] = ...) -> None: ...
+                 session_or_options: Union[Session, SessionOptions, bool] = ...) -> None:
+        self._mode: str = ...
+        self._has_driver: bool = ...
+        self._has_session: bool = ...
+        self._session_options: dict = ...
+        self._driver_options: DriverOptions = ...
+        self._setting_tab_id: str = ...
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -61,19 +65,31 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def _driver(self) -> Tab: ...
 
-    @_driver.setter
-    def _driver(self, tab): ...
+    # @_driver.setter
+    # def _driver(self, tab): ...
 
     @property
     def _session_url(self) -> str: ...
 
     def get(self,
             url: str,
-            show_errmsg: bool = ...,
-            retry: int = ...,
-            interval: float = ...,
-            timeout: float = ...,
-            **kwargs) -> Union[bool, None]: ...
+            show_errmsg: bool | None = ...,
+            retry: int | None = ...,
+            interval: float | None = ...,
+            timeout: float | None = ...,
+            params: dict | None = ...,
+            data: Union[dict, str, None] = ...,
+            json: Union[dict, str, None] = ...,
+            headers: dict | None = ...,
+            cookies: Any | None = ...,
+            files: Any | None = ...,
+            auth: Any | None = ...,
+            allow_redirects: bool = ...,
+            proxies: dict | None = ...,
+            hooks: Any | None = ...,
+            stream: Any | None = ...,
+            verify: Any | None = ...,
+            cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -109,11 +125,23 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
-             data: Union[dict, str] = ...,
-             show_errmsg: bool = ...,
-             retry: int = ...,
-             interval: float = ...,
-             **kwargs) -> bool: ...
+             show_errmsg: bool | None = ...,
+             retry: int | None = ...,
+             interval: float | None = ...,
+             timeout: float | None = ...,
+             params: dict | None = ...,
+             data: Union[dict, str, None] = ...,
+             json: Union[dict, str, None] = ...,
+             headers: dict | None = ...,
+             cookies: Any | None = ...,
+             files: Any | None = ...,
+             auth: Any | None = ...,
+             allow_redirects: bool = ...,
+             proxies: dict | None = ...,
+             hooks: Any | None = ...,
+             stream: Any | None = ...,
+             verify: Any | None = ...,
+             cert: Any | None = ...) -> bool: ...
 
     @property
     def download(self) -> DownloadKit: ...

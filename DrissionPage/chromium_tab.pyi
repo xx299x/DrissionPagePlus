@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*-
-from typing import Union
 
-from .chromium_page import ChromiumPage
-from .tab import Tab
 from .chromium_base import ChromiumBase
+from .chromium_page import ChromiumPage
 
 
 class ChromiumTab(ChromiumBase):

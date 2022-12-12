@@ -10,7 +10,7 @@ from requests import Session
 from .chromium_base import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
 from .config import DriverOptions
-from .drission import connect_chrome
+from .common import connect_chrome
 from .tab import Tab
 
 

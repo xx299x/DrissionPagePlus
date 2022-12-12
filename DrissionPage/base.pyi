@@ -1,11 +1,11 @@
 # -*- coding:utf-8 -*-
-"""
-@Author  :   g1879
-@Contact :   g1879@qq.com
-@File    :   base.py
-"""
 from abc import abstractmethod
 from typing import Union, Tuple, List
+
+from selenium.webdriver.remote.webelement import WebElement
+
+from .driver_page import DriverPage
+from .mix_page import MixPage
 
 
 class BaseParser(object):
@@ -32,7 +32,7 @@ class BaseParser(object):
 class BaseElement(BaseParser):
     """各元素类的基类"""
 
-    def __init__(self):
+    def __init__(self, page: BasePage):
         self.page: BasePage = ...
 
     # ----------------以下属性或方法由后代实现----------------
@@ -67,7 +67,8 @@ class BaseElement(BaseParser):
 class DrissionElement(BaseElement):
     """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
 
-    def __init__(self):
+    def __init__(self,
+                 page: BasePage = ...):
         self.page: BasePage = ...
 
     @property

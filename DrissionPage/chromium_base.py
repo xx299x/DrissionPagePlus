@@ -8,12 +8,11 @@ from urllib.parse import urlparse
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
-from .chromium_element import ChromiumElementWaiter, ChromeScroll
-from .common import get_loc
-from .session_element import SessionElement, make_session_ele
-from .chromium_element import ChromiumElement, _run_script
-from .config import DriverOptions, _cookies_to_tuple
 from .base import BasePage
+from .chromium_element import ChromiumElementWaiter, ChromeScroll, ChromiumElement, _run_script
+from .common import get_loc
+from .config import DriverOptions, _cookies_to_tuple
+from .session_element import SessionElement, make_session_ele
 from .tab import Tab
 
 

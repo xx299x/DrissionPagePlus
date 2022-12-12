@@ -11,7 +11,6 @@ from typing import Union, List, Any, Tuple
 
 from selenium.common.exceptions import TimeoutException, JavascriptException, InvalidElementStateException, \
     NoSuchElementException
-# from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
@@ -979,9 +978,9 @@ class Select(object):
         if ele.tag != 'select':
             raise TypeError(f"select方法只能在<select>元素使用，现在是：{ele.tag}。")
 
-        from selenium.webdriver.support.select import Select
+        from selenium.webdriver.support.select import Select as SeleniumSelect
         self.inner_ele = ele
-        self.select_ele = Select(ele.inner_ele)
+        self.select_ele = SeleniumSelect(ele.inner_ele)
 
     def __call__(self, text_or_index: Union[str, int, list, tuple], timeout=None) -> bool:
         """选定下拉列表中子元素                                                             \n
