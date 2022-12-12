@@ -36,7 +36,7 @@ class SessionPage(BasePage):
         elif isinstance(Session_or_Options, Session):
             self._session = Session_or_Options
 
-    def _set_session(self, data: dict) -> None:
+    def _set_session(self, data) -> None:
         """根据传入字典对session进行设置    \n
         :param data: session配置字典
         :return: None
