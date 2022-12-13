@@ -3,24 +3,20 @@ from pathlib import Path
 from platform import system
 from re import search
 from time import perf_counter, sleep
-from typing import Union, Tuple, List
 
 from requests import Session
 
 from .chromium_base import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
-from .config import DriverOptions
 from .common import connect_chrome
+from .config import DriverOptions
 from .tab import Tab
 
 
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
 
-    def __init__(self,
-                 addr_tab_opts: Union[str, Tab, DriverOptions] = None,
-                 tab_id: str = None,
-                 timeout: float = None):
+    def __init__(self, addr_tab_opts=None, tab_id=None, timeout=None):
         """初始化                                                      \n
         :param addr_tab_opts: 浏览器地址:端口、Tab对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
@@ -28,9 +24,7 @@ class ChromiumPage(ChromiumBase):
         """
         super().__init__(addr_tab_opts, tab_id, timeout)
 
-    def _connect_browser(self,
-                         addr_tab_opts: Union[str, Tab, DriverOptions] = None,
-                         tab_id: str = None) -> None:
+    def _connect_browser(self, addr_tab_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行                                    \n
         :param addr_tab_opts: 浏览器地址、Tab对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
@@ -79,7 +73,7 @@ class ChromiumPage(ChromiumBase):
         self._first_run = False
         self.main_tab: str = self.tab_id
 
-    def _init_page(self, tab_id: str = None) -> None:
+    def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
         :return: None
@@ -89,26 +83,26 @@ class ChromiumPage(ChromiumBase):
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
 
-    def _set_options(self) -> None:
+    def _set_options(self):
         self.set_timeouts(page_load=self.options.timeouts['pageLoad'] / 1000,
                           script=self.options.timeouts['script'] / 1000,
                           implicit=self.options.timeouts['implicit'] / 1000 if self.timeout is None else self.timeout)
         self._page_load_strategy = self.options.page_load_strategy
 
     @property
-    def tabs_count(self) -> int:
+    def tabs_count(self):
         """返回标签页数量"""
         return len(self.tabs)
 
     @property
-    def tabs(self) -> list:
+    def tabs(self):
         """返回所有标签页id"""
         self._driver
         json = self._control_session.get(f'http://{self.address}/json').json()
         return [i['id'] for i in json if i['type'] == 'page']
 
     @property
-    def process_id(self) -> Union[None, int]:
+    def process_id(self):
         """返回浏览器进程id"""
         try:
             return self._driver.SystemInfo.getProcessInfo()['id']
@@ -116,13 +110,13 @@ class ChromiumPage(ChromiumBase):
             return None
 
     @property
-    def set_window(self) -> 'WindowSizeSetter':
+    def set_window(self):
         """返回用于设置窗口大小的对象"""
         if not hasattr(self, '_window_setter'):
             self._window_setter = WindowSizeSetter(self)
         return self._window_setter
 
-    def get_tab(self, tab_id: str = None) -> ChromiumTab:
+    def get_tab(self, tab_id=None):
         """获取一个标签页对象                                    \n
         :param tab_id: 要获取的标签页id，为None时获取当前tab
         :return: 标签页对象
@@ -130,11 +124,7 @@ class ChromiumPage(ChromiumBase):
         tab_id = tab_id or self.tab_id
         return ChromiumTab(self, tab_id)
 
-    def get_screenshot(self, path: [str, Path] = None,
-                       as_bytes: [bool, str] = None,
-                       full_page: bool = False,
-                       left_top: Tuple[int, int] = None,
-                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]:
+    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持             \n
         :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
         :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
@@ -186,11 +176,11 @@ class ChromiumPage(ChromiumBase):
             f.write(png)
         return str(path.absolute())
 
-    def to_front(self) -> None:
+    def to_front(self):
         """激活当前标签页使其处于最前面"""
         self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
-    def new_tab(self, url: str = None, switch_to: bool = True) -> None:
+    def new_tab(self, url=None, switch_to=True):
         """新建并定位到一个标签页,该标签页在最后面         \n
         :param url: 新标签页跳转到的网址
         :param switch_to: 新建标签页后是否把焦点移过去
@@ -214,11 +204,11 @@ class ChromiumPage(ChromiumBase):
         else:
             self._control_session.get(f'http://{self.address}/json/new')
 
-    def to_main_tab(self) -> None:
+    def to_main_tab(self):
         """跳转到主标签页"""
         self.to_tab(self.main_tab)
 
-    def to_tab(self, tab_id: str = None, activate: bool = True) -> None:
+    def to_tab(self, tab_id=None, activate=True):
         """跳转到标签页                                           \n
         :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
@@ -226,7 +216,7 @@ class ChromiumPage(ChromiumBase):
         """
         self._to_tab(tab_id, activate)
 
-    def _to_tab(self, tab_id: str = None, activate: bool = True, read_doc: bool = True) -> None:
+    def _to_tab(self, tab_id=None, activate=True, read_doc=True):
         """跳转到标签页                                           \n
         :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
@@ -250,7 +240,7 @@ class ChromiumPage(ChromiumBase):
         if read_doc and self.ready_state == 'complete':
             self._get_document()
 
-    def close_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None, others: bool = False) -> None:
+    def close_tabs(self, tab_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个                                                        \n
         :param tab_ids: 要关闭的标签页id，可传入id组成的列表或元组，为None时关闭当前页
         :param others: 是否关闭指定标签页之外的
@@ -285,14 +275,14 @@ class ChromiumPage(ChromiumBase):
 
         self.to_tab()
 
-    def close_other_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None) -> None:
+    def close_other_tabs(self, tab_ids=None):
         """关闭传入的标签页以外标签页，默认保留当前页。可传入多个                                              \n
         :param tab_ids: 要保留的标签页id，可传入id组成的列表或元组，为None时保存当前页
         :return: None
         """
         self.close_tabs(tab_ids, True)
 
-    def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, None]:
+    def handle_alert(self, accept=True, send=None, timeout=None):
         """处理提示框，可以自动等待提示框出现                                                       \n
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
@@ -313,15 +303,15 @@ class ChromiumPage(ChromiumBase):
             self._driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
-    def hide_browser(self) -> None:
+    def hide_browser(self):
         """隐藏浏览器窗口，只在Windows系统可用"""
-        _show_or_hide_browser(self, hide=True)
+        show_or_hide_browser(self, hide=True)
 
-    def show_browser(self) -> None:
+    def show_browser(self):
         """显示浏览器窗口，只在Windows系统可用"""
-        _show_or_hide_browser(self, hide=False)
+        show_or_hide_browser(self, hide=False)
 
-    def quit(self) -> None:
+    def quit(self):
         """关闭浏览器"""
         self._tab_obj.Browser.close()
         self._tab_obj.stop()
@@ -360,27 +350,27 @@ class Alert(object):
 class WindowSizeSetter(object):
     """用于设置窗口大小的类"""
 
-    def __init__(self, page: ChromiumPage):
+    def __init__(self, page):
         self.driver = page._driver
         self.window_id = self._get_info()['windowId']
 
-    def maximized(self) -> None:
+    def maximized(self):
         """窗口最大化"""
         self._perform({'windowState': 'maximized'})
 
-    def minimized(self) -> None:
+    def minimized(self):
         """窗口最小化"""
         self._perform({'windowState': 'minimized'})
 
-    def fullscreen(self) -> None:
+    def fullscreen(self):
         """设置窗口为全屏"""
         self._perform({'windowState': 'fullscreen'})
 
-    def normal(self) -> None:
+    def normal(self):
         """设置窗口为常规模式"""
         self._perform({'windowState': 'normal'})
 
-    def new_size(self, width: int = None, height: int = None) -> None:
+    def new_size(self, width=None, height=None):
         """设置窗口大小             \n
         :param width: 窗口宽度
         :param height: 窗口高度
@@ -392,7 +382,7 @@ class WindowSizeSetter(object):
             height = height or info['height']
             self._perform({'width': width, 'height': height})
 
-    def to_location(self, x: int = None, y: int = None) -> None:
+    def to_location(self, x=None, y=None):
         """设置窗口在屏幕中的位置，相对左上角坐标  \n
         :param x: 距离顶部距离
         :param y: 距离左边距离
@@ -405,11 +395,11 @@ class WindowSizeSetter(object):
             y = y or info['top']
             self._perform({'left': x, 'top': y})
 
-    def _get_info(self) -> dict:
+    def _get_info(self):
         """获取窗口位置及大小信息"""
         return self.driver.Browser.getWindowBounds()
 
-    def _perform(self, bounds: dict) -> None:
+    def _perform(self, bounds):
         """执行改变窗口大小操作
         :param bounds: 控制数据
         :return: None
@@ -417,7 +407,7 @@ class WindowSizeSetter(object):
         self.driver.Browser.setWindowBounds(windowId=self.window_id, bounds=bounds)
 
 
-def _show_or_hide_browser(page: ChromiumPage, hide: bool = True) -> None:
+def show_or_hide_browser(page, hide=True):
     """执行显示或隐藏浏览器窗口
     :param page: ChromePage对象
     :param hide: 是否隐藏
@@ -435,20 +425,20 @@ def _show_or_hide_browser(page: ChromiumPage, hide: bool = True) -> None:
     except ImportError:
         raise ImportError('请先安装：pip install pypiwin32')
 
-    pid = page.process_id or _get_browser_progress_id(page.process, page.address)
+    pid = page.process_id or get_browser_progress_id(page.process, page.address)
     if not pid:
         return None
-    hds = _get_chrome_hwnds_from_pid(pid, page.title)
+    hds = get_chrome_hwnds_from_pid(pid, page.title)
     sw = SW_HIDE if hide else SW_SHOW
     for hd in hds:
         ShowWindow(hd, sw)
 
 
-def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
+def get_browser_progress_id(progress, address):
     """获取浏览器进程id
     :param progress: 已知的进程对象，没有时传入None
     :param address: 浏览器管理地址，含端口
-    :return: 进程id
+    :return: 进程id或None
     """
     if progress:
         return progress.pid
@@ -467,7 +457,7 @@ def _get_browser_progress_id(progress, address: str) -> Union[str, None]:
     return txt.split(' ')[-1]
 
 
-def _get_chrome_hwnds_from_pid(pid, title) -> list:
+def get_chrome_hwnds_from_pid(pid, title):
     """通过PID查询句柄ID
     :param pid: 进程id
     :param title: 窗口标题

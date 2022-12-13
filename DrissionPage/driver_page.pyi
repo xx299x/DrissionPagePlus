@@ -1,20 +1,15 @@
 # -*- coding:utf-8 -*-
-from glob import glob
-from os import sep
-from pathlib import Path
-from time import sleep, perf_counter
 from typing import Union, List, Any, Tuple
 
-from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import BasePage
-from .common import get_usable_path
-from .driver_element import DriverElement, make_driver_ele, Scroll, ElementWaiter
-from .session_element import make_session_ele, SessionElement
+from .driver_element import DriverElement, Scroll, ElementWaiter
+from .mix_page import MixPage
+from .session_element import SessionElement
 
 
 class DriverPage(BasePage):
@@ -171,7 +166,7 @@ class ToFrame(object):
     def __init__(self, page: DriverPage):
         self.page: DriverPage = ...
 
-    def __call__(self, condition: Union[int, str, tuple, WebElement, DriverElement] = ...): ...
+    def __call__(self, condition: Union[int, str, tuple, WebElement, DriverElement] = ...)->Union[DriverPage, MixPage]: ...
 
     def main(self) -> DriverPage: ...
 
@@ -188,4 +183,4 @@ class ToFrame(object):
     def by_ele(self, ele: Union[DriverElement, WebElement]) -> DriverPage: ...
 
 
-def _get_handles(handles: list, num_or_handles: Union[int, str, list, tuple]) -> set: ...
+def get_handles(handles: list, num_or_handles: Union[int, str, list, tuple]) -> set: ...

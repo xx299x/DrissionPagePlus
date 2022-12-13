@@ -21,7 +21,7 @@ class BaseParser(object):
     def ele(self, loc_or_ele, timeout=None):
         return self._ele(loc_or_ele, timeout, True)
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None):
+    def eles(self, loc_or_str, timeout=None):
         return self._ele(loc_or_str, timeout, False)
 
     # ----------------以下属性或方法待后代实现----------------
@@ -56,19 +56,19 @@ class BaseElement(BaseParser):
         return True
 
     @abstractmethod
-    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
+    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
         pass
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1):
+    def parent(self, level_or_loc = 1):
         pass
 
-    def prev(self, index: int = 1) -> None:
+    def prev(self, index = 1) -> None:
         return None  # ShadowRootElement直接继承
 
     def prevs(self) -> None:
         return None  # ShadowRootElement直接继承
 
-    def next(self, index: int = 1):
+    def next(self, index = 1):
         pass
 
     def nexts(self):
@@ -290,7 +290,7 @@ class DrissionElement(BaseElement):
 class BasePage(BaseParser):
     """页面类的基类"""
 
-    def __init__(self, timeout: float = 10):
+    def __init__(self, timeout = 10):
         """初始化函数"""
         self._url = None
         self.timeout = timeout
@@ -299,32 +299,32 @@ class BasePage(BaseParser):
         self._url_available = None
 
     @property
-    def title(self) -> Union[str, None]:
+    def title(self):
         """返回网页title"""
         ele = self.ele('xpath://title')
         return ele.text if ele else None
 
     @property
-    def timeout(self) -> float:
+    def timeout(self):
         """返回查找元素时等待的秒数"""
         return self._timeout
 
     @timeout.setter
-    def timeout(self, second: float) -> None:
+    def timeout(self, second):
         """设置查找元素时等待的秒数"""
         self._timeout = second
 
     @property
-    def cookies(self) -> dict:
+    def cookies(self):
         """返回cookies"""
         return self.get_cookies(True)
 
     @property
-    def url_available(self) -> bool:
+    def url_available(self):
         """返回当前访问的url有效性"""
         return self._url_available
 
-    def _before_connect(self, url: str, retry: int, interval: float) -> tuple:
+    def _before_connect(self, url, retry, interval):
         """连接前的准备                    \n
         :param url: 要访问的url
         :param retry: 重试次数
@@ -346,13 +346,9 @@ class BasePage(BaseParser):
         return
 
     @abstractmethod
-    def get_cookies(self, as_dict: bool = False):
+    def get_cookies(self, as_dict= False):
         return {}
 
     @abstractmethod
-    def get(self,
-            url: str,
-            show_errmsg: bool = False,
-            retry: int = None,
-            interval: float = None):
+    def get(self,            url,            show_errmsg= False,            retry = None,            interval= None):
         pass

@@ -1,17 +1,13 @@
 # -*- coding:utf-8 -*-
 from time import sleep
-from typing import Union, Tuple, List
 
-from DownloadKit import DownloadKit
-from requests import Session, Response
+from requests import Session
 from tldextract import extract
 
-from .chromium_base import ChromiumBase, ChromiumFrame
 from .base import BasePage
-from .chromium_element import ChromiumElement  # , ChromiumBase
+from .chromium_base import ChromiumBase
 from .chromium_page import ChromiumPage
-from .config import DriverOptions, SessionOptions, _cookies_to_tuple
-from .session_element import SessionElement
+from .config import DriverOptions, SessionOptions, cookies_to_tuple
 from .session_page import SessionPage
 from .tab import Tab
 
@@ -19,12 +15,7 @@ from .tab import Tab
 class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
-    def __init__(self,
-                 mode: str = 'd',
-                 timeout: float = 10,
-                 tab_id: str = None,
-                 driver_or_options: Union[Tab, DriverOptions, bool] = None,
-                 session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
+    def __init__(self, mode='d', timeout=10, tab_id=None, driver_or_options=None, session_or_options=None):
         """初始化函数                                                                        \n
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
@@ -49,9 +40,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 'd':
             self._driver
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, None]:
+    def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
@@ -65,7 +54,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     # -----------------共有属性和方法-------------------
     @property
-    def url(self) -> Union[str, None]:
+    def url(self):
         """返回当前url"""
         if self._mode == 'd':
             return super(SessionPage, self).url if self._tab_obj else None
@@ -73,7 +62,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self._session_url
 
     @property
-    def html(self) -> str:
+    def html(self):
         """返回页面html文本"""
         if self._mode == 's':
             return super().html
@@ -81,7 +70,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).html if self._has_driver else ''
 
     @property
-    def json(self) -> dict:
+    def json(self):
         """当返回内容是json格式时，返回对应的字典"""
         if self._mode == 's':
             return super().json
@@ -89,13 +78,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).json
 
     @property
-    def response(self) -> Response:
+    def response(self):
         """返回 s 模式获取到的 Response 对象，切换到 s 模式"""
         self.change_mode('s')
         return self._response
 
     @property
-    def mode(self) -> str:
+    def mode(self):
         """返回当前模式，'s'或'd' """
         return self._mode
 
@@ -107,7 +96,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).get_cookies()
 
     @property
-    def session(self) -> Session:
+    def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
             self._set_session(self._session_options)
@@ -118,12 +107,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return self._session
 
     @property
-    def driver(self) -> Tab:
+    def driver(self):
         """返回纯粹的Tab对象"""
         return self._tab_obj
 
     @property
-    def _wait_driver(self) -> Tab:
+    def _wait_driver(self):
         """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
@@ -131,7 +120,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return self._driver
 
     @property
-    def _driver(self) -> Tab:
+    def _driver(self):
         """返回纯粹的Tab对象，调用时切换到d模式，并连接浏览器"""
         self.change_mode('d')
         if self._tab_obj is None:
@@ -143,17 +132,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._tab_obj = tab
 
     @property
-    def _session_url(self) -> str:
+    def _session_url(self):
         """返回 session 保存的url"""
         return self._response.url if self._response else None
 
-    def get(self,
-            url: str,
-            show_errmsg: bool = False,
-            retry: int = None,
-            interval: float = None,
-            timeout: float = None,
-            **kwargs) -> Union[bool, None]:
+    def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url                                         \n
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
@@ -168,9 +151,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 's':
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
 
-    def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None]:
+    def ele(self, loc_or_ele, timeout=None):
         """返回第一个符合条件的元素、属性或节点文本                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -181,9 +162,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
 
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, ChromiumFrame, str]]:
+    def eles(self, loc_or_str, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本                                \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
@@ -194,8 +173,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement] = None) \
-            -> Union[SessionElement, str, None]:
+    def s_ele(self, loc_or_ele=None):
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -205,7 +183,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_ele(loc_or_ele)
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
+    def s_eles(self, loc_or_str=None):
         """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
@@ -215,7 +193,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_eles(loc_or_str)
 
-    def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None:
+    def change_mode(self, mode=None, go=True, copy_cookies=True):
         """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
         切换时会把当前模式的cookies复制到目标模式                   \n
         切换后，如果go是True，调用相应的get函数使访问的页面同步        \n
@@ -258,7 +236,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                     if url.startswith('http'):
                         self.get(url)
 
-    def cookies_to_session(self, copy_user_agent: bool = True) -> None:
+    def cookies_to_session(self, copy_user_agent=True):
         """把driver对象的cookies复制到session对象    \n
         :param copy_user_agent: 是否复制ua信息
         :return: None
@@ -269,7 +247,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         self.set_cookies(self._get_driver_cookies(as_dict=True), set_session=True)
 
-    def cookies_to_driver(self) -> None:
+    def cookies_to_driver(self):
         """把session对象的cookies复制到driver对象"""
         ex_url = extract(self._session_url)
         domain = f'{ex_url.domain}.{ex_url.suffix}'
@@ -282,7 +260,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 cookies.append(cookie)
         self.set_cookies(cookies, set_driver=True)
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]:
+    def get_cookies(self, as_dict=False, all_domains=False):
         """返回cookies                               \n
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
@@ -293,18 +271,17 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return self._get_driver_cookies(as_dict)
 
-    def _get_driver_cookies(self, as_dict: bool = False):
+    def _get_driver_cookies(self, as_dict=False):
         cookies = self._tab_obj.Network.getCookies()['cookies']
-        # cookies = super(WebPage, self)._wait_driver.Network.getCookies()['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
             return cookies
 
-    def set_cookies(self, cookies, set_session: bool = False, set_driver: bool = False):
+    def set_cookies(self, cookies, set_session=False, set_driver=False):
         # 添加cookie到driver
         if set_driver:
-            cookies = _cookies_to_tuple(cookies)
+            cookies = cookies_to_tuple(cookies)
             result_cookies = []
             for cookie in cookies:
                 if not cookie.get('domain', None):
@@ -330,7 +307,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     #     elif self._mode == 'd':
     #         super(SessionPage, self).set_headers(headers)
 
-    def check_page(self, by_requests: bool = False) -> Union[bool, None]:
+    def check_page(self, by_requests=False):
         """d模式时检查网页是否符合预期                \n
         默认由response状态检查，可重载实现针对性检查   \n
         :param by_requests: 是否用内置response检查
@@ -345,7 +322,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             r = self._make_response(self.url, retry=0)[0]
             return r.ok if r else False
 
-    def close_driver(self) -> None:
+    def close_driver(self):
         """关闭driver及浏览器"""
         if self._has_driver:
             self.change_mode('s')
@@ -355,7 +332,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 pass
             self._has_driver = None
 
-    def close_session(self) -> None:
+    def close_session(self):
         """关闭session"""
         if self._has_session:
             self.change_mode('d')
@@ -365,13 +342,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_session = None
 
     # ----------------重写SessionPage的函数-----------------------
-    def post(self,
-             url: str,
-             data: Union[dict, str] = None,
-             show_errmsg: bool = False,
-             retry: int = None,
-             interval: float = None,
-             **kwargs) -> bool:
+    def post(self, url: str, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
         """用post方式跳转到url，会切换到s模式                        \n
         :param url: 目标url
         :param data: post方式时提交的数据
@@ -385,17 +356,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return super().post(url, data, show_errmsg, retry, interval, **kwargs)
 
     @property
-    def download(self) -> DownloadKit:
+    def download(self):
         """返回下载器对象"""
         if self.mode == 'd':
             self.cookies_to_session()
         return super().download
 
-    def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-             timeout: float = None, single: bool = True, relative: bool = False) \
-            -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
-                Union[ChromiumElement, str, ChromiumFrame]]]:
+    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
@@ -446,7 +413,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         else:
             raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions或False。')
 
-    def quit(self) -> None:
+    def quit(self):
         """关闭浏览器，关闭session"""
         if self._has_session:
             self._session.close()

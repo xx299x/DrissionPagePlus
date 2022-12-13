@@ -15,7 +15,6 @@ from typing import Union
 from zipfile import ZipFile
 from urllib.parse import urlparse, urljoin, urlunparse
 from requests import get as requests_get
-from requests.exceptions import ConnectionError as requests_connection_err
 
 from .config import DriverOptions
 

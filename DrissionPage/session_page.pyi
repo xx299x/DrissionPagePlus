@@ -3,6 +3,7 @@ from typing import Any, Union, Tuple, List
 from DownloadKit import DownloadKit
 from requests import Session, Response
 from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
 
 from .base import BasePage
 from .session_element import SessionElement
@@ -22,8 +23,7 @@ class SessionPage(BasePage):
         self.retry_times: int = ...
         self.retry_interval: float = ...
 
-    def _create_session(self,
-                        Session_or_Options: Union[Session, SessionOptions]) -> None: ...
+    def _create_session(self, Session_or_Options: Union[Session, SessionOptions]) -> None: ...
 
     def _set_session(self, data: dict) -> None: ...
 
@@ -31,7 +31,7 @@ class SessionPage(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 timeout=...) -> Union[SessionElement, str, None]: ...
+                 timeout: float = ...) -> Union[SessionElement, str, None]: ...
 
     # -----------------共有属性和方法-------------------
 
@@ -114,7 +114,7 @@ class SessionPage(BasePage):
              hooks: Any | None = ...,
              stream: Any | None = ...,
              verify: Any | None = ...,
-             cert: Any | None = ..., ) -> bool: ...
+             cert: Any | None = ...) -> bool: ...
 
     def _s_connect(self,
                    url: str,
@@ -133,3 +133,10 @@ class SessionPage(BasePage):
                        interval: float = ...,
                        show_errmsg: bool = ...,
                        **kwargs) -> tuple: ...
+
+
+def check_headers(kwargs: Union[dict, CaseInsensitiveDict], headers: Union[dict, CaseInsensitiveDict],
+                  arg: str) -> bool: ...
+
+
+def set_charset(response: Response) -> Response: ...

@@ -18,8 +18,7 @@ class ActionChains:
         self.curr_x = 0  # 视口坐标
         self.curr_y = 0
 
-    def move_to(self, ele_or_loc,
-                offset_x: int = 0, offset_y: int = 0) -> 'ActionChains':
+    def move_to(self, ele_or_loc, offset_x=0, offset_y=0):
         """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量          \n
         当带偏移量时，偏移量相对于元素左上角坐标
         :param ele_or_loc: 元素对象或绝对坐标，坐标为tuple(int, int)形式
@@ -40,13 +39,13 @@ class ActionChains:
         if not _location_in_viewport(self.page, lx, ly):
             self.page.scroll.to_location(lx, ly)
 
-        cx, cy = _location_to_client(self.page, lx, ly)
+        cx, cy = location_to_client(self.page, lx, ly)
         self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=cx, y=cy, modifiers=self.modifier)
         self.curr_x = cx
         self.curr_y = cy
         return self
 
-    def move(self, offset_x: int = 0, offset_y: int = 0) -> 'ActionChains':
+    def move(self, offset_x=0, offset_y=0):
         """鼠标相对当前位置移动若干位置           \n
         :param offset_x: 偏移量x
         :param offset_y: 偏移量y
@@ -57,7 +56,7 @@ class ActionChains:
         self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def hold(self, on_ele=None) -> 'ActionChains':
+    def hold(self, on_ele=None):
         """点击并按住当前坐标或指定元素            \n
         :param on_ele: ChromiumElement对象
         :return: self
@@ -68,7 +67,7 @@ class ActionChains:
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def click(self, on_ele=None) -> 'ActionChains':
+    def click(self, on_ele=None):
         """点击鼠标左键，可先移动到元素上      \n
         :param on_ele: ChromiumElement元素
         :return: self
@@ -81,7 +80,7 @@ class ActionChains:
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def r_click(self, on_ele=None) -> 'ActionChains':
+    def r_click(self, on_ele=None):
         """点击鼠标右键，可先移动到元素上      \n
         :param on_ele: ChromiumElement元素
         :return: self
@@ -94,7 +93,7 @@ class ActionChains:
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def release(self, on_ele=None) -> 'ActionChains':
+    def release(self, on_ele=None):
         """释放鼠标左键，可先移动到元素再释放            \n
         :param on_ele: ChromiumElement对象
         :return: self
@@ -105,7 +104,7 @@ class ActionChains:
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def scroll(self, delta_x: int = 0, delta_y: int = 0, on_ele=None) -> 'ActionChains':
+    def scroll(self, delta_x=0, delta_y=0, on_ele=None):
         """滚动鼠标滚轮，可先移动到元素上                \n
         :param delta_x: 滚轮变化值x
         :param delta_y: 滚轮变化值y
@@ -118,23 +117,23 @@ class ActionChains:
                                           deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier)
         return self
 
-    def up(self, pixel: int) -> 'ActionChains':
+    def up(self, pixel):
         """鼠标向上移动若干像素"""
         return self.move(0, -pixel)
 
-    def down(self, pixel: int) -> 'ActionChains':
+    def down(self, pixel):
         """鼠标向下移动若干像素"""
         return self.move(0, pixel)
 
-    def left(self, pixel: int) -> 'ActionChains':
+    def left(self, pixel):
         """鼠标向左移动若干像素"""
         return self.move(-pixel, 0)
 
-    def right(self, pixel: int) -> 'ActionChains':
+    def right(self, pixel):
         """鼠标向右移动若干像素"""
         return self.move(pixel, 0)
 
-    def key_down(self, key) -> 'ActionChains':
+    def key_down(self, key):
         """按下键盘上的按键                    \n
         :param key: 按键，特殊字符见Keys
         :return: self
@@ -147,7 +146,7 @@ class ActionChains:
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
 
-    def key_up(self, key) -> 'ActionChains':
+    def key_up(self, key):
         """提起键盘上的按键                    \n
         :param key: 按键，特殊字符见Keys
         :return: self
@@ -160,12 +159,12 @@ class ActionChains:
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
 
-    def wait(self, second: float) -> 'ActionChains':
+    def wait(self, second):
         """等待若干秒"""
         sleep(second)
         return self
 
-    def _get_key_data(self, key, action: str) -> dict:
+    def _get_key_data(self, key, action):
         """获取用于发送的按键信息                   \n
         :param key: 按键
         :param action: 'keyDown' 或 'keyUp'
@@ -187,7 +186,7 @@ class ActionChains:
                 'isKeypad': description['location'] == 3}
 
 
-def _location_to_client(page, lx: int, ly: int) -> tuple:
+def location_to_client(page, lx, ly):
     """绝对坐标转换为视口坐标"""
     scrool_x = page.run_script('return document.documentElement.scrollLeft;')
     scrool_y = page.run_script('return document.documentElement.scrollTop;')

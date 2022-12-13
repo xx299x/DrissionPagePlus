@@ -8,7 +8,6 @@
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from http.cookiejar import Cookie
 from pathlib import Path
-from typing import Any, Union, List
 
 from requests.cookies import RequestsCookieJar
 from selenium.webdriver.chrome.options import Options
@@ -17,7 +16,7 @@ from selenium.webdriver.chrome.options import Options
 class OptionsManager(object):
     """管理配置文件内容的类"""
 
-    def __init__(self, path: str = None):
+    def __init__(self, path=None):
         """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建  \n
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
@@ -31,7 +30,7 @@ class OptionsManager(object):
         self._chrome_options = None
         self._session_options = None
 
-    def __text__(self) -> str:
+    def __text__(self):
         """打印ini文件内容"""
         return (f"paths:\n"
                 f"{self.get_option('paths')}\n\n"
@@ -41,7 +40,7 @@ class OptionsManager(object):
                 f"{self.get_option('session_options')}")
 
     @property
-    def paths(self) -> dict:
+    def paths(self):
         """返回paths设置"""
         if self._paths is None:
             self._paths = self.get_option('paths')
@@ -49,7 +48,7 @@ class OptionsManager(object):
         return self._paths
 
     @property
-    def chrome_options(self) -> dict:
+    def chrome_options(self):
         """返回chrome设置"""
         if self._chrome_options is None:
             self._chrome_options = self.get_option('chrome_options')
@@ -57,14 +56,14 @@ class OptionsManager(object):
         return self._chrome_options
 
     @property
-    def session_options(self) -> dict:
+    def session_options(self):
         """返回session设置"""
         if self._session_options is None:
             self._session_options = self.get_option('session_options')
 
         return self._session_options
 
-    def get_value(self, section: str, item: str) -> Any:
+    def get_value(self, section, item):
         """获取配置的值         \n
         :param section: 段名
         :param item: 项名
@@ -77,7 +76,7 @@ class OptionsManager(object):
         except NoSectionError and NoOptionError:
             return None
 
-    def get_option(self, section: str) -> dict:
+    def get_option(self, section):
         """把section内容以字典方式返回   \n
         :param section: 段名
         :return: 段内容生成的字典
@@ -93,7 +92,7 @@ class OptionsManager(object):
 
         return option
 
-    def set_item(self, section: str, item: str, value: Any):
+    def set_item(self, section, item, value):
         """设置配置值            \n
         :param section: 段名
         :param item: 项名
@@ -104,7 +103,7 @@ class OptionsManager(object):
         self.__setattr__(f'_{section}', None)
         return self
 
-    def save(self, path: str = None) -> str:
+    def save(self, path=None):
         """保存配置文件                                               \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 保存路径
@@ -128,13 +127,13 @@ class OptionsManager(object):
 
         return path
 
-    def save_to_default(self) -> str:
+    def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
 
 
 class SessionOptions(object):
-    def __init__(self, read_file: bool = True, ini_path: str = None):
+    def __init__(self, read_file=True, ini_path=None):
         """requests的Session对象配置类             \n
         :param read_file: 是否从文件读取配置
         :param ini_path: ini文件路径
@@ -195,14 +194,14 @@ class SessionOptions(object):
                 self._max_redirects = options_dict['max_redirects']
 
     @property
-    def headers(self) -> dict:
+    def headers(self):
         """返回headers设置信息"""
         if self._headers is None:
             self._headers = {}
         return self._headers
 
     @property
-    def cookies(self) -> list:
+    def cookies(self):
         """返回cookies设置信息"""
         if self._cookies is None:
             self._cookies = []
@@ -210,12 +209,12 @@ class SessionOptions(object):
         return self._cookies
 
     @property
-    def auth(self) -> tuple:
+    def auth(self):
         """返回auth设置信息"""
         return self._auth
 
     @property
-    def proxies(self) -> dict:
+    def proxies(self):
         """返回proxies设置信息"""
         if self._proxies is None:
             self._proxies = {}
@@ -223,7 +222,7 @@ class SessionOptions(object):
         return self._proxies
 
     @property
-    def hooks(self) -> dict:
+    def hooks(self):
         """返回hooks设置信息"""
         if self._hooks is None:
             self._hooks = {}
@@ -231,19 +230,19 @@ class SessionOptions(object):
         return self._hooks
 
     @property
-    def params(self) -> dict:
+    def params(self):
         """返回params设置信息"""
         if self._params is None:
             self._params = {}
         return self._params
 
     @property
-    def verify(self) -> bool:
+    def verify(self):
         """返回verify设置信息"""
         return self._verify
 
     @property
-    def cert(self) -> Union[str, tuple]:
+    def cert(self):
         """返回cert设置信息"""
         return self._cert
 
@@ -253,22 +252,22 @@ class SessionOptions(object):
         return self._adapters
 
     @property
-    def stream(self) -> bool:
+    def stream(self):
         """返回stream设置信息"""
         return self._stream
 
     @property
-    def trust_env(self) -> bool:
+    def trust_env(self):
         """返回trust_env设置信息"""
         return self._trust_env
 
     @property
-    def max_redirects(self) -> int:
+    def max_redirects(self):
         """返回max_redirects设置信息"""
         return self._max_redirects
 
     @headers.setter
-    def headers(self, headers: dict) -> None:
+    def headers(self, headers):
         """设置headers参数           \n
         :param headers: 参数值
         :return: None
@@ -276,7 +275,7 @@ class SessionOptions(object):
         self.set_headers(headers)
 
     @cookies.setter
-    def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None:
+    def cookies(self, cookies):
         """设置cookies参数           \n
         :param cookies: 参数值
         :return: None
@@ -284,7 +283,7 @@ class SessionOptions(object):
         self._cookies = cookies
 
     @auth.setter
-    def auth(self, auth: tuple) -> None:
+    def auth(self, auth):
         """设置auth参数           \n
         :param auth: 参数值
         :return: None
@@ -292,7 +291,7 @@ class SessionOptions(object):
         self._auth = auth
 
     @proxies.setter
-    def proxies(self, proxies: dict) -> None:
+    def proxies(self, proxies):
         """设置proxies参数           \n
         :param proxies: 参数值
         :return: None
@@ -300,7 +299,7 @@ class SessionOptions(object):
         self.set_proxies(proxies)
 
     @hooks.setter
-    def hooks(self, hooks: dict) -> None:
+    def hooks(self, hooks):
         """设置hooks参数           \n
         :param hooks: 参数值
         :return: None
@@ -308,7 +307,7 @@ class SessionOptions(object):
         self._hooks = hooks
 
     @params.setter
-    def params(self, params: dict) -> None:
+    def params(self, params):
         """设置params参数           \n
         :param params: 参数值
         :return: None
@@ -316,7 +315,7 @@ class SessionOptions(object):
         self._params = params
 
     @verify.setter
-    def verify(self, verify: bool) -> None:
+    def verify(self, verify):
         """设置verify参数           \n
         :param verify: 参数值
         :return: None
@@ -324,7 +323,7 @@ class SessionOptions(object):
         self._verify = verify
 
     @cert.setter
-    def cert(self, cert: Union[str, tuple]) -> None:
+    def cert(self, cert):
         """设置cert参数           \n
         :param cert: 参数值
         :return: None
@@ -332,7 +331,7 @@ class SessionOptions(object):
         self._cert = cert
 
     @adapters.setter
-    def adapters(self, adapters) -> None:
+    def adapters(self, adapters):
         """设置           \n
         :param adapters: 参数值
         :return: None
@@ -340,7 +339,7 @@ class SessionOptions(object):
         self._adapters = adapters
 
     @stream.setter
-    def stream(self, stream: bool) -> None:
+    def stream(self, stream):
         """设置stream参数           \n
         :param stream: 参数值
         :return: None
@@ -348,7 +347,7 @@ class SessionOptions(object):
         self._stream = stream
 
     @trust_env.setter
-    def trust_env(self, trust_env: bool) -> None:
+    def trust_env(self, trust_env):
         """设置trust_env参数           \n
         :param trust_env: 参数值
         :return: None
@@ -356,14 +355,14 @@ class SessionOptions(object):
         self._trust_env = trust_env
 
     @max_redirects.setter
-    def max_redirects(self, max_redirects: int) -> None:
+    def max_redirects(self, max_redirects):
         """设置max_redirects参数          \n
         :param max_redirects: 参数值
         :return: None
         """
         self._max_redirects = max_redirects
 
-    def set_headers(self, headers: dict) -> 'SessionOptions':
+    def set_headers(self, headers):
         """设置headers参数           \n
         :param headers: 参数值
         :return: 返回当前对象
@@ -371,7 +370,7 @@ class SessionOptions(object):
         self._headers = {key.lower(): headers[key] for key in headers}
         return self
 
-    def set_a_header(self, attr: str, value: str) -> 'SessionOptions':
+    def set_a_header(self, attr, value):
         """设置headers中一个项          \n
         :param attr: 设置名称
         :param value: 设置值
@@ -383,7 +382,7 @@ class SessionOptions(object):
         self._headers[attr.lower()] = value
         return self
 
-    def remove_a_header(self, attr: str) -> 'SessionOptions':
+    def remove_a_header(self, attr):
         """从headers中删除一个设置     \n
         :param attr: 要删除的设置
         :return: 返回当前对象
@@ -397,7 +396,7 @@ class SessionOptions(object):
 
         return self
 
-    def set_proxies(self, proxies: dict) -> 'SessionOptions':
+    def set_proxies(self, proxies):
         """设置proxies参数           \n
         {'http': 'http://xx.xx.xx.xx:xxxx',
          'https': 'http://xx.xx.xx.xx:xxxx'}
@@ -407,7 +406,7 @@ class SessionOptions(object):
         self._proxies = proxies
         return self
 
-    def save(self, path: str = None) -> str:
+    def save(self, path=None):
         """保存设置到文件                                              \n
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
@@ -431,7 +430,7 @@ class SessionOptions(object):
         else:
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
-        options = _session_options_to_dict(self)
+        options = session_options_to_dict(self)
 
         for i in options:
             om.set_item('session_options', i, options[i])
@@ -441,13 +440,13 @@ class SessionOptions(object):
 
         return path
 
-    def save_to_default(self) -> str:
+    def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
 
-    def as_dict(self) -> dict:
+    def as_dict(self):
         """以字典形式返回本对象"""
-        return _session_options_to_dict(self)
+        return session_options_to_dict(self)
 
 
 class DriverOptions(Options):
@@ -455,7 +454,7 @@ class DriverOptions(Options):
     增加了删除配置和保存到文件方法。
     """
 
-    def __init__(self, read_file: bool = True, ini_path: str = None):
+    def __init__(self, read_file=True, ini_path=None):
         """初始化，默认从文件读取设置                      \n
         :param read_file: 是否从默认ini文件中读取配置信息
         :param ini_path: ini文件路径，为None则读取默认ini文件
@@ -493,22 +492,22 @@ class DriverOptions(Options):
             self._arguments.append('--no-sandbox')
 
     @property
-    def driver_path(self) -> str:
+    def driver_path(self):
         """chromedriver文件路径"""
         return self._driver_path
 
     @property
-    def chrome_path(self) -> str:
+    def chrome_path(self):
         """浏览器启动文件路径"""
         return self.binary_location or 'chrome'
 
     @property
-    def user_data_path(self) -> str:
+    def user_data_path(self):
         """返回用户文件夹路径"""
         return self._user_data_path
 
     # -------------重写父类方法，实现链式操作-------------
-    def add_argument(self, argument) -> 'DriverOptions':
+    def add_argument(self, argument):
         """添加一个配置项               \n
         :param argument: 配置项内容
         :return: 当前对象
@@ -516,7 +515,7 @@ class DriverOptions(Options):
         super().add_argument(argument)
         return self
 
-    def set_capability(self, name, value) -> 'DriverOptions':
+    def set_capability(self, name, value):
         """设置一个capability          \n
         :param name: capability名称
         :param value: capability值
@@ -525,7 +524,7 @@ class DriverOptions(Options):
         super().set_capability(name, value)
         return self
 
-    def add_extension(self, extension: str) -> 'DriverOptions':
+    def add_extension(self, extension):
         """添加插件                           \n
         :param extension: crx文件路径
         :return: 当前对象
@@ -533,7 +532,7 @@ class DriverOptions(Options):
         super().add_extension(extension)
         return self
 
-    def add_encoded_extension(self, extension: str) -> 'DriverOptions':
+    def add_encoded_extension(self, extension):
         """将带有扩展数据的 Base64 编码字符串添加到将用于将其提取到 ChromeDriver 的列表中  \n
         :param extension: 带有扩展数据的 Base64 编码字符串
         :return: 当前对象
@@ -541,7 +540,7 @@ class DriverOptions(Options):
         super().add_encoded_extension(extension)
         return self
 
-    def add_experimental_option(self, name: str, value: Union[str, int, dict, List[str]]) -> 'DriverOptions':
+    def add_experimental_option(self, name, value):
         """添加一个实验选项到浏览器  \n
         :param name: 选项名称
         :param value: 选项值
@@ -552,7 +551,7 @@ class DriverOptions(Options):
 
     # -------------重写父类方法结束-------------
 
-    def save(self, path: str = None) -> str:
+    def save(self, path=None):
         """保存设置到文件                                                                        \n
         :param path: ini文件的路径， None 保存到当前读取的配置文件，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
@@ -589,11 +588,11 @@ class DriverOptions(Options):
 
         return path
 
-    def save_to_default(self) -> str:
+    def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
 
-    def remove_argument(self, value: str) -> 'DriverOptions':
+    def remove_argument(self, value):
         """移除一个argument项                                    \n
         :param value: 设置项名，有值的设置项传入设置名称即可
         :return: 当前对象
@@ -609,7 +608,7 @@ class DriverOptions(Options):
 
         return self
 
-    def remove_experimental_option(self, key: str) -> 'DriverOptions':
+    def remove_experimental_option(self, key):
         """移除一个实验设置，传入key值删除  \n
         :param key: 实验设置的名称
         :return: 当前对象
@@ -619,7 +618,7 @@ class DriverOptions(Options):
 
         return self
 
-    def remove_all_extensions(self) -> 'DriverOptions':
+    def remove_all_extensions(self):
         """移除所有插件             \n
         :return: 当前对象
         """
@@ -627,7 +626,7 @@ class DriverOptions(Options):
         self._extensions = []
         return self
 
-    def set_argument(self, arg: str, value: Union[bool, str]) -> 'DriverOptions':
+    def set_argument(self, arg, value):
         """设置浏览器配置的argument属性                          \n
         :param arg: 属性名
         :param value: 属性值，有值的属性传入值，没有的传入bool
@@ -641,7 +640,7 @@ class DriverOptions(Options):
 
         return self
 
-    def set_timeouts(self, implicit: float = None, pageLoad: float = None, script: float = None) -> 'DriverOptions':
+    def set_timeouts(self, implicit=None, pageLoad=None, script=None):
         """设置超时时间，设置单位为秒，selenium4以上版本有效       \n
         :param implicit: 查找元素超时时间
         :param pageLoad: 页面加载超时时间
@@ -659,7 +658,7 @@ class DriverOptions(Options):
 
         return self
 
-    def set_headless(self, on_off: bool = True) -> 'DriverOptions':
+    def set_headless(self, on_off=True):
         """设置是否隐藏浏览器界面   \n
         :param on_off: 开或关
         :return: 当前对象
@@ -667,7 +666,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--headless', on_off)
 
-    def set_no_imgs(self, on_off: bool = True) -> 'DriverOptions':
+    def set_no_imgs(self, on_off=True):
         """设置是否加载图片           \n
         :param on_off: 开或关
         :return: 当前对象
@@ -675,7 +674,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
-    def set_no_js(self, on_off: bool = True) -> 'DriverOptions':
+    def set_no_js(self, on_off=True):
         """设置是否禁用js       \n
         :param on_off: 开或关
         :return: 当前对象
@@ -683,7 +682,7 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--disable-javascript', on_off)
 
-    def set_mute(self, on_off: bool = True) -> 'DriverOptions':
+    def set_mute(self, on_off=True):
         """设置是否静音            \n
         :param on_off: 开或关
         :return: 当前对象
@@ -691,21 +690,21 @@ class DriverOptions(Options):
         on_off = True if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
-    def set_user_agent(self, user_agent: str) -> 'DriverOptions':
+    def set_user_agent(self, user_agent):
         """设置user agent                  \n
         :param user_agent: user agent文本
         :return: 当前对象
         """
         return self.set_argument('--user-agent', user_agent)
 
-    def set_proxy(self, proxy: str) -> 'DriverOptions':
+    def set_proxy(self, proxy):
         """设置代理                    \n
         :param proxy: 代理url和端口
         :return: 当前对象
         """
         return self.set_argument('--proxy-server', proxy)
 
-    def set_page_load_strategy(self, value: str) -> 'DriverOptions':
+    def set_page_load_strategy(self, value):
         """设置page_load_strategy，可接收 'normal', 'eager', 'none'                    \n
         selenium4以上版本才支持此功能
         normal：默认情况下使用, 等待所有资源下载完成
@@ -719,14 +718,8 @@ class DriverOptions(Options):
         self.page_load_strategy = value.lower()
         return self
 
-    def set_paths(self,
-                  driver_path: str = None,
-                  chrome_path: str = None,
-                  local_port: Union[int, str] = None,
-                  debugger_address: str = None,
-                  download_path: str = None,
-                  user_data_path: str = None,
-                  cache_path: str = None) -> 'DriverOptions':
+    def set_paths(self, driver_path=None, chrome_path=None, local_port=None, debugger_address=None, download_path=None,
+                  user_data_path=None, cache_path=None):
         """快捷的路径设置函数                                             \n
         :param driver_path: chromedriver.exe路径
         :param chrome_path: chrome.exe路径
@@ -761,12 +754,12 @@ class DriverOptions(Options):
 
         return self
 
-    def as_dict(self) -> dict:
+    def as_dict(self):
         """已dict方式返回所有配置信息"""
-        return _chrome_options_to_dict(self)
+        return chrome_options_to_dict(self)
 
 
-def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, bool]) -> Union[dict, None]:
+def chrome_options_to_dict(options):
     """把chrome配置对象转换为字典                             \n
     :param options: chrome配置对象，字典或DriverOptions对象
     :return: 配置字典
@@ -798,7 +791,7 @@ def _chrome_options_to_dict(options: Union[dict, DriverOptions, Options, None, b
     return re_dict
 
 
-def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]:
+def session_options_to_dict(options):
     """把session配置对象转换为字典                 \n
     :param options: session配置对象或字典
     :return: 配置字典
@@ -815,7 +808,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     cookies = options.__getattribute__('_cookies')
 
     if cookies is not None:
-        re_dict['cookies'] = _cookies_to_tuple(cookies)
+        re_dict['cookies'] = cookies_to_tuple(cookies)
 
     for attr in attrs:
         val = options.__getattribute__(f'_{attr}')
@@ -829,7 +822,7 @@ def _session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Unio
     return re_dict
 
 
-def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
+def cookie_to_dict(cookie):
     """把Cookie对象转为dict格式                \n
     :param cookie: Cookie对象
     :return: cookie字典
@@ -864,16 +857,16 @@ def _cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict:
     return cookie_dict
 
 
-def _cookies_to_tuple(cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> tuple:
+def cookies_to_tuple(cookies):
     """把cookies转为tuple格式                                                \n
     :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
     :return: 返回tuple形式的cookies
     """
     if isinstance(cookies, (list, tuple, RequestsCookieJar)):
-        cookies = tuple(_cookie_to_dict(cookie) for cookie in cookies)
+        cookies = tuple(cookie_to_dict(cookie) for cookie in cookies)
 
     elif isinstance(cookies, str):
-        cookies = tuple(_cookie_to_dict(cookie.lstrip()) for cookie in cookies.split(";"))
+        cookies = tuple(cookie_to_dict(cookie.lstrip()) for cookie in cookies.split(";"))
 
     elif isinstance(cookies, dict):
         cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)

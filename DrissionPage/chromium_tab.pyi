@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-
 from .chromium_base import ChromiumBase
 from .chromium_page import ChromiumPage
 

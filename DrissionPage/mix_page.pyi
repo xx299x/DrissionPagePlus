@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Any
 
 from DownloadKit import DownloadKit
 from requests import Response, Session
@@ -52,11 +52,24 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def json(self) -> dict: ...
 
     def get(self,
-            url: str,
-            show_errmsg: bool = ...,
-            retry: int = ...,
-            interval: float = ...,
-            **kwargs) -> Union[bool, None]: ...
+             url: str,
+             show_errmsg: bool | None = ...,
+             retry: int | None = ...,
+             interval: float | None = ...,
+             timeout: float | None = ...,
+             params: dict | None = ...,
+             data: Union[dict, str, None] = ...,
+             json: Union[dict, str, None] = ...,
+             headers: dict | None = ...,
+             cookies: Any | None = ...,
+             files: Any | None = ...,
+             auth: Any | None = ...,
+             allow_redirects: bool = ...,
+             proxies: dict | None = ...,
+             hooks: Any | None = ...,
+             stream: Any | None = ...,
+             verify: Any | None = ...,
+             cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
@@ -115,11 +128,23 @@ class MixPage(SessionPage, DriverPage, BasePage):
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
-             data: Union[dict, str] = ...,
-             show_errmsg: bool = ...,
-             retry: int = ...,
-             interval: float = ...,
-             **kwargs) -> bool: ...
+             show_errmsg: bool | None = ...,
+             retry: int | None = ...,
+             interval: float | None = ...,
+             timeout: float | None = ...,
+             params: dict | None = ...,
+             data: Union[dict, str, None] = ...,
+             json: Union[dict, str, None] = ...,
+             headers: dict | None = ...,
+             cookies: Any | None = ...,
+             files: Any | None = ...,
+             auth: Any | None = ...,
+             allow_redirects: bool = ...,
+             proxies: dict | None = ...,
+             hooks: Any | None = ...,
+             stream: Any | None = ...,
+             verify: Any | None = ...,
+             cert: Any | None = ...) -> bool: ...
 
     @property
     def download(self) -> DownloadKit: ...

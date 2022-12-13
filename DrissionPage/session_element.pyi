@@ -10,7 +10,7 @@ from .session_page import SessionPage
 class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
-    def __init__(self, ele: HtmlElement, page=...):
+    def __init__(self, ele: HtmlElement, page: Union[SessionPage, None] = ...):
         self._inner_ele: HtmlElement = ...
         self.page: SessionPage = ...
 
@@ -21,7 +21,7 @@ class SessionElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout=...) -> Union['SessionElement', str, None]: ...
+                 timeout: float = ...) -> Union['SessionElement', str, None]: ...
 
     @property
     def tag(self) -> str: ...
