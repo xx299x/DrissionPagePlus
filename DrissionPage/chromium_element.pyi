@@ -98,23 +98,23 @@ class ChromiumElement(DrissionElement):
     def parent(self, level_or_loc: Union[tuple, str, int] = ...) -> Union['ChromiumElement', None]: ...
 
     def prev(self,
-             index: int = ...,
              filter_loc: Union[tuple, str] = ...,
+             index: int = ...,
              timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def next(self,
-             index: int = ...,
              filter_loc: Union[tuple, str] = ...,
+             index: int = ...,
              timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def before(self,
-               index: int = ...,
                filter_loc: Union[tuple, str] = ...,
+               index: int = ...,
                timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def after(self,
-              index: int = ...,
               filter_loc: Union[tuple, str] = ...,
+              index: int = ...,
               timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def prevs(self,
@@ -274,15 +274,16 @@ class ChromiumShadowRootElement(BaseElement):
     def parent(self, level_or_loc: Union[str, int] = ...) -> ChromiumElement: ...
 
     def next(self,
-             index: int = ...,
-             filter_loc: Union[tuple, str] = ...) -> Union[ChromiumElement, str, None]: ...
+             filter_loc: Union[tuple, str] = ...,
+             index: int = ...) -> Union[ChromiumElement, str, None]: ...
 
     def before(self,
-               index: int = ...,
-               filter_loc: Union[tuple, str] = ...) -> Union[ChromiumElement, str, None]: ...
+               filter_loc: Union[tuple, str] = ...,
+               index: int = ...) -> Union[ChromiumElement, str, None]: ...
 
-    def after(self, index: int = ...,
-              filter_loc: Union[tuple, str] = ...) -> Union[ChromiumElement, str, None]: ...
+    def after(self,
+              filter_loc: Union[tuple, str] = ...,
+              index: int = ...) -> Union[ChromiumElement, str, None]: ...
 
     def nexts(self, filter_loc: Union[tuple, str] = ...) -> List[Union[ChromiumElement, str]]: ...
 

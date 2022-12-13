@@ -232,23 +232,23 @@ class ChromiumFrame(ChromiumBase):
     def parent(self, level_or_loc: Union[tuple, str, int] = ...) -> Union['ChromiumElement', None]: ...
 
     def prev(self,
-             index: int = ...,
              filter_loc: Union[tuple, str] = ...,
+             index: int = ...,
              timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def next(self,
-             index: int = ...,
              filter_loc: Union[tuple, str] = ...,
+             index: int = ...,
              timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def before(self,
-               index: int = ...,
                filter_loc: Union[tuple, str] = ...,
+               index: int = ...,
                timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def after(self,
-              index: int = ...,
               filter_loc: Union[tuple, str] = ...,
+              index: int = ...,
               timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
 
     def prevs(self,

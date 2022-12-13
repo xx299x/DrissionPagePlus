@@ -191,37 +191,37 @@ class ChromiumElement(DrissionElement):
         """
         return super().parent(level_or_loc)
 
-    def prev(self, index=1, filter_loc='', timeout=0):
+    def prev(self, filter_loc='', index=1, timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
         return super().prev(index, filter_loc, timeout)
 
-    def next(self, index=1, filter_loc='', timeout=0):
+    def next(self, filter_loc='', index=1, timeout=0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
         return super().next(index, filter_loc, timeout)
 
-    def before(self, index=1, filter_loc='', timeout=None):
+    def before(self, filter_loc='', index=1, timeout=None):
         """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-        :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的某个元素或节点
         """
         return super().before(index, filter_loc, timeout)
 
-    def after(self, index=1, filter_loc='', timeout=None):
+    def after(self, filter_loc='', index=1, timeout=None):
         """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-        :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的某个元素或节点
         """
@@ -907,28 +907,28 @@ class ChromiumShadowRootElement(BaseElement):
 
         return self.parent_ele._ele(loc, timeout=0, relative=True)
 
-    def next(self, index=1, filter_loc=''):
+    def next(self, filter_loc='', index=1):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 第几个查询结果元素
         :return: ChromiumElement对象
         """
         nodes = self.nexts(filter_loc=filter_loc)
         return nodes[index - 1] if nodes else None
 
-    def before(self, index=1, filter_loc=''):
+    def before(self, filter_loc='', index=1):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 前面第几个查询结果元素
         :return: 本元素前面的某个元素或节点
         """
         nodes = self.befores(filter_loc=filter_loc)
         return nodes[index - 1] if nodes else None
 
-    def after(self, index=1, filter_loc=''):
+    def after(self, filter_loc='', index=1):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
+        :param index: 后面第几个查询结果元素
         :return: 本元素后面的某个元素或节点
         """
         nodes = self.afters(filter_loc=filter_loc)
@@ -1213,48 +1213,48 @@ class ChromiumShadowRootElement(BaseElement):
 #         return self._inner_ele.parent(level_or_loc)
 #
 #     def prev(self,
-#              index: int = 1,
 #              filter_loc: Union[tuple, str] = '',
+#              index: int = 1,
 #              timeout: float = 0) -> Union['ChromiumElement', str, None]:
 #         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-#         :param index: 前面第几个查询结果元素
 #         :param filter_loc: 用于筛选元素的查询语法
+#         :param index: 前面第几个查询结果元素
 #         :param timeout: 查找元素的超时时间
 #         :return: 兄弟元素
 #         """
 #         return self._inner_ele.prev(index, filter_loc, timeout)
 #
 #     def next(self,
-#              index: int = 1,
 #              filter_loc: Union[tuple, str] = '',
+#              index: int = 1,
 #              timeout: float = 0) -> Union['ChromiumElement', str, None]:
 #         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-#         :param index: 后面第几个查询结果元素
 #         :param filter_loc: 用于筛选元素的查询语法
+#         :param index: 后面第几个查询结果元素
 #         :param timeout: 查找元素的超时时间
 #         :return: 兄弟元素
 #         """
 #         return self._inner_ele.next(index, filter_loc, timeout)
 #
 #     def before(self,
-#                index: int = 1,
 #                filter_loc: Union[tuple, str] = '',
+#                index: int = 1,
 #                timeout: float = None) -> Union['ChromiumElement', str, None]:
 #         """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-#         :param index: 前面第几个查询结果元素
 #         :param filter_loc: 用于筛选元素的查询语法
+#         :param index: 前面第几个查询结果元素
 #         :param timeout: 查找元素的超时时间
 #         :return: 本元素前面的某个元素或节点
 #         """
 #         return self._inner_ele.before(index, filter_loc, timeout)
 #
 #     def after(self,
-#               index: int = 1,
 #               filter_loc: Union[tuple, str] = '',
+#               index: int = 1,
 #               timeout: float = None) -> Union['ChromiumElement', str, None]:
 #         """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-#         :param index: 后面第几个查询结果元素
 #         :param filter_loc: 用于筛选元素的查询语法
+#         :param index: 后面第几个查询结果元素
 #         :param timeout: 查找元素的超时时间
 #         :return: 本元素后面的某个元素或节点
 #         """
