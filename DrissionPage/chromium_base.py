@@ -182,8 +182,7 @@ class ChromiumBase(BasePage):
     @property
     def html(self):
         """返回当前页面html文本"""
-        node_id = self._wait_driver.DOM.getDocument()['root']['nodeId']
-        return self._wait_driver.DOM.getOuterHTML(nodeId=node_id)['outerHTML']
+        return self._wait_driver.DOM.getOuterHTML(objectId=self._root_id)['outerHTML']
 
     @property
     def json(self):
@@ -477,7 +476,7 @@ class ChromiumBase(BasePage):
     def stop_loading(self):
         """页面停止加载"""
         if self._debug:
-            print('阻止页面加载')
+            print('停止页面加载')
         self._tab_obj.Page.stopLoading()
         while self.ready_state != 'complete':
             sleep(.1)
