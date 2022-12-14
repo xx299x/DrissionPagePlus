@@ -1,1 +1,2 @@
 include DrissionPage/configs.ini
+include DrissionPage/*.pyi

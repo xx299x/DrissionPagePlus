@@ -27,6 +27,7 @@ class ChromiumBase(BasePage):
         self._is_loading = None
         self._root_id = None
         self._debug = False
+        self._debug_recorder = None
         self._connect_browser(address, tab_id)
 
     def _connect_browser(self, addr_tab_opts=None, tab_id=None):
@@ -74,11 +75,29 @@ class ChromiumBase(BasePage):
         """刷新cdp使用的document数据"""
         if not self._is_reading:
             self._is_reading = True
+
             if self._debug:
                 print('获取document')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
+
             self._wait_loading()
-            root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
-            self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
+            while True:
+                try:
+                    root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
+                    if self._debug_recorder:
+                        self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{root_id}'))
+                    self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
+                    break
+                except:
+                    if self._debug_recorder:
+                        self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
+
+            if self._debug:
+                print('获取document结束')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '获取document', '结束'))
+
             self._is_loading = False
             self._is_reading = False
 
@@ -92,8 +111,10 @@ class ChromiumBase(BasePage):
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             state = self.ready_state
-            # if self._debug:
-            #     print(f'{state=}')
+
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), 'waiting', state))
+
             if state == 'complete':
                 return True
             elif self.page_load_strategy == 'eager' and state in ('interactive', 'complete'):
@@ -111,34 +132,42 @@ class ChromiumBase(BasePage):
         """页面开始加载时触发"""
         if kwargs['frameId'] == self.tab_id:
             self._is_loading = True
+
             if self._debug:
                 print('页面开始加载 FrameStartedLoading')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'FrameStartedLoading'))
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
         if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'FrameStoppedLoading'))
+
             self._get_document()
 
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
         if self._debug:
             print('loadEventFired')
-        # if self._first_run is False and self._is_loading:
-        #     if self._debug:
-        #         print('loadEventFired')
-        #     self._get_document()
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
 
     def _onDocumentUpdated(self, **kwargs):
         """页面跳转时触发"""
         if self._debug:
             print('documentUpdated')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '加载流程', 'documentUpdated'))
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
         if self._debug and not kwargs['frame'].get('parentId', None):
             print('navigated')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def _set_options(self):
         pass
@@ -151,6 +180,11 @@ class ChromiumBase(BasePage):
         :return: ChromiumElement对象
         """
         return self.ele(loc_or_str, timeout)
+
+    @property
+    def title(self):
+        """返回当前页面title"""
+        return self._tab_obj.Target.getTargetInfo(targetId=self.tab_id)['targetInfo']['title']
 
     @property
     def driver(self):
@@ -176,8 +210,7 @@ class ChromiumBase(BasePage):
     @property
     def url(self):
         """返回当前页面url"""
-        json = self._control_session.get(f'http://{self.address}/json').json()
-        return [i['url'] for i in json if i['id'] == self._tab_obj.id][0]  # change_mode要调用，不能用_driver
+        return self._tab_obj.Target.getTargetInfo(targetId=self.tab_id)['targetInfo']['url']
 
     @property
     def html(self):
@@ -477,6 +510,9 @@ class ChromiumBase(BasePage):
         """页面停止加载"""
         if self._debug:
             print('停止页面加载')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '操作', '停止页面加载'))
+
         self._tab_obj.Page.stopLoading()
         while self.ready_state != 'complete':
             sleep(.1)
