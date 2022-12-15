@@ -28,6 +28,7 @@ class ChromiumBase(BasePage):
         self._root_id = None
         self._debug = False
         self._debug_recorder = None
+        self.timeouts = Timeout(self)
         self._connect_browser(address, tab_id)
 
     def _connect_browser(self, addr_tab_opts=None, tab_id=None):
@@ -37,7 +38,6 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._root_id = None
-        self.timeouts = Timeout(self)
         self._control_session = Session()
         self._control_session.keep_alive = False
         self._first_run = True
@@ -256,14 +256,10 @@ class ChromiumBase(BasePage):
             self._scroll = ChromeScroll(self)
         return self._scroll
 
-    def set_page_load_strategy(self, value):
-        """设置页面加载策略                                    \n
-        :param value: 可选'normal', 'eager', 'none'
-        :return: None
-        """
-        if value not in ('normal', 'eager', 'none'):
-            raise ValueError("只能选择'normal', 'eager', 'none'。")
-        self._page_load_strategy = value
+    @property
+    def set_page_load_strategy(self):
+        """返回用于设置页面加载策略的对象"""
+        return pageLoadStrategy(self)
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒                   \n
@@ -307,7 +303,7 @@ class ChromiumBase(BasePage):
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
         :param timeout: 连接超时时间
-        :return: 目标url是否可用，返回None表示不确定
+        :return: 目标url是否可用
         """
         self._url_available = self._get(url, show_errmsg, retry, interval, timeout)
         return self._url_available
@@ -810,3 +806,34 @@ class Timeout(object):
     @property
     def implicit(self):
         return self.page.timeout
+
+
+class pageLoadStrategy(object):
+    """用于设置页面加载策略的类"""
+
+    def __init__(self, page):
+        """
+        :param page: ChromiumBase对象
+        """
+        self.page = page
+
+    def __call__(self, value):
+        """设置加载策略                                  \n
+        :param value: 可选 'normal', 'eager', 'none'
+        :return: None
+        """
+        if value.lower() not in ('normal', 'eager', 'none'):
+            raise ValueError("只能选择 'normal', 'eager', 'none'。")
+        self.page._page_load_strategy = value
+
+    def set_normal(self):
+        """设置页面加载策略为normal"""
+        self.page._page_load_strategy = 'normal'
+
+    def set_eager(self):
+        """设置页面加载策略为eager"""
+        self.page._page_load_strategy = 'eager'
+
+    def set_none(self):
+        """设置页面加载策略为none"""
+        self.page._page_load_strategy = 'none'

@@ -5,7 +5,7 @@ from requests import Session
 from tldextract import extract
 
 from .base import BasePage
-from .chromium_base import ChromiumBase
+from .chromium_base import ChromiumBase, Timeout
 from .chromium_page import ChromiumPage
 from .config import DriverOptions, SessionOptions, cookies_to_tuple
 from .session_page import SessionPage
@@ -32,6 +32,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._session = None
         self._tab_obj = None
         self._is_loading = False
+        self.timeouts = Timeout(self)
         self._set_session_options(session_or_options)
         self._set_driver_options(driver_or_options)
         self._setting_tab_id = tab_id
@@ -102,9 +103,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._session is None:
             self._set_session(self._session_options)
 
-            # if self._proxy:
-            #     self._session.proxies = self._proxy
-
         return self._session
 
     @property
@@ -117,7 +115,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
-        # self._wait_loading()
         return self._driver
 
     @property
@@ -150,6 +147,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 'd':
             return super(SessionPage, self).get(url, show_errmsg, retry, interval, timeout)
         elif self._mode == 's':
+            if timeout is None:
+                timeout = self.timeouts.page_load if self._has_driver else self.timeout
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
@@ -291,7 +290,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                      'name': cookie['name'],
                      'domain': cookie['domain']}
                 result_cookies.append(c)
-            # super(WebPage, self)._wait_driver.Network.setCookies(cookies=result_cookies)
             self._tab_obj.Network.setCookies(cookies=result_cookies)
 
         # 添加cookie到session
