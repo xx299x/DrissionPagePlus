@@ -97,9 +97,8 @@ class ChromiumPage(ChromiumBase):
     @property
     def tabs(self):
         """返回所有标签页id"""
-        self._driver
-        json = self._control_session.get(f'http://{self.address}/json').json()
-        return [i['id'] for i in json if i['type'] == 'page']
+        tabs = self.run_cdp('Target.getTargets', filter=[{'type': "page"}])['targetInfos']
+        return [i['targetId'] for i in tabs]
 
     @property
     def process_id(self):

@@ -17,12 +17,19 @@ class SessionPage(BasePage):
     """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
     def __init__(self, session_or_options=None, timeout=10):
-        """初始化函数"""
+        """初始化                                                     \n
+        :param session_or_options: Session对象或SessionOptions对象
+        :param timeout: 连接超时时间
+        """
         super().__init__(timeout)
         self._response = None
         self._create_session(session_or_options)
 
     def _create_session(self, Session_or_Options):
+        """创建内建Session对象
+        :param Session_or_Options: Session对象或SessionOptions对象
+        :return: None
+        """
         if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
             options = Session_or_Options or SessionOptions()
             self._set_session(options.as_dict())

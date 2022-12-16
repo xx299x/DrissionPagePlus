@@ -259,7 +259,7 @@ class ChromiumBase(BasePage):
     @property
     def set_page_load_strategy(self):
         """返回用于设置页面加载策略的对象"""
-        return pageLoadStrategy(self)
+        return PageLoadStrategy(self)
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒                   \n
@@ -367,13 +367,13 @@ class ChromiumBase(BasePage):
         """
         return self._ele(loc_or_ele, timeout=timeout)
 
-    def eles(self, loc_or_ele, timeout=None):
+    def eles(self, loc_or_str, timeout=None):
         """获取所有符合条件的元素对象                         \n
-        :param loc_or_ele: 定位符或元素对象
+        :param loc_or_str: 定位符或元素对象
         :param timeout: 查找超时时间
         :return: ChromiumElement对象组成的列表
         """
-        return self._ele(loc_or_ele, timeout=timeout, single=False)
+        return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_ele=None):
         """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
@@ -808,7 +808,7 @@ class Timeout(object):
         return self.page.timeout
 
 
-class pageLoadStrategy(object):
+class PageLoadStrategy(object):
     """用于设置页面加载策略的类"""
 
     def __init__(self, page):
@@ -826,14 +826,14 @@ class pageLoadStrategy(object):
             raise ValueError("只能选择 'normal', 'eager', 'none'。")
         self.page._page_load_strategy = value
 
-    def set_normal(self):
+    def normal(self):
         """设置页面加载策略为normal"""
         self.page._page_load_strategy = 'normal'
 
-    def set_eager(self):
+    def eager(self):
         """设置页面加载策略为eager"""
         self.page._page_load_strategy = 'eager'
 
-    def set_none(self):
+    def none(self):
         """设置页面加载策略为none"""
         self.page._page_load_strategy = 'none'

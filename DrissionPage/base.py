@@ -6,7 +6,7 @@
 """
 from abc import abstractmethod
 from re import sub
-from typing import Union, Tuple, List
+from typing import Union, List
 from urllib.parse import quote
 
 from .common import format_html, get_loc
@@ -26,7 +26,7 @@ class BaseParser(object):
 
     # ----------------以下属性或方法待后代实现----------------
     @property
-    def html(self) -> str:
+    def html(self):
         return ''
 
     def s_ele(self, loc_or_ele):
@@ -59,16 +59,16 @@ class BaseElement(BaseParser):
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
         pass
 
-    def parent(self, level_or_loc = 1):
+    def parent(self, level_or_loc=1):
         pass
 
-    def prev(self, index = 1) -> None:
+    def prev(self, index=1) -> None:
         return None  # ShadowRootElement直接继承
 
     def prevs(self) -> None:
         return None  # ShadowRootElement直接继承
 
-    def next(self, index = 1):
+    def next(self, index=1):
         pass
 
     def nexts(self):
@@ -290,7 +290,7 @@ class DrissionElement(BaseElement):
 class BasePage(BaseParser):
     """页面类的基类"""
 
-    def __init__(self, timeout = 10):
+    def __init__(self, timeout=10):
         """初始化函数"""
         self._url = None
         self.timeout = timeout
@@ -346,9 +346,9 @@ class BasePage(BaseParser):
         return
 
     @abstractmethod
-    def get_cookies(self, as_dict= False):
+    def get_cookies(self, as_dict=False):
         return {}
 
     @abstractmethod
-    def get(self,            url,            show_errmsg= False,            retry = None,            interval= None):
+    def get(self, url, show_errmsg=False, retry=None, interval=None):
         pass
