@@ -512,7 +512,6 @@ class ChromiumBase(BasePage):
         self._tab_obj.Page.stopLoading()
         while self.ready_state != 'complete':
             sleep(.1)
-        # self._get_document()
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句     \n

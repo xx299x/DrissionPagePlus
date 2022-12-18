@@ -24,7 +24,7 @@ class OptionsManager(object):
         if not Path(self.ini_path).exists():
             raise FileNotFoundError('ini文件不存在。')
         self._conf = RawConfigParser()
-        self._conf.read(self.ini_path, encoding='utf-8')
+        self._conf.read(self.ini_path, encoding='utf-8-sig')
 
         self._paths = None
         self._chrome_options = None
