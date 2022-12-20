@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from re import search
-from typing import Union, Tuple, List
 from urllib.parse import urlparse
 
 from .chromium_element import ChromiumElement
@@ -8,7 +7,15 @@ from .chromium_base import ChromiumBase
 
 
 class ChromiumFrame(object):
-    def __init__(self, page: ChromiumBase, ele: ChromiumElement):
+    """frame元素的类。
+    frame既是元素，也是页面，可以获取元素属性和定位周边元素，也能跳转到网址。
+    同域和异域的frame处理方式不一样，同域的当作元素看待，异域的当作页面看待。"""
+
+    def __init__(self, page, ele):
+        """
+        :param page: frame所在页面对象
+        :param ele: frame容器元素对象
+        """
         self.page = page
         self._inner_ele = ele
         self._is_diff_domain = False
@@ -22,18 +29,18 @@ class ChromiumFrame(object):
             self.inner_page.set_page_load_strategy(self.page.page_load_strategy)
             self.inner_page.timeouts = self.page.timeouts
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         attrs = self._inner_ele.attrs
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self._inner_ele.tag} {" ".join(attrs)}>'
 
     @property
-    def tag(self) -> str:
+    def tag(self):
         """返回元素tag"""
         return self._inner_ele.tag
 
     @property
-    def url(self) -> str:
+    def url(self):
         """"""
         if self._is_diff_domain:
             return self.inner_page.url
@@ -42,7 +49,7 @@ class ChromiumFrame(object):
             return r['node']['contentDocument']['documentURL']
 
     @property
-    def html(self) -> str:
+    def html(self):
         """返回元素outerHTML文本"""
         if self._is_diff_domain:
             tag = self.tag
@@ -55,7 +62,7 @@ class ChromiumFrame(object):
             return self._inner_ele.html
 
     @property
-    def title(self) -> str:
+    def title(self):
         d = self.inner_page if self._is_diff_domain else self._inner_ele
         ele = d.ele('xpath://title')
         return ele.text if ele else None
@@ -65,16 +72,16 @@ class ChromiumFrame(object):
         return self.inner_page.cookies if self._is_diff_domain else self.page.cookies
 
     @property
-    def inner_html(self) -> str:
+    def inner_html(self):
         """返回元素innerHTML文本"""
         return self.inner_page.html if self._is_diff_domain else self._inner_ele.inner_html
 
     @property
-    def attrs(self) -> dict:
+    def attrs(self):
         return self._inner_ele.attrs
 
     @property
-    def frame_size(self) -> dict:
+    def frame_size(self):
         if self._is_diff_domain:
             return self.inner_page.size
         else:
@@ -83,71 +90,66 @@ class ChromiumFrame(object):
             return {'height': h, 'width': w}
 
     @property
-    def size(self) -> dict:
+    def size(self):
         """返回frame元素大小"""
         return self._inner_ele.size
 
     @property
-    def obj_id(self) -> str:
+    def obj_id(self):
         """返回js中的object id"""
         return self._inner_ele.obj_id
 
     @property
-    def node_id(self) -> str:
+    def node_id(self):
         """返回cdp中的node id"""
         return self._inner_ele.node_id
 
     @property
-    def location(self) -> dict:
+    def location(self):
         """返回frame元素左上角的绝对坐标"""
         return self._inner_ele.location
 
     @property
-    def is_displayed(self) -> bool:
+    def is_displayed(self):
         """返回frame元素是否显示"""
         return self._inner_ele.is_displayed
 
     def get(self, url):
         self.page._get(url, False, None, None, None, self.frame_id)
 
-    def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
-            timeout: float = None):
+    def ele(self, loc_or_ele, timeout=None):
         d = self.inner_page if self._is_diff_domain else self._inner_ele
         return d.ele(loc_or_ele, timeout)
 
-    def eles(self,
-             loc_or_ele: Union[Tuple[str, str], str],
-             timeout: float = None):
+    def eles(self, loc_or_ele, timeout=None):
         d = self.inner_page if self._is_diff_domain else self._inner_ele
         return d.eles(loc_or_ele, timeout)
 
-    # def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement] = None) \
-    #         -> Union[SessionElement, str, None]:
-    #     """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
-    #     :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-    #     :return: SessionElement对象或属性、文本
-    #     """
-    #     if isinstance(loc_or_ele, ChromiumElement):
-    #         return make_session_ele(loc_or_ele)
-    #     else:
-    #         return make_session_ele(self, loc_or_ele)
-    #
-    # def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]:
-    #     """查找所有符合条件的元素以SessionElement列表形式返回                       \n
-    #     :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-    #     :return: SessionElement对象组成的列表
-    #     """
-    #     return make_session_ele(self, loc_or_str, single=False)
+    def s_ele(self, loc_or_ele=None):
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象或属性、文本
+        """
+        if isinstance(loc_or_ele, ChromiumElement):
+            return make_session_ele(loc_or_ele)
+        else:
+            return make_session_ele(self, loc_or_ele)
 
-    def attr(self, attr: str) -> Union[str, None]:
+    def s_eles(self, loc_or_str=None):
+        """查找所有符合条件的元素以SessionElement列表形式返回                       \n
+        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: SessionElement对象组成的列表
+        """
+        return make_session_ele(self, loc_or_str, single=False)
+
+    def attr(self, attr):
         """返回frame元素attribute属性值                           \n
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
         return self._inner_ele.attr(attr)
 
-    def set_attr(self, attr: str, value: str) -> None:
+    def set_attr(self, attr, value):
         """设置frame元素attribute属性          \n
         :param attr: 属性名
         :param value: 属性值
@@ -155,24 +157,21 @@ class ChromiumFrame(object):
         """
         self._inner_ele.set_attr(attr, value)
 
-    def remove_attr(self, attr: str) -> None:
+    def remove_attr(self, attr):
         """删除frame元素attribute属性          \n
         :param attr: 属性名
         :return: None
         """
         self._inner_ele.remove_attr(attr)
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union['ChromiumElement', None]:
+    def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
         return self._inner_ele.parent(level_or_loc)
 
-    def prev(self,
-             filter_loc: Union[tuple, str] = '',
-             index: int = 1,
-             timeout: float = 0) -> Union['ChromiumElement', str, None]:
+    def prev(self, filter_loc='', index=1, timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
@@ -181,10 +180,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.prev(filter_loc, index, timeout)
 
-    def next(self,
-             filter_loc: Union[tuple, str] = '',
-             index: int = 1,
-             timeout: float = 0) -> Union['ChromiumElement', str, None]:
+    def next(self, filter_loc='', index=1, timeout=0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
@@ -193,10 +189,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.next(filter_loc, index, timeout)
 
-    def before(self,
-               filter_loc: Union[tuple, str] = '',
-               index: int = 1,
-               timeout: float = None) -> Union['ChromiumElement', str, None]:
+    def before(self, filter_loc='', index=1, timeout=None):
         """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
@@ -205,10 +198,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.before(filter_loc, index, timeout)
 
-    def after(self,
-              filter_loc: Union[tuple, str] = '',
-              index: int = 1,
-              timeout: float = None) -> Union['ChromiumElement', str, None]:
+    def after(self, filter_loc='', index=1, timeout=None):
         """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
@@ -217,9 +207,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.after(filter_loc, index, timeout)
 
-    def prevs(self,
-              filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['ChromiumElement', str]]:
+    def prevs(self, filter_loc='', timeout=0):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -227,9 +215,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.prevs(filter_loc, timeout)
 
-    def nexts(self,
-              filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['ChromiumElement', str]]:
+    def nexts(self, filter_loc='', timeout=0):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -237,9 +223,7 @@ class ChromiumFrame(object):
         """
         return self._inner_ele.nexts(filter_loc, timeout)
 
-    def befores(self,
-                filter_loc: Union[tuple, str] = '',
-                timeout: float = None) -> List[Union['ChromiumElement', str]]:
+    def befores(self, filter_loc='', timeout=None):
         """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间

@@ -15,6 +15,7 @@ from .base import DrissionElement, BaseElement
 from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
+from .chromium_frame import ChromiumFrame
 
 
 class ChromiumElement(DrissionElement):
@@ -1184,7 +1185,7 @@ def _make_chromium_ele(page, node_id=None, obj_id=None):
             netloc1 = urlparse(src).netloc
             netloc2 = urlparse(page.url).netloc
             if netloc1 != netloc2:
-                from .chromium_base import ChromiumFrame
+                # from .chromium_base import ChromiumFrame
                 ele = ChromiumFrame(page, ele)
 
     return ele
@@ -1243,6 +1244,7 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None):
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
+    # todo:
     # elif isinstance(page_or_ele, ChromiumFrame):
     #     pass
     else:
@@ -1270,7 +1272,7 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None):
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
-        raise RuntimeError(f'Evaluation failed: {exceptionDetails}')
+        raise RuntimeError(f'javascript错误: {exceptionDetails}')
 
     try:
         return _parse_js_result(page, page_or_ele, res.get('result'))

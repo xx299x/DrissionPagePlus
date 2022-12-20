@@ -12,6 +12,7 @@ from .common import get_loc
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
 from .tab import Tab
+from .chromium_frame import ChromiumFrame
 
 
 class ChromiumBase(BasePage):
@@ -632,7 +633,7 @@ class ChromiumBase(BasePage):
         return True
 
 
-class ChromiumFrame(ChromiumBase):
+class Chromiu1mFrame(ChromiumBase):
     """实现浏览器frame的类"""
 
     def __init__(self, page, ele):
