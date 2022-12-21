@@ -3,7 +3,10 @@ from typing import Union, List, Tuple
 
 from lxml.html import HtmlElement
 
-from .base import DrissionElement, BasePage, BaseElement
+from .base import DrissionElement, BaseElement
+from .chromium_base import ChromiumFrame, ChromiumBase
+from .chromium_element import ChromiumElement
+from .driver_element import DriverElement
 from .session_page import SessionPage
 
 
@@ -104,6 +107,7 @@ class SessionElement(DrissionElement):
     def _get_ele_path(self, mode: str) -> str: ...
 
 
-def make_session_ele(html_or_ele: Union[str, BaseElement, BasePage],
+def make_session_ele(html_or_ele: Union[str, SessionElement, ChromiumElement, DriverElement, BaseElement, ChromiumFrame,
+                                        ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = ...,
                      single: bool = ...) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...

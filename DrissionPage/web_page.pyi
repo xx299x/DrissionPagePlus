@@ -5,8 +5,8 @@ from DownloadKit import DownloadKit
 from requests import Session, Response
 
 from .base import BasePage
-from .chromium_base import ChromiumFrame
 from .chromium_element import ChromiumElement
+from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage
 from .config import DriverOptions, SessionOptions
 from .session_element import SessionElement
@@ -99,7 +99,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = ...) -> List[Union[ChromiumElement, SessionElement, ChromiumFrame, str]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement] = ...) \
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = ...) \
             -> Union[SessionElement, str, None]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
@@ -147,7 +147,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def download(self) -> DownloadKit: ...
 
     def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
              timeout: float = ..., single: bool = ..., relative: bool = ...) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...

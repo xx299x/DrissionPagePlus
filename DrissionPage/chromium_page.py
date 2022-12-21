@@ -149,9 +149,9 @@ class ChromiumPage(ChromiumBase):
                 raise TypeError(f'不支持的文件格式：{pic_type}。')
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
-        hw = self.size
+        width, height = self.size
         if full_page:
-            vp = {'x': 0, 'y': 0, 'width': hw['width'], 'height': hw['height'], 'scale': 1}
+            vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
             png = self._wait_driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)['data']
         else:
             if left_top and right_bottom:

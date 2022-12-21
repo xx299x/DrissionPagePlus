@@ -264,7 +264,8 @@ def make_session_ele(html_or_ele, loc=None, single=True):
         raise ValueError("定位符必须为str或长度为2的tuple。")
 
     # ---------------根据传入对象类型获取页面对象和lxml元素对象---------------
-    if isinstance(html_or_ele, SessionElement):  # SessionElement
+    the_type = str(type(html_or_ele))
+    if the_type.endswith(".SessionElement'>"):  # SessionElement
         page = html_or_ele.page
 
         loc_str = loc[1]
@@ -285,7 +286,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
         loc = loc[0], loc_str
 
-    elif isinstance(html_or_ele, DrissionElement):  # ChromiumElement, DriverElement
+    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):  # ChromiumElement, DriverElement
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'
@@ -296,14 +297,14 @@ def make_session_ele(html_or_ele, loc=None, single=True):
         # 获取整个页面html再定位到当前元素，以实现查找上级元素
         page = html_or_ele.page
         xpath = html_or_ele.xpath
-        if hasattr(html_or_ele, 'doc_id'):  # ChromiumElement，支持元素在iframe内的情况
+        if hasattr(html_or_ele, 'doc_id'):  # ChromiumElement，兼容传入的元素在iframe内的情况
             html = html_or_ele.page.run_cdp('DOM.getOuterHTML', objectId=html_or_ele.doc_id)['outerHTML']
         else:
             html = html_or_ele.page.html
         html_or_ele = fromstring(html)
         html_or_ele = html_or_ele.xpath(xpath)[0]
 
-    elif isinstance(html_or_ele, BasePage):  # MixPage, DriverPage 或 SessionPage
+    elif isinstance(html_or_ele, BasePage):  # 各种页面对象
         page = html_or_ele
         html_or_ele = fromstring(html_or_ele.html)
 
@@ -311,7 +312,8 @@ def make_session_ele(html_or_ele, loc=None, single=True):
         page = None
         html_or_ele = fromstring(html_or_ele)
 
-    elif isinstance(html_or_ele, BaseElement):  # ShadowRootElement
+    # ShadowRootElement, ChromiumShadowRootElement, ChromiumFrame
+    elif isinstance(html_or_ele, BaseElement) or the_type.endswith(".ChromiumFrame'>"):
         page = html_or_ele.page
         html_or_ele = fromstring(html_or_ele.html)
 

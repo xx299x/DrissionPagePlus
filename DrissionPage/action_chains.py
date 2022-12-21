@@ -30,9 +30,9 @@ class ActionChains:
             lx = ele_or_loc[0] + offset_x
             ly = ele_or_loc[1] + offset_y
         elif 'ChromiumElement' in str(type(ele_or_loc)):
-            ele_loc = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
-            lx = ele_loc['x'] + offset_x
-            ly = ele_loc['y'] + offset_y
+            x, y = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
+            lx = x + offset_x
+            ly = y + offset_y
         else:
             raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 

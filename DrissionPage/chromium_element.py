@@ -2,20 +2,17 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   chromium_element.py
 """
 from os import sep
 from os.path import basename
 from pathlib import Path
 from re import search
 from time import perf_counter, sleep
-from urllib.parse import urlparse
 
 from .base import DrissionElement, BaseElement
 from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
-from .chromium_frame import ChromiumFrame
 
 
 class ChromiumElement(DrissionElement):
@@ -61,7 +58,8 @@ class ChromiumElement(DrissionElement):
     def tag(self):
         """返回元素tag"""
         if self._tag is None:
-            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']['localName'].lower()
+            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)['node'][
+                'localName'].lower()
         return self._tag
 
     @property
@@ -69,11 +67,11 @@ class ChromiumElement(DrissionElement):
         """返回元素outerHTML文本"""
         tag = self.tag
         if tag in ('iframe', 'frame'):
-            out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
+            out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id, not_change=True)['outerHTML']
             in_html = self.inner_html
             sign = search(rf'<{tag}.*?>', out_html).group(0)
             return f'{sign}{in_html}</{tag}>'
-        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
+        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id, not_change=True)['outerHTML']
 
     @property
     def inner_html(self):
@@ -86,7 +84,7 @@ class ChromiumElement(DrissionElement):
     @property
     def attrs(self):
         """返回元素所有attribute属性"""
-        attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
+        attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id, not_change=True)['attributes']
         attrs_len = len(attrs)
         return {attrs[i]: attrs[i + 1] for i in range(0, attrs_len, 2)}
 
@@ -120,51 +118,51 @@ class ChromiumElement(DrissionElement):
     def size(self):
         """返回元素宽和高"""
         try:
-            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
-            return {'height': model['height'], 'width': model['width']}
+            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id, not_change=True)['model']
+            return model['height'], model['width']
         except Exception:
-            return {'height': 0, 'width': 0}
+            return 0, 0
 
     @property
     def client_location(self):
         """返回元素左上角在视口中的坐标"""
         m = self._get_client_rect('border')
-        return {'x': m[0], 'y': m[1]} if m else None
+        return (m[0], m[1]) if m else (0, 0)
 
     @property
     def client_midpoint(self):
         """返回元素中间点在视口中的坐标"""
         m = self._get_client_rect('border')
-        return {'x': m[2] - m[0], 'y': m[5] - m[1]} if m else None
+        return (m[0] + (m[2] - m[0]) // 2, m[3] + (m[5] - m[3]) // 2) if m else (0, 0)
 
     @property
     def location(self):
         """返回元素左上角的绝对坐标"""
         cl = self.client_location
-        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
+        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
 
     @property
     def midpoint(self):
         """返回元素中间点的绝对坐标"""
         cl = self.client_midpoint
-        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
+        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
 
     @property
     def _client_click_point(self):
         """返回元素左上角可接受点击的点视口坐标"""
         m = self._get_client_rect('padding')
-        return {'x': m[0], 'y': m[1]} if m else None
+        return (m[0], m[1]) if m else (0, 0)
 
     @property
     def _click_point(self):
         """返回元素左上角可接受点击的点的绝对坐标"""
         cl = self._client_click_point
-        return self._get_absolute_rect(cl['x'], cl['y']) if cl else None
+        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
 
     @property
     def shadow_root(self):
         """返回当前元素的shadow_root元素对象"""
-        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id)['node']
+        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id, not_change=True)['node']
         if not info.get('shadowRoots', None):
             return None
 
@@ -307,8 +305,8 @@ class ChromiumElement(DrissionElement):
     @property
     def is_in_viewport(self):
         """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
-        loc = self.location
-        return _location_in_viewport(self.page, loc['x'], loc['y']) if loc else False
+        x, y = self.location
+        return _location_in_viewport(self.page, x, y) if x else False
 
     def attr(self, attr):
         """返回attribute属性值                           \n
@@ -361,7 +359,7 @@ class ChromiumElement(DrissionElement):
         :param prop: 属性名
         :return: 属性值文本
         """
-        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id)['result']
+        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id, not_change=True)['result']
         for i in p:
             if i['name'] == prop:
                 if 'value' not in i or 'value' not in i['value']:
@@ -392,7 +390,7 @@ class ChromiumElement(DrissionElement):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: 运行的结果
         """
-        return run_script(self, script, as_expr, self.page.timeouts.script, args)
+        return run_script(self, script, as_expr, self.page.timeouts.script, args, True)
 
     def run_async_script(self, script, as_expr=False, *args):
         """以异步方式执行js代码                                                 \n
@@ -402,7 +400,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         from threading import Thread
-        Thread(target=run_script, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
+        Thread(target=run_script, args=(self, script, as_expr, self.page.timeouts.script, args, True)).start()
 
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
@@ -472,7 +470,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_script(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)['node']
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
         try:
@@ -519,8 +517,8 @@ class ChromiumElement(DrissionElement):
             while not self.run_script(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        left, top = self.location.values()
-        height, width = self.size.values()
+        left, top = self.location
+        height, width = self.size
         left_top = (left, top)
         right_bottom = (left + width, top + height)
         return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
@@ -536,7 +534,7 @@ class ChromiumElement(DrissionElement):
             return self._set_file_input(vals)
 
         try:
-            self.page.run_cdp('DOM.focus', nodeId=self._node_id)
+            self.page.run_cdp('DOM.focus', nodeId=self._node_id, not_change=True)
         except Exception:
             self.click(by_js=True)
 
@@ -566,7 +564,7 @@ class ChromiumElement(DrissionElement):
         """
         if isinstance(files, str):
             files = files.split('\n')
-        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
+        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id, not_change=True)
 
     def clear(self, by_js=False):
         """清空元素文本                                    \n
@@ -604,13 +602,9 @@ class ChromiumElement(DrissionElement):
         if not by_js:
             self.page.scroll_to_see(self)
             if self.is_in_viewport:
-                client_point = self._client_click_point
-                if client_point:
-                    loc_point = self._click_point
-                    client_x = client_point['x']
-                    client_y = client_point['y']
-                    loc_x = loc_point['x']
-                    loc_y = loc_point['y']
+                client_x, client_y = self._client_click_point
+                if client_x:
+                    loc_x, loc_y = self._click_point
 
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
@@ -643,8 +637,8 @@ class ChromiumElement(DrissionElement):
     def r_click(self):
         """右键单击"""
         self.page.scroll_to_see(self)
-        xy = self._client_click_point
-        self._click(xy['x'], xy['y'], 'right')
+        x, y = self._client_click_point
+        self._click(x, y, 'right')
 
     def r_click_at(self, offset_x=None, offset_y=None):
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
@@ -683,9 +677,9 @@ class ChromiumElement(DrissionElement):
         :param shake: 是否随机抖动
         :return: None
         """
-        curr_xy = self.midpoint
-        offset_x += curr_xy['x']
-        offset_y += curr_xy['y']
+        curr_x, curr_y = self.midpoint
+        offset_x += curr_x
+        offset_y += curr_y
         self.drag_to((offset_x, offset_y), speed, shake)
 
     def drag_to(self, ele_or_loc, speed=40, shake=True):
@@ -697,17 +691,13 @@ class ChromiumElement(DrissionElement):
         """
         # x, y：目标点坐标
         if isinstance(ele_or_loc, ChromiumElement):
-            midpoint = ele_or_loc.midpoint
-            target_x = midpoint['x']
-            target_y = midpoint['y']
+            target_x, target_y = ele_or_loc.midpoint
         elif isinstance(ele_or_loc, (list, tuple)):
             target_x, target_y = ele_or_loc
         else:
             raise TypeError('需要ChromiumElement对象或坐标。')
 
-        curr_xy = self.midpoint
-        current_x = curr_xy['x']
-        current_y = curr_xy['y']
+        current_x, current_y = self.midpoint
         width = target_x - current_x
         height = target_y - current_y
         num = 0 if not speed else int(((abs(width) ** 2 + abs(height) ** 2) ** .5) // speed)
@@ -735,14 +725,14 @@ class ChromiumElement(DrissionElement):
         :param node_id: cdp中的node id
         :return: js中的object id
         """
-        return self.page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
+        return self.page.run_cdp('DOM.resolveNode', nodeId=node_id, not_change=True)['object']['objectId']
 
     def _get_node_id(self, obj_id):
         """根据传入object id获取cdp中的node id          \n
         :param obj_id: js中的object id
         :return: cdp中的node id
         """
-        return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
+        return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
 
     def _get_ele_path(self, mode):
         """返获取css路径或xpath路径"""
@@ -787,12 +777,12 @@ class ChromiumElement(DrissionElement):
         return f':root{t}' if mode == 'css' else t
 
     def _get_client_rect(self, quad):
-        """按照类型返回坐标
+        """按照类型返回窗口坐标                             \n
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标，大小为0时返回None
         """
         try:
-            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
+            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id, not_change=True)['model'][quad]
         except:
             return None
 
@@ -845,7 +835,7 @@ class ChromiumShadowRootElement(BaseElement):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)
+            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)
             return True
         except Exception:
             return False
@@ -1030,28 +1020,30 @@ class ChromiumShadowRootElement(BaseElement):
 
         css_paths = [i.css_path[47:] for i in eles]
         if single:
-            node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css_paths[0])['nodeId']
-            return ChromiumElement(self.page, node_id) if node_id else None
+            node_id = self.page.run_cdp('DOM.querySelector',
+                                        nodeId=self._node_id, selector=css_paths[0], not_change=True)['nodeId']
+            return _make_chromium_ele(self.page, node_id=node_id) if node_id else None
 
         else:
             results = []
             for i in css_paths:
-                node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
+                node_id = self.page.run_cdp('DOM.querySelector',
+                                            nodeId=self._node_id, selector=i, not_change=True)['nodeId']
                 if node_id:
-                    results.append(ChromiumElement(self.page, node_id))
+                    results.append(_make_chromium_ele(self.page, node_id=node_id))
             return results
 
     def _get_node_id(self, obj_id):
         """返回元素node id"""
-        return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
+        return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
 
     def _get_obj_id(self, back_id):
         """返回元素object id"""
-        return self.page.run_cdp('DOM.resolveNode', backendNodeId=back_id)['object']['objectId']
+        return self.page.run_cdp('DOM.resolveNode', backendNodeId=back_id, not_change=True)['object']['objectId']
 
     def _get_backend_id(self, node_id):
         """返回元素object id"""
-        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
+        return self.page.run_cdp('DOM.describeNode', nodeId=node_id, not_change=True)['node']['backendNodeId']
 
 
 def make_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
@@ -1179,14 +1171,9 @@ def _find_by_css(ele, selector, single, timeout):
 def _make_chromium_ele(page, node_id=None, obj_id=None):
     """根据node id或object id生成相应元素对象"""
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id)
-    if ele.tag in ('iframe', 'frame') and ele.attr('src'):
-        src = ele.attr('src')
-        if src:
-            netloc1 = urlparse(src).netloc
-            netloc2 = urlparse(page.url).netloc
-            if netloc1 != netloc2:
-                # from .chromium_base import ChromiumFrame
-                ele = ChromiumFrame(page, ele)
+    if ele.tag in ('iframe', 'frame'):
+        from .chromium_frame import ChromiumFrame
+        ele = ChromiumFrame(page, ele)
 
     return ele
 
@@ -1232,13 +1219,14 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None):
+def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None, not_change=False):
     """运行javascript代码                                                 \n
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
     :param timeout: 超时时间
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+    :param not_change: 执行时是否切换页面对象模式
     :return: js执行结果
     """
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
@@ -1257,7 +1245,9 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None):
                            returnByValue=False,
                            awaitPromise=True,
                            userGesture=True,
-                           timeout=timeout * 1000)
+                           timeout=timeout * 1000,
+                           not_change=not_change)
+
     else:
         args = args or ()
         if not is_js_func(script):
@@ -1268,7 +1258,8 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None):
                            arguments=[_convert_argument(arg) for arg in args],
                            returnByValue=False,
                            awaitPromise=True,
-                           userGesture=True)
+                           userGesture=True,
+                           not_change=not_change)
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
