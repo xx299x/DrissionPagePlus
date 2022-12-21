@@ -6,8 +6,8 @@ from requests import Session
 from requests.cookies import RequestsCookieJar
 
 from .base import BasePage
-from .chromium_element import ChromiumElement
-from .chromium_element import ChromiumElementWaiter, ChromeScroll
+from .chromium_element import ChromiumElement, ChromiumElementWaiter, ChromeScroll
+from .chromium_frame import ChromiumFrame
 from .config import DriverOptions
 from .session_element import SessionElement
 from .tab import Tab
@@ -56,8 +56,8 @@ class ChromiumBase(BasePage):
 
     def _set_options(self) -> None: ...
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str, 'ChromiumElement'],
-                 timeout: float = ...) -> Union['ChromiumElement', 'ChromiumFrame', None]: ...
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
+                 timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, None]: ...
 
     @property
     def title(self) -> str: ...
@@ -90,7 +90,7 @@ class ChromiumBase(BasePage):
     def ready_state(self) -> str: ...
 
     @property
-    def size(self) -> dict: ...
+    def size(self) -> tuple: ...
 
     @property
     def active_ele(self) -> ChromiumElement: ...
@@ -99,10 +99,10 @@ class ChromiumBase(BasePage):
     def page_load_strategy(self) -> str: ...
 
     @property
-    def scroll(self) -> 'ChromeScroll': ...
+    def scroll(self) -> ChromeScroll: ...
 
     @property
-    def set_page_load_strategy(self) -> pageLoadStrategy: ...
+    def set_page_load_strategy(self) -> PageLoadStrategy: ...
 
     def set_timeouts(self, implicit: float = ..., page_load: float = ..., script: float = ...) -> None: ...
 
@@ -130,22 +130,22 @@ class ChromiumBase(BasePage):
     def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
-            timeout: float = ...) -> Union[ChromiumElement, 'ChromiumFrame', None]: ...
+            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+            timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...) -> List[Union[ChromiumElement, 'ChromiumFrame']]: ...
+             timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement] = ...) \
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = ...) \
             -> Union[SessionElement, str, None]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
              timeout: float = ..., single: bool = ..., relative: bool = ...) \
-            -> Union[ChromiumElement, 'ChromiumFrame', None, List[Union[ChromiumElement, 'ChromiumFrame']]]: ...
+            -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, ChromiumElement],
@@ -188,86 +188,6 @@ class ChromiumBase(BasePage):
                    show_errmsg: bool = ...,
                    timeout: float = ...,
                    frame_id: str = ...) -> Union[bool, None]: ...
-
-
-class ChromiumFrame(ChromiumBase):
-    """实现浏览器frame的类"""
-
-    def __init__(self, page: ChromiumBase,
-                 ele: ChromiumElement):
-        self._inner_ele: ChromiumElement = ...
-        self.page: ChromiumBase = ...
-
-    def __repr__(self) -> str: ...
-
-    @property
-    def tag(self) -> str: ...
-
-    @property
-    def html(self) -> str: ...
-
-    @property
-    def inner_html(self) -> str: ...
-
-    @property
-    def attrs(self) -> dict: ...
-
-    @property
-    def frame_size(self) -> dict: ...
-
-    def _set_options(self) -> None: ...
-
-    @property
-    def obj_id(self) -> str: ...
-
-    @property
-    def node_id(self) -> str: ...
-
-    @property
-    def location(self) -> dict: ...
-
-    @property
-    def is_displayed(self) -> bool: ...
-
-    def attr(self, attr: str) -> Union[str, None]: ...
-
-    def set_attr(self, attr: str, value: str) -> None: ...
-
-    def remove_attr(self, attr: str) -> None: ...
-
-    def parent(self, level_or_loc: Union[tuple, str, int] = ...) -> Union['ChromiumElement', None]: ...
-
-    def prev(self,
-             filter_loc: Union[tuple, str] = ...,
-             index: int = ...,
-             timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
-
-    def next(self,
-             filter_loc: Union[tuple, str] = ...,
-             index: int = ...,
-             timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
-
-    def before(self,
-               filter_loc: Union[tuple, str] = ...,
-               index: int = ...,
-               timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
-
-    def after(self,
-              filter_loc: Union[tuple, str] = ...,
-              index: int = ...,
-              timeout: float = ...) -> Union['ChromiumElement', str, None]: ...
-
-    def prevs(self,
-              filter_loc: Union[tuple, str] = ...,
-              timeout: float = ...) -> List[Union['ChromiumElement', str]]: ...
-
-    def nexts(self,
-              filter_loc: Union[tuple, str] = ...,
-              timeout: float = ...) -> List[Union['ChromiumElement', str]]: ...
-
-    def befores(self,
-                filter_loc: Union[tuple, str] = ...,
-                timeout: float = ...) -> List[Union['ChromiumElement', str]]: ...
 
 
 class Timeout(object):

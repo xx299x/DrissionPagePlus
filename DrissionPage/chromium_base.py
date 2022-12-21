@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 from json import loads
-from re import search
 from time import perf_counter, sleep
-from urllib.parse import urlparse
 
 from requests import Session
 
@@ -12,7 +10,6 @@ from .common import get_loc
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
 from .tab import Tab
-from .chromium_frame import ChromiumFrame
 
 
 class ChromiumBase(BasePage):
@@ -51,6 +48,7 @@ class ChromiumBase(BasePage):
         self._set_options()
         self._init_page(tab_id)
         self._get_document()
+        self._first_run = False
 
     def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -90,7 +88,8 @@ class ChromiumBase(BasePage):
                         self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{root_id}'))
                     self._root_id = self._tab_obj.DOM.resolveNode(nodeId=root_id)['object']['objectId']
                     break
-                except:
+
+                except Exception:
                     if self._debug_recorder:
                         self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
 
@@ -235,10 +234,10 @@ class ChromiumBase(BasePage):
 
     @property
     def size(self):
-        """返回页面总长宽，{'height': int, 'width': int}"""
+        """返回页面总长高，格式：(长, 高)"""
         w = self.run_script('document.body.scrollWidth;', as_expr=True)
         h = self.run_script('document.body.scrollHeight;', as_expr=True)
-        return {'height': h, 'width': w}
+        return w, h
 
     @property
     def active_ele(self):
@@ -306,25 +305,13 @@ class ChromiumBase(BasePage):
         :param timeout: 连接超时时间
         :return: 目标url是否可用
         """
-        self._url_available = self._get(url, show_errmsg, retry, interval, timeout)
-        return self._url_available
-
-    def _get(self, url: str, show_errmsg=False, retry=None, interval=None, timeout=None, frame_id=None):
-        """访问url                                            \n
-        :param url: 目标url
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间
-        :return: 目标url是否可用，返回None表示不确定
-        """
         retry, interval = self._before_connect(url, retry, interval)
-        return self._d_connect(self._url,
-                               times=retry,
-                               interval=interval,
-                               show_errmsg=show_errmsg,
-                               timeout=timeout,
-                               frame_id=frame_id)
+        self._url_available = self._d_connect(self._url,
+                                              times=retry,
+                                              interval=interval,
+                                              show_errmsg=show_errmsg,
+                                              timeout=timeout)
+        return self._url_available
 
     def get_cookies(self, as_dict=False):
         """获取cookies信息                                              \n
@@ -381,10 +368,7 @@ class ChromiumBase(BasePage):
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        if isinstance(loc_or_ele, ChromiumElement):
-            return make_session_ele(loc_or_ele)
-        else:
-            return make_session_ele(self, loc_or_ele)
+        return make_session_ele(self, loc_or_ele)
 
     def s_eles(self, loc_or_str=None):
         """查找所有符合条件的元素以SessionElement列表形式返回                       \n
@@ -402,7 +386,7 @@ class ChromiumBase(BasePage):
         """
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
-        elif isinstance(loc_or_ele, ChromiumElement):
+        elif isinstance(loc_or_ele, ChromiumElement) or str(type(loc_or_ele)).endswith(".ChromiumFrame'>"):
             return loc_or_ele
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
@@ -426,12 +410,8 @@ class ChromiumBase(BasePage):
         for i in nodeIds['nodeIds']:
             ele = ChromiumElement(self, node_id=i)
             if ele.tag in ('iframe', 'frame'):
-                src = ele.attr('src')
-                if src:
-                    netloc1 = urlparse(src).netloc
-                    netloc2 = urlparse(self.url).netloc
-                    if netloc1 != netloc2:
-                        ele = ChromiumFrame(self, ele)
+                from .chromium_frame import ChromiumFrame
+                ele = ChromiumFrame(self, ele)
             eles.append(ele)
 
         return eles[0] if single else eles
@@ -520,8 +500,14 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
+        if cmd_args.get('not_change', None):
+            driver = self._tab_obj
+            cmd_args.pop('not_change')
+        else:
+            driver = self._driver
+
         try:
-            return self._driver.call_method(cmd, **cmd_args)
+            return driver.call_method(cmd, **cmd_args)
         except Exception as e:
             if 'Could not find node with given id' in str(e):
                 raise RuntimeError('该元素已不在当前页面中。')
@@ -585,7 +571,7 @@ class ChromiumBase(BasePage):
         if cookies:
             self._wait_driver.Network.clearBrowserCookies()
 
-    def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None, frame_id=None):
+    def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次                            \n
         :param to_url: 要访问的url
         :param times: 重试次数
@@ -599,10 +585,7 @@ class ChromiumBase(BasePage):
 
         for _ in range(times + 1):
             err = None
-            if frame_id:
-                result = self._driver.Page.navigate(url=to_url, frameId=frame_id)
-            else:
-                result = self._driver.Page.navigate(url=to_url)
+            result = self._driver.Page.navigate(url=to_url)
 
             is_timeout = not self._wait_loading(timeout)
             while self.is_loading:
@@ -631,168 +614,6 @@ class ChromiumBase(BasePage):
             return False
 
         return True
-
-
-class Chromiu1mFrame(ChromiumBase):
-    """实现浏览器frame的类"""
-
-    def __init__(self, page, ele):
-        """初始化                                                      \n
-        :param page: 页面对象
-        :param ele: 页面上的frame元素
-        """
-        self.page = page
-        self._inner_ele = ele
-        frame_id = page.run_cdp('DOM.describeNode', nodeId=ele.node_id)['node'].get('frameId', None)
-        super().__init__(page.address, frame_id, page.timeout)
-
-    def __repr__(self):
-        attrs = self.attrs
-        attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
-        return f'<ChromiumFrame {self.tag} {" ".join(attrs)}>'
-
-    @property
-    def tag(self):
-        """返回元素tag"""
-        return self._inner_ele.tag
-
-    @property
-    def html(self):
-        """返回元素outerHTML文本"""
-        tag = self.tag
-        out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._inner_ele.node_id)['outerHTML']
-        in_html = super().html
-        sign = search(rf'<{tag}.*?>', out_html).group(0)
-        return f'{sign}{in_html}</{tag}>'
-
-    @property
-    def inner_html(self):
-        """返回元素innerHTML文本"""
-        return super().html
-
-    @property
-    def attrs(self):
-        return self._inner_ele.attrs
-
-    @property
-    def frame_size(self):
-        """返回frame元素大小"""
-        return self._inner_ele.size
-
-    def _set_options(self):
-        self.set_timeouts(page_load=self.page.timeouts.page_load,
-                          script=self.page.timeouts.script,
-                          implicit=self.page.timeouts.implicit if self.timeout is None else self.timeout)
-        self._page_load_strategy = self.page.page_load_strategy
-
-    @property
-    def obj_id(self):
-        """返回js中的object id"""
-        return self._inner_ele.obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        return self._inner_ele.node_id
-
-    @property
-    def location(self):
-        """返回frame元素左上角的绝对坐标"""
-        return self._inner_ele.location
-
-    @property
-    def is_displayed(self):
-        """返回frame元素是否显示"""
-        return self._inner_ele.is_displayed
-
-    def attr(self, attr):
-        """返回frame元素attribute属性值                           \n
-        :param attr: 属性名
-        :return: 属性值文本，没有该属性返回None
-        """
-        return self._inner_ele.attr(attr)
-
-    def set_attr(self, attr, value):
-        """设置frame元素attribute属性          \n
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self._inner_ele.set_attr(attr, value)
-
-    def remove_attr(self, attr):
-        """删除frame元素attribute属性          \n
-        :param attr: 属性名
-        :return: None
-        """
-        self._inner_ele.remove_attr(attr)
-
-    def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
-        :param level_or_loc: 第几级父元素，或定位符
-        :return: 上级元素对象
-        """
-        return self._inner_ele.parent(level_or_loc)
-
-    def prev(self, filter_loc='', index=1, timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 前面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
-        """
-        return self._inner_ele.prev(filter_loc, index, timeout)
-
-    def next(self, filter_loc='', index=1, timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 后面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
-        """
-        return self._inner_ele.next(filter_loc, index, timeout)
-
-    def before(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 前面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 本元素前面的某个元素或节点
-        """
-        return self._inner_ele.before(filter_loc, index, timeout)
-
-    def after(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 后面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 本元素后面的某个元素或节点
-        """
-        return self._inner_ele.after(filter_loc, index, timeout)
-
-    def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素或节点文本组成的列表
-        """
-        return self._inner_ele.prevs(filter_loc, timeout)
-
-    def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素或节点文本组成的列表
-        """
-        return self._inner_ele.nexts(filter_loc, timeout)
-
-    def befores(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
-        :return: 本元素前面的元素或节点组成的列表
-        """
-        return self._inner_ele.befores(filter_loc, timeout)
 
 
 class Timeout(object):
