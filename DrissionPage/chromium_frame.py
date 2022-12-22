@@ -25,7 +25,7 @@ class ChromiumFrame(object):
         node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id, not_change=True)['node']
         self.frame_id = node.get('frameId', None)
 
-        if self.frame_id in str(self.page.run_cdp('Page.getFrameTree', not_change=True)['frameTree']):
+        if self._is_inner_frame():
             self._is_diff_domain = False
             self.frame_page = None
             backend_id = node.get('contentDocument', None).get('backendNodeId', None)
@@ -52,6 +52,10 @@ class ChromiumFrame(object):
         attrs = self.frame_ele.attrs
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
+
+    def _is_inner_frame(self):
+        """返回当前frame是否同域"""
+        return self.frame_id in str(self.page.run_cdp('Page.getFrameTree', not_change=True)['frameTree'])
 
     @property
     def tag(self):
@@ -149,7 +153,7 @@ class ChromiumFrame(object):
         return self.frame_ele.css_path
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
-        """访问目标网页                                            \n
+        """访问目标网页，url为同域名时只有url参数生效                 \n
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -157,7 +161,7 @@ class ChromiumFrame(object):
         :param timeout: 连接超时时间
         :return: 目标url是否可用
         """
-        # todo: 处理跳转到异域的情况
+        # todo: 处理同域名跳转到异域，及同域跳转到异域的情况
         if self._is_diff_domain:
             return self.frame_page.get(url, show_errmsg, retry, interval, timeout)
         else:
