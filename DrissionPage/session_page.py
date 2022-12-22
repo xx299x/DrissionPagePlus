@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from re import search
 from time import sleep
 from urllib.parse import urlparse

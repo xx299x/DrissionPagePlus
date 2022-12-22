@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   base.py
 """
 from abc import abstractmethod
 from re import sub

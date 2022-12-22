@@ -1,4 +1,8 @@
 # -*- encoding: utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from subprocess import Popen
 from typing import Union
 

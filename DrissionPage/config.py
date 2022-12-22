@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*-
 """
-管理配置的类
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   config.py
 """
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from http.cookiejar import Cookie

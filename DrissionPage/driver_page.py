@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   driver_page.py
 """
 from glob import glob
 from os import sep

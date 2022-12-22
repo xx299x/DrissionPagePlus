@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   driver_element.py
 """
 from os import sep
 from pathlib import Path

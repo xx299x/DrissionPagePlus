@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   chromium_element.py
 """
 from pathlib import Path
 from typing import Union, Tuple, List, Any
@@ -321,7 +320,7 @@ class ChromiumShadowRootElement(BaseElement):
     def _get_backend_id(self, node_id: str) -> str: ...
 
 
-def make_chromium_ele(ele: ChromiumElement,
+def find_in_chromium_ele(ele: ChromiumElement,
                       loc: Union[str, Tuple[str, str]],
                       single: bool = ...,
                       timeout: float = ...,
@@ -341,7 +340,7 @@ def _find_by_css(ele: ChromiumElement,
                  timeout: float) -> Union[ChromiumElement, List[ChromiumElement], None]: ...
 
 
-def _make_chromium_ele(page: ChromiumBase, node_id: str = ..., obj_id: str = ...) -> ChromiumElement: ...
+def make_chromium_ele(page: ChromiumBase, node_id: str = ..., obj_id: str = ...) -> Union[ChromiumElement, ChromiumFrame]: ...
 
 
 def _make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str: ...

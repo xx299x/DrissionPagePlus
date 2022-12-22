@@ -443,7 +443,7 @@ class ChromiumElement(DrissionElement):
         :param single: True则返回第一个，False则返回全部
         :return: ChromiumElement对象或文本、属性或其组成的列表
         """
-        return make_chromium_ele(self, loc_or_str, single, timeout, relative=relative)
+        return find_in_chromium_ele(self, loc_or_str, single, timeout, relative=relative)
 
     def style(self, style, pseudo_ele=''):
         """返回元素样式属性值，可获取伪元素属性值                \n
@@ -1022,7 +1022,7 @@ class ChromiumShadowRootElement(BaseElement):
         if single:
             node_id = self.page.run_cdp('DOM.querySelector',
                                         nodeId=self._node_id, selector=css_paths[0], not_change=True)['nodeId']
-            return _make_chromium_ele(self.page, node_id=node_id) if node_id else None
+            return make_chromium_ele(self.page, node_id=node_id) if node_id else None
 
         else:
             results = []
@@ -1030,7 +1030,7 @@ class ChromiumShadowRootElement(BaseElement):
                 node_id = self.page.run_cdp('DOM.querySelector',
                                             nodeId=self._node_id, selector=i, not_change=True)['nodeId']
                 if node_id:
-                    results.append(_make_chromium_ele(self.page, node_id=node_id))
+                    results.append(make_chromium_ele(self.page, node_id=node_id))
             return results
 
     def _get_node_id(self, obj_id):
@@ -1046,7 +1046,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self.page.run_cdp('DOM.describeNode', nodeId=node_id, not_change=True)['node']['backendNodeId']
 
 
-def make_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
+def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
     """在chromium元素中查找                                   \n
     :param ele: ChromiumElement对象
     :param loc: 元素定位元组
@@ -1117,14 +1117,14 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
             return None
         else:
             # return ChromiumElement(ele.page, obj_id=r['result']['objectId'])
-            return _make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+            return make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     else:
         if r['result']['description'] == 'NodeList(0)':
             return []
         else:
             r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [_make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
+            return [make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
                     if i['value']['type'] == 'object' else i['value']['value']
                     for i in r[:-1]]
 
@@ -1158,18 +1158,23 @@ def _find_by_css(ele, selector, single, timeout):
         if r['result']['subtype'] == 'null':
             return None
         else:
-            return _make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+            return make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     else:
         if r['result']['description'] == 'NodeList(0)':
             return []
         else:
             r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [_make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
+            return [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
-def _make_chromium_ele(page, node_id=None, obj_id=None):
-    """根据node id或object id生成相应元素对象"""
+def make_chromium_ele(page, node_id=None, obj_id=None):
+    """根据node id或object id生成相应元素对象          \n
+    :param page: ChromiumPage对象
+    :param node_id: 元素的node id
+    :param obj_id: 元素的object id
+    :return: ChromiumElement对象或ChromiumFrame对象
+    """
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id)
     if ele.tag in ('iframe', 'frame'):
         from .chromium_frame import ChromiumFrame
@@ -1290,7 +1295,7 @@ def _parse_js_result(page, ele, result):
             elif class_name == 'HTMLDocument':
                 return result
             else:
-                return _make_chromium_ele(page, obj_id=result['objectId'])
+                return make_chromium_ele(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
             r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']

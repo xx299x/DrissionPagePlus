@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   driver_page.py
 """
 from os import popen
 from pathlib import Path

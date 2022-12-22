@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
 from platform import system
 from re import search

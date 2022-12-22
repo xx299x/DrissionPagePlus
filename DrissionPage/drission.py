@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   drission.py
 """
 from platform import system
 from sys import exit

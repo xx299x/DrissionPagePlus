@@ -1,11 +1,15 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from json import loads
 from time import perf_counter, sleep
 
 from requests import Session
 
 from .base import BasePage
-from .chromium_element import ChromiumElementWaiter, ChromeScroll, ChromiumElement, run_script
+from .chromium_element import ChromiumElementWaiter, ChromeScroll, ChromiumElement, run_script, make_chromium_ele
 from .common import get_loc
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
@@ -408,11 +412,7 @@ class ChromiumBase(BasePage):
                                                          toIndex=count)
         eles = []
         for i in nodeIds['nodeIds']:
-            ele = ChromiumElement(self, node_id=i)
-            if ele.tag in ('iframe', 'frame'):
-                from .chromium_frame import ChromiumFrame
-                ele = ChromiumFrame(self, ele)
-            eles.append(ele)
+            eles.append(make_chromium_ele(self, node_id=i))
 
         return eles[0] if single else eles
 

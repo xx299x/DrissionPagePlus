@@ -1,3 +1,8 @@
+# -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from typing import Any, Union, Tuple, List
 
 from DownloadKit import DownloadKit

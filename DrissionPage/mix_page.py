@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   mix_page.py
 """
 from .base import BasePage
 from .drission import Drission

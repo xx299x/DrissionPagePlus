@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   session_element.py
 """
 from re import match, DOTALL
 

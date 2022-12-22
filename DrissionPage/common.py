@@ -2,7 +2,6 @@
 """
 @Author  :   g1879
 @Contact :   g1879@qq.com
-@File    :   common.py
 """
 from html import unescape
 from pathlib import Path
