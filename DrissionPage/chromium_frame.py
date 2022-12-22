@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 """
 from re import search
-from urllib.parse import urlparse
 
 from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
@@ -23,20 +22,22 @@ class ChromiumFrame(object):
         """
         self.page = page
         self.frame_ele = ele
-        self.frame_id = page.run_cdp('DOM.describeNode', nodeId=ele.node_id)['node'].get('frameId', None)
+        node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id, not_change=True)['node']
+        self.frame_id = node.get('frameId', None)
 
-        # 有src属性，且域名和主框架不一样，为异域frame
-        src = ele.attr('src')
-        if src and urlparse(src).netloc != urlparse(page.url).netloc:
+        if self.frame_id in str(self.page.run_cdp('Page.getFrameTree', not_change=True)['frameTree']):
+            self._is_diff_domain = False
+            self.frame_page = None
+            backend_id = node.get('contentDocument', None).get('backendNodeId', None)
+            obj_id = self.page.driver.DOM.resolveNode(backendNodeId=backend_id)['object']['objectId']
+            self._doc_ele = ChromiumElement(page, obj_id=obj_id)
+
+        else:  # 若frame_id不在frame_tree中，为异域frame
             self._is_diff_domain = True
+            self._doc_ele = None
             self.frame_page = ChromiumBase(page.address, self.frame_id)
             self.frame_page.set_page_load_strategy(self.page.page_load_strategy)
             self.frame_page.timeouts = self.page.timeouts
-            self.frame_page._debug = True
-
-        else:
-            self.frame_page = None
-            self._is_diff_domain = False
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                             \n
@@ -59,7 +60,7 @@ class ChromiumFrame(object):
 
     @property
     def url(self):
-        """"""
+        """返回frame当前访问的url"""
         if self._is_diff_domain:
             return self.frame_page.url
         else:
@@ -71,7 +72,8 @@ class ChromiumFrame(object):
         """返回元素outerHTML文本"""
         if self._is_diff_domain:
             tag = self.tag
-            out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self.frame_ele.node_id)['outerHTML']
+            out_html = self.page.run_cdp('DOM.getOuterHTML',
+                                         nodeId=self.frame_ele.node_id, not_change=True)['outerHTML']
             in_html = self.frame_page.html
             sign = search(rf'<{tag}.*?>', out_html).group(0)
             return f'{sign}{in_html}</{tag}>'
@@ -88,6 +90,7 @@ class ChromiumFrame(object):
 
     @property
     def cookies(self):
+        """以dict格式返回cookies"""
         return self.frame_page.cookies if self._is_diff_domain else self.page.cookies
 
     @property
@@ -135,6 +138,16 @@ class ChromiumFrame(object):
         """返回frame元素是否显示"""
         return self.frame_ele.is_displayed
 
+    @property
+    def xpath(self):
+        """返回frame的xpath绝对路径"""
+        return self.frame_ele.xpath
+
+    @property
+    def css_path(self):
+        """返回frame的css selector绝对路径"""
+        return self.frame_ele.css_path
+
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问目标网页                                            \n
         :param url: 目标url
@@ -144,22 +157,55 @@ class ChromiumFrame(object):
         :param timeout: 连接超时时间
         :return: 目标url是否可用
         """
+        # todo: 处理跳转到异域的情况
         if self._is_diff_domain:
-            return self.page.get(url, show_errmsg, retry, interval, timeout)
+            return self.frame_page.get(url, show_errmsg, retry, interval, timeout)
         else:
-            # todo:
-            pass
+            self.frame_ele.run_script(f'this.contentWindow.location="{url}";')
 
     def refresh(self):
-        "document.getElementById('some_frame_id').contentWindow.location.reload();"
+        """刷新frame页面"""
+        if self._is_diff_domain:
+            raise RuntimeError('refresh()仅支持同域frame。')
+        else:
+            try:
+                self.frame_ele.run_script('this.contentWindow.location.reload();')
+            except RuntimeError:
+                return RuntimeError('非同源域名无法执行refresh()。')
+
+    def forward(self, steps=1):
+        """在浏览历史中前进若干步    \n
+        :param steps: 前进步数
+        :return: None
+        """
+        if self._is_diff_domain:
+            raise RuntimeError('forward()仅支持同域frame。')
+        else:
+            try:
+                self.frame_ele.run_script(f'this.contentWindow.history.go({steps});')
+            except RuntimeError:
+                return RuntimeError('非同源域名无法执行forward()。')
+
+    def back(self, steps=1):
+        """在浏览历史中后退若干步    \n
+        :param steps: 后退步数
+        :return: None
+        """
+        if self._is_diff_domain:
+            raise RuntimeError('back()仅支持同域frame。')
+        else:
+            try:
+                self.frame_ele.run_script(f'this.contentWindow.history.go({-steps});')
+            except RuntimeError:
+                return RuntimeError('非同源域名无法执行back()。')
 
     def ele(self, loc_or_str, timeout=None):
-        """在frame内查找单个元素
+        """在frame内查找单个元素                         \n
         :param loc_or_str: 定位符或元素对象
         :param timeout: 查找超时时间
         :return: ChromiumElement对象
         """
-        d = self.frame_page if self._is_diff_domain else self.frame_ele
+        d = self.frame_page if self._is_diff_domain else self._doc_ele
         return d.ele(loc_or_str, timeout)
 
     def eles(self, loc_or_str, timeout=None):
@@ -168,7 +214,7 @@ class ChromiumFrame(object):
         :param timeout: 查找超时时间
         :return: ChromiumElement对象组成的列表
         """
-        d = self.frame_page if self._is_diff_domain else self.frame_ele
+        d = self.frame_page if self._is_diff_domain else self._doc_ele
         return d.eles(loc_or_str, timeout)
 
     def s_ele(self, loc_or_str=None):
@@ -209,6 +255,10 @@ class ChromiumFrame(object):
         :return: None
         """
         self.frame_ele.remove_attr(attr)
+
+    def run_script(self, script, as_expr=False, *args):
+        # todo:
+        pass
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n

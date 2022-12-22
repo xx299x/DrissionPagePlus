@@ -14,6 +14,8 @@ from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 
+__FRAME_ELEMENT__ = ('iframe', 'frame')
+
 
 class ChromiumElement(DrissionElement):
     """ChromePage页面对象中的元素对象"""
@@ -38,7 +40,8 @@ class ChromiumElement(DrissionElement):
             self._node_id = self._get_node_id(obj_id)
             self._obj_id = obj_id
 
-        self._doc_id = self.run_script('return this.ownerDocument;')['objectId']
+        doc = self.run_script('return this.ownerDocument;')
+        self._doc_id = doc['objectId'] if doc else None
 
     def __repr__(self):
         attrs = self.attrs
@@ -738,7 +741,6 @@ class ChromiumElement(DrissionElement):
         """返获取css路径或xpath路径"""
         if mode == 'xpath':
             txt1 = 'var tag = el.nodeName.toLowerCase();'
-            # txt2 = '''return '//' + tag + '[@id="' + el.id + '"]'  + path;'''
             txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
             txt4 = '''
             if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
@@ -747,7 +749,6 @@ class ChromiumElement(DrissionElement):
 
         elif mode == 'css':
             txt1 = ''
-            # txt2 = '''return '#' + el.id + path;'''
             txt3 = ''
             txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
             txt5 = '''return path.substr(1);'''
@@ -1116,7 +1117,6 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
         if r['result']['subtype'] == 'null':
             return None
         else:
-            # return ChromiumElement(ele.page, obj_id=r['result']['objectId'])
             return make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     else:
@@ -1237,9 +1237,6 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None, not_
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
-    # todo:
-    # elif isinstance(page_or_ele, ChromiumFrame):
-    #     pass
     else:
         page = page_or_ele
         obj_id = page_or_ele._root_id

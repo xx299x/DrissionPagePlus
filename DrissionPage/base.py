@@ -263,10 +263,10 @@ class DrissionElement(BaseElement):
 class BasePage(BaseParser):
     """页面类的基类"""
 
-    def __init__(self, timeout=10):
+    def __init__(self, timeout=None):
         """初始化函数"""
         self._url = None
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else 10
         self.retry_times = 3
         self.retry_interval = 2
         self._url_available = None
