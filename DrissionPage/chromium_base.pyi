@@ -121,14 +121,6 @@ class ChromiumBase(BasePage):
             interval: float = ...,
             timeout: float = ...) -> Union[None, bool]: ...
 
-    def _get(self,
-             url: str,
-             show_errmsg: bool = ...,
-             retry: int = ...,
-             interval: float = ...,
-             timeout: float = ...,
-             frame_id: str = ...) -> Union[None, bool]: ...
-
     def get_cookies(self, as_dict: bool = ...) -> Union[list, dict]: ...
 
     def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
@@ -190,8 +182,7 @@ class ChromiumBase(BasePage):
                    times: int = ...,
                    interval: float = ...,
                    show_errmsg: bool = ...,
-                   timeout: float = ...,
-                   frame_id: str = ...) -> Union[bool, None]: ...
+                   timeout: float = ...) -> Union[bool, None]: ...
 
 
 class Timeout(object):

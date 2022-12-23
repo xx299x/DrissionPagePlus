@@ -20,25 +20,32 @@ __FRAME_ELEMENT__ = ('iframe', 'frame')
 class ChromiumElement(DrissionElement):
     """ChromePage页面对象中的元素对象"""
 
-    def __init__(self, page, node_id=None, obj_id=None):
+    def __init__(self, page, node_id=None, obj_id=None, backend_id=None):
         """初始化，node_id和obj_id必须至少传入一个                       \n
         :param page: 元素所在ChromePage页面对象
         :param node_id: cdp中的node id
         :param obj_id: js中的object id
+        :param backend_id: backend id
         """
         super().__init__(page)
         self._select = None
         self._scroll = None
         self._tag = None
-        if not node_id and not obj_id:
-            raise RuntimeError('元素可能已失效。')
 
         if node_id:
             self._node_id = node_id
             self._obj_id = self._get_obj_id(node_id)
-        else:
+            self._backend_id = self._get_backend_id(self._node_id)
+        elif obj_id:
             self._node_id = self._get_node_id(obj_id)
             self._obj_id = obj_id
+            self._backend_id = self._get_backend_id(self._node_id)
+        elif backend_id:
+            self._obj_id = self._get_obj_id(backend_id=backend_id)
+            self._node_id = self._get_node_id(obj_id=self._obj_id)
+            self._backend_id = backend_id
+        else:
+            raise RuntimeError('元素可能已失效。')
 
         doc = self.run_script('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
@@ -111,6 +118,11 @@ class ChromiumElement(DrissionElement):
     def node_id(self):
         """返回cdp中的node id"""
         return self._node_id
+
+    @property
+    def backend_id(self):
+        """返回backend id"""
+        return self._backend_id
 
     @property
     def doc_id(self):
@@ -723,19 +735,34 @@ class ChromiumElement(DrissionElement):
             current_x, current_y = x, y
         actions.release()
 
-    def _get_obj_id(self, node_id):
+    def _get_obj_id(self, node_id=None, backend_id=None):
         """根据传入node id获取js中的object id          \n
         :param node_id: cdp中的node id
+        :param backend_id: backend id
         :return: js中的object id
         """
-        return self.page.run_cdp('DOM.resolveNode', nodeId=node_id, not_change=True)['object']['objectId']
+        if node_id:
+            return self.page.run_cdp('DOM.resolveNode', nodeId=node_id, not_change=True)['object']['objectId']
+        else:
+            return self.page.run_cdp('DOM.resolveNode', backendNodeId=backend_id, not_change=True)['object']['objectId']
 
-    def _get_node_id(self, obj_id):
+    def _get_node_id(self, obj_id=None, backend_id=None):
         """根据传入object id获取cdp中的node id          \n
         :param obj_id: js中的object id
+        :param backend_id: backend id
         :return: cdp中的node id
         """
-        return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
+        if obj_id:
+            return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
+        else:
+            return self.page.run_cdp('DOM.describeNode', backendNodeId=backend_id, not_change=True)['node']['nodeId']
+
+    def _get_backend_id(self, node_id):
+        """根据传入node id获取backend id
+        :param node_id:
+        :return: backend id
+        """
+        return self.page.run_cdp('DOM.describeNode', nodeId=node_id, not_change=True)['node']['backendNodeId']
 
     def _get_ele_path(self, mode):
         """返获取css路径或xpath路径"""
@@ -848,8 +875,13 @@ class ChromiumShadowRootElement(BaseElement):
 
     @property
     def obj_id(self):
-        """返回元素js中的obect id"""
+        """返回元素js中的object id"""
         return self._obj_id
+
+    @property
+    def backend_id(self):
+        """返回backend id"""
+        return self._backend_id
 
     @property
     def tag(self):

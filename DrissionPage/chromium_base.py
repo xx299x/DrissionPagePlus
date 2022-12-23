@@ -174,7 +174,10 @@ class ChromiumBase(BasePage):
                 self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def _set_options(self):
-        pass
+        self.set_timeouts(page_load=10,
+                          script=10,
+                          implicit=10)
+        self._page_load_strategy = 'normal'
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                              \n
@@ -583,7 +586,7 @@ class ChromiumBase(BasePage):
         err = None
         timeout = timeout if timeout is not None else self.timeouts.page_load
 
-        for _ in range(times + 1):
+        for t in range(times + 1):
             err = None
             result = self._driver.Page.navigate(url=to_url)
 
@@ -599,7 +602,7 @@ class ChromiumBase(BasePage):
             if not err:
                 break
 
-            if _ < times:
+            if t < times:
                 sleep(interval)
                 while self.ready_state != 'complete':
                     sleep(.1)

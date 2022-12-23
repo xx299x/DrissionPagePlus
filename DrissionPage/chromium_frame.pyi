@@ -66,6 +66,9 @@ class ChromiumFrame(object):
     def node_id(self) -> str: ...
 
     @property
+    def backend_id(self) -> str: ...
+
+    @property
     def location(self) -> dict: ...
 
     @property
