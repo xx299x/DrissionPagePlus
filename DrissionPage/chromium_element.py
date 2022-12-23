@@ -625,7 +625,7 @@ class ChromiumElement(DrissionElement):
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
                         if wait_loading:
-                            self.wait_loading()
+                            self.page.wait_loading()
                         return True
 
                     timeout = timeout if timeout is not None else self.page.timeout
@@ -635,13 +635,13 @@ class ChromiumElement(DrissionElement):
 
                     if click is not None:
                         if wait_loading:
-                            self.wait_loading()
+                            self.page.wait_loading()
                         return True
 
         if by_js is not False:
             self.run_script('this.click();')
             if wait_loading:
-                self.wait_loading()
+                self.page.wait_loading()
             return True
 
         return False
@@ -741,18 +741,6 @@ class ChromiumElement(DrissionElement):
             actions.move(x - current_x, y - current_y)
             current_x, current_y = x, y
         actions.release()
-
-    def wait_loading(self, timeout=2):
-        """阻塞程序，等待页面进入加载状态        \n
-        :param timeout: 超时时间
-        :return: 等待结束时是否进入加载状态
-        """
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self.page.is_loading:
-                return True
-            sleep(.05)
-        return False
 
     def _get_obj_id(self, node_id=None, backend_id=None):
         """根据传入node id获取js中的object id          \n

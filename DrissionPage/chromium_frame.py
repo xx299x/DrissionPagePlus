@@ -77,7 +77,7 @@ class cc(ChromiumBase):
             err = None
             result = self._driver.Page.navigate(url=to_url, frameId=self.frame_id)
 
-            is_timeout = not self._wait_loading(timeout)
+            is_timeout = not self._wait_loaded(timeout)
             while self.is_loading:
                 sleep(.1)
 

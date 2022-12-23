@@ -84,7 +84,7 @@ class ChromiumBase(BasePage):
                 if self._debug_recorder:
                     self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
 
-            self._wait_loading()
+            self._wait_loaded()
             while True:
                 try:
                     root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
@@ -105,7 +105,7 @@ class ChromiumBase(BasePage):
             self._is_loading = False
             self._is_reading = False
 
-    def _wait_loading(self, timeout=None):
+    def _wait_loaded(self, timeout=None):
         """等待页面加载完成
         :param timeout: 超时时间
         :return: 是否成功，超时返回False
@@ -319,6 +319,18 @@ class ChromiumBase(BasePage):
                                               show_errmsg=show_errmsg,
                                               timeout=timeout)
         return self._url_available
+
+    def wait_loading(self, timeout=1):
+        """阻塞程序，等待页面进入加载状态        \n
+        :param timeout: 超时时间
+        :return: 等待结束时是否进入加载状态
+        """
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self.is_loading:
+                return True
+            sleep(.005)
+        return False
 
     def get_cookies(self, as_dict=False):
         """获取cookies信息                                              \n
@@ -599,7 +611,7 @@ class ChromiumBase(BasePage):
             err = None
             result = self._driver.Page.navigate(url=to_url)
 
-            is_timeout = not self._wait_loading(timeout)
+            is_timeout = not self._wait_loaded(timeout)
             while self.is_loading:
                 sleep(.1)
 
