@@ -592,12 +592,13 @@ class ChromiumElement(DrissionElement):
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def click(self, by_js=None, retry=False, timeout=.2):
+    def click(self, by_js=None, retry=False, timeout=.2, wait_loading=False):
         """点击元素                                                                      \n
         如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
         :param retry: 遇到其它元素遮挡时，是否重试
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
+        :param wait_loading: 是否等待页面进入加载状态
         :return: 是否点击成功
         """
 
@@ -623,6 +624,8 @@ class ChromiumElement(DrissionElement):
 
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
+                        if wait_loading:
+                            self.wait_loading()
                         return True
 
                     timeout = timeout if timeout is not None else self.page.timeout
@@ -631,10 +634,14 @@ class ChromiumElement(DrissionElement):
                         click = do_it(client_x, client_y, loc_x, loc_y)
 
                     if click is not None:
+                        if wait_loading:
+                            self.wait_loading()
                         return True
 
         if by_js is not False:
             self.run_script('this.click();')
+            if wait_loading:
+                self.wait_loading()
             return True
 
         return False
@@ -734,6 +741,18 @@ class ChromiumElement(DrissionElement):
             actions.move(x - current_x, y - current_y)
             current_x, current_y = x, y
         actions.release()
+
+    def wait_loading(self, timeout=2):
+        """阻塞程序，等待页面进入加载状态        \n
+        :param timeout: 超时时间
+        :return: 等待结束时是否进入加载状态
+        """
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self.page.is_loading:
+                return True
+            sleep(.05)
+        return False
 
     def _get_obj_id(self, node_id=None, backend_id=None):
         """根据传入node id获取js中的object id          \n
@@ -1146,19 +1165,15 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
                              userGesture=True)
 
     if single:
-        if r['result']['subtype'] == 'null':
-            return None
-        else:
-            return make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return None if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
+    if r['result']['description'] == 'NodeList(0)':
+        return []
     else:
-        if r['result']['description'] == 'NodeList(0)':
-            return []
-        else:
-            r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
-                    if i['value']['type'] == 'object' else i['value']['value']
-                    for i in r[:-1]]
+        r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+        return [make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
+                if i['value']['type'] == 'object' else i['value']['value']
+                for i in r[:-1]]
 
 
 def _find_by_css(ele, selector, single, timeout):
@@ -1187,17 +1202,13 @@ def _find_by_css(ele, selector, single, timeout):
                              userGesture=True)
 
     if single:
-        if r['result']['subtype'] == 'null':
-            return None
-        else:
-            return make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return None if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
+    if r['result']['description'] == 'NodeList(0)':
+        return []
     else:
-        if r['result']['description'] == 'NodeList(0)':
-            return []
-        else:
-            r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
-            return [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
+        r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+        return [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
 def make_chromium_ele(page, node_id=None, obj_id=None):

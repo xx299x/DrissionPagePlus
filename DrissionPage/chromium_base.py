@@ -402,22 +402,31 @@ class ChromiumBase(BasePage):
         search_result = self._wait_driver.DOM.performSearch(query=loc, includeUserAgentShadowDOM=True)
         count = search_result['resultCount']
 
+        nodeIds = None
         end_time = perf_counter() + timeout
-        while count == 0 and perf_counter() < end_time:
+        while True:
+            if count > 0:
+                count = 1 if single else count
+                try:
+                    nodeIds = self._wait_driver.DOM.getSearchResults(searchId=search_result['searchId'],
+                                                                     fromIndex=0, toIndex=count)
+                    break
+                except Exception:
+                    sleep(.01)
+
+            if perf_counter() >= end_time:
+                break
+
             search_result = self._wait_driver.DOM.performSearch(query=loc, includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
 
-        if count == 0:
+        if not nodeIds:
             return None if single else []
 
-        count = 1 if single else count
-        nodeIds = self._wait_driver.DOM.getSearchResults(searchId=search_result['searchId'], fromIndex=0,
-                                                         toIndex=count)
-        eles = []
-        for i in nodeIds['nodeIds']:
-            eles.append(make_chromium_ele(self, node_id=i))
-
-        return eles[0] if single else eles
+        if single:
+            return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+        else:
+            return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
 
     def wait_ele(self, loc_or_ele, timeout=None):
         """返回用于等待元素到达某个状态的等待器对象                             \n
