@@ -1099,7 +1099,7 @@ def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
     if isinstance(loc, (str, tuple)):
         loc = get_loc(loc)
     else:
-        raise ValueError("定位符必须为str或长度为2的tuple对象。")
+        raise ValueError(f"定位符必须为str或长度为2的tuple对象。现在是：{loc}")
 
     loc_str = loc[1]
     if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
