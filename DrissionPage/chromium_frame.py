@@ -20,13 +20,16 @@ class ChromiumFrame(ChromiumBase):
 
         if self._is_inner_frame():
             self._is_diff_domain = False
-            super().__init__(page.address, page.tab_id, page.timeout)
             self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+            super().__init__(page.address, page.tab_id, page.timeout)
         else:
             self._is_diff_domain = True
             super().__init__(page.address, self.frame_id, page.timeout)
             obj_id = super().run_script('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+
+        self._tab_obj.Page.FrameAttached = self._onFrameAttached
+        self._tab_obj.Page.FrameDetached = self._onFrameDetached
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                             \n
@@ -53,8 +56,8 @@ class ChromiumFrame(ChromiumBase):
             while True:
                 try:
                     if self._is_inner_frame():
-                        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self.backend_id, not_change=True)[
-                            'node']
+                        node = self.page.run_cdp('DOM.describeNode',
+                                                 backendNodeId=self.backend_id, not_change=True)['node']
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
                     else:
                         b_id = self._tab_obj.DOM.getDocument()['root']['backendNodeId']
@@ -87,6 +90,14 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
             self._get_new_document()
+
+    def _onFrameAttached(self, **kwargs):
+        if self._debug:
+            print(f'FrameAttached{[kwargs]}')
+
+    def _onFrameDetached(self, **kwargs):
+        if self._debug:
+            print(f'FrameDetached{[kwargs]}')
 
     @property
     def tab_id(self):
@@ -188,6 +199,14 @@ class ChromiumFrame(ChromiumBase):
     def css_path(self):
         """返回frame的css selector绝对路径"""
         return self.frame_ele.css_path
+
+    @property
+    def ready_state(self):
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        if self._is_diff_domain:
+            return super().ready_state
+        else:
+            return self.doc_ele.run_script('return this.readyState;')
 
     def refresh(self):
         """刷新frame页面"""

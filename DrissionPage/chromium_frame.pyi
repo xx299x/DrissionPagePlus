@@ -5,7 +5,6 @@
 """
 from typing import Union, Tuple, List, Any
 
-from session_element import SessionElement
 from .chromium_element import ChromiumElement
 from .chromium_base import ChromiumBase
 
@@ -32,7 +31,22 @@ class ChromiumFrame(ChromiumBase):
 
     def __repr__(self) -> str: ...
 
-    def _is_inner_frame(self) -> bool: ...
+    def _get_new_document(self) -> None: ...
+
+    @property
+    def tab_id(self) -> str: ...
+
+    @property
+    def backend_id(self) -> str: ...
+
+    @property
+    def obj_id(self) -> str: ...
+
+    @property
+    def node_id(self) -> str: ...
+
+    @property
+    def frame_ele(self) -> ChromiumElement: ...
 
     @property
     def tag(self) -> str: ...
@@ -44,13 +58,13 @@ class ChromiumFrame(ChromiumBase):
     def html(self) -> str: ...
 
     @property
+    def inner_html(self) -> str: ...
+
+    @property
     def title(self) -> str: ...
 
     @property
     def cookies(self) -> dict: ...
-
-    @property
-    def inner_html(self) -> str: ...
 
     @property
     def attrs(self) -> dict: ...
@@ -65,18 +79,6 @@ class ChromiumFrame(ChromiumBase):
     def active_ele(self) -> ChromiumElement: ...
 
     @property
-    def obj_id(self) -> str: ...
-
-    @property
-    def node_id(self) -> str: ...
-
-    @property
-    def backend_id(self) -> str: ...
-
-    @property
-    def frame_ele(self) -> ChromiumElement: ...
-
-    @property
     def location(self) -> dict: ...
 
     @property
@@ -88,31 +90,7 @@ class ChromiumFrame(ChromiumBase):
     @property
     def css_path(self) -> str: ...
 
-    def get(self,
-            url: str,
-            show_errmsg: bool = ...,
-            retry: int = ...,
-            interval: float = ...,
-            timeout: float = ...) -> Union[None, bool]: ...
-
     def refresh(self) -> None: ...
-
-    def forward(self, steps: int = ...) -> None: ...
-
-    def back(self, steps: int = ...) -> None: ...
-
-    def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, 'ChromiumFrame'],
-            timeout: float = ...): ...
-
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...): ...
-
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str, ChromiumElement] = ...) -> Union[
-        SessionElement, str, None]: ...
-
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
 
     def attr(self, attr: str) -> Union[str, None]: ...
 
@@ -155,3 +133,17 @@ class ChromiumFrame(ChromiumBase):
     def befores(self,
                 filter_loc: Union[tuple, str] = ...,
                 timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
+
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+             timeout: float = ..., single: bool = ..., relative: bool = ...) \
+            -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...
+
+    def _d_connect(self,
+                   to_url: str,
+                   times: int = ...,
+                   interval: float = ...,
+                   show_errmsg: bool = ...,
+                   timeout: float = ...) -> Union[bool, None]: ...
+
+    def _is_inner_frame(self) -> bool: ...
