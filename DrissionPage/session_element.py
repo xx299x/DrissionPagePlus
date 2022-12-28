@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from html import unescape
 from re import match, DOTALL
 
 from lxml.etree import tostring
@@ -49,7 +50,7 @@ class SessionElement(DrissionElement):
     def html(self):
         """返回outerHTML文本"""
         html = tostring(self._inner_ele, method="html").decode()
-        return html[:html.rfind('>') + 1]  # tostring()会把跟紧元素的文本节点也带上，因此要去掉
+        return unescape(html[:html.rfind('>') + 1])  # tostring()会把跟紧元素的文本节点也带上，因此要去掉
 
     @property
     def inner_html(self):
@@ -264,7 +265,8 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
     # ---------------根据传入对象类型获取页面对象和lxml元素对象---------------
     the_type = str(type(html_or_ele))
-    if the_type.endswith(".SessionElement'>"):  # SessionElement
+    # SessionElement
+    if the_type.endswith(".SessionElement'>"):
         page = html_or_ele.page
 
         loc_str = loc[1]
@@ -285,7 +287,8 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
         loc = loc[0], loc_str
 
-    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):  # ChromiumElement, DriverElement
+    # ChromiumElement, DriverElement
+    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'
@@ -303,11 +306,13 @@ def make_session_ele(html_or_ele, loc=None, single=True):
         html_or_ele = fromstring(html)
         html_or_ele = html_or_ele.xpath(xpath)[0]
 
-    elif isinstance(html_or_ele, BasePage):  # 各种页面对象
+    # 各种页面对象
+    elif isinstance(html_or_ele, BasePage):
         page = html_or_ele
         html_or_ele = fromstring(html_or_ele.html)
 
-    elif isinstance(html_or_ele, str):  # 直接传入html文本
+    # 直接传入html文本
+    elif isinstance(html_or_ele, str):
         page = None
         html_or_ele = fromstring(html_or_ele)
 

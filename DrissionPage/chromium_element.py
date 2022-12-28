@@ -6,7 +6,6 @@
 from os import sep
 from os.path import basename
 from pathlib import Path
-from re import search
 from time import perf_counter, sleep
 
 from .base import DrissionElement, BaseElement
@@ -75,20 +74,11 @@ class ChromiumElement(DrissionElement):
     @property
     def html(self):
         """返回元素outerHTML文本"""
-        tag = self.tag
-        if tag in ('iframe', 'frame'):
-            out_html = self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id, not_change=True)['outerHTML']
-            in_html = self.inner_html
-            sign = search(rf'<{tag}.*?>', out_html).group(0)
-            return f'{sign}{in_html}</{tag}>'
         return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id, not_change=True)['outerHTML']
 
     @property
     def inner_html(self):
         """返回元素innerHTML文本"""
-        if self.tag in ('iframe', 'frame'):
-            return self.run_script('return this.contentDocument.documentElement;').html
-            # return self.run_script(self, 'this.contentDocument.body;').html
         return self.run_script('return this.innerHTML;')
 
     @property
@@ -826,7 +816,7 @@ class ChromiumElement(DrissionElement):
         js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
         xy = self.run_script(js)
         sx, sy = xy.split(' ')
-        return {'x': x + int(float(sx)), 'y': y + int(float(sy))}
+        return x + int(float(sx)), y + int(float(sy))
 
 
 class ChromiumShadowRootElement(BaseElement):
