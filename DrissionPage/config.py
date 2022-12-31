@@ -131,8 +131,10 @@ class OptionsManager(object):
 
 
 class SessionOptions(object):
+    """requests的Session对象配置类"""
+
     def __init__(self, read_file=True, ini_path=None):
-        """requests的Session对象配置类             \n
+        """
         :param read_file: 是否从文件读取配置
         :param ini_path: ini文件路径
         """

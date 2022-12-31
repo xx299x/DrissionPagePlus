@@ -10,9 +10,6 @@ from .chromium_base import ChromiumBase
 
 
 class ChromiumFrame(ChromiumBase):
-    """frame元素的类。
-    frame既是元素，也是页面，可以获取元素属性和定位周边元素，也能跳转到网址。
-    同域和异域的frame处理方式不一样，同域的当作元素看待，异域的当作页面看待。"""
 
     def __init__(self, page: ChromiumBase, ele: ChromiumElement):
         self.page: ChromiumBase = ...

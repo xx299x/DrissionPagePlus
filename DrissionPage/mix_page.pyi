@@ -22,12 +22,6 @@ from .session_page import SessionPage
 
 
 class MixPage(SessionPage, DriverPage, BasePage):
-    """MixPage整合了DriverPage和SessionPage，封装了对页面的操作，
-    可在selenium（d模式）和requests（s模式）间无缝切换。
-    切换的时候会自动同步cookies。
-    获取信息功能为两种模式共有，操作页面元素功能只有d模式有。
-    调用某种模式独有的功能，会自动切换到该模式。
-    """
 
     def __init__(self,
                  mode: str = ...,
@@ -56,24 +50,24 @@ class MixPage(SessionPage, DriverPage, BasePage):
     def json(self) -> dict: ...
 
     def get(self,
-             url: str,
-             show_errmsg: bool | None = ...,
-             retry: int | None = ...,
-             interval: float | None = ...,
-             timeout: float | None = ...,
-             params: dict | None = ...,
-             data: Union[dict, str, None] = ...,
-             json: Union[dict, str, None] = ...,
-             headers: dict | None = ...,
-             cookies: Any | None = ...,
-             files: Any | None = ...,
-             auth: Any | None = ...,
-             allow_redirects: bool = ...,
-             proxies: dict | None = ...,
-             hooks: Any | None = ...,
-             stream: Any | None = ...,
-             verify: Any | None = ...,
-             cert: Any | None = ...) -> Union[bool, None]: ...
+            url: str,
+            show_errmsg: bool | None = ...,
+            retry: int | None = ...,
+            interval: float | None = ...,
+            timeout: float | None = ...,
+            params: dict | None = ...,
+            data: Union[dict, str, None] = ...,
+            json: Union[dict, str, None] = ...,
+            headers: dict | None = ...,
+            cookies: Any | None = ...,
+            files: Any | None = ...,
+            auth: Any | None = ...,
+            allow_redirects: bool = ...,
+            proxies: dict | None = ...,
+            hooks: Any | None = ...,
+            stream: Any | None = ...,
+            verify: Any | None = ...,
+            cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],

@@ -116,7 +116,7 @@ class ChromiumElement(DrissionElement):
 
     @property
     def doc_id(self):
-        """返回document的object id"""
+        """返回所在document的object id"""
         return self._doc_id
 
     @property
@@ -192,7 +192,7 @@ class ChromiumElement(DrissionElement):
     def scroll(self):
         """用于滚动滚动条的对象"""
         if self._scroll is None:
-            self._scroll = ChromeScroll(self)
+            self._scroll = ChromiumScroll(self)
         return self._scroll
 
     def parent(self, level_or_loc=1):
@@ -277,7 +277,7 @@ class ChromiumElement(DrissionElement):
             if self.tag != 'select':
                 self._select = False
             else:
-                self._select = ChromeSelect(self)
+                self._select = ChromiumSelect(self)
 
         return self._select
 
@@ -392,7 +392,7 @@ class ChromiumElement(DrissionElement):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
         return run_script(self, script, as_expr, self.page.timeouts.script, args, True)
@@ -492,7 +492,7 @@ class ChromiumElement(DrissionElement):
 
     def save(self, path=None, rename=None):
         """保存图片或其它有src属性的元素的资源                                \n
-        :param path: 文件保存路径，为None时保存到当前文件夹，为False时不保存
+        :param path: 文件保存路径，为None时保存到当前文件夹
         :param rename: 文件名称，为None时从资源url获取
         :return: None
         """
@@ -1399,29 +1399,26 @@ def _offset_scroll(ele, offset_x, offset_y):
     return cx, cy
 
 
-class ChromeScroll(object):
+class ChromiumScroll(object):
     """用于滚动的对象"""
 
     def __init__(self, page_or_ele):
         """
         :param page_or_ele: ChromePage或ChromiumElement
         """
+        self.page_or_ele = page_or_ele
         if isinstance(page_or_ele, ChromiumElement):
             self.t1 = self.t2 = 'this'
-            self.obj_id = page_or_ele.obj_id
-            self.page = page_or_ele.page
         else:
             self.t1 = 'window'
             self.t2 = 'document.documentElement'
-            self.obj_id = None
-            self.page = page_or_ele
 
     def _run_script(self, js):
         js = js.format(self.t1, self.t2, self.t2)
-        if self.obj_id:
-            self.page.run_script(js)
+        if self.t1 == 'this':  # 在元素上滚动
+            self.page_or_ele.run_script(js)
         else:
-            self.page.driver.Runtime.evaluate(expression=js)
+            self.page_or_ele.run_script(js, as_expr=True)
 
     def to_top(self):
         """滚动到顶端，水平位置不变"""
@@ -1482,8 +1479,8 @@ class ChromeScroll(object):
         self._run_script(f'{{}}.scrollBy({pixel},0);')
 
 
-class ChromeSelect(object):
-    """ChromeSelect 类专门用于处理 d 模式下 select 标签"""
+class ChromiumSelect(object):
+    """ChromiumSelect 类专门用于处理 d 模式下 select 标签"""
 
     def __init__(self, ele):
         """初始化                      \n
@@ -1542,7 +1539,7 @@ class ChromeSelect(object):
         """此方法用于根据text值选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param text: text属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否选择成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', False, timeout)
@@ -1551,25 +1548,25 @@ class ChromeSelect(object):
         """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param value: value属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否选择成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', False, timeout)
 
     def by_index(self, index, timeout=None):
         """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple  \n
-        :param index: index属性值，传入list或tuple可选择多项
+        :param index: 序号，0开始，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否选择成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', False, timeout)
 
     def cancel_by_text(self, text, timeout=None):
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
-        :param text: text属性值，传入list或tuple可取消多项
+        :param text: 文本，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否取消成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', True, timeout)
@@ -1578,16 +1575,16 @@ class ChromeSelect(object):
         """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
         :param value: value属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否取消成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', True, timeout)
 
     def cancel_by_index(self, index, timeout=None):
         """此方法用于根据index值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
-        :param index: value属性值，传入list或tuple可取消多项
+        :param index: 序号，0开始，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
-        :return: None
+        :return: 是否取消成功
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', True, timeout)

@@ -14,7 +14,7 @@ element = html.xpath('//h1')[0]
 title = element.text
 
 # 使用 DrissionPage：
-page = MixPage('s')
+page = WebPage('s')
 page.get(url)
 title = page('tag:h1').text
 ```
@@ -32,8 +32,7 @@ r = requests.get(url)
 with open(f'{save_path}\\img.png', 'wb') as fd:
    for chunk in r.iter_content():
        fd.write(chunk)
-        
+
 # 使用 DrissionPage：
 page.download(url, save_path, 'img')  # 支持重命名，处理文件名冲突
 ```
-

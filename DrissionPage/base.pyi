@@ -8,7 +8,6 @@ from typing import Union, Tuple, List
 
 
 class BaseParser(object):
-    """所有页面、元素类的基类"""
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str]): ...
 
@@ -29,7 +28,6 @@ class BaseParser(object):
 
 
 class BaseElement(BaseParser):
-    """各元素类的基类"""
 
     def __init__(self, page: BasePage):
         self.page: BasePage = ...
@@ -37,9 +35,6 @@ class BaseElement(BaseParser):
     # ----------------以下属性或方法由后代实现----------------
     @property
     def tag(self)->str: ...
-
-    @property
-    def is_valid(self)->bool: ...
 
     @abstractmethod
     def _ele(self, loc_or_str: Union[Tuple[str, str], str], timeout:float=..., single:bool=..., relative:bool=...): ...
@@ -56,7 +51,6 @@ class BaseElement(BaseParser):
 
 
 class DrissionElement(BaseElement):
-    """DriverElement 和 SessionElement的基类，但不是ShadowRootElement的基类"""
 
     def __init__(self,
                  page: BasePage = ...):
@@ -138,7 +132,6 @@ class DrissionElement(BaseElement):
 
 
 class BasePage(BaseParser):
-    """页面类的基类"""
 
     def __init__(self, timeout: float = ...):
         self._url_available: bool = ...

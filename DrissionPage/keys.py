@@ -21,6 +21,7 @@ class Keys:
     SHIFT = '\ue008'
     LEFT_SHIFT = SHIFT
     CONTROL = '\ue009'
+    CTRL = '\ue009'
     LEFT_CONTROL = CONTROL
     ALT = '\ue00a'
     LEFT_ALT = ALT
@@ -41,6 +42,7 @@ class Keys:
     ARROW_DOWN = DOWN
     INSERT = '\ue016'
     DELETE = '\ue017'
+    DEL = '\ue017'
     SEMICOLON = '\ue018'
     EQUALS = '\ue019'
 

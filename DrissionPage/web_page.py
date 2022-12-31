@@ -13,17 +13,17 @@ from .chromium_base import ChromiumBase, Timeout
 from .chromium_page import ChromiumPage
 from .config import DriverOptions, SessionOptions, cookies_to_tuple
 from .session_page import SessionPage
-from .tab import Tab
+from .chromium_driver import ChromiumDriver
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
     def __init__(self, mode='d', timeout=10, tab_id=None, driver_or_options=None, session_or_options=None):
-        """初始化函数                                                                        \n
+        """初始化函数                                                                              \n
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param driver_or_options: Tab对象或DriverOptions对象，只使用s模式时应传入False
+        :param driver_or_options: ChromiumDriver对象或DriverOptions对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
         self._mode = mode.lower()
@@ -111,19 +111,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     @property
     def driver(self):
-        """返回纯粹的Tab对象"""
+        """返回纯粹的ChromiumDriver对象"""
         return self._tab_obj
 
     @property
     def _wait_driver(self):
-        """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
+        """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
         return self._driver
 
     @property
     def _driver(self):
-        """返回纯粹的Tab对象，调用时切换到d模式，并连接浏览器"""
+        """返回纯粹的ChromiumDriver对象，调用时切换到d模式，并连接浏览器"""
         self.change_mode('d')
         if self._tab_obj is None:
             self._connect_browser(self._driver_options, self._setting_tab_id)
@@ -377,20 +377,20 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single, relative=relative)
 
-    def _set_driver_options(self, Tab_or_Options):
+    def _set_driver_options(self, driver_or_Options):
         """处理driver设置"""
-        if Tab_or_Options is None:
+        if driver_or_Options is None:
             self._driver_options = DriverOptions()
 
-        elif Tab_or_Options is False:
+        elif driver_or_Options is False:
             self._driver_options = DriverOptions(read_file=False)
 
-        elif isinstance(Tab_or_Options, Tab):
-            self._connect_browser(Tab_or_Options)
+        elif isinstance(driver_or_Options, ChromiumDriver):
+            self._connect_browser(driver_or_Options)
             self._has_driver = True
 
-        elif isinstance(Tab_or_Options, DriverOptions):
-            self._driver_options = Tab_or_Options
+        elif isinstance(driver_or_Options, DriverOptions):
+            self._driver_options = driver_or_Options
 
         else:
             raise TypeError('driver_or_options参数只能接收WebDriver, Options, DriverOptions或False。')

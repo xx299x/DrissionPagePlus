@@ -6,17 +6,16 @@
 from typing import Union, Tuple
 
 from .chromium_base import ChromiumBase
-from .tab import Tab
+from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement
 from .chromium_page import ChromiumPage
 
 
 class ActionChains:
-    """用于实现动作链的类"""
 
     def __init__(self, page:ChromiumBase):
         self.page: ChromiumPage = ...
-        self._dr: Tab = ...
+        self._dr: ChromiumDriver = ...
         self.curr_x: int = ...
         self.curr_y: int = ...
         self.modifier: int = ...

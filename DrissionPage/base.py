@@ -49,10 +49,6 @@ class BaseElement(BaseParser):
     def tag(self):
         return
 
-    @property
-    def is_valid(self):
-        return True
-
     @abstractmethod
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
         pass

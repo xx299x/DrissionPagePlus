@@ -17,7 +17,6 @@ from .session_element import SessionElement
 
 
 class DriverPage(BasePage):
-    """DriverPage封装了页面操作的常用功能，使用selenium来获取、解析、操作网页"""
 
     def __init__(self, driver: RemoteWebDriver, timeout: float = ...) -> None:
         self._driver: RemoteWebDriver = ...
@@ -165,7 +164,6 @@ class DriverPage(BasePage):
 
 
 class ToFrame(object):
-    """用于处理焦点跳转到页面框架的类"""
 
     def __init__(self, page: DriverPage):
         self.page: DriverPage = ...

@@ -12,7 +12,6 @@ from selenium.webdriver.chrome.options import Options
 
 
 class OptionsManager(object):
-    """管理配置文件内容的类"""
 
     def __init__(self, path: str = ...):
         self.ini_path: str = ...
@@ -147,9 +146,6 @@ class SessionOptions(object):
 
 
 class DriverOptions(Options):
-    """chrome浏览器配置类，继承自selenium.webdriver.chrome.options的Options类，
-    增加了删除配置和保存到文件方法。
-    """
 
     def __init__(self, read_file: bool = ..., ini_path: str = ...):
         self.ini_path: str = ...

@@ -15,7 +15,6 @@ from .session_element import SessionElement
 
 
 class ShadowRootElement(BaseElement):
-    """ShadowRootElement是用于处理ShadowRoot的类，使用方法和DriverElement基本一致"""
 
     def __init__(self, inner_ele: WebElement, parent_ele: DriverElement):
         self._inner_ele: WebElement = ...

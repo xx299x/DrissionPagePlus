@@ -16,7 +16,6 @@ from .config import SessionOptions, DriverOptions
 
 
 class Drission(object):
-    """Drission类用于管理WebDriver对象和Session对象，是驱动器的角色"""
 
     def __init__(self,
                  driver_or_options: Union[RemoteWebDriver, Options, DriverOptions, bool] = ...,

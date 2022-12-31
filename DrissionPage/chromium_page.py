@@ -14,23 +14,23 @@ from .chromium_base import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
 from .common import connect_chrome
 from .config import DriverOptions
-from .tab import Tab
+from .chromium_driver import ChromiumDriver
 
 
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
 
-    def __init__(self, addr_tab_opts=None, tab_id=None, timeout=None):
-        """初始化                                                      \n
-        :param addr_tab_opts: 浏览器地址:端口、Tab对象或DriverOptions对象
+    def __init__(self, addr_driver_opts=None, tab_id=None, timeout=None):
+        """初始化                                                                       \n
+        :param addr_driver_opts: 浏览器地址:端口、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        super().__init__(addr_tab_opts, tab_id, timeout)
+        super().__init__(addr_driver_opts, tab_id, timeout)
 
-    def _connect_browser(self, addr_tab_opts=None, tab_id=None):
+    def _connect_browser(self, addr_driver_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行                                    \n
-        :param addr_tab_opts: 浏览器地址、Tab对象或DriverOptions对象
+        :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
@@ -44,32 +44,32 @@ class ChromiumPage(ChromiumBase):
         self._first_run = True
 
         # 接管或启动浏览器
-        if addr_tab_opts is None or isinstance(addr_tab_opts, DriverOptions):
-            self.options = addr_tab_opts or DriverOptions()  # 从ini文件读取
+        if addr_driver_opts is None or isinstance(addr_driver_opts, DriverOptions):
+            self.options = addr_driver_opts or DriverOptions()  # 从ini文件读取
             self.address = self.options.debugger_address
             self.process = connect_chrome(self.options)[1]
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
 
         # 接收浏览器地址和端口
-        elif isinstance(addr_tab_opts, str):
-            self.address = addr_tab_opts
+        elif isinstance(addr_driver_opts, str):
+            self.address = addr_driver_opts
             self.options = DriverOptions(read_file=False)
-            self.options.debugger_address = addr_tab_opts
+            self.options.debugger_address = addr_driver_opts
             self.process = connect_chrome(self.options)[1]
             if not tab_id:
                 json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
 
-        # 接收传递过来的Tab，浏览器
-        elif isinstance(addr_tab_opts, Tab):
-            self._tab_obj = addr_tab_opts
-            self.address = search(r'ws://(.*?)/dev', addr_tab_opts._websocket_url).group(1)
+        # 接收传递过来的ChromiumDriver，浏览器
+        elif isinstance(addr_driver_opts, ChromiumDriver):
+            self._tab_obj = addr_driver_opts
+            self.address = search(r'ws://(.*?)/dev', addr_driver_opts._websocket_url).group(1)
             self.process = None
             self.options = DriverOptions(read_file=False)
 
         else:
-            raise TypeError('只能接收Tab或DriverOptions类型参数。')
+            raise TypeError('只能接收ChromiumDriver或DriverOptions类型参数。')
 
         self._set_options()
         self._init_page(tab_id)
@@ -129,8 +129,8 @@ class ChromiumPage(ChromiumBase):
 
     def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持             \n
-        :param path: 完整路径，后缀可选'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选'jpg','jpeg','png','webp'，生效时path参数无效
+        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
         :param left_top: 截取范围左上角坐标
         :param right_bottom: 截取范围右下角角坐标

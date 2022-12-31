@@ -17,9 +17,8 @@ from .session_element import SessionElement
 
 
 class DriverElement(DrissionElement):
-    """driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能"""
 
-    def __init__(self, ele: WebElement, page:Union[DriverPage, MixPage]=...):
+    def __init__(self, ele: WebElement, page: Union[DriverPage, MixPage] = ...):
         self._inner_ele: WebElement = ...
         self._select: Select = ...
         self._scroll: Scroll = ...
@@ -219,14 +218,13 @@ class DriverElement(DrissionElement):
                            loc: Union[tuple, str] = ...) -> Union[List['DriverElement'], 'DriverElement']: ...
 
 
-def make_driver_ele(page_or_ele: Union[DriverPage, MixPage,DriverElement, ShadowRootElement],
+def make_driver_ele(page_or_ele: Union[DriverPage, MixPage, DriverElement, ShadowRootElement],
                     loc: Union[str, Tuple[str, str]],
                     single: bool = ...,
                     timeout: float = ...) -> Union[DriverElement, str, None, List[Union[DriverElement, str]]]: ...
 
 
 class ElementsByXpath(object):
-    """用js通过xpath获取元素、节点或属性，与WebDriverWait配合使用"""
 
     def __init__(self, page, xpath: str = ..., single: bool = ..., timeout: float = ...):
         self.single: bool = ...
@@ -238,7 +236,6 @@ class ElementsByXpath(object):
 
 
 class Select(object):
-    """Select 类专门用于处理 d 模式下 select 标签"""
 
     def __init__(self, ele: DriverElement):
         self.select_ele: SeleniumSelect = ...
@@ -283,7 +280,6 @@ class Select(object):
 
 
 class ElementWaiter(object):
-    """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
     def __init__(self,
                  page_or_ele,
@@ -303,7 +299,6 @@ class ElementWaiter(object):
 
 
 class Scroll(object):
-    """用于滚动的对象"""
 
     def __init__(self, page_or_ele):
         self.driver: Union[DriverElement, DriverPage] = ...

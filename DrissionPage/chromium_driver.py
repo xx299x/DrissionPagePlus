@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-@Author  :   g1879
-@Contact :   g1879@qq.com
-"""
 from functools import partial
 from json import dumps, loads
 from logging import getLogger
 from os import getenv
 from threading import Thread, Event
-from warnings import warn
 
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
@@ -39,7 +34,7 @@ class GenericAttr(object):
         self.tab.set_listener("%s.%s" % (self.name, key), value)
 
 
-class Tab(object):
+class ChromiumDriver(object):
     status_initial = 'initial'
     status_started = 'started'
     status_stopped = 'stopped'
@@ -101,7 +96,7 @@ class Tab(object):
                     return self.method_results[message['id']].get(timeout=q_timeout)
                 except queue.Empty:
                     if isinstance(timeout, (int, float)) and timeout <= 0:
-                        raise TimeoutException("Calling %s timeout" % message['method'])
+                        raise TimeoutError(f"调用{message['method']}超时。")
 
                     continue
 
@@ -132,8 +127,8 @@ class Tab(object):
             elif "id" in message:
                 if message["id"] in self.method_results:
                     self.method_results[message['id']].put(message)
-            else:  # pragma: no cover
-                warn("unknown message: %s" % message)
+            # else:  # pragma: no cover
+            #     warn("unknown message: %s" % message)
 
     def _handle_event_loop(self):
         while not self._stopped.is_set():
@@ -157,45 +152,27 @@ class Tab(object):
 
     def call_method(self, _method, *args, **kwargs):
         if not self._started:
-            raise RuntimeException("Cannot call method before it is started")
+            raise RuntimeError("不能在启动前调用方法。")
 
         if args:
-            raise CallMethodException("the params should be key=value format")
+            raise CallMethodException("参数必须是key=value形式。")
 
         if self._stopped.is_set():
-            raise RuntimeException("Tab has been stopped")
+            raise RuntimeError("Driver已经停止。")
 
         timeout = kwargs.pop("_timeout", None)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
         if 'result' not in result and 'error' in result:
-            warn("%s error: %s" % (_method, result['error']['message']))
-            raise CallMethodException("calling method: %s error: %s" % (_method, result['error']['message']))
+            raise CallMethodException(f"调用方法：{_method} 错误：{result['error']['message']}")
 
         return result['result']
-
-    def set_listener(self, event, callback):
-        if not callback:
-            return self.event_handlers.pop(event, None)
-
-        if not callable(callback):
-            raise RuntimeException("callback should be callable")
-
-        self.event_handlers[event] = callback
-        return True
-
-    def get_listener(self, event):
-        return self.event_handlers.get(event, None)
-
-    def del_all_listeners(self):
-        self.event_handlers = {}
-        return True
 
     def start(self):
         if self._started:
             return False
 
         if not self._websocket_url:
-            raise RuntimeException("Already has another client connect to this tab")
+            raise RuntimeError("已存在另一个连接。")
 
         self._started = True
         self.status = self.status_started
@@ -210,7 +187,7 @@ class Tab(object):
             return False
 
         if not self._started:
-            raise RuntimeException("Tab is not running")
+            raise RuntimeError("Driver正在运行。")
 
         self.status = self.status_stopped
         self._stopped.set()
@@ -218,9 +195,26 @@ class Tab(object):
             self._ws.close()
         return True
 
+    def set_listener(self, event, callback):
+        if not callback:
+            return self.event_handlers.pop(event, None)
+
+        if not callable(callback):
+            raise RuntimeError("方法不能调用。")
+
+        self.event_handlers[event] = callback
+        return True
+
+    def get_listener(self, event):
+        return self.event_handlers.get(event, None)
+
+    def del_all_listeners(self):
+        self.event_handlers = {}
+        return True
+
     def wait(self, timeout=None):
         if not self._started:
-            raise RuntimeException("Tab is not running")
+            raise RuntimeError("Driver仍未运行。")
 
         if timeout:
             return self._stopped.wait(timeout)
@@ -230,30 +224,10 @@ class Tab(object):
         return True
 
     def __str__(self):
-        return "<Tab [%s]>" % self.id
+        return f"<ChromiumDriver {self.id}>"
 
     __repr__ = __str__
 
 
-class PyChromeException(Exception):
-    pass
-
-
-class UserAbortException(PyChromeException):
-    pass
-
-
-class TabConnectionException(PyChromeException):
-    pass
-
-
-class CallMethodException(PyChromeException):
-    pass
-
-
-class TimeoutException(PyChromeException):
-    pass
-
-
-class RuntimeException(PyChromeException):
+class CallMethodException(Exception):
     pass

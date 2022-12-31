@@ -49,7 +49,7 @@ ele1.drag_to(ele2)
 driver.execute_script("window.scrollTo(document.documentElement.scrollLeft, document.body.scrollHeight);")
 
 # 使用 DrissionPage：
-page.scroll_to('bottom')
+page.scroll.to_bottom()
 ```
 
 ## 设置 headless 模式
@@ -95,4 +95,3 @@ shadow_element = element.shadow_root
 class_name = element('xpath://div[@id="div_id"]/@class')
 text = element('xpath://div[@id="div_id"]/text()[2]')
 ```
-

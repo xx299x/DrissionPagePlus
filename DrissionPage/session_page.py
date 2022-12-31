@@ -95,8 +95,11 @@ class SessionPage(BasePage):
 
     @property
     def json(self):
-        """当返回内容是json格式时，返回对应的字典"""
-        return self.response.json()
+        """当返回内容是json格式时，返回对应的字典，非json格式时返回None"""
+        try:
+            return self.response.json()
+        except Exception:
+            return None
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url                                 \n

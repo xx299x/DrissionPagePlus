@@ -9,11 +9,11 @@ from time import perf_counter, sleep
 from requests import Session
 
 from .base import BasePage
-from .chromium_element import ChromiumElementWaiter, ChromeScroll, ChromiumElement, run_script, make_chromium_ele
+from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_script, make_chromium_ele
 from .common import get_loc
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
-from .tab import Tab
+from .chromium_driver import ChromiumDriver
 
 
 class ChromiumBase(BasePage):
@@ -33,9 +33,9 @@ class ChromiumBase(BasePage):
         self.timeouts = Timeout(self)
         self._connect_browser(address, tab_id)
 
-    def _connect_browser(self, addr_tab_opts=None, tab_id=None):
+    def _connect_browser(self, addr_driver_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行                                    \n
-        :param addr_tab_opts: 浏览器地址、Tab对象或DriverOptions对象
+        :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
@@ -45,7 +45,7 @@ class ChromiumBase(BasePage):
         self._first_run = True
         self._is_reading = False  # 用于避免不同线程重复读取document
 
-        self.address = addr_tab_opts
+        self.address = addr_driver_opts
         if not tab_id:
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
@@ -61,8 +61,8 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         if tab_id:
-            self._tab_obj = Tab(id=tab_id, type='page',
-                                webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
+            self._tab_obj = ChromiumDriver(id=tab_id, type='page',
+                                           webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
 
         self._tab_obj.start()
         self._tab_obj.DOM.enable()
@@ -195,16 +195,17 @@ class ChromiumBase(BasePage):
 
     @property
     def driver(self):
-        """返回用于控制浏览器的Tab对象"""
+        """返回用于控制浏览器的ChromiumDriver对象"""
         return self._tab_obj
 
     @property
     def _driver(self):
+        """返回用于控制浏览器的ChromiumDriver对象"""
         return self._tab_obj
 
     @property
     def _wait_driver(self):
-        """返回用于控制浏览器的Tab对象，会先等待页面加载完毕"""
+        """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
         return self._tab_obj
@@ -226,8 +227,11 @@ class ChromiumBase(BasePage):
 
     @property
     def json(self):
-        """当返回内容是json格式时，返回对应的字典"""
-        return loads(self('t:pre').text)
+        """当返回内容是json格式时，返回对应的字典，非json格式时返回None"""
+        try:
+            return loads(self('t:pre', timeout=.5).text)
+        except Exception:
+            return None
 
     @property
     def tab_id(self):
@@ -260,7 +264,7 @@ class ChromiumBase(BasePage):
     def scroll(self):
         """返回用于滚动滚动条的对象"""
         if not hasattr(self, '_scroll'):
-            self._scroll = ChromeScroll(self)
+            self._scroll = ChromiumScroll(self)
         return self._scroll
 
     @property

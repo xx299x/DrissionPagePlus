@@ -10,14 +10,13 @@ from typing import Union, Tuple, List
 from .chromium_base import ChromiumBase
 from .chromium_tab import ChromiumTab
 from .config import DriverOptions
-from .tab import Tab
+from .chromium_driver import ChromiumDriver
 
 
 class ChromiumPage(ChromiumBase):
-    """用于管理浏览器的类"""
 
     def __init__(self,
-                 addr_tab_opts: Union[str, Tab, DriverOptions] = ...,
+                 addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = ...,
                  tab_id: str = ...,
                  timeout: float = ...):
         self.options: DriverOptions = ...
@@ -27,7 +26,7 @@ class ChromiumPage(ChromiumBase):
         self._alert: Alert = ...
 
     def _connect_browser(self,
-                         addr_tab_opts: Union[str, Tab, DriverOptions] = ...,
+                         addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = ...,
                          tab_id: str = ...) -> None: ...
 
     def _init_page(self, tab_id: str = ...) -> None: ...
@@ -82,7 +81,6 @@ class ChromiumPage(ChromiumBase):
 
 
 class Alert(object):
-    """用于保存alert信息的类"""
 
     def __init__(self):
         self.activated: bool = ...
@@ -94,10 +92,9 @@ class Alert(object):
 
 
 class WindowSizeSetter(object):
-    """用于设置窗口大小的类"""
 
     def __init__(self, page: ChromiumPage):
-        self.driver: Tab = ...
+        self.driver: ChromiumDriver = ...
         self.window_id: str = ...
 
     def maximized(self) -> None: ...
