@@ -75,7 +75,7 @@ class ChromiumPage(ChromiumBase):
         self._init_page(tab_id)
         self._get_document()
         self._first_run = False
-        self.main_tab: str = self.tab_id
+        self._main_tab = self.tab_id
 
     def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -100,9 +100,13 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def tabs(self):
-        """返回所有标签页id"""
+        """返回所有标签页id组成的列表"""
         tabs = self.run_cdp('Target.getTargets', filter=[{'type': "page"}])['targetInfos']
         return [i['targetId'] for i in tabs]
+
+    @property
+    def main_tab(self):
+        return self._main_tab
 
     @property
     def process_id(self):
@@ -116,7 +120,7 @@ class ChromiumPage(ChromiumBase):
     def set_window(self):
         """返回用于设置窗口大小的对象"""
         if not hasattr(self, '_window_setter'):
-            self._window_setter = WindowSizeSetter(self)
+            self._window_setter = WindowSetter(self)
         return self._window_setter
 
     def get_tab(self, tab_id=None):
@@ -184,7 +188,7 @@ class ChromiumPage(ChromiumBase):
         self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
     def new_tab(self, url=None, switch_to=True):
-        """新建并定位到一个标签页,该标签页在最后面         \n
+        """新建一个标签页,该标签页在最后面                \n
         :param url: 新标签页跳转到的网址
         :param switch_to: 新建标签页后是否把焦点移过去
         :return: None
@@ -207,9 +211,16 @@ class ChromiumPage(ChromiumBase):
         else:
             self._control_session.get(f'http://{self.address}/json/new')
 
+    def set_main_tab(self, tab_id=None):
+        """设置主tab                               \n
+        :param tab_id: 标签页id，不传入则设置当前tab
+        :return: None
+        """
+        self._main_tab = tab_id or self.tab_id
+
     def to_main_tab(self):
         """跳转到主标签页"""
-        self.to_tab(self.main_tab)
+        self.to_tab(self._main_tab)
 
     def to_tab(self, tab_id=None, activate=True):
         """跳转到标签页                                           \n
@@ -228,7 +239,7 @@ class ChromiumPage(ChromiumBase):
         """
         tabs = self.tabs
         if not tab_id:
-            tab_id = self.main_tab
+            tab_id = self._main_tab
         if tab_id not in tabs:
             tab_id = tabs[0]
 
@@ -273,8 +284,8 @@ class ChromiumPage(ChromiumBase):
         while len(self.tabs) != end_len:
             sleep(.1)
 
-        if self.main_tab in tabs:
-            self.main_tab = self.tabs[0]
+        if self._main_tab in tabs:
+            self._main_tab = self.tabs[0]
 
         self.to_tab()
 
@@ -350,7 +361,7 @@ class Alert(object):
         self.response_text = None
 
 
-class WindowSizeSetter(object):
+class WindowSetter(object):
     """用于设置窗口大小的类"""
 
     def __init__(self, page):
@@ -373,7 +384,7 @@ class WindowSizeSetter(object):
         """设置窗口为常规模式"""
         self._perform({'windowState': 'normal'})
 
-    def new_size(self, width=None, height=None):
+    def size(self, width=None, height=None):
         """设置窗口大小             \n
         :param width: 窗口宽度
         :param height: 窗口高度
@@ -385,7 +396,7 @@ class WindowSizeSetter(object):
             height = height or info['height']
             self._perform({'width': width, 'height': height})
 
-    def to_location(self, x=None, y=None):
+    def location(self, x=None, y=None):
         """设置窗口在屏幕中的位置，相对左上角坐标  \n
         :param x: 距离顶部距离
         :param y: 距离左边距离

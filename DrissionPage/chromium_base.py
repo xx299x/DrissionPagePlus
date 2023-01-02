@@ -257,7 +257,7 @@ class ChromiumBase(BasePage):
 
     @property
     def page_load_strategy(self):
-        """返回页面加载策略"""
+        """返回页面加载策略，有3种：'none'、'normal'、'eager'"""
         return self._page_load_strategy
 
     @property
@@ -292,7 +292,7 @@ class ChromiumBase(BasePage):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
         return run_script(self, script, as_expr, self.timeouts.script, args)
@@ -301,7 +301,7 @@ class ChromiumBase(BasePage):
         """以异步方式执行js代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: None
         """
         from threading import Thread
@@ -664,7 +664,7 @@ class PageLoadStrategy(object):
         """
         :param page: ChromiumBase对象
         """
-        self.page = page
+        self._page = page
 
     def __call__(self, value):
         """设置加载策略                                  \n
@@ -673,16 +673,16 @@ class PageLoadStrategy(object):
         """
         if value.lower() not in ('normal', 'eager', 'none'):
             raise ValueError("只能选择 'normal', 'eager', 'none'。")
-        self.page._page_load_strategy = value
+        self._page._page_load_strategy = value
 
     def normal(self):
         """设置页面加载策略为normal"""
-        self.page._page_load_strategy = 'normal'
+        self._page._page_load_strategy = 'normal'
 
     def eager(self):
         """设置页面加载策略为eager"""
-        self.page._page_load_strategy = 'eager'
+        self._page._page_load_strategy = 'eager'
 
     def none(self):
         """设置页面加载策略为none"""
-        self.page._page_load_strategy = 'none'
+        self._page._page_load_strategy = 'none'

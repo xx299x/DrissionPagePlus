@@ -28,9 +28,6 @@ class ChromiumFrame(ChromiumBase):
             obj_id = super().run_script('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
-        self._tab_obj.Page.FrameAttached = self._onFrameAttached
-        self._tab_obj.Page.FrameDetached = self._onFrameDetached
-
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                             \n
         例：ele2 = ele1('@id=ele_id')                               \n
@@ -45,6 +42,21 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
+    # def _reload_document(self):
+    #     self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
+    #     node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
+    #
+    #     if self._is_inner_frame():
+    #         self._is_diff_domain = False
+    #         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+    #         super().__init__(self.page.address, self.page.tab_id, self.page.timeout)
+    #     else:
+    #         self._is_diff_domain = True
+    #         self._tab_obj.stop()
+    #         super().__init__(self.page.address, self.frame_id, self.page.timeout)
+    #         obj_id = super().run_script('document;', as_expr=True)['objectId']
+    #         self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
         if not self._is_reading:
@@ -55,10 +67,11 @@ class ChromiumFrame(ChromiumBase):
 
             while True:
                 try:
-                    if self._is_inner_frame():
+                    if self._is_diff_domain is False:
                         node = self.page.run_cdp('DOM.describeNode',
                                                  backendNodeId=self.backend_id, not_change=True)['node']
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+
                     else:
                         b_id = self._tab_obj.DOM.getDocument()['root']['backendNodeId']
                         self.doc_ele = ChromiumElement(self, backend_id=b_id)
@@ -90,14 +103,6 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
             self._get_new_document()
-
-    def _onFrameAttached(self, **kwargs):
-        if self._debug:
-            print(f'FrameAttached{[kwargs]}')
-
-    def _onFrameDetached(self, **kwargs):
-        if self._debug:
-            print(f'FrameDetached{[kwargs]}')
 
     @property
     def tab_id(self):
@@ -204,9 +209,17 @@ class ChromiumFrame(ChromiumBase):
     def ready_state(self):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
         if self._is_diff_domain:
-            return super().ready_state
+            try:
+                return super().ready_state
+            except:
+                return 'complete'
+
         else:
-            return self.doc_ele.run_script('return this.readyState;')
+            while True:
+                try:
+                    return self.doc_ele.run_script('return this.readyState;')
+                except:
+                    pass
 
     def refresh(self):
         """刷新frame页面"""

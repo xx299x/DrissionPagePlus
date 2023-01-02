@@ -198,10 +198,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).s_eles(loc_or_str)
 
     def change_mode(self, mode=None, go=True, copy_cookies=True):
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
-        切换时会把当前模式的cookies复制到目标模式                   \n
-        切换后，如果go是True，调用相应的get函数使访问的页面同步        \n
-        注意：s转d时，若浏览器当前网址域名和s模式不一样，必须会跳转      \n
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式                         \n
+        如copy_cookies为True，切换时会把当前模式的cookies复制到目标模式                   \n
+        切换后，如果go是True，调用相应的get函数使访问的页面同步                            \n
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
         :param copy_cookies: 是否复制cookies到目标模式
@@ -283,6 +282,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return cookies
 
     def set_cookies(self, cookies, set_session=False, set_driver=False):
+        """添加cookies信息到浏览器或session对象                                                 \n
+        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
+        :param set_session: 是否设置到Session对象
+        :param set_driver: 是否设置到浏览器
+        :return: None
+        """
         # 添加cookie到driver
         if set_driver:
             cookies = cookies_to_tuple(cookies)
