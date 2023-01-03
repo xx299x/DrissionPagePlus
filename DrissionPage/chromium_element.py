@@ -156,7 +156,7 @@ class ChromiumElement(DrissionElement):
     def _client_click_point(self):
         """返回元素左上角可接受点击的点视口坐标"""
         m = self._get_client_rect('padding')
-        return (m[0], m[1]) if m else (0, 0)
+        return (self.client_midpoint[0], m[1]) if m else (0, 0)
 
     @property
     def _click_point(self):
@@ -664,7 +664,7 @@ class ChromiumElement(DrissionElement):
         """实施点击                        \n
         :param client_x: 视口中的x坐标
         :param client_y: 视口中的y坐标
-        :param button: 'left'或'right'
+        :param button: 'left' 或 'right'
         :return: None
         """
         self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=client_x, y=client_y, button=button,
@@ -1385,17 +1385,17 @@ def _offset_scroll(ele, offset_x, offset_y):
     :param offset_y: 偏移量y
     :return: 视口中的坐标
     """
-    location = ele.location
-    midpoint = ele._click_point
-    lx = location['x'] + offset_x if offset_x else midpoint['x']
-    ly = location['y'] + offset_y if offset_y else midpoint['y']
+    loc_x, loc_y = ele.location
+    cp_x, cp_y = ele._click_point
+    lx = loc_x + offset_x if offset_x else cp_x
+    ly = loc_y + offset_y if offset_y else cp_y
 
     if not _location_in_viewport(ele.page, lx, ly):
         ele.page.scroll.to_location(lx, ly)
-    cl = ele.client_location
-    cm = ele._client_click_point
-    cx = cl['x'] + offset_x if offset_x else cm['x']
-    cy = cl['y'] + offset_y if offset_y else cm['y']
+    cl_x, cl_y = ele.client_location
+    ccp_x, ccp_y = ele._client_click_point
+    cx = cl_x + offset_x if offset_x else ccp_x
+    cy = cl_y + offset_y if offset_y else ccp_y
     return cx, cy
 
 

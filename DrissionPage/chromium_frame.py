@@ -13,7 +13,7 @@ from .chromium_element import ChromiumElement
 class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
         self.page = page
-        self.address = self.page.address
+        self.address = page.address
         node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id, not_change=True)['node']
         self.frame_id = node['frameId']
         self._backend_id = ele.backend_id
@@ -48,18 +48,25 @@ class ChromiumFrame(ChromiumBase):
         node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
 
         if self._is_inner_frame():
-            print('-111')
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
             super().__init__(self.address, self.page.tab_id, self.page.timeout)
-            print('+111')
         else:
-            print('-222')
             self._is_diff_domain = True
+            self._tab_obj.stop()
             super().__init__(self.address, self.frame_id, self.page.timeout)
             obj_id = super().run_script('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-            print('+222')
+
+    def _check_ok(self):
+        if self._tab_obj._stopped.is_set():
+            self._reload()
+
+        try:
+            self._tab_obj.DOM.describeNode(nodeId=self.node_id)
+        except:
+            self._reload()
+            sleep(2)
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
@@ -94,7 +101,6 @@ class ChromiumFrame(ChromiumBase):
 
     def _onFrameStartedLoading(self, **kwargs):
         """页面开始加载时触发"""
-        # print('开始', kwargs['frameId'])
         if kwargs['frameId'] == self.frame_id:
             self._is_loading = True
             if self._debug:
@@ -102,7 +108,6 @@ class ChromiumFrame(ChromiumBase):
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
-        # print('停止', kwargs['frameId'])
         if kwargs['frameId'] == self.frame_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
@@ -136,16 +141,19 @@ class ChromiumFrame(ChromiumBase):
     @property
     def tag(self):
         """返回元素tag"""
+        self._check_ok()
         return self.frame_ele.tag
 
     @property
     def url(self):
         """返回frame当前访问的url"""
+        self._check_ok()
         return self.doc_ele.run_script('return this.location.href;')
 
     @property
     def html(self):
         """返回元素outerHTML文本"""
+        self._check_ok()
         tag = self.tag
         out_html = self.page.run_cdp('DOM.getOuterHTML',
                                      nodeId=self.frame_ele.node_id, not_change=True)['outerHTML']
@@ -155,30 +163,31 @@ class ChromiumFrame(ChromiumBase):
     @property
     def inner_html(self):
         """返回元素innerHTML文本"""
+        self._check_ok()
         return self.doc_ele.run_script('return this.documentElement.outerHTML;')
 
     @property
     def title(self):
         """返回页面title"""
-        while True:
-            try:
-                return self.ele('t:title').text
-            except:
-                self._reload()
+        self._check_ok()
+        return self.ele('t:title').text
 
     @property
     def cookies(self):
         """以dict格式返回cookies"""
+        self._check_ok()
         return super().cookies if self._is_diff_domain else self.doc_ele.run_script('return this.cookie;')
 
     @property
     def attrs(self):
         """返回frame元素所有attribute属性"""
+        self._check_ok()
         return self.frame_ele.attrs
 
     @property
     def frame_size(self):
         """返回frame内页面尺寸，格式：(长, 高)"""
+        self._check_ok()
         w = self.doc_ele.run_script('return this.body.scrollWidth')
         h = self.doc_ele.run_script('return this.body.scrollHeight')
         return w, h
@@ -186,31 +195,37 @@ class ChromiumFrame(ChromiumBase):
     @property
     def size(self):
         """返回frame元素大小"""
+        self._check_ok()
         return self.frame_ele.size
 
     @property
     def active_ele(self):
         """返回当前焦点所在元素"""
+        self._check_ok()
         return self.doc_ele.run_script('return this.activeElement;')
 
     @property
     def location(self):
         """返回frame元素左上角的绝对坐标"""
+        self._check_ok()
         return self.frame_ele.location
 
     @property
     def is_displayed(self):
         """返回frame元素是否显示"""
+        self._check_ok()
         return self.frame_ele.is_displayed
 
     @property
     def xpath(self):
         """返回frame的xpath绝对路径"""
+        self._check_ok()
         return self.frame_ele.xpath
 
     @property
     def css_path(self):
         """返回frame的css selector绝对路径"""
+        self._check_ok()
         return self.frame_ele.css_path
 
     @property
@@ -231,6 +246,7 @@ class ChromiumFrame(ChromiumBase):
 
     def refresh(self):
         """刷新frame页面"""
+        self._check_ok()
         self.doc_ele.run_script('this.location.reload();')
 
     def attr(self, attr):
@@ -238,6 +254,7 @@ class ChromiumFrame(ChromiumBase):
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
+        self._check_ok()
         return self.frame_ele.attr(attr)
 
     def set_attr(self, attr, value):
@@ -246,6 +263,7 @@ class ChromiumFrame(ChromiumBase):
         :param value: 属性值
         :return: None
         """
+        self._check_ok()
         self.frame_ele.set_attr(attr, value)
 
     def remove_attr(self, attr):
@@ -253,6 +271,7 @@ class ChromiumFrame(ChromiumBase):
         :param attr: 属性名
         :return: None
         """
+        self._check_ok()
         self.frame_ele.remove_attr(attr)
 
     def run_script(self, script, as_expr=False, *args):
@@ -262,6 +281,7 @@ class ChromiumFrame(ChromiumBase):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
+        self._check_ok()
         return self.doc_ele.run_script(script, as_expr=as_expr, *args)
 
     def parent(self, level_or_loc=1):
@@ -269,6 +289,7 @@ class ChromiumFrame(ChromiumBase):
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
+        self._check_ok()
         return self.frame_ele.parent(level_or_loc)
 
     def prev(self, filter_loc='', index=1, timeout=0):
@@ -278,6 +299,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
+        self._check_ok()
         return self.frame_ele.prev(filter_loc, index, timeout)
 
     def next(self, filter_loc='', index=1, timeout=0):
@@ -287,6 +309,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
+        self._check_ok()
         return self.frame_ele.next(filter_loc, index, timeout)
 
     def before(self, filter_loc='', index=1, timeout=None):
@@ -296,6 +319,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的某个元素或节点
         """
+        self._check_ok()
         return self.frame_ele.before(filter_loc, index, timeout)
 
     def after(self, filter_loc='', index=1, timeout=None):
@@ -305,6 +329,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的某个元素或节点
         """
+        self._check_ok()
         return self.frame_ele.after(filter_loc, index, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
@@ -313,6 +338,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
         """
+        self._check_ok()
         return self.frame_ele.prevs(filter_loc, timeout)
 
     def nexts(self, filter_loc='', timeout=0):
@@ -321,6 +347,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
         """
+        self._check_ok()
         return self.frame_ele.nexts(filter_loc, timeout)
 
     def befores(self, filter_loc='', timeout=None):
@@ -329,6 +356,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
         """
+        self._check_ok()
         return self.frame_ele.befores(filter_loc, timeout)
 
     def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
@@ -354,6 +382,7 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 连接超时时间
         :return: 是否成功，返回None表示不确定
         """
+        self._check_ok()
         err = None
         timeout = timeout if timeout is not None else self.timeouts.page_load
 
