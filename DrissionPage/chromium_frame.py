@@ -13,6 +13,7 @@ from .chromium_element import ChromiumElement
 class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
         self.page = page
+        self.address = self.page.address
         node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id, not_change=True)['node']
         self.frame_id = node['frameId']
         self._backend_id = ele.backend_id
@@ -42,20 +43,23 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
-    # def _reload_document(self):
-    #     self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
-    #     node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
-    #
-    #     if self._is_inner_frame():
-    #         self._is_diff_domain = False
-    #         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
-    #         super().__init__(self.page.address, self.page.tab_id, self.page.timeout)
-    #     else:
-    #         self._is_diff_domain = True
-    #         self._tab_obj.stop()
-    #         super().__init__(self.page.address, self.frame_id, self.page.timeout)
-    #         obj_id = super().run_script('document;', as_expr=True)['objectId']
-    #         self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+    def _reload(self):
+        self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
+
+        if self._is_inner_frame():
+            print('-111')
+            self._is_diff_domain = False
+            self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+            super().__init__(self.address, self.page.tab_id, self.page.timeout)
+            print('+111')
+        else:
+            print('-222')
+            self._is_diff_domain = True
+            super().__init__(self.address, self.frame_id, self.page.timeout)
+            obj_id = super().run_script('document;', as_expr=True)['objectId']
+            self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+            print('+222')
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
@@ -156,7 +160,11 @@ class ChromiumFrame(ChromiumBase):
     @property
     def title(self):
         """返回页面title"""
-        return self.ele('t:title').text
+        while True:
+            try:
+                return self.ele('t:title').text
+            except:
+                self._reload()
 
     @property
     def cookies(self):
@@ -251,7 +259,7 @@ class ChromiumFrame(ChromiumBase):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
         return self.doc_ele.run_script(script, as_expr=as_expr, *args)

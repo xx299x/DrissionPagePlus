@@ -113,8 +113,8 @@ def get_loc(loc: Union[tuple, str], translate_css: bool = False) -> tuple:
 
 
 def str_to_loc(loc: str) -> tuple:
-    """处理元素查找语句                                                                    \n
-    查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                      \n
+    """处理元素查找语句                                                                 \n
+    查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                    \n
     @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串    \n
     """
     loc_by = 'xpath'
@@ -159,7 +159,7 @@ def str_to_loc(loc: str) -> tuple:
 
     # 根据文本查找
     elif loc.startswith('text='):
-        loc_str = f'//*[.={_make_search_str(loc[5:])}]'
+        loc_str = f'//*[text()={_make_search_str(loc[5:])}]'
     elif loc.startswith('text:') and loc != 'text:':
         loc_str = f'//*/text()[contains(., {_make_search_str(loc[5:])})]/..'
 

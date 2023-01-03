@@ -1251,7 +1251,7 @@ def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None, not_
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
     :param timeout: 超时时间
-    :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+    :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
     :param not_change: 执行时是否切换页面对象模式
     :return: js执行结果
     """
