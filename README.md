@@ -254,7 +254,7 @@ page.download(url, save_path, 'img')  # 支持重命名，处理文件名冲突�
 用 selenium 登录网站，然后切换到 requests 读取网页。两者会共享登录信息。
 
 ```python
-page = MixPage()  # 创建页面对象，默认 driver 模式
+page = WebPage()  # 创建页面对象，默认 driver 模式
 page.get('https://gitee.com/profile')  # 访问个人中心页面（未登录，重定向到登录页面）
 
 page.ele('@id:user_login').input('your_user_name')  # 使用 selenium 输入账号密码登录
@@ -313,4 +313,4 @@ Git 命令学习
 
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
-![](https://gitee.com/g1879/DrissionPage-demos/raw/master/pics/code.jpg)
+![](https://gitee.com/g1879/DrissionPage/raw/master/docs/imgs/code.jpg)
