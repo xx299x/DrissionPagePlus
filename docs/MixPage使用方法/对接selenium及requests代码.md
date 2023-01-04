@@ -1,7 +1,7 @@
 DrissionPage 代码可无缝拼接 selenium 及 requests 代码。既可直接使用 selenium 的`WebDriver`对象，也可导出自身的`WebDriver`给 selenium 代码使用。requests 的
 `Session`对象也可直接传递。便于已有项目的迁移。
 
-# selenium 转 DrissionPage
+# ✔️ selenium 转 DrissionPage
 
 ```python
 from selenium import webdriver
@@ -17,7 +17,7 @@ page = MixPage(drission=drission)
 print(page.title)  
 ```
 
-# DrissionPage 转 selenium
+# ✔️ DrissionPage 转 selenium
 
 ```python
 page = MixPage()
@@ -31,9 +31,9 @@ print(driver.title)
 element = driver.find_element(By.XPATH, '//div')  
 ```
 
-# requests 转 DrissionPage
+# ✔️ requests 转 DrissionPage
 
-``` python
+```python
 from requests import Session
 
 session = requets.Session()
@@ -45,7 +45,7 @@ page = MixPage('s', drission=drission)
 page.get('https://www.baidu.com')
 ```
 
-# DrissionPage 转 requests
+# ✔️ DrissionPage 转 requests
 
 ```python
 from DrissionPage import MixPage

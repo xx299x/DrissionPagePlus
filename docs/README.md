@@ -96,4 +96,4 @@ DrissionPage，即 driver 和 session 组合而成的 page。
 
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
-![](https://gitee.com/g1879/DrissionPage-demos/raw/master/pics/code.jpg)
+![](imgs/code.jpg)

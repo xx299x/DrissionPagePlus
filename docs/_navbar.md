@@ -1,5 +1,2 @@
 * [DataRecorder](https://gitee.com/g1879/DataRecorder)
-* [ListPage](https://gitee.com/g1879/ListPage)
-* [DownloadKit](https://gitee.com/g1879/DownloadKit)
 * [FlowViewer](http://g1879.gitee.io/flowviewer)
-* [Demos](https://gitee.com/g1879/DrissionPage-demos)
