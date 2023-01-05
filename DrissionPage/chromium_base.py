@@ -329,12 +329,14 @@ class ChromiumBase(BasePage):
         :param timeout: 超时时间
         :return: 等待结束时是否进入加载状态
         """
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self.is_loading:
-                return True
-            sleep(.005)
-        return False
+        if timeout:
+            timeout = 2 if timeout is True else timeout
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if self.is_loading:
+                    return True
+                sleep(.005)
+            return False
 
     def get_cookies(self, as_dict=False):
         """获取cookies信息                                              \n
@@ -363,12 +365,12 @@ class ChromiumBase(BasePage):
             result_cookies.append(c)
         self._wait_driver.Network.setCookies(cookies=result_cookies)
 
-    # def set_headers(self, headers: dict) -> None:
-    #     """设置固定发送的headers                        \n
-    #     :param headers: dict格式的headers数据
-    #     :return: None
-    #     """
-    #     self.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
+    def set_headers(self, headers: dict) -> None:
+        """设置固定发送的headers                        \n
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        self.run_cdp('Network.setExtraHTTPHeaders', headers=headers, not_change=True)
 
     def ele(self, loc_or_ele, timeout=None):
         """获取第一个符合条件的元素对象                       \n

@@ -582,13 +582,13 @@ class ChromiumElement(DrissionElement):
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def click(self, by_js=None, retry=False, timeout=.2, wait_loading=False):
+    def click(self, by_js=None, retry=False, timeout=.2, wait_loading=0):
         """点击元素                                                                      \n
         如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击                                \n
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
         :param retry: 遇到其它元素遮挡时，是否重试
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
-        :param wait_loading: 是否等待页面进入加载状态
+        :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
 
@@ -614,8 +614,7 @@ class ChromiumElement(DrissionElement):
 
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
-                        if wait_loading:
-                            self.page.wait_loading()
+                        self.page.wait_loading(wait_loading)
                         return True
 
                     timeout = timeout if timeout is not None else self.page.timeout
@@ -624,14 +623,12 @@ class ChromiumElement(DrissionElement):
                         click = do_it(client_x, client_y, loc_x, loc_y)
 
                     if click is not None:
-                        if wait_loading:
-                            self.page.wait_loading()
+                        self.page.wait_loading(wait_loading)
                         return True
 
         if by_js is not False:
             self.run_script('this.click();')
-            if wait_loading:
-                self.page.wait_loading()
+            self.page.wait_loading(wait_loading)
             return True
 
         return False
@@ -652,6 +649,12 @@ class ChromiumElement(DrissionElement):
         x, y = self._client_click_point
         self._click(x, y, 'right')
 
+    def m_click(self):
+        """中键单击"""
+        self.page.scroll_to_see(self)
+        x, y = self._client_click_point
+        self._click(x, y, 'middle')
+
     def r_click_at(self, offset_x=None, offset_y=None):
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
         :param offset_x: 相对元素左上角坐标的x轴偏移量
@@ -669,7 +672,7 @@ class ChromiumElement(DrissionElement):
         """
         self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=client_x, y=client_y, button=button,
                                                   clickCount=1)
-        sleep(.1)
+        sleep(.05)
         self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=client_x, y=client_y, button=button)
 
     def hover(self, offset_x=None, offset_y=None):

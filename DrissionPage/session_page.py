@@ -73,6 +73,15 @@ class SessionPage(BasePage):
 
             self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
 
+    def set_headers(self, headers):
+        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的        \n
+        :param headers: dict形式的headers
+        :return: None
+        """
+        headers = CaseInsensitiveDict(headers)
+        for i in headers:
+            self.session.headers[i] = headers[i]
+
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                                  \n
         例：ele2 = ele1('@id=ele_id')                                     \n

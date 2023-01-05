@@ -23,9 +23,9 @@ class ActionChains:
         self.curr_y = 0
 
     def move_to(self, ele_or_loc, offset_x=0, offset_y=0):
-        """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量          \n
+        """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量                        \n
         当带偏移量时，偏移量相对于元素左上角坐标
-        :param ele_or_loc: 元素对象或绝对坐标，坐标为tuple(int, int)形式
+        :param ele_or_loc: 元素对象、绝对坐标或文本定位符，坐标为tuple(int, int)形式
         :param offset_x: 偏移量x
         :param offset_y: 偏移量y
         :return: self
@@ -33,7 +33,8 @@ class ActionChains:
         if isinstance(ele_or_loc, (tuple, list)):
             lx = ele_or_loc[0] + offset_x
             ly = ele_or_loc[1] + offset_y
-        elif 'ChromiumElement' in str(type(ele_or_loc)):
+        elif isinstance(ele_or_loc, str) or 'ChromiumElement' in str(type(ele_or_loc)):
+            ele_or_loc = self.page(ele_or_loc)
             x, y = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
             lx = x + offset_x
             ly = y + offset_y
@@ -60,51 +61,111 @@ class ActionChains:
         self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
-    def hold(self, on_ele=None):
-        """点击并按住当前坐标或指定元素            \n
-        :param on_ele: ChromiumElement对象
-        :return: self
-        """
-        if on_ele:
-            self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mousePressed', button='left',
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
-        return self
-
     def click(self, on_ele=None):
-        """点击鼠标左键，可先移动到元素上      \n
-        :param on_ele: ChromiumElement元素
+        """点击鼠标左键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
         if on_ele:
             self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mousePressed', button='left',
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
-        self._dr.Input.dispatchMouseEvent(type='mouseReleased', button='left',
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        self._hold('left').wait(.05)._release('left')
         return self
 
     def r_click(self, on_ele=None):
-        """点击鼠标右键，可先移动到元素上      \n
-        :param on_ele: ChromiumElement元素
+        """点击鼠标右键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
         if on_ele:
             self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mousePressed', button='right',
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
-        self._dr.Input.dispatchMouseEvent(type='mouseReleased', button='right',
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        self._hold('right').wait(.05)._release('right')
+        return self
+
+    def m_click(self, on_ele=None):
+        """点击鼠标中键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._hold('middle').wait(.05)._release('middle')
+        return self
+
+    def hold(self, on_ele=None):
+        """按住鼠标左键，可先移动到元素上                    \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._hold('left')
         return self
 
     def release(self, on_ele=None):
-        """释放鼠标左键，可先移动到元素再释放            \n
-        :param on_ele: ChromiumElement对象
+        """释放鼠标左键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
         if on_ele:
             self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mouseReleased', button='left',
+        self._release('left')
+        return self
+
+    def r_hold(self, on_ele=None):
+        """按住鼠标右键，可先移动到元素上                    \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._hold('right')
+        return self
+
+    def r_release(self, on_ele=None):
+        """释放鼠标右键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._release('right')
+        return self
+
+    def m_hold(self, on_ele=None):
+        """按住鼠标中键，可先移动到元素上                    \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._hold('middle')
+        return self
+
+    def m_release(self, on_ele=None):
+        """释放鼠标中键，可先移动到元素上                   \n
+        :param on_ele: ChromiumElement元素或文本定位符
+        :return: self
+        """
+        if on_ele:
+            self.move_to(on_ele)
+        self._release('middle')
+        return self
+
+    def _hold(self, button):
+        """按下鼠标按键                 \n
+        :param button: 要按下的按键
+        :return: self
+        """
+        self._dr.Input.dispatchMouseEvent(type='mousePressed', button=button, clickCount=1,
+                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        return self
+
+    def _release(self, button):
+        """释放鼠标按键                 \n
+        :param button: 要释放的按键
+        :return: self
+        """
+        self._dr.Input.dispatchMouseEvent(type='mouseReleased', button=button, clickCount=1,
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
@@ -161,6 +222,17 @@ class ActionChains:
 
         data = self._get_key_data(key, 'keyUp')
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
+        return self
+
+    def type(self, text):
+        """输入文本                 \n
+        :param text: 要输入的文本
+        :return: self
+        """
+        for i in text:
+            self.key_down(i)
+            sleep(.05)
+            self.key_up(i)
         return self
 
     def wait(self, second):
