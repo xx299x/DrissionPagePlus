@@ -305,15 +305,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if set_session:
             super().set_cookies(cookies)
 
-    # def set_headers(self, headers: dict) -> None:
-    #     """设置固定发送的headers                        \n
-    #     :param headers: dict格式的headers数据
-    #     :return: None
-    #     """
-    #     if self._mode == 's':
-    #         self.session.headers = headers
-    #     elif self._mode == 'd':
-    #         super(SessionPage, self).set_headers(headers)
+    def set_headers(self, headers: dict) -> None:
+        """设置固定发送的headers                        \n
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        if self._has_session:
+            return super().set_headers(headers)
+        if self._has_driver:
+            super(SessionPage, self).set_headers(headers)
 
     def check_page(self, by_requests=False):
         """d模式时检查网页是否符合预期                \n
