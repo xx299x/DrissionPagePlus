@@ -672,4 +672,4 @@ def _location_in_viewport(page, loc_x: int, loc_y: int) -> bool:
     if (x< document.documentElement.scrollLeft || y < document.documentElement.scrollTop 
     || x > vWidth || y > vHeight){{return false;}}
     return true;}}'''
-    return page.run_script(js)
+    return page.run_js(js)

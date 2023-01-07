@@ -46,7 +46,7 @@ class ChromiumElement(DrissionElement):
         else:
             raise RuntimeError('元素可能已失效。')
 
-        doc = self.run_script('return this.ownerDocument;')
+        doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
 
     def __repr__(self):
@@ -79,7 +79,7 @@ class ChromiumElement(DrissionElement):
     @property
     def inner_html(self):
         """返回元素innerHTML文本"""
-        return self.run_script('return this.innerHTML;')
+        return self.run_js('return this.innerHTML;')
 
     @property
     def attrs(self):
@@ -132,13 +132,13 @@ class ChromiumElement(DrissionElement):
     def client_location(self):
         """返回元素左上角在视口中的坐标"""
         m = self._get_client_rect('border')
-        return (m[0], m[1]) if m else (0, 0)
+        return (int(m[0]), int(m[1])) if m else (0, 0)
 
     @property
     def client_midpoint(self):
         """返回元素中间点在视口中的坐标"""
         m = self._get_client_rect('border')
-        return (m[0] + (m[2] - m[0]) // 2, m[3] + (m[5] - m[3]) // 2) if m else (0, 0)
+        return (int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)) if m else (0, 0)
 
     @property
     def location(self):
@@ -156,7 +156,7 @@ class ChromiumElement(DrissionElement):
     def _client_click_point(self):
         """返回元素左上角可接受点击的点视口坐标"""
         m = self._get_client_rect('padding')
-        return (self.client_midpoint[0], m[1]) if m else (0, 0)
+        return (int(self.client_midpoint[0]), int(m[1])) if m else (0, 0)
 
     @property
     def _click_point(self):
@@ -284,19 +284,19 @@ class ChromiumElement(DrissionElement):
     @property
     def is_selected(self):
         """返回元素是否被选择"""
-        return self.run_script('return this.selected;')
+        return self.run_js('return this.selected;')
 
     @property
     def is_displayed(self):
         """返回元素是否显示"""
         return not (self.style('visibility') == 'hidden'
-                    or self.run_script('return this.offsetParent === null;')
+                    or self.run_js('return this.offsetParent === null;')
                     or self.style('display') == 'none')
 
     @property
     def is_enabled(self):
         """返回元素是否可用"""
-        return not self.run_script('return this.disabled;')
+        return not self.run_js('return this.disabled;')
 
     @property
     def is_alive(self):
@@ -350,14 +350,14 @@ class ChromiumElement(DrissionElement):
         :param value: 属性值
         :return: None
         """
-        self.run_script(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
+        self.run_js(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
 
     def remove_attr(self, attr):
         """删除元素attribute属性          \n
         :param attr: 属性名
         :return: None
         """
-        self.run_script(f'this.removeAttribute("{attr}");')
+        self.run_js(f'this.removeAttribute("{attr}");')
 
     def prop(self, prop):
         """获取property属性值            \n
@@ -379,7 +379,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         value = value.replace('"', r'\"')
-        self.run_script(f'this.{prop}="{value}";')
+        self.run_js(f'this.{prop}="{value}";')
 
     def set_innerHTML(self, html):
         """设置元素innerHTML        \n
@@ -388,16 +388,16 @@ class ChromiumElement(DrissionElement):
         """
         self.set_prop('innerHTML', html)
 
-    def run_script(self, script, as_expr=False, *args):
+    def run_js(self, script, as_expr=False, *args):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
-        return run_script(self, script, as_expr, self.page.timeouts.script, args, True)
+        return run_js(self, script, as_expr, self.page.timeouts.script, args, True)
 
-    def run_async_script(self, script, as_expr=False, *args):
+    def run_async_js(self, script, as_expr=False, *args):
         """以异步方式执行js代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -405,7 +405,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         from threading import Thread
-        Thread(target=run_script, args=(self, script, as_expr, self.page.timeouts.script, args, True)).start()
+        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args, True)).start()
 
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
@@ -459,7 +459,7 @@ class ChromiumElement(DrissionElement):
         if pseudo_ele:
             pseudo_ele = f', "{pseudo_ele}"' if pseudo_ele.startswith(':') else f', "::{pseudo_ele}"'
         js = f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");'
-        return self.run_script(js)
+        return self.run_js(js)
 
     def get_src(self):
         """返回元素src资源，base64的会转为bytes返回，其它返回str"""
@@ -472,7 +472,7 @@ class ChromiumElement(DrissionElement):
                   '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
                   '&& this.naturalHeight > 0')
             end_time = perf_counter() + self.page.timeout
-            while not self.run_script(js) and perf_counter() < end_time:
+            while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
         node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)['node']
@@ -519,7 +519,7 @@ class ChromiumElement(DrissionElement):
                   '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
                   '&& this.naturalHeight > 0')
             end_time = perf_counter() + self.page.timeout
-            while not self.run_script(js) and perf_counter() < end_time:
+            while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
         left, top = self.location
@@ -577,7 +577,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         if by_js:
-            self.run_script("this.value='';")
+            self.run_js("this.value='';")
 
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
@@ -627,7 +627,7 @@ class ChromiumElement(DrissionElement):
                         return True
 
         if by_js is not False:
-            self.run_script('this.click();')
+            self.run_js('this.click();')
             self.page.wait_loading(wait_loading)
             return True
 
@@ -801,7 +801,7 @@ class ChromiumElement(DrissionElement):
         }
         return e(this);}
         '''
-        t = self.run_script(js)
+        t = self.run_js(js)
         return f':root{t}' if mode == 'css' else t
 
     def _get_client_rect(self, quad):
@@ -817,9 +817,9 @@ class ChromiumElement(DrissionElement):
     def _get_absolute_rect(self, x, y):
         """根据绝对坐标获取窗口坐标"""
         js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
-        xy = self.run_script(js)
+        xy = self.run_js(js)
         sx, sy = xy.split(' ')
-        return x + int(float(sx)), y + int(float(sy))
+        return int(x + float(sx)), int(y + float(sy))
 
 
 class ChromiumShadowRootElement(BaseElement):
@@ -857,7 +857,7 @@ class ChromiumShadowRootElement(BaseElement):
     @property
     def is_enabled(self):
         """返回元素是否可用"""
-        return not self.run_script('return this.disabled;')
+        return not self.run_js('return this.disabled;')
 
     @property
     def is_alive(self):
@@ -896,26 +896,26 @@ class ChromiumShadowRootElement(BaseElement):
     @property
     def inner_html(self):
         """返回内部的html文本"""
-        return self.run_script('return this.innerHTML;')
+        return self.run_js('return this.innerHTML;')
 
-    def run_script(self, script, as_expr=False, *args):
+    def run_js(self, script, as_expr=False, *args):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
-        return run_script(self, script, as_expr, self.page.timeouts.script, args)
+        return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
-    def run_async_script(self, script, as_expr=False, *args):
+    def run_async_js(self, script, as_expr=False, *args):
         """以异步方式执行js代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: None
         """
         from threading import Thread
-        Thread(target=run_script, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
+        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n
@@ -1248,7 +1248,7 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def run_script(page_or_ele, script, as_expr=False, timeout=None, args=None, not_change=False):
+def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_change=False):
     """运行javascript代码                                                 \n
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
@@ -1416,32 +1416,32 @@ class ChromiumScroll(object):
             self.t1 = 'window'
             self.t2 = 'document.documentElement'
 
-    def _run_script(self, js):
+    def _run_js(self, js):
         js = js.format(self.t1, self.t2, self.t2)
         if self.t1 == 'this':  # 在元素上滚动
-            self.page_or_ele.run_script(js)
+            self.page_or_ele.run_js(js)
         else:
-            self.page_or_ele.run_script(js, as_expr=True)
+            self.page_or_ele.run_js(js, as_expr=True)
 
     def to_top(self):
         """滚动到顶端，水平位置不变"""
-        self._run_script('{}.scrollTo({}.scrollLeft,0);')
+        self._run_js('{}.scrollTo({}.scrollLeft,0);')
 
     def to_bottom(self):
         """滚动到底端，水平位置不变"""
-        self._run_script('{}.scrollTo({}.scrollLeft,{}.scrollHeight);')
+        self._run_js('{}.scrollTo({}.scrollLeft,{}.scrollHeight);')
 
     def to_half(self):
         """滚动到垂直中间位置，水平位置不变"""
-        self._run_script('{}.scrollTo({}.scrollLeft,{}.scrollHeight/2);')
+        self._run_js('{}.scrollTo({}.scrollLeft,{}.scrollHeight/2);')
 
     def to_rightmost(self):
         """滚动到最右边，垂直位置不变"""
-        self._run_script('{}.scrollTo({}.scrollWidth,{}.scrollTop);')
+        self._run_js('{}.scrollTo({}.scrollWidth,{}.scrollTop);')
 
     def to_leftmost(self):
         """滚动到最左边，垂直位置不变"""
-        self._run_script('{}.scrollTo(0,{}.scrollTop);')
+        self._run_js('{}.scrollTo(0,{}.scrollTop);')
 
     def to_location(self, x, y):
         """滚动到指定位置                 \n
@@ -1449,7 +1449,7 @@ class ChromiumScroll(object):
         :param y: 垂直距离
         :return: None
         """
-        self._run_script(f'{{}}.scrollTo({x},{y});')
+        self._run_js(f'{{}}.scrollTo({x},{y});')
 
     def up(self, pixel=300):
         """向上滚动若干像素，水平位置不变    \n
@@ -1457,14 +1457,14 @@ class ChromiumScroll(object):
         :return: None
         """
         pixel = -pixel
-        self._run_script(f'{{}}.scrollBy(0,{pixel});')
+        self._run_js(f'{{}}.scrollBy(0,{pixel});')
 
     def down(self, pixel=300):
         """向下滚动若干像素，水平位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        self._run_script(f'{{}}.scrollBy(0,{pixel});')
+        self._run_js(f'{{}}.scrollBy(0,{pixel});')
 
     def left(self, pixel=300):
         """向左滚动若干像素，垂直位置不变    \n
@@ -1472,14 +1472,14 @@ class ChromiumScroll(object):
         :return: None
         """
         pixel = -pixel
-        self._run_script(f'{{}}.scrollBy({pixel},0);')
+        self._run_js(f'{{}}.scrollBy({pixel},0);')
 
     def right(self, pixel=300):
         """向右滚动若干像素，垂直位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        self._run_script(f'{{}}.scrollBy({pixel},0);')
+        self._run_js(f'{{}}.scrollBy({pixel},0);')
 
 
 class ChromiumSelect(object):
@@ -1520,7 +1520,7 @@ class ChromiumSelect(object):
         """返回第一个被选中的option元素        \n
         :return: ChromiumElement对象或None
         """
-        ele = self._ele.run_script('return this.options[this.selectedIndex];')
+        ele = self._ele.run_js('return this.options[this.selectedIndex];')
         return ele
 
     @property
@@ -1624,7 +1624,7 @@ class ChromiumSelect(object):
                 return False
 
             js = 'false' if deselect else 'true'
-            ele.run_script(f'this.selected={js};')
+            ele.run_js(f'this.selected={js};')
 
             return True
 

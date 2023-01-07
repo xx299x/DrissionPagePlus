@@ -9,7 +9,7 @@ from time import perf_counter, sleep
 from requests import Session
 
 from .base import BasePage
-from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_script, make_chromium_ele
+from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
 from .common import get_loc
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
@@ -246,14 +246,14 @@ class ChromiumBase(BasePage):
     @property
     def size(self):
         """返回页面总长高，格式：(长, 高)"""
-        w = self.run_script('document.body.scrollWidth;', as_expr=True)
-        h = self.run_script('document.body.scrollHeight;', as_expr=True)
+        w = self.run_js('document.body.scrollWidth;', as_expr=True)
+        h = self.run_js('document.body.scrollHeight;', as_expr=True)
         return w, h
 
     @property
     def active_ele(self):
         """返回当前焦点所在元素"""
-        return self.run_script('return document.activeElement;')
+        return self.run_js('return document.activeElement;')
 
     @property
     def page_load_strategy(self):
@@ -288,16 +288,16 @@ class ChromiumBase(BasePage):
         if script is not None:
             self.timeouts.script = script
 
-    def run_script(self, script, as_expr=False, *args):
+    def run_js(self, script, as_expr=False, *args):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
-        return run_script(self, script, as_expr, self.timeouts.script, args)
+        return run_js(self, script, as_expr, self.timeouts.script, args)
 
-    def run_async_script(self, script, as_expr=False, *args):
+    def run_async_js(self, script, as_expr=False, *args):
         """以异步方式执行js代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -305,7 +305,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         from threading import Thread
-        Thread(target=run_script, args=(self, script, as_expr, self.timeouts.script, args)).start()
+        Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script, args)).start()
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问url                                            \n
@@ -463,7 +463,7 @@ class ChromiumBase(BasePage):
         try:
             self._wait_driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
         except Exception:
-            self.ele(loc_or_ele).run_script("this.scrollIntoView();")
+            self.ele(loc_or_ele).run_js("this.scrollIntoView();")
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面                      \n
@@ -556,7 +556,7 @@ class ChromiumBase(BasePage):
         :return: sessionStorage一个或所有项内容
         """
         js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
-        return self.run_script(js, as_expr=True)
+        return self.run_js(js, as_expr=True)
 
     def get_local_storage(self, item=None):
         """获取localStorage信息，不设置item则获取全部       \n
@@ -564,7 +564,7 @@ class ChromiumBase(BasePage):
         :return: localStorage一个或所有项内容
         """
         js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
-        return self.run_script(js, as_expr=True)
+        return self.run_js(js, as_expr=True)
 
     def set_session_storage(self, item, value):
         """设置或删除某项sessionStorage信息                         \n
@@ -573,7 +573,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
-        return self.run_script(js, as_expr=True)
+        return self.run_js(js, as_expr=True)
 
     def set_local_storage(self, item, value):
         """设置或删除某项localStorage信息                           \n
@@ -582,7 +582,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self.run_script(js, as_expr=True)
+        return self.run_js(js, as_expr=True)
 
     def clear_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
         """清除缓存，可选要清除的项                            \n
@@ -593,9 +593,9 @@ class ChromiumBase(BasePage):
         :return: None
         """
         if session_storage:
-            self.run_script('sessionStorage.clear();', as_expr=True)
+            self.run_js('sessionStorage.clear();', as_expr=True)
         if local_storage:
-            self.run_script('localStorage.clear();', as_expr=True)
+            self.run_js('localStorage.clear();', as_expr=True)
         if cache:
             self._wait_driver.Network.clearBrowserCache()
         if cookies:

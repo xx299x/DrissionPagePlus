@@ -264,6 +264,6 @@ class ActionChains:
 
 def location_to_client(page, lx, ly):
     """绝对坐标转换为视口坐标"""
-    scrool_x = page.run_script('return document.documentElement.scrollLeft;')
-    scrool_y = page.run_script('return document.documentElement.scrollTop;')
-    return lx + scrool_x, ly + scrool_y
+    scroll_x = page.run_js('return document.documentElement.scrollLeft;')
+    scroll_y = page.run_js('return document.documentElement.scrollTop;')
+    return lx + scroll_x, ly + scroll_y

@@ -26,7 +26,7 @@ class ChromiumFrame(ChromiumBase):
         else:
             self._is_diff_domain = True
             super().__init__(page.address, self.frame_id, page.timeout)
-            obj_id = super().run_script('document;', as_expr=True)['objectId']
+            obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
     def __call__(self, loc_or_str, timeout=None):
@@ -55,7 +55,7 @@ class ChromiumFrame(ChromiumBase):
             self._is_diff_domain = True
             self._tab_obj.stop()
             super().__init__(self.address, self.frame_id, self.page.timeout)
-            obj_id = super().run_script('document;', as_expr=True)['objectId']
+            obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
     def _check_ok(self):
@@ -148,7 +148,7 @@ class ChromiumFrame(ChromiumBase):
     def url(self):
         """返回frame当前访问的url"""
         self._check_ok()
-        return self.doc_ele.run_script('return this.location.href;')
+        return self.doc_ele.run_js('return this.location.href;')
 
     @property
     def html(self):
@@ -164,7 +164,7 @@ class ChromiumFrame(ChromiumBase):
     def inner_html(self):
         """返回元素innerHTML文本"""
         self._check_ok()
-        return self.doc_ele.run_script('return this.documentElement.outerHTML;')
+        return self.doc_ele.run_js('return this.documentElement.outerHTML;')
 
     @property
     def title(self):
@@ -176,7 +176,7 @@ class ChromiumFrame(ChromiumBase):
     def cookies(self):
         """以dict格式返回cookies"""
         self._check_ok()
-        return super().cookies if self._is_diff_domain else self.doc_ele.run_script('return this.cookie;')
+        return super().cookies if self._is_diff_domain else self.doc_ele.run_js('return this.cookie;')
 
     @property
     def attrs(self):
@@ -188,8 +188,8 @@ class ChromiumFrame(ChromiumBase):
     def frame_size(self):
         """返回frame内页面尺寸，格式：(长, 高)"""
         self._check_ok()
-        w = self.doc_ele.run_script('return this.body.scrollWidth')
-        h = self.doc_ele.run_script('return this.body.scrollHeight')
+        w = self.doc_ele.run_js('return this.body.scrollWidth')
+        h = self.doc_ele.run_js('return this.body.scrollHeight')
         return w, h
 
     @property
@@ -202,7 +202,7 @@ class ChromiumFrame(ChromiumBase):
     def active_ele(self):
         """返回当前焦点所在元素"""
         self._check_ok()
-        return self.doc_ele.run_script('return this.activeElement;')
+        return self.doc_ele.run_js('return this.activeElement;')
 
     @property
     def location(self):
@@ -240,14 +240,14 @@ class ChromiumFrame(ChromiumBase):
         else:
             while True:
                 try:
-                    return self.doc_ele.run_script('return this.readyState;')
+                    return self.doc_ele.run_js('return this.readyState;')
                 except:
                     pass
 
     def refresh(self):
         """刷新frame页面"""
         self._check_ok()
-        self.doc_ele.run_script('this.location.reload();')
+        self.doc_ele.run_js('this.location.reload();')
 
     def attr(self, attr):
         """返回frame元素attribute属性值                           \n
@@ -274,7 +274,7 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         self.frame_ele.remove_attr(attr)
 
-    def run_script(self, script, as_expr=False, *args):
+    def run_js(self, script, as_expr=False, *args):
         """运行javascript代码                                                 \n
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -282,7 +282,7 @@ class ChromiumFrame(ChromiumBase):
         :return: 运行的结果
         """
         self._check_ok()
-        return self.doc_ele.run_script(script, as_expr=as_expr, *args)
+        return self.doc_ele.run_js(script, as_expr=as_expr, *args)
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位              \n
