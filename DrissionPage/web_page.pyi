@@ -21,11 +21,11 @@ from .chromium_driver import ChromiumDriver
 class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __init__(self,
-                 mode: str = ...,
-                 timeout: float = ...,
-                 tab_id: str = ...,
-                 driver_or_options: Union[ChromiumDriver, DriverOptions, bool] = ...,
-                 session_or_options: Union[Session, SessionOptions, bool] = ...) -> None:
+                 mode: str = 'd',
+                 timeout: float = 10,
+                 tab_id: str = None,
+                 driver_or_options: Union[ChromiumDriver, DriverOptions, bool] = None,
+                 session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
         self._mode: str = ...
         self._has_driver: bool = ...
         self._has_session: bool = ...
@@ -35,7 +35,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-                 timeout: float = ...) -> Union[ChromiumElement, SessionElement, ChromiumFrame, None]: ...
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, None]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -76,10 +76,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def get(self,
             url: str,
-            show_errmsg: bool | None = ...,
-            retry: int | None = ...,
-            interval: float | None = ...,
-            timeout: float | None = ...,
+            show_errmsg: bool = False,
+            retry: int | None = None,
+            interval: float | None = None,
+            timeout: float | None = None,
             params: dict | None = ...,
             data: Union[dict, str, None] = ...,
             json: Union[dict, str, None] = ...,
@@ -96,30 +96,28 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-            timeout: float = ...) -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None]: ...
+            timeout: float = None) -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...) -> List[Union[ChromiumElement, SessionElement, ChromiumFrame, str]]: ...
+             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, ChromiumFrame, str]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = ...) \
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) \
             -> Union[SessionElement, str, None]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
-    def change_mode(self, mode: str = ..., go: bool = ..., copy_cookies: bool = ...) -> None: ...
+    def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
-    def cookies_to_session(self, copy_user_agent: bool = ...) -> None: ...
+    def cookies_to_session(self, copy_user_agent: bool = True) -> None: ...
 
     def cookies_to_driver(self) -> None: ...
 
-    def get_cookies(self, as_dict: bool = ..., all_domains: bool = ...) -> Union[dict, list]: ...
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]: ...
 
-    def _get_driver_cookies(self, as_dict: bool = ...)->dict: ...
+    def _get_driver_cookies(self, as_dict: bool = False) -> dict: ...
 
-    def set_cookies(self, cookies, set_session: bool = ..., set_driver: bool = ...) -> None: ...
-
-    def check_page(self, by_requests: bool = ...) -> Union[bool, None]: ...
+    def set_cookies(self, cookies, set_session: bool = False, set_driver: bool = False) -> None: ...
 
     def close_driver(self) -> None: ...
 
@@ -128,12 +126,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
-             show_errmsg: bool | None = ...,
-             retry: int | None = ...,
-             interval: float | None = ...,
+             data: Union[dict, str, None] = None,
+             show_errmsg: bool = False,
+             retry: int | None = None,
+             interval: float | None = None,
              timeout: float | None = ...,
              params: dict | None = ...,
-             data: Union[dict, str, None] = ...,
              json: Union[dict, str, None] = ...,
              headers: dict | None = ...,
              cookies: Any | None = ...,
@@ -151,7 +149,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
-             timeout: float = ..., single: bool = ..., relative: bool = ...) \
+             timeout: float = None, single: bool = True, relative: bool = False) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...
 

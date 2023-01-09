@@ -24,17 +24,17 @@ from .session_page import SessionPage
 class MixPage(SessionPage, DriverPage, BasePage):
 
     def __init__(self,
-                 mode: str = ...,
-                 drission: Union[Drission, str] = ...,
-                 timeout: float = ...,
-                 driver_options: Union[Options, DriverOptions, bool] = ...,
-                 session_options: Union[dict, SessionOptions, bool] = ...) -> None:
+                 mode: str = 'd',
+                 drission: Union[Drission, str] = None,
+                 timeout: float = None,
+                 driver_options: Union[Options, DriverOptions, bool] = None,
+                 session_options: Union[dict, SessionOptions, bool] = None) -> None:
         self._mode: str = ...
         self._drission: Drission = ...
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-                 timeout: float = ...) -> Union[DriverElement, SessionElement, str, None]: ...
+                 timeout: float = None) -> Union[DriverElement, SessionElement, str, None]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -51,9 +51,9 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def get(self,
             url: str,
-            show_errmsg: bool | None = ...,
-            retry: int | None = ...,
-            interval: float | None = ...,
+            show_errmsg: bool | None = False,
+            retry: int | None = None,
+            interval: float | None = None,
             timeout: float | None = ...,
             params: dict | None = ...,
             data: Union[dict, str, None] = ...,
@@ -71,24 +71,24 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-            timeout: float = ...) -> Union[DriverElement, SessionElement, str, None]: ...
+            timeout: float = None) -> Union[DriverElement, SessionElement, str, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...) -> List[Union[DriverElement, SessionElement, str]]: ...
+             timeout: float = None) -> List[Union[DriverElement, SessionElement, str]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement] = ...) \
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement] = None) \
             -> Union[SessionElement, str, None]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, DriverElement, SessionElement, WebElement],
-             timeout: float = ..., single: bool = ...) \
+             timeout: float = None, single: bool = False) \
             -> Union[DriverElement, SessionElement, str, None, List[Union[SessionElement, str]], List[
                 Union[DriverElement, str]]]: ...
 
-    def get_cookies(self, as_dict: bool = ..., all_domains: bool = ...) -> Union[dict, list]: ...
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False) -> Union[dict, list]: ...
 
     # ----------------MixPage独有属性和方法-----------------------
     @property
@@ -109,15 +109,15 @@ class MixPage(SessionPage, DriverPage, BasePage):
     @property
     def _session_url(self) -> str: ...
 
-    def change_mode(self, mode: str = ..., go: bool = ..., copy_cookies: bool = ...) -> None: ...
+    def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
-    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict], refresh: bool = ...) -> None: ...
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict], refresh: bool = True) -> None: ...
 
-    def cookies_to_session(self, copy_user_agent: bool = ...) -> None: ...
+    def cookies_to_session(self, copy_user_agent: bool = False) -> None: ...
 
-    def cookies_to_driver(self, url: str = ...) -> None: ...
+    def cookies_to_driver(self, url: str = None) -> None: ...
 
-    def check_page(self, by_requests: bool = ...) -> Union[bool, None]: ...
+    def check_page(self, by_requests: bool = False) -> Union[bool, None]: ...
 
     def close_driver(self) -> None: ...
 
@@ -126,12 +126,12 @@ class MixPage(SessionPage, DriverPage, BasePage):
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
-             show_errmsg: bool | None = ...,
-             retry: int | None = ...,
-             interval: float | None = ...,
+             data: Union[dict, str, None] = None,
+             show_errmsg: bool = False,
+             retry: int | None = None,
+             interval: float | None = None,
              timeout: float | None = ...,
              params: dict | None = ...,
-             data: Union[dict, str, None] = ...,
              json: Union[dict, str, None] = ...,
              headers: dict | None = ...,
              cookies: Any | None = ...,
@@ -147,7 +147,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
     @property
     def download(self) -> DownloadKit: ...
 
-    def chrome_downloading(self, path: str = ...) -> list: ...
+    def chrome_downloading(self, path: str = None) -> list: ...
 
     # ----------------MixPage独有函数-----------------------
     def hide_browser(self) -> None: ...

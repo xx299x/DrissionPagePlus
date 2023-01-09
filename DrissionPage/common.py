@@ -18,7 +18,7 @@ from requests import get as requests_get
 from .config import DriverOptions
 
 
-def get_ele_txt(e) -> str:
+def get_ele_txt(e):
     """获取元素内所有文本
     :param e: 元素对象
     :return: 元素内所有文本
@@ -85,7 +85,7 @@ def get_ele_txt(e) -> str:
     return format_html(re_str)
 
 
-def get_loc(loc: Union[tuple, str], translate_css: bool = False) -> tuple:
+def get_loc(loc, translate_css=False):
     """接收selenium定位元组或本库定位语法，转换为标准定位元组，可翻译css selector为xpath  \n
     :param loc: selenium定位元组或本库定位语法
     :param translate_css: 是否翻译css selector为xpath
@@ -112,7 +112,7 @@ def get_loc(loc: Union[tuple, str], translate_css: bool = False) -> tuple:
     return loc
 
 
-def str_to_loc(loc: str) -> tuple:
+def str_to_loc(loc):
     """处理元素查找语句                                                                 \n
     查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                    \n
     @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串    \n
@@ -280,7 +280,7 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def translate_loc(loc: tuple) -> tuple:
+def translate_loc(loc):
     """把By类型的loc元组转换为css selector或xpath类型的  \n
     :param loc: By类型的loc元组
     :return: css selector或xpath类型的loc元组
@@ -322,7 +322,7 @@ def translate_loc(loc: tuple) -> tuple:
     return loc_by, loc_str
 
 
-def format_html(text: str) -> str:
+def format_html(text):
     """处理html编码字符             \n
     :param text: html文本
     :return: 格式化后的html文本
@@ -330,7 +330,7 @@ def format_html(text: str) -> str:
     return unescape(text).replace('\xa0', ' ') if text else text
 
 
-def clean_folder(folder_path: str, ignore: list = None) -> None:
+def clean_folder(folder_path, ignore=None):
     """清空一个文件夹，除了ignore里的文件和文件夹  \n
     :param folder_path: 要清空的文件夹路径
     :param ignore: 忽略列表
@@ -347,7 +347,7 @@ def clean_folder(folder_path: str, ignore: list = None) -> None:
                 rmtree(f, True)
 
 
-def unzip(zip_path: str, to_path: str) -> Union[list, None]:
+def unzip(zip_path, to_path):
     """解压下载的chromedriver.zip文件"""
     if not zip_path:
         return
@@ -356,7 +356,7 @@ def unzip(zip_path: str, to_path: str) -> Union[list, None]:
         return [f.extract(f.namelist()[0], path=to_path)]
 
 
-def get_exe_path_from_port(port: Union[str, int]) -> Union[str, None]:
+def get_exe_path_from_port(port):
     """获取端口号第一条进程的可执行文件路径      \n
     :param port: 端口号
     :return: 可执行文件的绝对路径
@@ -371,7 +371,7 @@ def get_exe_path_from_port(port: Union[str, int]) -> Union[str, None]:
         return file_lst[2].strip() if len(file_lst) > 2 else None
 
 
-def get_pid_from_port(port: Union[str, int]) -> Union[str, None]:
+def get_pid_from_port(port):
     """获取端口号第一条进程的pid           \n
     :param port: 端口号
     :return: 进程id
@@ -396,7 +396,7 @@ def get_pid_from_port(port: Union[str, int]) -> Union[str, None]:
         return None
 
 
-def get_usable_path(path: Union[str, Path]) -> Path:
+def get_usable_path(path):
     """检查文件或文件夹是否有重名，并返回可以使用的路径           \n
     :param path: 文件或文件夹路径
     :return: 可用的路径，Path对象
@@ -424,7 +424,7 @@ def get_usable_path(path: Union[str, Path]) -> Path:
     return path
 
 
-def make_valid_name(full_name: str) -> str:
+def make_valid_name(full_name):
     """获取有效的文件名                  \n
     :param full_name: 文件名
     :return: 可用的文件名
@@ -450,7 +450,7 @@ def make_valid_name(full_name: str) -> str:
     return sub(r'[<>/\\|:*?\n]', '', full_name)
 
 
-def get_long(txt) -> int:
+def get_long(txt):
     """返回字符串中字符个数（一个汉字是2个字符）          \n
     :param txt: 字符串
     :return: 字符个数
@@ -459,7 +459,7 @@ def get_long(txt) -> int:
     return int((len(txt.encode('utf-8')) - txt_len) / 2 + txt_len)
 
 
-def make_absolute_link(link, page=None) -> str:
+def make_absolute_link(link, page=None):
     """获取绝对url
     :param link: 超链接
     :param page: 页面对象
@@ -484,7 +484,7 @@ def make_absolute_link(link, page=None) -> str:
     return link
 
 
-def is_js_func(func: str) -> bool:
+def is_js_func(func):
     """检查文本是否js函数"""
     func = func.strip()
     if func.startswith('function') or func.startswith('async '):
@@ -514,7 +514,7 @@ def _port_is_using(ip: str, port: str) -> Union[bool, None]:
             s.close()
 
 
-def connect_chrome(option: DriverOptions) -> tuple:
+def connect_chrome(option):
     """连接或启动chrome                           \n
     :param option: DriverOptions对象
     :return: chrome 路径和进程对象组成的元组
@@ -543,8 +543,8 @@ def connect_chrome(option: DriverOptions) -> tuple:
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        from DrissionPage.easy_set import _get_chrome_path
-        chrome_path = _get_chrome_path(show_msg=False)
+        from DrissionPage.easy_set import get_chrome_path
+        chrome_path = get_chrome_path(show_msg=False)
 
         if not chrome_path:
             raise FileNotFoundError('无法找到chrome路径，请手动配置。')
@@ -659,7 +659,7 @@ def _set_value_to_dict(target_dict: dict, src: list, value) -> None:
     exec(src)
 
 
-def _location_in_viewport(page, loc_x: int, loc_y: int) -> bool:
+def location_in_viewport(page, loc_x, loc_y):
     """判断给定的坐标是否在视口中          |n
     :param page: ChromePage对象
     :param loc_x: 页面绝对坐标x

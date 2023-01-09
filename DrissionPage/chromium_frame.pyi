@@ -24,7 +24,7 @@ class ChromiumFrame(ChromiumBase):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+                 timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
 
     def __repr__(self) -> str: ...
 
@@ -103,52 +103,56 @@ class ChromiumFrame(ChromiumBase):
 
     def remove_attr(self, attr: str) -> None: ...
 
-    def run_js(self, script: str, as_expr: bool = ..., *args: Any) -> Any: ...
+    def run_js(self, script: str, as_expr: bool = False, *args: Any) -> Any: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = ...) -> Union[ChromiumElement, None]: ...
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union[ChromiumElement, None]: ...
 
     def prev(self,
-             filter_loc: Union[tuple, str] = ...,
-             index: int = ...,
-             timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+             filter_loc: Union[tuple, str] = '',
+             index: int = 1,
+             timeout: float = 0) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
 
     def next(self,
-             filter_loc: Union[tuple, str] = ...,
-             index: int = ...,
-             timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+             filter_loc: Union[tuple, str] = '',
+             index: int = 1,
+             timeout: float = 0) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
 
     def before(self,
-               filter_loc: Union[tuple, str] = ...,
-               index: int = ...,
-               timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+               filter_loc: Union[tuple, str] = '',
+               index: int = 1,
+               timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
 
     def after(self,
-              filter_loc: Union[tuple, str] = ...,
-              index: int = ...,
-              timeout: float = ...) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+              filter_loc: Union[tuple, str] = '',
+              index: int = 1,
+              timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
 
     def prevs(self,
-              filter_loc: Union[tuple, str] = ...,
-              timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = 0) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
     def nexts(self,
-              filter_loc: Union[tuple, str] = ...,
-              timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = 0) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
     def befores(self,
                 filter_loc: Union[tuple, str] = ...,
                 timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
+    def afters(self,
+               filter_loc: Union[tuple, str] = ...,
+               timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
+
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-             timeout: float = ..., single: bool = ..., relative: bool = ...) \
+             timeout: float = None, single: bool = True, relative: bool = False) \
             -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def _d_connect(self,
                    to_url: str,
-                   times: int = ...,
-                   interval: float = ...,
-                   show_errmsg: bool = ...,
-                   timeout: float = ...) -> Union[bool, None]: ...
+                   times: int = 0,
+                   interval: float = 1,
+                   show_errmsg: bool = False,
+                   timeout: float = None) -> Union[bool, None]: ...
 
     def _is_inner_frame(self) -> bool: ...

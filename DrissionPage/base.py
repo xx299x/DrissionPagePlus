@@ -190,7 +190,7 @@ class DrissionElement(BaseElement):
         """
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
-    def afters(self, filter_loc, timeout=None):
+    def afters(self, filter_loc='', timeout=None):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间

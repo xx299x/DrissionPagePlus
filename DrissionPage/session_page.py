@@ -145,7 +145,7 @@ class SessionPage(BasePage):
         """
         return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele)
 
-    def s_eles(self, loc_or_str=None):
+    def s_eles(self, loc_or_str):
         """返回页面中符合条件的所有元素、属性或节点文本                              \n
         :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
@@ -318,7 +318,7 @@ def set_charset(response) -> Response:
     """设置Response对象的编码"""
     # 在headers中获取编码
     content_type = response.headers.get('content-type', '').lower()
-    charset = search(r'charset[=: ]*(.*)?[;]', content_type)
+    charset = search(r'charset[=: ]*(.*)?;', content_type)
 
     if charset:
         response.encoding = charset.group(1)

@@ -9,7 +9,7 @@ from pathlib import Path
 from time import perf_counter, sleep
 
 from .base import DrissionElement, BaseElement
-from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, _location_in_viewport
+from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, location_in_viewport
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 
@@ -262,6 +262,14 @@ class ChromiumElement(DrissionElement):
         """
         return super().befores(filter_loc, timeout)
 
+    def afters(self, filter_loc='', timeout=None):
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 本元素前面的元素或节点组成的列表
+        """
+        return super().afters(filter_loc, timeout)
+
     def wait_ele(self, loc_or_ele, timeout=None):
         """返回用于等待子元素到达某个状态的等待器对象                    \n
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
@@ -311,7 +319,7 @@ class ChromiumElement(DrissionElement):
     def is_in_viewport(self):
         """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
         x, y = self.location
-        return _location_in_viewport(self.page, x, y) if x else False
+        return location_in_viewport(self.page, x, y) if x else False
 
     def attr(self, attr):
         """返回attribute属性值                           \n
@@ -811,7 +819,7 @@ class ChromiumElement(DrissionElement):
         """
         try:
             return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id, not_change=True)['model'][quad]
-        except:
+        except Exception:
             return None
 
     def _get_absolute_rect(self, x, y):
@@ -1393,7 +1401,7 @@ def _offset_scroll(ele, offset_x, offset_y):
     lx = loc_x + offset_x if offset_x else cp_x
     ly = loc_y + offset_y if offset_y else cp_y
 
-    if not _location_in_viewport(ele.page, lx, ly):
+    if not location_in_viewport(ele.page, lx, ly):
         ele.page.scroll.to_location(lx, ly)
     cl_x, cl_y = ele.client_location
     ccp_x, ccp_y = ele._client_click_point

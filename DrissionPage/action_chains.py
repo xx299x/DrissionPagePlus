@@ -5,7 +5,7 @@
 """
 from time import sleep
 
-from .common import _location_in_viewport
+from .common import location_in_viewport
 from .keys import _modifierBit, _keyDescriptionForString
 
 
@@ -43,7 +43,7 @@ class ActionChains:
         else:
             raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 
-        if not _location_in_viewport(self.page, lx, ly):
+        if not location_in_viewport(self.page, lx, ly):
             # 把元素滚动到页面中间
             clientWidth = self.page.run_js('return document.body.clientWidth;')
             clientHeight = self.page.run_js('return document.body.clientHeight;')

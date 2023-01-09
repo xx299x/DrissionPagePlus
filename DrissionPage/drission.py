@@ -395,10 +395,10 @@ def create_driver(chrome_path, driver_path, options):
     except (WebDriverException, SessionNotCreatedException):
         print('打开失败，尝试获取driver。\n')
         from .easy_set import get_match_driver
-        from DrissionPage.easy_set import _get_chrome_path
+        from DrissionPage.easy_set import get_chrome_path
 
         if chrome_path == 'chrome':
-            chrome_path = _get_chrome_path(show_msg=False, from_ini=False)
+            chrome_path = get_chrome_path(show_msg=False, from_ini=False)
 
         if chrome_path:
             driver_path = get_match_driver(chrome_path=chrome_path, check_version=False, show_msg=True)

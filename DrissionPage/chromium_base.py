@@ -395,7 +395,7 @@ class ChromiumBase(BasePage):
         """
         return make_session_ele(self, loc_or_ele)
 
-    def s_eles(self, loc_or_str=None):
+    def s_eles(self, loc_or_str):
         """查找所有符合条件的元素以SessionElement列表形式返回                       \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
@@ -572,7 +572,8 @@ class ChromiumBase(BasePage):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
+        js = f'sessionStorage.removeItem("{item}");' if item is False \
+            else f'sessionStorage.setItem("{item}","{value}");'
         return self.run_js(js, as_expr=True)
 
     def set_local_storage(self, item, value):

@@ -133,7 +133,7 @@ class DriverElement(DrissionElement):
         """
         return make_session_ele(self, loc_or_str)
 
-    def s_eles(self, loc_or_str=None):
+    def s_eles(self, loc_or_str):
         """查找所有符合条件的元素以SessionElement列表形式返回                         \n
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
@@ -1136,7 +1136,7 @@ class ElementWaiter(object):
         return self._wait_ele('hidden')
 
     def _wait_ele(self, mode):
-        """执行等待
+        """执行等待              \n
         :param mode: 等待模式
         :return: 是否等待成功
         """

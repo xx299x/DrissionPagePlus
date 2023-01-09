@@ -187,7 +187,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).s_ele(loc_or_ele)
 
-    def s_eles(self, loc_or_str=None):
+    def s_eles(self, loc_or_str):
         """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
@@ -314,21 +314,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super().set_headers(headers)
         if self._has_driver:
             super(SessionPage, self).set_headers(headers)
-
-    def check_page(self, by_requests=False):
-        """d模式时检查网页是否符合预期                \n
-        默认由response状态检查，可重载实现针对性检查   \n
-        :param by_requests: 是否用内置response检查
-        :return: bool或None，None代表不知道结果
-        """
-        if self._session_url and self._session_url == self.url:
-            return self._response.ok
-
-        # 使用requests访问url并判断可用性
-        if by_requests:
-            self.cookies_to_session()
-            r = self._make_response(self.url, retry=0)[0]
-            return r.ok if r else False
 
     def close_driver(self):
         """关闭driver及浏览器"""

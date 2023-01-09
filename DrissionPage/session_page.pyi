@@ -17,8 +17,8 @@ from .config import SessionOptions
 
 class SessionPage(BasePage):
     def __init__(self,
-                 session_or_options: Union[Session, SessionOptions] = ...,
-                 timeout: float = ...):
+                 session_or_options: Union[Session, SessionOptions] = None,
+                 timeout: float = 10):
         self._session: Session = ...
         self._url: str = ...
         self._response: Response = ...
@@ -38,7 +38,7 @@ class SessionPage(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 timeout: float = ...) -> Union[SessionElement, str, None]: ...
+                 timeout: float = None) -> Union[SessionElement, str, None]: ...
 
     # -----------------共有属性和方法-------------------
 
@@ -53,10 +53,10 @@ class SessionPage(BasePage):
 
     def get(self,
             url: str,
-            show_errmsg: bool | None = ...,
-            retry: int | None = ...,
-            interval: float | None = ...,
-            timeout: float | None = ...,
+            show_errmsg: bool | None = False,
+            retry: int | None = None,
+            interval: float | None = None,
+            timeout: float | None = None,
             params: dict | None = ...,
             data: Union[dict, str, None] = ...,
             json: Union[dict, str, None] = ...,
@@ -73,25 +73,25 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            timeout: float = ...) -> Union[SessionElement, str, None]: ...
+            timeout: float = None) -> Union[SessionElement, str, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = ...) -> List[Union[SessionElement, str]]: ...
+             timeout: float = None) -> List[Union[SessionElement, str]]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = ...) -> Union[SessionElement, str, None]: ...
+              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) -> Union[SessionElement, str, None]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = ...) -> List[Union[SessionElement, str]]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-             timeout: float = ...,
-             single: bool = ...) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...
+             timeout: float = None,
+             single: bool = True) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...
 
     def get_cookies(self,
-                    as_dict: bool = ...,
-                    all_domains: bool = ...) -> Union[dict, list]: ...
+                    as_dict: bool = False,
+                    all_domains: bool = False) -> Union[dict, list]: ...
 
     # ----------------session独有属性和方法-----------------------
     @property
@@ -105,12 +105,12 @@ class SessionPage(BasePage):
 
     def post(self,
              url: str,
-             show_errmsg: bool | None = ...,
-             retry: int | None = ...,
-             interval: float | None = ...,
+             data: Union[dict, str, None] = ...,
+             show_errmsg: bool = False,
+             retry: int | None = None,
+             interval: float | None = None,
              timeout: float | None = ...,
              params: dict | None = ...,
-             data: Union[dict, str, None] = ...,
              json: Union[dict, str, None] = ...,
              headers: dict | None = ...,
              cookies: Any | None = ...,
@@ -126,19 +126,19 @@ class SessionPage(BasePage):
     def _s_connect(self,
                    url: str,
                    mode: str,
-                   data: Union[dict, str, None] = ...,
-                   show_errmsg: bool = ...,
-                   retry: int = ...,
-                   interval: float = ...,
+                   data: Union[dict, str, None] = None,
+                   show_errmsg: bool = False,
+                   retry: int = None,
+                   interval: float = None,
                    **kwargs) -> bool: ...
 
     def _make_response(self,
                        url: str,
-                       mode: str = ...,
-                       data: Union[dict, str] = ...,
-                       retry: int = ...,
-                       interval: float = ...,
-                       show_errmsg: bool = ...,
+                       mode: str = 'get',
+                       data: Union[dict, str] = None,
+                       retry: int = None,
+                       interval: float = None,
+                       show_errmsg: bool = False,
                        **kwargs) -> tuple: ...
 
 

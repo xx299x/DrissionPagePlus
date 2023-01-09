@@ -17,7 +17,7 @@ from .drission import Drission
 from .session_page import SessionPage
 
 
-def show_settings(ini_path: str = None) -> None:
+def show_settings(ini_path=None):
     """打印ini文件内容"""
     om = OptionsManager(ini_path)
     print('paths:')
@@ -28,16 +28,16 @@ def show_settings(ini_path: str = None) -> None:
     pprint(om.get_option('session_options'))
 
 
-def set_paths(driver_path: str = None,
-              chrome_path: str = None,
-              local_port: Union[int, str] = None,
-              debugger_address: str = None,
-              tmp_path: str = None,
-              download_path: str = None,
-              user_data_path: str = None,
-              cache_path: str = None,
-              ini_path: str = None,
-              check_version: bool = False) -> None:
+def set_paths(driver_path=None,
+              chrome_path=None,
+              local_port=None,
+              debugger_address=None,
+              tmp_path=None,
+              download_path=None,
+              user_data_path=None,
+              cache_path=None,
+              ini_path=None,
+              check_version=False):
     """快捷的路径设置函数                                          \n
     :param driver_path: chromedriver.exe路径
     :param chrome_path: chrome.exe路径
@@ -88,7 +88,7 @@ def set_paths(driver_path: str = None,
         check_driver_version(format_path(driver_path), format_path(chrome_path))
 
 
-def set_argument(arg: str, value: Union[bool, str], ini_path: str = None) -> None:
+def set_argument(arg, value, ini_path=None):
     """设置浏览器配置argument属性                            \n
     :param arg: 属性名
     :param value: 属性值，有值的属性传入值，没有的传入bool
@@ -105,7 +105,7 @@ def set_argument(arg: str, value: Union[bool, str], ini_path: str = None) -> Non
     do.save()
 
 
-def set_headless(on_off: bool = True, ini_path: str = None) -> None:
+def set_headless(on_off=True, ini_path=None):
     """设置是否隐藏浏览器界面               \n
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
@@ -115,7 +115,7 @@ def set_headless(on_off: bool = True, ini_path: str = None) -> None:
     set_argument('--headless', on_off, ini_path)
 
 
-def set_no_imgs(on_off: bool = True, ini_path: str = None) -> None:
+def set_no_imgs(on_off=True, ini_path=None):
     """设置是否禁止加载图片                    \n
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
@@ -125,7 +125,7 @@ def set_no_imgs(on_off: bool = True, ini_path: str = None) -> None:
     set_argument('--blink-settings=imagesEnabled=false', on_off, ini_path)
 
 
-def set_no_js(on_off: bool = True, ini_path: str = None) -> None:
+def set_no_js(on_off=True, ini_path=None):
     """设置是否禁用js                              \n
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
@@ -135,7 +135,7 @@ def set_no_js(on_off: bool = True, ini_path: str = None) -> None:
     set_argument('--disable-javascript', on_off, ini_path)
 
 
-def set_mute(on_off: bool = True, ini_path: str = None) -> None:
+def set_mute(on_off=True, ini_path=None):
     """设置是否静音                              \n
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
@@ -145,7 +145,7 @@ def set_mute(on_off: bool = True, ini_path: str = None) -> None:
     set_argument('--mute-audio', on_off, ini_path)
 
 
-def set_user_agent(user_agent: str, ini_path: str = None) -> None:
+def set_user_agent(user_agent, ini_path=None):
     """设置user agent                           \n
     :param user_agent: user agent文本
     :param ini_path: 要修改的ini文件路径
@@ -154,7 +154,7 @@ def set_user_agent(user_agent: str, ini_path: str = None) -> None:
     set_argument('user-agent', user_agent, ini_path)
 
 
-def set_proxy(proxy: str, ini_path: str = None) -> None:
+def set_proxy(proxy, ini_path=None):
     """设置代理                                  \n
     :param proxy: 代理网址和端口
     :param ini_path: 要修改的ini文件路径
@@ -163,7 +163,7 @@ def set_proxy(proxy: str, ini_path: str = None) -> None:
     set_argument('--proxy-server', proxy, ini_path)
 
 
-def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bool:
+def check_driver_version(driver_path=None, chrome_path=None):
     """检查传入的chrome和chromedriver是否匹配  \n
     :param driver_path: chromedriver.exe路径
     :param chrome_path: chrome.exe路径
@@ -194,11 +194,11 @@ def check_driver_version(driver_path: str = None, chrome_path: str = None) -> bo
 
 
 # -------------------------自动识别chrome版本号并下载对应driver------------------------
-def get_match_driver(ini_path: Union[str, None] = 'default',
-                     save_path: str = None,
-                     chrome_path: str = None,
-                     show_msg: bool = True,
-                     check_version: bool = True) -> Union[str, None]:
+def get_match_driver(ini_path='default',
+                     save_path=None,
+                     chrome_path=None,
+                     show_msg=True,
+                     check_version=True):
     """自动识别chrome版本并下载匹配的driver             \n
     :param ini_path: 要读取和修改的ini文件路径
     :param save_path: chromedriver保存路径
@@ -209,7 +209,7 @@ def get_match_driver(ini_path: Union[str, None] = 'default',
     """
     save_path = save_path or str(Path(__file__).parent)
 
-    chrome_path = chrome_path or _get_chrome_path(ini_path, show_msg)
+    chrome_path = chrome_path or get_chrome_path(ini_path, show_msg)
     chrome_path = Path(chrome_path).absolute() if chrome_path else None
     if show_msg:
         print('chrome.exe路径', chrome_path)
@@ -246,13 +246,17 @@ def get_match_driver(ini_path: Union[str, None] = 'default',
     return driver_path
 
 
-def _get_chrome_path(ini_path: str = None,
-                     show_msg: bool = True,
-                     from_ini: bool = True,
-                     from_regedit: bool = True,
-                     from_system_path: bool = True, ) -> Union[str, None]:
+def get_chrome_path(ini_path=None,
+                    show_msg=True,
+                    from_ini=True,
+                    from_regedit=True,
+                    from_system_path=True):
     """从ini文件或系统变量中获取chrome.exe的路径    \n
     :param ini_path: ini文件路径
+    :param show_msg: 是否打印信息
+    :param from_ini: 是否从ini文件获取
+    :param from_regedit: 是否从注册表获取
+    :param from_system_path: 是否从系统路径获取
     :return: chrome.exe路径
     """
     # -----------从ini文件中获取--------------
