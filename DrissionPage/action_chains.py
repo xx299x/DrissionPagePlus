@@ -30,7 +30,9 @@ class ActionChains:
         :param offset_y: 偏移量y
         :return: self
         """
+        is_loc = False
         if isinstance(ele_or_loc, (tuple, list)):
+            is_loc = True
             lx = ele_or_loc[0] + offset_x
             ly = ele_or_loc[1] + offset_y
         elif isinstance(ele_or_loc, str) or 'ChromiumElement' in str(type(ele_or_loc)):
@@ -42,9 +44,19 @@ class ActionChains:
             raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 
         if not _location_in_viewport(self.page, lx, ly):
-            self.page.scroll.to_location(lx, ly)
+            # 把元素滚动到页面中间
+            clientWidth = self.page.run_js('return document.body.clientWidth;')
+            clientHeight = self.page.run_js('return document.body.clientHeight;')
+            self.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
 
-        cx, cy = location_to_client(self.page, lx, ly)
+        # # 这样设计为了应付那些不随滚动条滚动的元素
+        if is_loc:
+            cx, cy = location_to_client(self.page, lx, ly)
+        else:
+            x, y = ele_or_loc.client_location if offset_x or offset_y else ele_or_loc.client_midpoint
+            cx = x + offset_x
+            cy = y + offset_y
+
         self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=cx, y=cy, modifiers=self.modifier)
         self.curr_x = cx
         self.curr_y = cy
@@ -266,4 +278,4 @@ def location_to_client(page, lx, ly):
     """绝对坐标转换为视口坐标"""
     scroll_x = page.run_js('return document.documentElement.scrollLeft;')
     scroll_y = page.run_js('return document.documentElement.scrollTop;')
-    return lx + scroll_x, ly + scroll_y
+    return lx - scroll_x, ly - scroll_y
