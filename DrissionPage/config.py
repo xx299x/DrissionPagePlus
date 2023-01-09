@@ -488,8 +488,8 @@ class DriverOptions(Options):
             self.timeouts['pageLoad'] *= 1000
             self.timeouts['script'] *= 1000
 
-        if '--no-sandbox' not in self._arguments:
-            self._arguments.append('--no-sandbox')
+        # if '--no-sandbox' not in self._arguments:
+        #     self._arguments.append('--no-sandbox')
 
     @property
     def driver_path(self):

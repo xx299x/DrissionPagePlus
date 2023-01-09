@@ -1,4 +1,4 @@
-#
+# ✨️ 概述
 
 DrissionPage 是一个基于 python 的网页自动化工具。
 
@@ -9,6 +9,10 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 它功能强大，内置无数人性化设计和便捷功能。
 
 它的语法简洁而优雅，代码量少，对新手友好。
+
+<a href='https://gitee.com/g1879/DrissionPage/stargazers'><img src='https://gitee.com/g1879/DrissionPage/badge/star.svg?theme=dark' alt='star'></img></a> <a href='https://gitee.com/g1879/DrissionPage/members'><img src='https://gitee.com/g1879/DrissionPage/badge/fork.svg?theme=dark' alt='fork'></img></a>
+
+项目地址：[gitee](https://gitee.com/g1879/DrissionPage)    |    [github](https://github.com/g1879/DrissionPage)
 
 **交流QQ群：**  897838127
 
@@ -56,15 +60,24 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 除了以上优点，本库还内置了无数人性化设计。
 
 - 极简的语法规则。集成大量常用功能，代码更优雅
+
 - 定位元素更加容易，功能更强大稳定
+
 - 无处不在的等待和自动重试功能。使不稳定的网络变得易于控制，程序更稳定，编写更省心
+
 - 提供强大的下载工具。操作浏览器时也能享受快捷可靠的下载功能
+
 - 允许反复使用已经打开的浏览器。无须每次运行从头启动浏览器，调试超方便
+
 - 使用 ini 文件保存常用配置，自动调用，提供便捷的设置，远离繁杂的配置项
+
 - 内置 lxml 作为解析引擎，解析速度成几个数量级提升
+
 - 使用 POM 模式封装，可直接用于测试，便于扩展
+
 - 高度集成的便利功能，从每个细节中体现
-- 还有很多细节，这里不一一列举，欢迎实际使用中体验：）
+
+- 还有很多细节，这里不一一列举，欢迎实际使用中体验：D
 
 # 🖐🏻 免责声明
 
