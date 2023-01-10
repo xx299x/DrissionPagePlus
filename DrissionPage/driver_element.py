@@ -258,6 +258,7 @@ class DriverElement(DrissionElement):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         return super().prev(index, filter_loc, timeout)
 
     def next(self, index=1, filter_loc='', timeout=0):
@@ -267,6 +268,7 @@ class DriverElement(DrissionElement):
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         return super().next(index, filter_loc, timeout)
 
     def before(self, index=1, filter_loc='', timeout=None):
@@ -276,6 +278,7 @@ class DriverElement(DrissionElement):
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的某个元素或节点
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         return super().before(index, filter_loc, timeout)
 
     def after(self, index=1, filter_loc='', timeout=None):
@@ -285,6 +288,7 @@ class DriverElement(DrissionElement):
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的某个元素或节点
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         return super().after(index, filter_loc, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
@@ -325,6 +329,7 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -334,6 +339,7 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('right', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -343,6 +349,7 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -352,6 +359,7 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -361,6 +369,7 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
+        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('near', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -1245,3 +1254,14 @@ class Scroll(object):
         :return: None
         """
         self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
+
+
+def _exchange_arguments(index, filter_loc):
+    # 此方法用于兼容MixPage参数顺序相反的情况
+    if isinstance(index, str) and isinstance(filter_loc, int):
+        index, filter_loc = filter_loc, index
+    elif isinstance(index, int) and filter_loc == 1:
+        filter_loc = ''
+    elif isinstance(filter_loc, str) and index == '':
+        index = 1
+    return index, filter_loc

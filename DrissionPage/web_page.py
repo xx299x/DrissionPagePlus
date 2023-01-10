@@ -44,7 +44,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
 
         if self._mode == 'd':
-            self._driver
+            self._to_d_mode()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                            \n

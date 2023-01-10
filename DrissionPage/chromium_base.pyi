@@ -187,6 +187,8 @@ class ChromiumBase(BasePage):
                    show_errmsg: bool = False,
                    timeout: float = None) -> Union[bool, None]: ...
 
+    def _to_d_mode(self): ...
+
 
 class Timeout(object):
 

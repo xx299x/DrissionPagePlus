@@ -295,6 +295,7 @@ class ChromiumBase(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
+        self._to_d_mode()
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
@@ -304,6 +305,7 @@ class ChromiumBase(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: None
         """
+        self._to_d_mode()
         from threading import Thread
         Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script, args)).start()
 
@@ -649,6 +651,10 @@ class ChromiumBase(BasePage):
             return False
 
         return True
+
+    def _to_d_mode(self):
+        """用于使WebPage切换到d模式"""
+        return self._driver
 
 
 class Timeout(object):

@@ -196,19 +196,31 @@ class ActionChains:
         return self
 
     def up(self, pixel):
-        """鼠标向上移动若干像素"""
+        """鼠标向上移动若干像素            \n
+        :param pixel: 鼠标移动的像素值
+        :return: self
+        """
         return self.move(0, -pixel)
 
     def down(self, pixel):
-        """鼠标向下移动若干像素"""
+        """鼠标向下移动若干像素           \n
+        :param pixel: 鼠标移动的像素值
+        :return: self
+        """
         return self.move(0, pixel)
 
     def left(self, pixel):
-        """鼠标向左移动若干像素"""
+        """鼠标向左移动若干像素           \n
+        :param pixel: 鼠标移动的像素值
+        :return: self
+        """
         return self.move(-pixel, 0)
 
     def right(self, pixel):
-        """鼠标向右移动若干像素"""
+        """鼠标向右移动若干像素           \n
+        :param pixel: 鼠标移动的像素值
+        :return: self
+        """
         return self.move(pixel, 0)
 
     def key_down(self, key):
