@@ -12,7 +12,7 @@ from requests import Session
 
 from .chromium_base import Timeout, ChromiumBase
 from .chromium_tab import ChromiumTab
-from .common import connect_chrome
+from .common import connect_browser
 from .config import DriverOptions
 from .chromium_driver import ChromiumDriver
 
@@ -47,7 +47,7 @@ class ChromiumPage(ChromiumBase):
         if addr_driver_opts is None or isinstance(addr_driver_opts, DriverOptions):
             self.options = addr_driver_opts or DriverOptions()  # 从ini文件读取
             self.address = self.options.debugger_address
-            self.process = connect_chrome(self.options)[1]
+            self.process = connect_browser(self.options)[1]
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
 
@@ -56,7 +56,7 @@ class ChromiumPage(ChromiumBase):
             self.address = addr_driver_opts
             self.options = DriverOptions(read_file=False)
             self.options.debugger_address = addr_driver_opts
-            self.process = connect_chrome(self.options)[1]
+            self.process = connect_browser(self.options)[1]
             if not tab_id:
                 json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page'][0]

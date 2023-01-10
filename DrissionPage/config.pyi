@@ -5,6 +5,7 @@
 """
 from configparser import RawConfigParser
 from http.cookiejar import Cookie
+from pathlib import Path
 from typing import Any, Union, List
 
 from requests.cookies import RequestsCookieJar
@@ -159,6 +160,9 @@ class DriverOptions(Options):
     def chrome_path(self) -> str: ...
 
     @property
+    def browser_path(self) -> str: ...
+
+    @property
     def user_data_path(self) -> str: ...
 
     # -------------重写父类方法，实现链式操作-------------
@@ -203,8 +207,9 @@ class DriverOptions(Options):
     def set_page_load_strategy(self, value: str) -> 'DriverOptions': ...
 
     def set_paths(self,
-                  driver_path: str = None,
-                  chrome_path: str = None,
+                  driver_path: Union[str, Path] = None,
+                  chrome_path: Union[str, Path] = None,
+                  browser_path: Union[str, Path] = None,
                   local_port: Union[int, str] = None,
                   debugger_address: str = None,
                   download_path: str = None,

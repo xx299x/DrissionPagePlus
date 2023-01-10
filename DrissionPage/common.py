@@ -514,14 +514,14 @@ def _port_is_using(ip: str, port: str) -> Union[bool, None]:
             s.close()
 
 
-def connect_chrome(option):
-    """连接或启动chrome                           \n
+def connect_browser(option):
+    """连接或启动浏览器                           \n
     :param option: DriverOptions对象
     :return: chrome 路径和进程对象组成的元组
     """
     system_type = system().lower()
     debugger_address = option.debugger_address
-    chrome_path = option.chrome_path
+    chrome_path = option.browser_path
 
     debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
     ip, port = debugger_address.split(':')

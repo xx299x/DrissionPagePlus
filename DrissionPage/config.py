@@ -488,9 +488,6 @@ class DriverOptions(Options):
             self.timeouts['pageLoad'] *= 1000
             self.timeouts['script'] *= 1000
 
-        # if '--no-sandbox' not in self._arguments:
-        #     self._arguments.append('--no-sandbox')
-
     @property
     def driver_path(self):
         """chromedriver文件路径"""
@@ -498,6 +495,11 @@ class DriverOptions(Options):
 
     @property
     def chrome_path(self):
+        """浏览器启动文件路径"""
+        return self.browser_path
+
+    @property
+    def browser_path(self):
         """浏览器启动文件路径"""
         return self.binary_location or 'chrome'
 
@@ -718,11 +720,12 @@ class DriverOptions(Options):
         self.page_load_strategy = value.lower()
         return self
 
-    def set_paths(self, driver_path=None, chrome_path=None, local_port=None, debugger_address=None, download_path=None,
-                  user_data_path=None, cache_path=None):
+    def set_paths(self, driver_path=None, chrome_path=None, browser_path=None, local_port=None,
+                  debugger_address=None, download_path=None, user_data_path=None, cache_path=None):
         """快捷的路径设置函数                                             \n
         :param driver_path: chromedriver.exe路径
         :param chrome_path: chrome.exe路径
+        :param browser_path: 浏览器可执行文件路径
         :param local_port: 本地端口号
         :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
         :param download_path: 下载文件路径
@@ -735,6 +738,9 @@ class DriverOptions(Options):
 
         if chrome_path is not None:
             self.binary_location = str(chrome_path)
+
+        if browser_path is not None:
+            self.binary_location = str(browser_path)
 
         if local_port is not None:
             self.debugger_address = '' if local_port == '' else f'127.0.0.1:{local_port}'

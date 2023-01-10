@@ -14,7 +14,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
-from .common import get_pid_from_port, connect_chrome
+from .common import get_pid_from_port, connect_browser
 from .config import SessionOptions, DriverOptions, cookies_to_tuple, session_options_to_dict
 
 
@@ -103,7 +103,7 @@ class Drission(object):
             # -----------若指定debug端口且该端口未在使用中，则先启动浏览器进程-----------
             if self.driver_options.debugger_address:
                 # 启动浏览器进程，同时返回该进程使用的 chrome.exe 路径
-                chrome_path, self._debugger = connect_chrome(self.driver_options)
+                chrome_path, self._debugger = connect_browser(self.driver_options)
 
             # -----------创建WebDriver对象-----------
             self._driver = create_driver(chrome_path, driver_path, self.driver_options)

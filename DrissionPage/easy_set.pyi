@@ -11,6 +11,7 @@ def show_settings(ini_path: str = None) -> None: ...
 
 def set_paths(driver_path: str = None,
               chrome_path: str = None,
+              browser_path: str = None,
               local_port: Union[int, str] = None,
               debugger_address: str = None,
               tmp_path: str = None,
