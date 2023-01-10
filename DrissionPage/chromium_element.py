@@ -1300,6 +1300,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_chan
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
+        print(script)
         raise RuntimeError(f'javascript错误: {exceptionDetails}')
 
     try:
@@ -1397,41 +1398,41 @@ class ChromiumScroll(object):
 
     def __init__(self, page_or_ele):
         """
-        :param page_or_ele: ChromePage或ChromiumElement
+        :param page_or_ele: 页面对象、元素对象或frame对象
         """
-        self.page_or_ele = page_or_ele
+        self._driver = page_or_ele
         if isinstance(page_or_ele, ChromiumElement):
             self.t1 = self.t2 = 'this'
+        elif 'ChromiumFrame' in str(type(page_or_ele)):
+            self._driver = page_or_ele.doc_ele
+            self.t1 = self.t2 = 'this.documentElement'
         else:
             self.t1 = 'window'
             self.t2 = 'document.documentElement'
 
     def _run_js(self, js):
         js = js.format(self.t1, self.t2, self.t2)
-        if self.t1 == 'this':  # 在元素上滚动
-            self.page_or_ele.run_js(js)
-        else:
-            self.page_or_ele.run_js(js, as_expr=True)
+        self._driver.run_js(js)
 
     def to_top(self):
         """滚动到顶端，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft,0);')
+        self._run_js('{}.scrollTo({}.scrollLeft, 0);')
 
     def to_bottom(self):
         """滚动到底端，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft,{}.scrollHeight);')
+        self._run_js('{}.scrollTo({}.scrollLeft, {}.scrollHeight);')
 
     def to_half(self):
         """滚动到垂直中间位置，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft,{}.scrollHeight/2);')
+        self._run_js('{}.scrollTo({}.scrollLeft, {}.scrollHeight/2);')
 
     def to_rightmost(self):
         """滚动到最右边，垂直位置不变"""
-        self._run_js('{}.scrollTo({}.scrollWidth,{}.scrollTop);')
+        self._run_js('{}.scrollTo({}.scrollWidth, {}.scrollTop);')
 
     def to_leftmost(self):
         """滚动到最左边，垂直位置不变"""
-        self._run_js('{}.scrollTo(0,{}.scrollTop);')
+        self._run_js('{}.scrollTo(0, {}.scrollTop);')
 
     def to_location(self, x, y):
         """滚动到指定位置                 \n
@@ -1439,7 +1440,7 @@ class ChromiumScroll(object):
         :param y: 垂直距离
         :return: None
         """
-        self._run_js(f'{{}}.scrollTo({x},{y});')
+        self._run_js(f'{{}}.scrollTo({x}, {y});')
 
     def up(self, pixel=300):
         """向上滚动若干像素，水平位置不变    \n
@@ -1447,14 +1448,14 @@ class ChromiumScroll(object):
         :return: None
         """
         pixel = -pixel
-        self._run_js(f'{{}}.scrollBy(0,{pixel});')
+        self._run_js(f'{{}}.scrollBy(0, {pixel});')
 
     def down(self, pixel=300):
         """向下滚动若干像素，水平位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        self._run_js(f'{{}}.scrollBy(0,{pixel});')
+        self._run_js(f'{{}}.scrollBy(0, {pixel});')
 
     def left(self, pixel=300):
         """向左滚动若干像素，垂直位置不变    \n
@@ -1462,14 +1463,14 @@ class ChromiumScroll(object):
         :return: None
         """
         pixel = -pixel
-        self._run_js(f'{{}}.scrollBy({pixel},0);')
+        self._run_js(f'{{}}.scrollBy({pixel}, 0);')
 
     def right(self, pixel=300):
         """向右滚动若干像素，垂直位置不变    \n
         :param pixel: 滚动的像素
         :return: None
         """
-        self._run_js(f'{{}}.scrollBy({pixel},0);')
+        self._run_js(f'{{}}.scrollBy({pixel}, 0);')
 
 
 class ChromiumSelect(object):
