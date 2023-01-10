@@ -8,6 +8,7 @@ from typing import Union
 from requests import get as requests_get
 
 from .base import BasePage, DrissionElement
+from .chromium_element import ChromiumElement
 from .config import DriverOptions
 
 
@@ -57,3 +58,6 @@ def connect_browser(option: DriverOptions) -> tuple: ...
 
 
 def location_in_viewport(page, loc_x: int, loc_y: int) -> bool: ...
+
+
+def offset_scroll(ele: ChromiumElement, offset_x: int, offset_y: int) -> tuple: ...

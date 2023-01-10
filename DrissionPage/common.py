@@ -666,10 +666,36 @@ def location_in_viewport(page, loc_x, loc_y):
     :param loc_y: 页面绝对坐标y
     :return:
     """
-    js = f'''function(){{var x = {loc_x};var y = {loc_y};
-    const vWidth = window.innerWidth || document.documentElement.clientWidth
-    const vHeight = window.innerHeight || document.documentElement.clientHeight
-    if (x< document.documentElement.scrollLeft || y < document.documentElement.scrollTop 
-    || x > vWidth || y > vHeight){{return false;}}
+    js = f'''function(){{var x = {loc_x}; var y = {loc_y};
+    const scrollLeft = document.documentElement.scrollLeft;
+    const scrollTop = document.documentElement.scrollTop;
+    const vWidth = document.documentElement.clientWidth;
+    const vHeight = document.documentElement.clientHeight;
+    if (x< scrollLeft || y < scrollTop || x > vWidth + scrollLeft || y > vHeight + scrollTop){{return false;}}
     return true;}}'''
     return page.run_js(js)
+    # const vWidth = window.innerWidth || document.documentElement.clientWidth;
+    # const vHeight = window.innerHeight || document.documentElement.clientHeight;
+
+
+def offset_scroll(ele, offset_x, offset_y):
+    """接收元素及偏移坐标，把坐标滚动到页面中间，返回该点在视口中的坐标    \n
+    有偏移量时以元素左上角坐标为基准，没有时以_click_point为基准
+    :param ele: 元素对象
+    :param offset_x: 偏移量x
+    :param offset_y: 偏移量y
+    :return: 视口中的坐标
+    """
+    loc_x, loc_y = ele.location
+    cp_x, cp_y = ele._click_point
+    lx = loc_x + offset_x if offset_x else cp_x
+    ly = loc_y + offset_y if offset_y else cp_y
+    if not location_in_viewport(ele.page, lx, ly):
+        clientWidth = ele.page.run_js('return document.body.clientWidth;')
+        clientHeight = ele.page.run_js('return document.body.clientHeight;')
+        ele.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
+    cl_x, cl_y = ele.client_location
+    ccp_x, ccp_y = ele._client_click_point
+    cx = cl_x + offset_x if offset_x else ccp_x
+    cy = cl_y + offset_y if offset_y else ccp_y
+    return cx, cy

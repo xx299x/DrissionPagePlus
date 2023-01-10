@@ -10,7 +10,7 @@ from requests import Session
 
 from .base import BasePage
 from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
-from .common import get_loc
+from .common import get_loc, offset_scroll
 from .config import cookies_to_tuple
 from .session_element import make_session_ele
 from .chromium_driver import ChromiumDriver
@@ -459,11 +459,15 @@ class ChromiumBase(BasePage):
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
         :return: None
         """
-        node_id = self.ele(loc_or_ele).node_id
+        ele = self.ele(loc_or_ele)
+        node_id = ele.node_id
         try:
             self._wait_driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
         except Exception:
             self.ele(loc_or_ele).run_js("this.scrollIntoView();")
+
+        if not ele.is_in_viewport:
+            offset_scroll(ele, 0, 0)
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面                      \n

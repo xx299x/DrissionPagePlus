@@ -37,6 +37,7 @@ class ActionChains:
             ly = ele_or_loc[1] + offset_y
         elif isinstance(ele_or_loc, str) or 'ChromiumElement' in str(type(ele_or_loc)):
             ele_or_loc = self.page(ele_or_loc)
+            self.page.scroll_to_see(ele_or_loc)
             x, y = ele_or_loc.location if offset_x or offset_y else ele_or_loc.midpoint
             lx = x + offset_x
             ly = y + offset_y
@@ -44,7 +45,7 @@ class ActionChains:
             raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 
         if not location_in_viewport(self.page, lx, ly):
-            # 把元素滚动到页面中间
+            # 把坐标滚动到页面中间
             clientWidth = self.page.run_js('return document.body.clientWidth;')
             clientHeight = self.page.run_js('return document.body.clientHeight;')
             self.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)

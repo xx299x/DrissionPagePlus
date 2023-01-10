@@ -9,7 +9,8 @@ from pathlib import Path
 from time import perf_counter, sleep
 
 from .base import DrissionElement, BaseElement
-from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, location_in_viewport
+from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, location_in_viewport, \
+    offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 
@@ -318,7 +319,7 @@ class ChromiumElement(DrissionElement):
     @property
     def is_in_viewport(self):
         """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
-        x, y = self.location
+        x, y = self._click_point
         return location_in_viewport(self.page, x, y) if x else False
 
     def attr(self, attr):
@@ -648,7 +649,8 @@ class ChromiumElement(DrissionElement):
         :param button: 左键还是右键
         :return: None
         """
-        x, y = _offset_scroll(self, offset_x, offset_y)
+        self.page.scroll_to_see(self)
+        x, y = offset_scroll(self, offset_x, offset_y)
         self._click(x, y, button)
 
     def r_click(self):
@@ -657,12 +659,6 @@ class ChromiumElement(DrissionElement):
         x, y = self._client_click_point
         self._click(x, y, 'right')
 
-    def m_click(self):
-        """中键单击"""
-        self.page.scroll_to_see(self)
-        x, y = self._client_click_point
-        self._click(x, y, 'middle')
-
     def r_click_at(self, offset_x=None, offset_y=None):
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
         :param offset_x: 相对元素左上角坐标的x轴偏移量
@@ -670,6 +666,12 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         self.click_at(offset_x, offset_y, 'right')
+
+    def m_click(self):
+        """中键单击"""
+        self.page.scroll_to_see(self)
+        x, y = self._client_click_point
+        self._click(x, y, 'middle')
 
     def _click(self, client_x, client_y, button='left'):
         """实施点击                        \n
@@ -689,7 +691,8 @@ class ChromiumElement(DrissionElement):
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        x, y = _offset_scroll(self, offset_x, offset_y)
+        self.page.scroll_to_see(self)
+        x, y = offset_scroll(self, offset_x, offset_y)
         self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
 
     def drag(self, offset_x=0, offset_y=0, speed=40, shake=True):
@@ -1387,27 +1390,6 @@ def _send_key(ele, modifier, key):
         ele.page.driver.Input.dispatchKeyEvent(**data)
         data['type'] = 'keyUp'
         ele.page.driver.Input.dispatchKeyEvent(**data)
-
-
-def _offset_scroll(ele, offset_x, offset_y):
-    """接收元素及偏移坐标，滚动到偏移坐标，返回该点在视口中的坐标
-    :param ele: 元素对象
-    :param offset_x: 偏移量x
-    :param offset_y: 偏移量y
-    :return: 视口中的坐标
-    """
-    loc_x, loc_y = ele.location
-    cp_x, cp_y = ele._click_point
-    lx = loc_x + offset_x if offset_x else cp_x
-    ly = loc_y + offset_y if offset_y else cp_y
-
-    if not location_in_viewport(ele.page, lx, ly):
-        ele.page.scroll.to_location(lx, ly)
-    cl_x, cl_y = ele.client_location
-    ccp_x, ccp_y = ele._client_click_point
-    cx = cl_x + offset_x if offset_x else ccp_x
-    cy = cl_y + offset_y if offset_y else ccp_y
-    return cx, cy
 
 
 class ChromiumScroll(object):
