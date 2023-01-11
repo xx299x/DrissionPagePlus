@@ -88,9 +88,10 @@ class ChromiumPage(ChromiumBase):
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
 
     def _set_options(self):
+        """从配置中读取设置"""
         self.set_timeouts(page_load=self.options.timeouts['pageLoad'] / 1000,
                           script=self.options.timeouts['script'] / 1000,
-                          implicit=self.options.timeouts['implicit'] / 1000 if self.timeout is None else self.timeout)
+                          implicit=self.options.timeouts['implicit'] / 1000)
         self._page_load_strategy = self.options.page_load_strategy
 
     @property

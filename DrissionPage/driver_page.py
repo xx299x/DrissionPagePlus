@@ -67,12 +67,6 @@ class DriverPage(BasePage):
         """
         retry, interval = self._before_connect(url, retry, interval)
         self._url_available = self._d_connect(self._url, times=retry, interval=interval, show_errmsg=show_errmsg)
-
-        try:
-            self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
-        except Exception:
-            pass
-
         return self._url_available
 
     def ele(self, loc_or_ele, timeout=None):

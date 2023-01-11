@@ -25,13 +25,14 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        super().__init__(timeout)
         self._is_loading = None
         self._root_id = None
         self._debug = False
         self._debug_recorder = None
         self.timeouts = Timeout(self)
         self._connect_browser(address, tab_id)
+        timeout = timeout if timeout is not None else self.timeouts.implicit
+        super().__init__(timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行                                    \n
@@ -280,7 +281,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         if implicit is not None:
-            self.timeout = implicit
+            self.timeouts.implicit = implicit
 
         if page_load is not None:
             self.timeouts.page_load = page_load
@@ -661,13 +662,10 @@ class Timeout(object):
     """用于保存d模式timeout信息的类"""
 
     def __init__(self, page):
-        self.page = page
+        self._page = page
+        self.implicit = 10
         self.page_load = 30
         self.script = 30
-
-    @property
-    def implicit(self):
-        return self.page.timeout
 
 
 class PageLoadStrategy(object):

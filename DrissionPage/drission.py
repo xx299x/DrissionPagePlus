@@ -113,12 +113,6 @@ class Drission(object):
             if active_tab != self._driver.current_window_handle:
                 self._driver.switch_to.window(active_tab)
 
-            # 反反爬设置
-            try:
-                self._driver.execute_script('Object.defineProperty(navigator,"webdriver",{get:() => undefined,});')
-            except Exception:
-                pass
-
         return self._driver
 
     @property

@@ -20,14 +20,16 @@ from .session_element import SessionElement, make_session_ele
 class SessionPage(BasePage):
     """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
-    def __init__(self, session_or_options=None, timeout=10):
+    def __init__(self, session_or_options=None, timeout=None):
         """初始化                                                     \n
         :param session_or_options: Session对象或SessionOptions对象
-        :param timeout: 连接超时时间
+        :param timeout: 连接超时时间，为None时从ini文件读取
         """
-        super().__init__(timeout)
         self._response = None
+        self.timeout = 10
         self._create_session(session_or_options)
+        timeout = timeout if timeout is not None else self.timeout
+        super().__init__(timeout)
 
     def _create_session(self, Session_or_Options):
         """创建内建Session对象
@@ -37,6 +39,7 @@ class SessionPage(BasePage):
         if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
             options = Session_or_Options or SessionOptions()
             self._set_session(options.as_dict())
+            self.timeout = options.timeout
         elif isinstance(Session_or_Options, Session):
             self._session = Session_or_Options
 

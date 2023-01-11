@@ -42,7 +42,6 @@ class OptionsManager(object):
         """返回paths设置"""
         if self._paths is None:
             self._paths = self.get_option('paths')
-
         return self._paths
 
     @property
@@ -50,7 +49,6 @@ class OptionsManager(object):
         """返回chrome设置"""
         if self._chrome_options is None:
             self._chrome_options = self.get_option('chrome_options')
-
         return self._chrome_options
 
     @property
@@ -58,7 +56,6 @@ class OptionsManager(object):
         """返回session设置"""
         if self._session_options is None:
             self._session_options = self.get_option('session_options')
-
         return self._session_options
 
     def get_value(self, section, item):
@@ -151,6 +148,7 @@ class SessionOptions(object):
         self._stream = None
         self._trust_env = None
         self._max_redirects = None
+        self.timeout = 10
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
@@ -192,6 +190,8 @@ class SessionOptions(object):
 
             if options_dict.get('max_redirects', None) is not None:
                 self._max_redirects = options_dict['max_redirects']
+
+            self.timeout = options_dict.get('timeout', 10)
 
     @property
     def headers(self):

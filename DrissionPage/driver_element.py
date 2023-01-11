@@ -329,7 +329,6 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -339,7 +338,6 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('right', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -349,7 +347,6 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -359,7 +356,6 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('left', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
@@ -369,7 +365,6 @@ class DriverElement(DrissionElement):
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
         """
-        index, filter_loc = _exchange_arguments(index, filter_loc)
         eles = self._get_relative_eles('near', filter_loc)
         return eles[index - 1] if index <= len(eles) else None
 
