@@ -89,9 +89,9 @@ class ChromiumPage(ChromiumBase):
 
     def _set_options(self):
         """从配置中读取设置"""
-        self.set_timeouts(page_load=self.options.timeouts['pageLoad'] / 1000,
-                          script=self.options.timeouts['script'] / 1000,
-                          implicit=self.options.timeouts['implicit'] / 1000)
+        self.set_timeouts(page_load=self.options.timeouts['pageLoad'],
+                          script=self.options.timeouts['script'],
+                          implicit=self.options.timeouts['implicit'])
         self._page_load_strategy = self.options.page_load_strategy
 
     @property
@@ -339,6 +339,7 @@ class ChromiumPage(ChromiumBase):
         self._alert.defaultPrompt = None
         self._alert.response_accept = kwargs.get('result')
         self._alert.response_text = kwargs['userInput']
+        self._tab_obj.has_alert = False
 
     def _on_alert_open(self, **kwargs):
         """alert出现时触发的方法"""
@@ -348,6 +349,7 @@ class ChromiumPage(ChromiumBase):
         self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
         self._alert.response_accept = None
         self._alert.response_text = None
+        self._tab_obj.has_alert = True
 
 
 class Alert(object):

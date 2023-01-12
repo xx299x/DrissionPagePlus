@@ -356,7 +356,7 @@ def unzip(zip_path, to_path):
         return [f.extract(f.namelist()[0], path=to_path)]
 
 
-def get_exe_path_from_port(port):
+def get_exe_from_port(port):
     """获取端口号第一条进程的可执行文件路径      \n
     :param port: 端口号
     :return: 可执行文件的绝对路径
@@ -529,8 +529,7 @@ def connect_browser(option):
         return None, None
 
     if _port_is_using(ip, port):
-        chrome_path = get_exe_path_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' \
-            else chrome_path
+        chrome_path = get_exe_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' else chrome_path
         return chrome_path, None
 
     args = _get_running_args(option)
@@ -539,7 +538,7 @@ def connect_browser(option):
     try:
         debugger = _run_browser(port, chrome_path, args)
         if chrome_path == 'chrome' and system_type == 'windows':
-            chrome_path = get_exe_path_from_port(port)
+            chrome_path = get_exe_from_port(port)
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:

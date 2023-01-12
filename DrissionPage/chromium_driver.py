@@ -43,6 +43,7 @@ class ChromiumDriver(object):
         self.id = kwargs.get("id")
         self.type = kwargs.get("type")
         self.debug = getenv("DEBUG", False)
+        self.has_alert = False
 
         self._websocket_url = kwargs.get("webSocketDebuggerUrl")
         self._kwargs = kwargs
@@ -95,6 +96,8 @@ class ChromiumDriver(object):
 
                     return self.method_results[message['id']].get(timeout=q_timeout)
                 except queue.Empty:
+                    if self.has_alert:
+                        return {'result': {'alert': True}}
                     if isinstance(timeout, (int, float)) and timeout <= 0:
                         raise TimeoutError(f"调用{message['method']}超时。")
 

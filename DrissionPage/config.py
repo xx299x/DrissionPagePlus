@@ -148,7 +148,7 @@ class SessionOptions(object):
         self._stream = None
         self._trust_env = None
         self._max_redirects = None
-        self.timeout = 10
+        self._timeout = 10
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
@@ -191,7 +191,12 @@ class SessionOptions(object):
             if options_dict.get('max_redirects', None) is not None:
                 self._max_redirects = options_dict['max_redirects']
 
-            self.timeout = options_dict.get('timeout', 10)
+            self._timeout = options_dict.get('timeout', 10)
+
+    @property
+    def timeout(self):
+        """返回timeout属性信息"""
+        return self._timeout
 
     @property
     def headers(self):
@@ -205,7 +210,6 @@ class SessionOptions(object):
         """返回cookies设置信息"""
         if self._cookies is None:
             self._cookies = []
-
         return self._cookies
 
     @property
@@ -218,7 +222,6 @@ class SessionOptions(object):
         """返回proxies设置信息"""
         if self._proxies is None:
             self._proxies = {}
-
         return self._proxies
 
     @property
@@ -226,7 +229,6 @@ class SessionOptions(object):
         """返回hooks设置信息"""
         if self._hooks is None:
             self._hooks = {}
-
         return self._hooks
 
     @property
@@ -265,6 +267,11 @@ class SessionOptions(object):
     def max_redirects(self):
         """返回max_redirects设置信息"""
         return self._max_redirects
+
+    @timeout.setter
+    def timeout(self, second):
+        """返回timeout属性信息"""
+        self._timeout = second
 
     @headers.setter
     def headers(self, headers):
@@ -361,6 +368,13 @@ class SessionOptions(object):
         :return: None
         """
         self._max_redirects = max_redirects
+
+    def set_timeout(self, second):
+        """设置超时信息
+        :param second: 秒数
+        :return: 返回当前对象
+        """
+        self._timeout = second
 
     def set_headers(self, headers):
         """设置headers参数           \n
@@ -460,10 +474,7 @@ class DriverOptions(Options):
         :param ini_path: ini文件路径，为None则读取默认ini文件
         """
         super().__init__()
-        self._driver_path = None
         self._user_data_path = None
-        self.ini_path = None
-        self.timeouts = {'implicit': 10000, 'pageLoad': 30000, 'script': 30000}
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
@@ -484,9 +495,12 @@ class DriverOptions(Options):
                     break
 
             self.timeouts = options_dict.get('timeouts', {'implicit': 10, 'pageLoad': 30, 'script': 30})
-            self.timeouts['implicit'] *= 1000
-            self.timeouts['pageLoad'] *= 1000
-            self.timeouts['script'] *= 1000
+            return
+
+        self._driver_path = None
+        self.ini_path = None
+        self.timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
+        self._debugger_address = '127.0.0.1:9222'
 
     @property
     def driver_path(self):
@@ -649,14 +663,12 @@ class DriverOptions(Options):
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
-        # timeouts = self._caps.get('timeouts', {'implicit': 10, 'pageLoad': 3000, 'script': 3000})
         if implicit is not None:
             self.timeouts['implicit'] = implicit
         if pageLoad is not None:
-            self.timeouts['pageLoad'] = pageLoad * 1000
+            self.timeouts['pageLoad'] = pageLoad
         if script is not None:
-            self.timeouts['script'] = script * 1000
-        # self.timeouts = timeouts
+            self.timeouts['script'] = script
 
         return self
 
@@ -778,7 +790,7 @@ def chrome_options_to_dict(options):
 
     re_dict = dict()
     attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path',
-             'set_window_rect', 'page_load_strategy']
+             'page_load_strategy']
 
     options_dir = options.__dir__()
     for attr in attrs:
@@ -789,9 +801,6 @@ def chrome_options_to_dict(options):
 
     if 'timeouts' in options_dir and 'timeouts' in options._caps:
         timeouts = options.__getattribute__('timeouts')
-        timeouts['implicit'] /= 1000
-        timeouts['pageLoad'] /= 1000
-        timeouts['script'] /= 1000
         re_dict['timeouts'] = timeouts
 
     return re_dict
@@ -809,7 +818,8 @@ def session_options_to_dict(options):
         return options
 
     re_dict = dict()
-    attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env', 'max_redirects']  # 'adapters',
+    attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env',
+             'max_redirects', 'timeout']  # 'adapters',
 
     cookies = options.__getattribute__('_cookies')
 

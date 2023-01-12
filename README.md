@@ -1,5 +1,3 @@
-# 
-
 DrissionPage 是一个基于 python 的网页自动化工具。
 
 它既能控制浏览器，也能收发数据包，甚至能把两者合而为一，
@@ -10,9 +8,21 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 它的语法简洁而优雅，代码量少，对新手友好。
 
-**使用文档：** 📒[点击打开](http://g1879.gitee.io/drissionpage)
+***
 
-**QQ群：**  897838127
+支持系统：Windows、Linux、Mac
+
+python 版本：3.6 及以上
+
+支持浏览器：Chromium 内核浏览器（如 Chrome 和 edge）
+
+*** 
+
+<a href='https://gitee.com/g1879/DrissionPage/stargazers'><img src='https://gitee.com/g1879/DrissionPage/badge/star.svg?theme=dark' alt='star'></img></a> <a href='https://gitee.com/g1879/DrissionPage/members'><img src='https://gitee.com/g1879/DrissionPage/badge/fork.svg?theme=dark' alt='fork'></img></a>
+
+项目地址：[gitee](https://gitee.com/g1879/DrissionPage)    |    [github](https://github.com/g1879/DrissionPage)
+
+**交流QQ群：**  897838127
 
 **联系邮箱：**  g1879@qq.com
 
@@ -22,8 +32,9 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 使用浏览器，可以很大程度上绕过这些坑，但浏览器运行效率不高。
 
 因此，这个库设计初衷，是将它们合而为一，能够在不同须要时切换相应模式，并提供一种人性化的使用方法，提高开发和运行效率。  
-除了合并两者，本库还以网页为单位封装了常用功能，提供非常简便的操作和语句，在用于网页自动化操作时，减少考虑细节，专注功能实现，使用更方便。  
-一切从简，尽量提供简单直接的使用方法，对新手更友好。
+除了合并两者，本库还以网页为单位封装了常用功能，提供非常简便的操作和语句，在用于网页自动化操作时，减少考虑细节，专注功能实现，使用更方便。  一切从简，尽量提供简单直接的使用方法，使代码更优雅。
+
+以前的版本是对 selenium 进行重新封装实现的。从 3.0 开始，作者另起炉灶，对底层进行了重新开发，摆脱对 selenium 的依赖，增强了功能，提升了运行效率。
 
 # 💡 理念
 

@@ -22,7 +22,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __init__(self,
                  mode: str = 'd',
-                 timeout: float = 10,
+                 timeout: float = None,
                  tab_id: str = None,
                  driver_or_options: Union[ChromiumDriver, DriverOptions, bool] = None,
                  session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
@@ -158,6 +158,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
              timeout: float = None, single: bool = True, relative: bool = False) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...
+
+    def _set_both_options(self, dr_opt: Union[ChromiumDriver, DriverOptions],
+                     se_opt: Union[Session, SessionOptions, dict, bool, None]) -> None: ...
 
     def _set_driver_options(self, driver_or_Options: Union[ChromiumDriver, DriverOptions]) -> None: ...
 

@@ -37,8 +37,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._tab_obj = None
         self._is_loading = False
         self.timeouts = Timeout(self)
-        self._set_session_options(session_or_options)
-        self._set_driver_options(driver_or_options)
+        self._set_both_options(driver_or_options, session_or_options)
         self._setting_tab_id = tab_id
         self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
         self._response = None
@@ -383,58 +382,61 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single, relative=relative)
 
-    def _set_driver_options(self, driver_or_Options):
-        """处理driver设置
-        :param driver_or_Options: ChromiumDriver对象或DriverOptions对象
+    def _set_both_options(self, dr_opt, se_opt):
+        """处理两种模式的设置
+        :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
+        :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
         :return: None
         """
-        if isinstance(driver_or_Options, ChromiumDriver):
-            self._connect_browser(driver_or_Options)
+        if isinstance(dr_opt, ChromiumDriver):
+            self._connect_browser(dr_opt)
             self._has_driver = True
-            return
-
-        if driver_or_Options is None:
-            self._driver_options = DriverOptions()
-
-        elif driver_or_Options is False:
-            self._driver_options = DriverOptions(read_file=False)
-
-        elif isinstance(driver_or_Options, DriverOptions):
-            self._driver_options = driver_or_Options
+            self._driver_options = None
+            dr_opt = False
 
         else:
-            raise TypeError('driver_or_options参数只能接收WebDriver, Options, DriverOptions或False。')
+            if dr_opt is None:
+                self._driver_options = DriverOptions()
 
-        timeouts = self._driver_options.timeouts
-        self.set_timeouts(timeouts['implicit'], timeouts['pageLoad'], timeouts['script'])
+            elif dr_opt is False:
+                self._driver_options = DriverOptions(read_file=False)
 
-    def _set_session_options(self, Session_or_Options):
-        """处理session设置
-        :param Session_or_Options: Session对象或SessionOptions对象
-        :return: None
-        """
-        if isinstance(Session_or_Options, Session):
-            self._session = Session_or_Options
+            elif isinstance(dr_opt, DriverOptions):
+                self._driver_options = dr_opt
+
+            else:
+                raise TypeError('driver_or_options参数只能接收ChromiumDriver, DriverOptions、None或False。')
+
+        if isinstance(se_opt, Session):
+            self._session = se_opt
             self._has_session = True
-            return
-
-        if Session_or_Options is None:
-            so = SessionOptions()
-
-        elif Session_or_Options is False:
-            so = SessionOptions(read_file=False)
-
-        elif isinstance(Session_or_Options, SessionOptions):
-            so = Session_or_Options
-
-        elif isinstance(Session_or_Options, dict):
-            so = Session_or_Options
+            self._session_options = None
+            se_opt = False
 
         else:
-            raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions或False。')
+            if se_opt is None:
+                so = SessionOptions().as_dict()
 
-        self._session_options = so.as_dict()
-        self.set_timeouts(implicit=so.timeout)
+            elif se_opt is False:
+                so = SessionOptions(read_file=False).as_dict()
+
+            elif isinstance(se_opt, SessionOptions):
+                so = se_opt.as_dict()
+
+            elif isinstance(se_opt, dict):
+                so = se_opt
+
+            else:
+                raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions、None或False。')
+
+            self._session_options = so
+
+        if se_opt is not False:
+            self.set_timeouts(implicit=self._session_options.get('timeout', 10))
+
+        if dr_opt is not False:
+            t = self._driver_options.timeouts
+            self.set_timeouts(t['implicit'], t['pageLoad'], t['script'])
 
     def quit(self):
         """关闭浏览器，关闭session"""

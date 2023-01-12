@@ -667,6 +667,9 @@ class Timeout(object):
         self.page_load = 30
         self.script = 30
 
+    def __repr__(self):
+        return str({'implicit': self.implicit, 'page_load': self.page_load, 'script': self.script})
+
 
 class PageLoadStrategy(object):
     """用于设置页面加载策略的类"""
