@@ -5,6 +5,7 @@
 """
 from pathlib import Path
 from platform import system
+from queue import Queue
 from re import search
 from time import perf_counter, sleep
 
@@ -42,6 +43,7 @@ class ChromiumPage(ChromiumBase):
         self._control_session.keep_alive = False
         self._alert = Alert()
         self._first_run = True
+        self._download_list = None
 
         # 接管或启动浏览器
         if addr_driver_opts is None or isinstance(addr_driver_opts, DriverOptions):
@@ -123,6 +125,30 @@ class ChromiumPage(ChromiumBase):
         if not hasattr(self, '_window_setter'):
             self._window_setter = WindowSetter(self)
         return self._window_setter
+
+    @property
+    def download_list(self):
+        """以list方式返回被拦截的下载列表"""
+        if self._download_list is None:
+            return []
+        d_list = []
+        while not self._download_list.empty():
+            d_list.append(self._download_list.get())
+        return d_list
+
+    def block_download(self, on_off):
+        """开始或停止拦截下载            \n
+        :param on_off: 开始或停止拦截
+        :return: None
+        """
+        if on_off:
+            self._tab_obj.Page.downloadWillBegin = self._on_download_begin
+            self._tab_obj.Browser.setDownloadBehavior(behavior='deny')
+            # self._tab_obj.Browser.downloadWillBegin = self._on_download_begin
+        else:
+            self._tab_obj.Browser.setDownloadBehavior(behavior='default')
+            self._tab_obj.Page.downloadWillBegin = None
+            # self._tab_obj.Browser.downloadWillBegin = None
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象                                    \n
@@ -350,6 +376,15 @@ class ChromiumPage(ChromiumBase):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._tab_obj.has_alert = True
+
+    def _on_download_begin(self, **kwargs):
+        if self._download_list is None:
+            self._download_list = Queue()
+        gid = kwargs['guid']
+        self._tab_obj.Browser.cancelDownload(guid=gid)
+        url = kwargs['url']
+        name = kwargs['suggestedFilename']
+        self._download_list.put(item={'url': url, 'name': name})
 
 
 class Alert(object):

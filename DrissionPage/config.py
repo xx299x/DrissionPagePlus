@@ -761,7 +761,10 @@ class DriverOptions(Options):
             self.debugger_address = debugger_address
 
         if download_path is not None:
-            self.experimental_options['prefs']['download.default_directory'] = str(download_path)
+            if 'prefs' not in self.experimental_options:
+                self.experimental_options['prefs'] = {'download.default_directory': str(download_path)}
+            else:
+                self.experimental_options['prefs']['download.default_directory'] = str(download_path)
 
         if user_data_path is not None:
             self.set_argument('--user-data-dir', str(user_data_path))
