@@ -10,7 +10,6 @@ from re import split, search, sub
 from shutil import rmtree
 from subprocess import Popen
 from time import perf_counter, sleep
-from typing import Union
 from zipfile import ZipFile
 from urllib.parse import urlparse, urljoin, urlunparse
 from requests import get as requests_get
@@ -494,24 +493,17 @@ def is_js_func(func):
     return False
 
 
-def _port_is_using(ip: str, port: str) -> Union[bool, None]:
+def port_is_using(ip, port):
     """检查端口是否被占用               \n
     :param ip: 浏览器地址
     :param port: 浏览器端口
     :return: bool
     """
-    import socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    try:
-        s.connect((ip, int(port)))
-        s.shutdown(2)
-        return True
-    except socket.error:
-        return False
-    finally:
-        if s:
-            s.close()
+    from socket import socket, AF_INET, SOCK_STREAM
+    s = socket(AF_INET, SOCK_STREAM)
+    result = s.connect_ex((ip, int(port)))
+    s.close()
+    return True if result == 0 else False
 
 
 def connect_browser(option):
@@ -528,7 +520,7 @@ def connect_browser(option):
     if ip not in ('127.0.0.1', 'localhost'):
         return None, None
 
-    if _port_is_using(ip, port):
+    if port_is_using(ip, port):
         chrome_path = get_exe_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' else chrome_path
         return chrome_path, None
 
