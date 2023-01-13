@@ -503,7 +503,7 @@ def port_is_using(ip, port):
     s = socket(AF_INET, SOCK_STREAM)
     result = s.connect_ex((ip, int(port)))
     s.close()
-    return True if result == 0 else False
+    return result == 0
 
 
 def connect_browser(option):

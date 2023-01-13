@@ -26,7 +26,6 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
-        self.timeout = 10
         self._create_session(session_or_options)
         timeout = timeout if timeout is not None else self.timeout
         super().__init__(timeout)
@@ -40,8 +39,11 @@ class SessionPage(BasePage):
             options = Session_or_Options or SessionOptions()
             self._set_session(options.as_dict())
             self.timeout = options.timeout
+            self._download_path = options.download_path
         elif isinstance(Session_or_Options, Session):
             self._session = Session_or_Options
+            self._download_path = None
+        self._download_kit = None
 
     def _set_session(self, data):
         """根据传入字典对session进行设置    \n
@@ -112,6 +114,20 @@ class SessionPage(BasePage):
             return self.response.json()
         except Exception:
             return None
+
+    @property
+    def download_path(self):
+        """返回下载路径"""
+        return self._download_path
+
+    def set_download_path(self, path):
+        """设置下载路径                  \n
+        :param path: 下载路径
+        :return: None
+        """
+        self._download_path = str(path)
+        if self._download_kit is not None:
+            self._download_kit.goal_path = self._download_path
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url                                 \n
@@ -199,9 +215,8 @@ class SessionPage(BasePage):
     @property
     def download(self):
         """返回下载器对象"""
-        if not hasattr(self, '_download_kit'):
-            self._download_kit = DownloadKit(session=self)
-
+        if self._download_kit is None:
+            self._download_kit = DownloadKit(session=self, goal_path=self.download_path)
         return self._download_kit
 
     def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):

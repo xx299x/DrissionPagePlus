@@ -136,6 +136,7 @@ class SessionOptions(object):
         :param ini_path: ini文件路径
         """
         self.ini_path = None
+        self._download_path = None
         self._headers = None
         self._cookies = None
         self._auth = None
@@ -193,10 +194,17 @@ class SessionOptions(object):
 
             self._timeout = options_dict.get('timeout', 10)
 
+            self._download_path = om.paths.get('download_path', None)
+
     @property
     def timeout(self):
         """返回timeout属性信息"""
         return self._timeout
+
+    @property
+    def download_path(self):
+        """返回默认下载路径属性信息"""
+        return self._download_path
 
     @property
     def headers(self):
@@ -375,6 +383,7 @@ class SessionOptions(object):
         :return: 返回当前对象
         """
         self._timeout = second
+        return self
 
     def set_headers(self, headers):
         """设置headers参数           \n
@@ -415,9 +424,18 @@ class SessionOptions(object):
         {'http': 'http://xx.xx.xx.xx:xxxx',
          'https': 'http://xx.xx.xx.xx:xxxx'}
         :param proxies: 参数值
-        :return: None
+        :return: 返回当前对象
         """
         self._proxies = proxies
+        return self
+
+    def set_paths(self, download_path=None):
+        """设置默认下载路径                          \n
+        :param download_path: 下载路径
+        :return: 返回当前对象
+        """
+        if download_path is not None:
+            self._download_path = str(download_path)
         return self
 
     def save(self, path=None):
@@ -448,6 +466,9 @@ class SessionOptions(object):
 
         for i in options:
             om.set_item('session_options', i, options[i])
+
+        om.set_item('paths', 'download_path', self.download_path)
+        om.set_item('session_options', 'timeout', self.timeout)
 
         path = str(path)
         om.save(path)
@@ -482,6 +503,7 @@ class DriverOptions(Options):
             options_dict = om.chrome_options
 
             self._driver_path = om.paths.get('chromedriver_path', None)
+            self._download_path = om.paths.get('download_path', None)
             self._binary_location = options_dict.get('binary_location', '')
             self._arguments = options_dict.get('arguments', [])
             self._extensions = options_dict.get('extensions', [])
@@ -498,6 +520,7 @@ class DriverOptions(Options):
             return
 
         self._driver_path = None
+        self._download_path = None
         self.ini_path = None
         self.timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
         self._debugger_address = '127.0.0.1:9222'
@@ -506,6 +529,11 @@ class DriverOptions(Options):
     def driver_path(self):
         """chromedriver文件路径"""
         return self._driver_path
+
+    @property
+    def download_path(self):
+        """默认下载路径文件路径"""
+        return self._download_path
 
     @property
     def chrome_path(self):
@@ -596,6 +624,8 @@ class DriverOptions(Options):
         for i in options:
             if i == 'driver_path':
                 om.set_item('paths', 'chromedriver_path', options[i])
+            elif i == 'download_path':
+                om.set_item('paths', 'download_path', options[i])
             else:
                 om.set_item('chrome_options', i, options[i])
 
@@ -761,10 +791,7 @@ class DriverOptions(Options):
             self.debugger_address = debugger_address
 
         if download_path is not None:
-            if 'prefs' not in self.experimental_options:
-                self.experimental_options['prefs'] = {'download.default_directory': str(download_path)}
-            else:
-                self.experimental_options['prefs']['download.default_directory'] = str(download_path)
+            self._download_path = str(download_path)
 
         if user_data_path is not None:
             self.set_argument('--user-data-dir', str(user_data_path))
@@ -793,12 +820,12 @@ def chrome_options_to_dict(options):
 
     re_dict = dict()
     attrs = ['debugger_address', 'binary_location', 'arguments', 'extensions', 'experimental_options', 'driver_path',
-             'page_load_strategy']
+             'page_load_strategy', 'download_path']
 
     options_dir = options.__dir__()
     for attr in attrs:
         try:
-            re_dict[attr] = options.__getattribute__(f'{attr}') if attr in options_dir else None
+            re_dict[attr] = options.__getattribute__(attr) if attr in options_dir else None
         except Exception:
             pass
 

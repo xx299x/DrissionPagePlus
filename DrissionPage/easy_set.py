@@ -33,7 +33,6 @@ def set_paths(driver_path=None,
               browser_path=None,
               local_port=None,
               debugger_address=None,
-              tmp_path=None,
               download_path=None,
               user_data_path=None,
               cache_path=None,
@@ -46,7 +45,6 @@ def set_paths(driver_path=None,
     :param local_port: 本地端口号
     :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
     :param download_path: 下载文件路径
-    :param tmp_path: 临时文件夹路径
     :param user_data_path: 用户数据路径
     :param cache_path: 缓存路径
     :param ini_path: 要修改的ini文件路径
@@ -73,13 +71,8 @@ def set_paths(driver_path=None,
     if debugger_address is not None:
         om.set_item('chrome_options', 'debugger_address', format_path(debugger_address))
 
-    if tmp_path is not None:
-        om.set_item('paths', 'tmp_path', format_path(tmp_path))
-
     if download_path is not None:
-        experimental_options = om.get_value('chrome_options', 'experimental_options')
-        experimental_options['prefs']['download.default_directory'] = format_path(download_path)
-        om.set_item('chrome_options', 'experimental_options', experimental_options)
+        om.set_item('paths', 'download_path', format_path(download_path))
 
     om.save()
 

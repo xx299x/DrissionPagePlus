@@ -37,10 +37,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._tab_obj = None
         self._is_loading = False
         self.timeouts = Timeout(self)
+        self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
         self._set_both_options(driver_or_options, session_or_options)
         self._setting_tab_id = tab_id
-        self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
         self._response = None
+        self._download_kit = None
 
         if self._mode == 'd':
             self._to_d_mode()
@@ -152,6 +153,34 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: None
         """
         self.set_timeouts(implicit=second)
+
+    @property
+    def download_path(self):
+        """返回默认下载路径"""
+        return super(SessionPage, self).download_path
+
+    def set_download_tool(self, use_browser=False):
+        """设置下载释是否使用浏览器           \n
+        :param use_browser: 是否使用浏览器
+        :return: None
+        """
+        if use_browser:
+            self._tab_obj.Browser.setDownloadBehavior(behavior='allow')
+            self._tab_obj.Page.downloadWillBegin = None
+        else:
+            self._tab_obj.Page.downloadWillBegin = self._on_download_begin
+            self._tab_obj.Browser.downloadWillBegin = self._on_download_begin
+            self._tab_obj.Browser.setDownloadBehavior(behavior='deny')
+
+    def set_download_path(self, path):
+        """设置默认下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        if self._has_driver:
+            super(SessionPage, self).set_download_path(path)
+        else:
+            super().set_download_path(path)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url                                         \n
@@ -450,3 +479,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._tab_obj.stop()
             self._tab_obj = None
             self._has_driver = None
+
+    def _on_download_begin(self, **kwargs):
+        gid = kwargs['guid']
+        self._tab_obj.Browser.cancelDownload(guid=gid)
+        url = kwargs['url']
+        name = kwargs['suggestedFilename']
+        self.download(url, goal_path=self.download_path, rename=name)
