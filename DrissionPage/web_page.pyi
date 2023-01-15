@@ -3,20 +3,19 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from pathlib import Path
 from typing import Union, Tuple, List, Any
 
 from DownloadKit import DownloadKit
 from requests import Session, Response
 
 from .base import BasePage
+from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
-from .chromium_page import ChromiumPage
+from .chromium_page import ChromiumPage, ChromiumDownloadSetter
 from .config import DriverOptions, SessionOptions
 from .session_element import SessionElement
 from .session_page import SessionPage
-from .chromium_driver import ChromiumDriver
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -33,6 +32,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._session_options: dict = ...
         self._driver_options: DriverOptions = ...
         self._setting_tab_id: str = ...
+        self._download_kit: DownloadKit = ...
+        self._download_set: WebPageDownloadSetter = ...
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -84,7 +85,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def download_path(self) -> str: ...
 
-    def set_download_tool(self, use_browser:bool=False) -> None: ...
+    @property
+    def download_set(self) -> WebPageDownloadSetter: ...
 
     def get(self,
             url: str,
@@ -177,10 +179,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def _on_download_begin(self, **kwargs): ...
 
 
-class DownloadSetter(object):
-    def __init__(self, page: ChromiumPage):
-        self._page: ChromiumPage = ...
+class WebPageDownloadSetter(ChromiumDownloadSetter):
+    def __init__(self, page: WebPage):
+        self._page: WebPage = ...
+        self._behavior: str = ...
 
-    def deny(self) -> None: ...
+    def save_path(self, path) -> None: ...
 
-    def save_path(self, path: Union[str, Path] = '') -> None: ...
+    def use_browser(self) -> None: ...
+
+    def use_DownloadKit(self) -> None: ...
+
+    def _download_by_DownloadKit(self, **kwargs) -> None: ...

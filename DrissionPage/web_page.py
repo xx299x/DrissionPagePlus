@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from time import sleep
 
 from requests import Session
@@ -10,10 +11,10 @@ from tldextract import extract
 
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_page import ChromiumPage
+from .chromium_driver import ChromiumDriver
+from .chromium_page import ChromiumPage, ChromiumDownloadSetter
 from .config import DriverOptions, SessionOptions, cookies_to_tuple
 from .session_page import SessionPage
-from .chromium_driver import ChromiumDriver
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -42,6 +43,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._setting_tab_id = tab_id
         self._response = None
         self._download_kit = None
+        self._download_set = None
 
         if self._mode == 'd':
             self._to_d_mode()
@@ -159,28 +161,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """返回默认下载路径"""
         return super(SessionPage, self).download_path
 
-    def set_download_tool(self, use_browser=False):
-        """设置下载释是否使用浏览器           \n
-        :param use_browser: 是否使用浏览器
-        :return: None
-        """
-        if use_browser:
-            self._tab_obj.Browser.setDownloadBehavior(behavior='allow')
-            self._tab_obj.Page.downloadWillBegin = None
-        else:
-            self._tab_obj.Page.downloadWillBegin = self._on_download_begin
-            self._tab_obj.Browser.downloadWillBegin = self._on_download_begin
-            self._tab_obj.Browser.setDownloadBehavior(behavior='deny')
-
-    def set_download_path(self, path):
-        """设置默认下载路径
-        :param path: 下载路径
-        :return: None
-        """
-        if self._has_driver:
-            super(SessionPage, self).set_download_path(path)
-        else:
-            super().set_download_path(path)
+    @property
+    def download_set(self):
+        """返回下载设置对象"""
+        if self._download_set is None:
+            self._download_set = WebPageDownloadSetter(self)
+        return self._download_set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url                                         \n
@@ -480,9 +466,53 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._tab_obj = None
             self._has_driver = None
 
-    def _on_download_begin(self, **kwargs):
+
+class WebPageDownloadSetter(ChromiumDownloadSetter):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        super().__init__(page)
+        self._behavior = 'allow'
+
+    def save_path(self, path):
+        """设置下载路径               \n
+        :param path: 下载路径
+        :return: None
+        """
+        # todo: 设置时判断模式，初始设置
+        path = path or ''
+        path = Path(path).absolute()
+        path.mkdir(parents=True, exist_ok=True)
+        path = str(path)
+        self._page._download_path = path
+        if self._page._has_driver:
+            try:
+                self._page.run_cdp('Browser.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
+                                   not_change=True)
+            except:
+                self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
+                                   not_change=True)
+
+    def use_browser(self):
+        """设置使用浏览器下载文件"""
+        if not self._page._has_driver:
+            raise RuntimeError('浏览器未连接。')
+        self._page.driver.Page.downloadWillBegin = None
+        self._page.driver.Browser.downloadWillBegin = None
+        self._page.driver.Browser.setDownloadBehavior(behavior='allow')
+        self._behavior = 'allow'
+
+    def use_DownloadKit(self):
+        """设置使用DownloadKit下载文件"""
+        self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
+        self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+        self._page.driver.Browser.setDownloadBehavior(behavior='deny')
+        self._behavior = 'deny'
+
+    def _download_by_DownloadKit(self, **kwargs):
         gid = kwargs['guid']
-        self._tab_obj.Browser.cancelDownload(guid=gid)
+        self._page.run_cdp('Browser.cancelDownload', guid=gid, not_change=True)
         url = kwargs['url']
         name = kwargs['suggestedFilename']
-        self.download(url, goal_path=self.download_path, rename=name)
+        print(f'开始下载：{url}')
+        self._page.download.add(url, goal_path=self._page.download_path, rename=name)

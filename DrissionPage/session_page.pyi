@@ -12,8 +12,8 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 from .base import BasePage
-from .session_element import SessionElement
 from .config import SessionOptions
+from .session_element import SessionElement
 
 
 class SessionPage(BasePage):
@@ -56,7 +56,8 @@ class SessionPage(BasePage):
     @property
     def download_path(self) -> str: ...
 
-    def set_download_path(self, path: Union[str, Path]) -> None: ...
+    @property
+    def download_set(self) -> DownloadSetter: ...
 
     def get(self,
             url: str,
@@ -147,6 +148,13 @@ class SessionPage(BasePage):
                        interval: float = None,
                        show_errmsg: bool = False,
                        **kwargs) -> tuple: ...
+
+
+class DownloadSetter(object):
+    def __init__(self, page: SessionPage):
+        self._page: SessionPage = ...
+
+    def save_path(self, path: Union[str, Path]): ...
 
 
 def check_headers(kwargs: Union[dict, CaseInsensitiveDict], headers: Union[dict, CaseInsensitiveDict],

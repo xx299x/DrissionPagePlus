@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Union, Tuple, List
 
 from .chromium_base import ChromiumBase
+from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .config import DriverOptions
-from .chromium_driver import ChromiumDriver
 
 
 class ChromiumPage(ChromiumBase):
@@ -53,12 +53,10 @@ class ChromiumPage(ChromiumBase):
     def download_list(self) -> list: ...
 
     @property
-    def set_download(self) -> DownloadSetter: ...
+    def download_set(self) -> ChromiumDownloadSetter: ...
 
     @property
     def download_path(self) -> str: ...
-
-    def set_download_path(self, path: Union[str, Path]) -> None: ...
 
     def get_tab(self, tab_id: str = None) -> ChromiumTab: ...
 
@@ -93,6 +91,13 @@ class ChromiumPage(ChromiumBase):
     def _on_alert_close(self, **kwargs): ...
 
     def _on_alert_open(self, **kwargs): ...
+
+
+class ChromiumDownloadSetter(object):
+    def __init__(self, page: ChromiumPage):
+        self._page: ChromiumPage = ...
+
+    def save_path(self, path: Union[str, Path]): ...
 
 
 class Alert(object):

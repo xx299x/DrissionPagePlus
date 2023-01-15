@@ -120,14 +120,10 @@ class SessionPage(BasePage):
         """返回下载路径"""
         return self._download_path
 
-    def set_download_path(self, path):
-        """设置下载路径                  \n
-        :param path: 下载路径
-        :return: None
-        """
-        self._download_path = str(path)
-        if self._download_kit is not None:
-            self._download_kit.goal_path = self._download_path
+    @property
+    def download_set(self):
+        """返回用于设置下载参数的对象"""
+        return DownloadSetter(self)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url                                 \n
@@ -325,6 +321,23 @@ class SessionPage(BasePage):
             if show_errmsg:
                 raise ConnectionError(f'状态码：{r.status_code}')
             return r, f'状态码：{r.status_code}'
+
+
+class DownloadSetter(object):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        self._page = page
+
+    def save_path(self, path):
+        """设置下载保存路径           \n
+        :param path: 下载保存路径
+        :return: None
+        """
+        path = path if path is None else str(path)
+        self._page._download_path = path
+        if self._page._download_kit is not None:
+            self._page._download_kit.goal_path = path
 
 
 def check_headers(kwargs, headers, arg) -> bool:

@@ -11,10 +11,11 @@ from time import perf_counter, sleep
 from requests import Session
 
 from .chromium_base import Timeout, ChromiumBase
+from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .common import connect_browser
 from .config import DriverOptions
-from .chromium_driver import ChromiumDriver
+from .session_page import DownloadSetter
 
 
 class ChromiumPage(ChromiumBase):
@@ -86,7 +87,7 @@ class ChromiumPage(ChromiumBase):
 
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
-        self._download_path = self.set_download_path(self.options.download_path)
+        self.download_set.save_path(self.options.download_path)
 
     def _set_options(self):
         """从配置中读取设置"""
@@ -131,17 +132,10 @@ class ChromiumPage(ChromiumBase):
         p = self._download_path or ''
         return str(Path(p).absolute())
 
-    def set_download_path(self, path):
-        """设置下载路径               \n
-        :param path: 下载路径
-        :return: None
-        """
-        path = path or ''
-        path = Path(path).absolute()
-        path.mkdir(parents=True, exist_ok=True)
-        path = str(path)
-        self._download_path = path
-        self.run_cdp('Browser.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
+    @property
+    def download_set(self):
+        """返回用于设置下载参数的对象"""
+        return ChromiumDownloadSetter(self)
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象                                    \n
@@ -369,6 +363,25 @@ class ChromiumPage(ChromiumBase):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._tab_obj.has_alert = True
+
+
+class ChromiumDownloadSetter(DownloadSetter):
+    """用于设置下载参数的类"""
+
+    def save_path(self, path):
+        """设置下载路径               \n
+        :param path: 下载路径
+        :return: None
+        """
+        path = path or ''
+        path = Path(path).absolute()
+        path.mkdir(parents=True, exist_ok=True)
+        path = str(path)
+        self._page._download_path = path
+        try:
+            self._page.run_cdp('Browser.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
+        except:
+            self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
 
 
 class Alert(object):
