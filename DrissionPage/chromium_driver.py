@@ -22,7 +22,7 @@ class GenericAttr(object):
         self.__dict__['tab'] = tab
 
     def __getattr__(self, item):
-        method_name = "%s.%s" % (self.name, item)
+        method_name = f"{self.name}.{item}"
         event_listener = self.tab.get_listener(method_name)
 
         if event_listener:
@@ -31,7 +31,7 @@ class GenericAttr(object):
         return partial(self.tab.call_method, method_name)
 
     def __setattr__(self, key, value):
-        self.tab.set_listener("%s.%s" % (self.name, key), value)
+        self.tab.set_listener(f"{self.name}.{key}", value)
 
 
 class ChromiumDriver(object):
@@ -73,7 +73,7 @@ class ChromiumDriver(object):
         message_json = dumps(message)
 
         if self.debug:  # pragma: no cover
-            print("SEND > %s" % message_json)
+            print(f"SEND > {message_json}")
 
         if not isinstance(timeout, (int, float)) or timeout > 1:
             q_timeout = 1
@@ -122,7 +122,7 @@ class ChromiumDriver(object):
                 return
 
             if self.debug:  # pragma: no cover
-                print('< RECV %s' % message_json)
+                print(f'< RECV {message_json}')
 
             if "method" in message:
                 self.event_queue.put(message)
@@ -144,7 +144,7 @@ class ChromiumDriver(object):
                 try:
                     self.event_handlers[event['method']](**event['params'])
                 except Exception as e:
-                    logger.error("callback %s exception" % event['method'], exc_info=True)
+                    logger.error(f"callback {event['method']} exception", exc_info=True)
 
             self.event_queue.task_done()
 

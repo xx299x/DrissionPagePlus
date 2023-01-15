@@ -22,41 +22,14 @@ class OptionsManager(object):
         if not Path(self.ini_path).exists():
             raise FileNotFoundError('ini文件不存在。')
         self._conf = RawConfigParser()
-        self._conf.read(self.ini_path, encoding='utf-8-sig')
+        self._conf.read(self.ini_path, encoding='utf-8')
 
-        self._paths = None
-        self._chrome_options = None
-        self._session_options = None
-
-    def __text__(self):
-        """打印ini文件内容"""
-        return (f"paths:\n"
-                f"{self.get_option('paths')}\n\n"
-                "chrome options:\n"
-                f"{self.get_option('chrome_options')}\n\n"
-                "session options:\n"
-                f"{self.get_option('session_options')}")
-
-    @property
-    def paths(self):
-        """返回paths设置"""
-        if self._paths is None:
-            self._paths = self.get_option('paths')
-        return self._paths
-
-    @property
-    def chrome_options(self):
-        """返回chrome设置"""
-        if self._chrome_options is None:
-            self._chrome_options = self.get_option('chrome_options')
-        return self._chrome_options
-
-    @property
-    def session_options(self):
-        """返回session设置"""
-        if self._session_options is None:
-            self._session_options = self.get_option('session_options')
-        return self._session_options
+    def __getattr__(self, item):
+        """以dict形似返回获取大项信息
+        :param item: 项名
+        :return: None
+        """
+        return self.get_option(item)
 
     def get_value(self, section, item):
         """获取配置的值         \n
@@ -276,19 +249,6 @@ class SessionOptions(object):
         """返回max_redirects设置信息"""
         return self._max_redirects
 
-    @timeout.setter
-    def timeout(self, second):
-        """返回timeout属性信息"""
-        self._timeout = second
-
-    @headers.setter
-    def headers(self, headers):
-        """设置headers参数           \n
-        :param headers: 参数值
-        :return: None
-        """
-        self.set_headers(headers)
-
     @cookies.setter
     def cookies(self, cookies):
         """设置cookies参数           \n
@@ -304,14 +264,6 @@ class SessionOptions(object):
         :return: None
         """
         self._auth = auth
-
-    @proxies.setter
-    def proxies(self, proxies):
-        """设置proxies参数           \n
-        :param proxies: 参数值
-        :return: None
-        """
-        self.set_proxies(proxies)
 
     @hooks.setter
     def hooks(self, hooks):

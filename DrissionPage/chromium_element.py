@@ -157,7 +157,7 @@ class ChromiumElement(DrissionElement):
     def _client_click_point(self):
         """返回元素左上角可接受点击的点视口坐标"""
         m = self._get_client_rect('padding')
-        return (int(self.client_midpoint[0]), int(m[1])) if m else (0, 0)
+        return (int(self.client_midpoint[0]), int(m[1]) + 1) if m else (0, 0)
 
     @property
     def _click_point(self):

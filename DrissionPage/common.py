@@ -524,7 +524,8 @@ def connect_browser(option):
         chrome_path = get_exe_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' else chrome_path
         return chrome_path, None
 
-    args = _get_running_args(option)
+    args = _get_launch_args(option)
+    _set_prefs(option)
 
     # ----------创建浏览器进程----------
     try:
@@ -573,7 +574,7 @@ def _run_browser(port, path: str, args) -> Popen:
     raise ConnectionError('无法连接浏览器。')
 
 
-def _get_running_args(opt: DriverOptions) -> list:
+def _get_launch_args(opt: DriverOptions) -> list:
     """从DriverOptions获取命令行启动参数"""
     sys = system().lower()
     result = []
@@ -587,7 +588,7 @@ def _get_running_args(opt: DriverOptions) -> list:
         else:
             result.append(arg)
 
-    # ----------处理extensions-------------
+    # ----------处理插件extensions-------------
     ext = opt._extension_files
     if ext:
         ext = set(ext)
@@ -599,12 +600,25 @@ def _get_running_args(opt: DriverOptions) -> list:
         ext = f'--load-extension={ext}'
         result.append(ext)
 
-    # ----------处理experimental_options-------------
+    return result
+
+
+def _set_prefs(opt: DriverOptions) -> None:
+    """处理启动配置中的prefs项，目前只能对已存在文件夹配置"""
     prefs = opt.experimental_options.get('prefs', None)
     if prefs and opt.user_data_path:
-        prefs_file = Path(opt.user_data_path) / 'Default' / 'Preferences'
+        args = opt.arguments
+        profile = 'Default'
+        for arg in args:
+            if arg.startswith('--profile-directory'):
+                profile = arg.split('=')[-1].strip()
+                break
+
+        prefs_file = Path(opt.user_data_path) / profile / 'Preferences'
         if not prefs_file.exists():
-            return result
+            prefs_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(prefs_file, 'w') as f:
+                f.write('{}')
 
         from json import load, dump
         with open(prefs_file, "r", encoding='utf-8') as f:
@@ -618,8 +632,6 @@ def _get_running_args(opt: DriverOptions) -> list:
 
         with open(prefs_file, 'w', encoding='utf-8') as f:
             dump(j, f)
-
-    return result
 
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:
