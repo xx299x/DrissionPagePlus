@@ -37,7 +37,7 @@ class SessionPage(BasePage):
         """
         if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
             options = Session_or_Options or SessionOptions()
-            self._set_session(options.as_dict())
+            self._set_session(options)
             self.timeout = options.timeout
             self._download_path = options.download_path
         elif isinstance(Session_or_Options, Session):
@@ -45,23 +45,27 @@ class SessionPage(BasePage):
             self._download_path = None
         self._download_kit = None
 
-    def _set_session(self, data):
+    def _set_session(self, opt):
         """根据传入字典对session进行设置    \n
         :param data: session配置字典
         :return: None
         """
         self._session = Session()
 
-        if 'headers' in data:
-            self._session.headers = CaseInsensitiveDict(data['headers'])
-        if 'cookies' in data:
-            self.set_cookies(data['cookies'])
+        if opt.headers:
+            self._session.headers = CaseInsensitiveDict(opt.headers)
+        if opt.cookies:
+            self.set_cookies(opt.cookies)
+        if opt.adapters:
+            for url, adapter in opt.adapters:
+                self._session.mount(url, adapter)
 
         attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
-                 'cert', 'stream', 'trust_env', 'max_redirects']  # , 'adapters'
+                 'cert', 'stream', 'trust_env', 'max_redirects']
         for i in attrs:
-            if i in data:
-                self._session.__setattr__(i, data[i])
+            attr = opt.__getattribute__(i)
+            if attr:
+                self._session.__setattr__(i, attr)
 
     def set_cookies(self, cookies):
         cookies = cookies_to_tuple(cookies)

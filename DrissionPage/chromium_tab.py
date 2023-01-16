@@ -20,5 +20,5 @@ class ChromiumTab(ChromiumBase):
     def _set_options(self):
         self.set_timeouts(page_load=self.page.timeouts.page_load,
                           script=self.page.timeouts.script,
-                          implicit=self.page.timeouts.implicit if self.timeout is None else self.timeout)
+                          implicit=self.page.timeouts.implicit)
         self._page_load_strategy = self.page.page_load_strategy

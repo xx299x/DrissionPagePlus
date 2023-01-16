@@ -65,10 +65,19 @@ class OptionsManager(object):
         :param section: 段名
         :param item: 项名
         :param value: 项值
-        :return: 当前对象
+        :return: None
         """
         self._conf.set(section, item, str(value))
         self.__setattr__(f'_{section}', None)
+        return self
+
+    def remove_item(self, section, item):
+        """删除配置值            \n
+        :param section: 段名
+        :param item: 项名
+        :return: None
+        """
+        self._conf.remove_option(section, item)
         return self
 
     def save(self, path=None):
@@ -124,25 +133,21 @@ class SessionOptions(object):
         self._max_redirects = None
         self._timeout = 10
 
+        self._del_set = set()  # 记录要从ini文件删除的参数
+
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.session_options
 
             if options_dict.get('headers', None) is not None:
-                self._headers = {key.lower(): options_dict['headers'][key] for key in options_dict['headers']}
+                self.set_headers(options_dict['headers'])
 
             if options_dict.get('cookies', None) is not None:
-                self._cookies = options_dict['cookies']
+                self.set_cookies(options_dict['cookies'])
 
             if options_dict.get('auth', None) is not None:
                 self._auth = options_dict['auth']
-
-            if options_dict.get('proxies', None) is not None:
-                self._proxies = options_dict['proxies']
-
-            if options_dict.get('hooks', None) is not None:
-                self._hooks = options_dict['hooks']
 
             if options_dict.get('params', None) is not None:
                 self._params = options_dict['params']
@@ -153,9 +158,6 @@ class SessionOptions(object):
             if options_dict.get('cert', None) is not None:
                 self._cert = options_dict['cert']
 
-            # if options_dict.get('adapters', None) is not None:
-            #     self._adapters = options_dict['adapters']
-
             if options_dict.get('stream', None) is not None:
                 self._stream = options_dict['stream']
 
@@ -165,169 +167,29 @@ class SessionOptions(object):
             if options_dict.get('max_redirects', None) is not None:
                 self._max_redirects = options_dict['max_redirects']
 
-            self._timeout = options_dict.get('timeout', 10)
-
+            self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
+            self._timeout = om.timeouts.get('implicit', 10)
             self._download_path = om.paths.get('download_path', None)
 
-    @property
-    def timeout(self):
-        """返回timeout属性信息"""
-        return self._timeout
-
+    # ===========须独立处理的项开始============
     @property
     def download_path(self):
         """返回默认下载路径属性信息"""
         return self._download_path
 
-    @property
-    def headers(self):
-        """返回headers设置信息"""
-        if self._headers is None:
-            self._headers = {}
-        return self._headers
-
-    @property
-    def cookies(self):
-        """返回cookies设置信息"""
-        if self._cookies is None:
-            self._cookies = []
-        return self._cookies
-
-    @property
-    def auth(self):
-        """返回auth设置信息"""
-        return self._auth
-
-    @property
-    def proxies(self):
-        """返回proxies设置信息"""
-        if self._proxies is None:
-            self._proxies = {}
-        return self._proxies
-
-    @property
-    def hooks(self):
-        """返回hooks设置信息"""
-        if self._hooks is None:
-            self._hooks = {}
-        return self._hooks
-
-    @property
-    def params(self):
-        """返回params设置信息"""
-        if self._params is None:
-            self._params = {}
-        return self._params
-
-    @property
-    def verify(self):
-        """返回verify设置信息"""
-        return self._verify
-
-    @property
-    def cert(self):
-        """返回cert设置信息"""
-        return self._cert
-
-    @property
-    def adapters(self):
-        """返回adapters设置信息"""
-        return self._adapters
-
-    @property
-    def stream(self):
-        """返回stream设置信息"""
-        return self._stream
-
-    @property
-    def trust_env(self):
-        """返回trust_env设置信息"""
-        return self._trust_env
-
-    @property
-    def max_redirects(self):
-        """返回max_redirects设置信息"""
-        return self._max_redirects
-
-    @cookies.setter
-    def cookies(self, cookies):
-        """设置cookies参数           \n
-        :param cookies: 参数值
-        :return: None
+    def set_paths(self, download_path=None):
+        """设置默认下载路径                          \n
+        :param download_path: 下载路径
+        :return: 返回当前对象
         """
-        self._cookies = cookies
+        if download_path is not None:
+            self._download_path = str(download_path)
+        return self
 
-    @auth.setter
-    def auth(self, auth):
-        """设置auth参数           \n
-        :param auth: 参数值
-        :return: None
-        """
-        self._auth = auth
-
-    @hooks.setter
-    def hooks(self, hooks):
-        """设置hooks参数           \n
-        :param hooks: 参数值
-        :return: None
-        """
-        self._hooks = hooks
-
-    @params.setter
-    def params(self, params):
-        """设置params参数           \n
-        :param params: 参数值
-        :return: None
-        """
-        self._params = params
-
-    @verify.setter
-    def verify(self, verify):
-        """设置verify参数           \n
-        :param verify: 参数值
-        :return: None
-        """
-        self._verify = verify
-
-    @cert.setter
-    def cert(self, cert):
-        """设置cert参数           \n
-        :param cert: 参数值
-        :return: None
-        """
-        self._cert = cert
-
-    @adapters.setter
-    def adapters(self, adapters):
-        """设置           \n
-        :param adapters: 参数值
-        :return: None
-        """
-        self._adapters = adapters
-
-    @stream.setter
-    def stream(self, stream):
-        """设置stream参数           \n
-        :param stream: 参数值
-        :return: None
-        """
-        self._stream = stream
-
-    @trust_env.setter
-    def trust_env(self, trust_env):
-        """设置trust_env参数           \n
-        :param trust_env: 参数值
-        :return: None
-        """
-        self._trust_env = trust_env
-
-    @max_redirects.setter
-    def max_redirects(self, max_redirects):
-        """设置max_redirects参数          \n
-        :param max_redirects: 参数值
-        :return: None
-        """
-        self._max_redirects = max_redirects
+    @property
+    def timeout(self):
+        """返回timeout属性信息"""
+        return self._timeout
 
     def set_timeout(self, second):
         """设置超时信息
@@ -337,12 +199,42 @@ class SessionOptions(object):
         self._timeout = second
         return self
 
-    def set_headers(self, headers):
-        """设置headers参数           \n
-        :param headers: 参数值
+    @property
+    def proxies(self):
+        """返回proxies设置信息"""
+        if self._proxies is None:
+            self._proxies = {}
+        return self._proxies
+
+    def set_proxies(self, http, https=None):
+        """设置proxies参数                                                                 \n
+        :param http: http代理地址
+        :param https: https代理地址
         :return: 返回当前对象
         """
-        self._headers = {key.lower(): headers[key] for key in headers}
+        proxies = None if http == https is None else {'http': http, 'https': https or http}
+        self._sets('proxies', proxies)
+        return self
+
+    # ===========须独立处理的项结束============
+
+    @property
+    def headers(self):
+        """返回headers设置信息"""
+        if self._headers is None:
+            self._headers = {}
+        return self._headers
+
+    def set_headers(self, headers):
+        """设置headers参数                                                               \n
+        :param headers: 参数值，传入None可在ini文件标记删除
+        :return: 返回当前对象
+        """
+        if headers is None:
+            self._headers = None
+            self._del_set.add('headers')
+        else:
+            self._headers = {key.lower(): headers[key] for key in headers}
         return self
 
     def set_a_header(self, attr, value):
@@ -371,24 +263,159 @@ class SessionOptions(object):
 
         return self
 
-    def set_proxies(self, proxies):
-        """设置proxies参数           \n
-        {'http': 'http://xx.xx.xx.xx:xxxx',
-         'https': 'http://xx.xx.xx.xx:xxxx'}
-        :param proxies: 参数值
+    @property
+    def cookies(self):
+        """以list形式返回cookies"""
+        if self._cookies is None:
+            self._cookies = []
+        return self._cookies
+
+    def set_cookies(self, cookies):
+        """设置cookies信息                                                                        \n
+        :param cookies: cookies，可为CookieJar, list, tuple, str, dict，传入None可在ini文件标记删除
         :return: 返回当前对象
         """
-        self._proxies = proxies
+        cookies = cookies if cookies is None else list(cookies_to_tuple(cookies))
+        self._sets('cookies', cookies)
         return self
 
-    def set_paths(self, download_path=None):
-        """设置默认下载路径                          \n
-        :param download_path: 下载路径
+    @property
+    def auth(self):
+        """返回auth设置信息"""
+        return self._auth
+
+    def set_auth(self, auth):
+        """设置认证元组或对象                                                                \n
+        :param auth: 认证元组或对象
         :return: 返回当前对象
         """
-        if download_path is not None:
-            self._download_path = str(download_path)
+        self._sets('auth', auth)
         return self
+
+    @property
+    def hooks(self):
+        """返回回调方法"""
+        if self._hooks is None:
+            self._hooks = {}
+        return self._hooks
+
+    def set_hooks(self, hooks):
+        """设置回调方法                       \n
+        :param hooks:
+        :return: 返回当前对象
+        """
+        self._hooks = hooks
+        return self
+
+    @property
+    def params(self):
+        """返回params设置信息"""
+        if self._params is None:
+            self._params = {}
+        return self._params
+
+    def set_params(self, params):
+        """设置查询参数字典                                                                  \n
+        :param params: 查询参数字典
+        :return: 返回当前对象
+        """
+        self._sets('params', params)
+        return self
+
+    @property
+    def verify(self):
+        """返回是否验证SSL证书设置"""
+        return self._verify
+
+    def set_verify(self, on_off):
+        """设置是否验证SSL证书                                                               \n
+        :param on_off: 是否验证 SSL 证书
+        :return: 返回当前对象
+        """
+        self._sets('verify', on_off)
+        return self
+
+    @property
+    def cert(self):
+        """返回cert设置信息"""
+        return self._cert
+
+    def set_cert(self, cert):
+        """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组                            \n
+        :param cert: 证书路径或元组
+        :return: 返回当前对象
+        """
+        self._sets('cert', cert)
+        return self
+
+    @property
+    def adapters(self):
+        """返回适配器设置信息"""
+        if self._adapters is None:
+            self._adapters = []
+        return self._adapters
+
+    def add_adapter(self, url, adapter):
+        """添加适配器                        \n
+        :param url: 适配器对应url
+        :param adapter: 适配器对象
+        :return: 返回当前对象
+        """
+        self._adapters.append((url, adapter))
+        return self
+
+    @property
+    def stream(self):
+        """返回stream设置信息"""
+        return self._stream
+
+    def set_stream(self, on_off):
+        """设置是否使用流式响应内容            \n
+        :param on_off: 是否使用流式响应内容
+        :return: 返回当前对象
+        """
+        self._sets('stream', on_off)
+        return self
+
+    @property
+    def trust_env(self):
+        """返回trust_env设置信息"""
+        return self._trust_env
+
+    def set_trust_env(self, on_off):
+        """设置是否信任环境            \n
+        :param on_off: 是否信任环境
+        :return: 返回当前对象
+        """
+        self._sets('trust_env', on_off)
+        return self
+
+    @property
+    def max_redirects(self):
+        """返回最大重定向次数"""
+        return self._max_redirects
+
+    def set_max_redirects(self, times):
+        """设置最大重定向次数            \n
+        :param times: 最大重定向次数
+        :return: 返回当前对象
+        """
+        self._sets('max_redirects', times)
+        return self
+
+    def _sets(self, arg, val):
+        """给属性赋值或标记删除
+        :param arg: 属性名称
+        :param val: 参数值
+        :return: None
+        """
+        if val is None:
+            self.__setattr__(f'_{arg}', None)
+            self._del_set.add(arg)
+        else:
+            self.__setattr__(f'_{arg}', val)
+            if arg in self._del_set:
+                self._del_set.remove(arg)
 
     def save(self, path=None):
         """保存设置到文件                                              \n
@@ -417,10 +444,22 @@ class SessionOptions(object):
         options = session_options_to_dict(self)
 
         for i in options:
-            om.set_item('session_options', i, options[i])
+            if i not in ('download_path', 'timeout', 'proxies'):
+                om.set_item('session_options', i, options[i])
 
         om.set_item('paths', 'download_path', self.download_path)
-        om.set_item('session_options', 'timeout', self.timeout)
+        om.set_item('timeouts', 'implicit', self.timeout)
+        om.set_item('proxies', 'http', self.proxies.get('http', None))
+        om.set_item('proxies', 'https', self.proxies.get('https', None))
+
+        for i in self._del_set:
+            if i == 'download_path':
+                om.set_item('paths', 'download_path', '')
+            elif i == 'proxies':
+                om.set_item('proxies', 'http', '')
+                om.set_item('proxies', 'https', '')
+            else:
+                om.remove_item('session_options', i)
 
         path = str(path)
         om.save(path)
@@ -800,22 +839,13 @@ def session_options_to_dict(options):
         return options
 
     re_dict = dict()
-    attrs = ['headers', 'proxies', 'hooks', 'params', 'verify', 'stream', 'trust_env',
-             'max_redirects', 'timeout']  # 'adapters',
-
-    cookies = options.__getattribute__('_cookies')
-
-    if cookies is not None:
-        re_dict['cookies'] = cookies_to_tuple(cookies)
+    attrs = ['headers', 'cookies', 'proxies', 'params', 'verify', 'stream', 'trust_env',
+             'max_redirects', 'timeout', 'download_path']
 
     for attr in attrs:
         val = options.__getattribute__(f'_{attr}')
         if val is not None:
             re_dict[attr] = val
-
-    # cert属性默认值为None，为免无法区分是否被设置，故主动赋值
-    re_dict['cert'] = options.__getattribute__('_cert')
-    re_dict['auth'] = options.__getattribute__('_auth')
 
     return re_dict
 
