@@ -430,15 +430,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         else:
             if se_opt is None:
-                so = SessionOptions().as_dict()
+                so = SessionOptions()
 
             elif se_opt is False:
-                so = SessionOptions(read_file=False).as_dict()
+                so = SessionOptions(read_file=False)
 
             elif isinstance(se_opt, SessionOptions):
-                so = se_opt.as_dict()
-
-            elif isinstance(se_opt, dict):
                 so = se_opt
 
             else:
@@ -447,7 +444,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._session_options = so
 
         if se_opt is not False:
-            self.set_timeouts(implicit=self._session_options.get('timeout', 10))
+            self.set_timeouts(implicit=self._session_options.timeout)
 
         if dr_opt is not False:
             t = self._driver_options.timeouts

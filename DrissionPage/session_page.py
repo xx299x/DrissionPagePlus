@@ -47,7 +47,7 @@ class SessionPage(BasePage):
 
     def _set_session(self, opt):
         """根据传入字典对session进行设置    \n
-        :param data: session配置字典
+        :param opt: session配置字典
         :return: None
         """
         self._session = Session()

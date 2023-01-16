@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 from json import dumps, loads
-from logging import getLogger
 from os import getenv
 from threading import Thread, Event
 
@@ -12,8 +11,6 @@ try:
     import Queue as queue
 except ImportError:
     import queue
-
-logger = getLogger(__name__)
 
 
 class GenericAttr(object):
@@ -48,7 +45,7 @@ class ChromiumDriver(object):
         self._websocket_url = kwargs.get("webSocketDebuggerUrl")
         self._kwargs = kwargs
 
-        self._cur_id = 1000
+        self._cur_id = 0
 
         self._ws = None
 
@@ -144,7 +141,7 @@ class ChromiumDriver(object):
                 try:
                     self.event_handlers[event['method']](**event['params'])
                 except Exception as e:
-                    logger.error(f"callback {event['method']} exception", exc_info=True)
+                    raise RuntimeError(f"回调函数 {event['method']} 错误：{e}")
 
             self.event_queue.task_done()
 
