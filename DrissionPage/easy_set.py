@@ -12,7 +12,8 @@ from typing import Union
 from selenium import webdriver
 
 from .common import unzip
-from .config import OptionsManager, DriverOptions
+from .configs.options_manage import OptionsManager
+from .configs.driver_options import DriverOptions
 from .drission import Drission
 from .session_page import SessionPage
 

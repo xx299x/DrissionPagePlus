@@ -14,8 +14,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
-from .common import get_pid_from_port, connect_browser
-from .config import SessionOptions, DriverOptions, cookies_to_tuple, session_options_to_dict
+from .common import get_pid_from_port, connect_browser, cookies_to_tuple
+from .configs.session_options import SessionOptions, session_options_to_dict
+from .configs.driver_options import DriverOptions
 
 
 class Drission(object):

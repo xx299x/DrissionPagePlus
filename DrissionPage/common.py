@@ -4,17 +4,21 @@
 @Contact :   g1879@qq.com
 """
 from html import unescape
+from http.cookiejar import Cookie
 from pathlib import Path
 from platform import system
 from re import split, search, sub
 from shutil import rmtree
 from subprocess import Popen
 from time import perf_counter, sleep
-from zipfile import ZipFile
 from urllib.parse import urlparse, urljoin, urlunparse
-from requests import get as requests_get
+from zipfile import ZipFile
 
-from .config import DriverOptions
+from requests import get as requests_get
+from requests.cookies import RequestsCookieJar
+
+# from .configs.chromium_options import ChromiumOptions
+from .configs.driver_options import DriverOptions
 
 
 def get_ele_txt(e):
@@ -329,6 +333,61 @@ def format_html(text):
     return unescape(text).replace('\xa0', ' ') if text else text
 
 
+def cookie_to_dict(cookie):
+    """把Cookie对象转为dict格式                \n
+    :param cookie: Cookie对象
+    :return: cookie字典
+    """
+    if isinstance(cookie, Cookie):
+        cookie_dict = cookie.__dict__.copy()
+        cookie_dict.pop('rfc2109')
+        cookie_dict.pop('_rest')
+        return cookie_dict
+
+    elif isinstance(cookie, dict):
+        cookie_dict = cookie
+
+    elif isinstance(cookie, str):
+        cookie = cookie.split(',' if ',' in cookie else ';')
+        cookie_dict = {}
+
+        for key, attr in enumerate(cookie):
+            attr_val = attr.lstrip().split('=')
+
+            if key == 0:
+                cookie_dict['name'] = attr_val[0]
+                cookie_dict['value'] = attr_val[1] if len(attr_val) == 2 else ''
+            else:
+                cookie_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else ''
+
+        return cookie_dict
+
+    else:
+        raise TypeError('cookie参数必须为Cookie、str或dict类型。')
+
+    return cookie_dict
+
+
+def cookies_to_tuple(cookies):
+    """把cookies转为tuple格式                                                \n
+    :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
+    :return: 返回tuple形式的cookies
+    """
+    if isinstance(cookies, (list, tuple, RequestsCookieJar)):
+        cookies = tuple(cookie_to_dict(cookie) for cookie in cookies)
+
+    elif isinstance(cookies, str):
+        cookies = tuple(cookie_to_dict(cookie.lstrip()) for cookie in cookies.split(";"))
+
+    elif isinstance(cookies, dict):
+        cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
+
+    else:
+        raise TypeError('cookies参数必须为RequestsCookieJar、list、tuple、str或dict类型。')
+
+    return cookies
+
+
 def clean_folder(folder_path, ignore=None):
     """清空一个文件夹，除了ignore里的文件和文件夹  \n
     :param folder_path: 要清空的文件夹路径
@@ -524,8 +583,8 @@ def connect_browser(option):
         chrome_path = get_exe_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' else chrome_path
         return chrome_path, None
 
-    args = _get_launch_args(option)
-    _set_prefs(option)
+    args = get_launch_args(option)
+    set_prefs(option)
 
     # ----------创建浏览器进程----------
     try:
@@ -544,6 +603,71 @@ def connect_browser(option):
         debugger = _run_browser(port, chrome_path, args)
 
     return chrome_path, debugger
+
+
+def get_launch_args(opt):
+    """从DriverOptions获取命令行启动参数"""
+    sys = system().lower()
+    result = []
+
+    # ----------处理arguments-----------
+    args = opt.arguments
+    for arg in args:
+        index = arg.find('=') + 1
+        if index == 0:
+            result.append(arg)
+        else:
+            a = arg[index:].strip()
+            if a.startswith('"') and a.endswith('"'):
+                result.append(arg)
+            else:
+                result.append(f'{arg[:index]}"{a}"')
+
+    # ----------处理插件extensions-------------
+    ext = opt._extension_files if isinstance(opt, DriverOptions) else opt.extensions
+    if ext:
+        ext = set(ext)
+        if sys == 'windows':
+            ext = '","'.join(ext)
+            ext = f'"{ext}"'
+        else:
+            ext = ','.join(ext)
+        ext = f'--load-extension={ext}'
+        result.append(ext)
+
+    return result
+
+
+def set_prefs(opt):
+    """处理启动配置中的prefs项，目前只能对已存在文件夹配置"""
+    # todo: 支持删除pref项
+    prefs = opt.experimental_options.get('prefs', None) if isinstance(opt, DriverOptions) else opt.preferences
+    if prefs and opt.user_data_path:
+        args = opt.arguments
+        user = 'Default'
+        for arg in args:
+            if arg.startswith('--profile-directory'):
+                user = arg.split('=')[-1].strip()
+                break
+
+        prefs_file = Path(opt.user_data_path) / user / 'Preferences'
+        if not prefs_file.exists():
+            prefs_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(prefs_file, 'w') as f:
+                f.write('{}')
+
+        from json import load, dump
+        with open(prefs_file, "r", encoding='utf-8') as f:
+            j = load(f)
+
+            for pref in prefs:
+                value = prefs[pref]
+                pref = pref.split('.')
+                _make_leave_in_dict(j, pref, 0, len(pref))
+                _set_value_to_dict(j, pref, value)
+
+        with open(prefs_file, 'w', encoding='utf-8') as f:
+            dump(j, f)
 
 
 def _run_browser(port, path: str, args) -> Popen:
@@ -572,66 +696,6 @@ def _run_browser(port, path: str, args) -> Popen:
             sleep(.2)
 
     raise ConnectionError('无法连接浏览器。')
-
-
-def _get_launch_args(opt: DriverOptions) -> list:
-    """从DriverOptions获取命令行启动参数"""
-    sys = system().lower()
-    result = []
-
-    # ----------处理arguments-----------
-    args = opt.arguments
-    for arg in args:
-        if arg.startswith(('--user-data-dir', '--disk-cache-dir', '--user-agent')) and sys == 'windows':
-            index = arg.find('=') + 1
-            result.append(f'{arg[:index]}"{arg[index:].strip()}"')
-        else:
-            result.append(arg)
-
-    # ----------处理插件extensions-------------
-    ext = opt._extension_files
-    if ext:
-        ext = set(ext)
-        if sys == 'windows':
-            ext = '","'.join(ext)
-            ext = f'"{ext}"'
-        else:
-            ext = ','.join(ext)
-        ext = f'--load-extension={ext}'
-        result.append(ext)
-
-    return result
-
-
-def _set_prefs(opt: DriverOptions) -> None:
-    """处理启动配置中的prefs项，目前只能对已存在文件夹配置"""
-    prefs = opt.experimental_options.get('prefs', None)
-    if prefs and opt.user_data_path:
-        args = opt.arguments
-        profile = 'Default'
-        for arg in args:
-            if arg.startswith('--profile-directory'):
-                profile = arg.split('=')[-1].strip()
-                break
-
-        prefs_file = Path(opt.user_data_path) / profile / 'Preferences'
-        if not prefs_file.exists():
-            prefs_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(prefs_file, 'w') as f:
-                f.write('{}')
-
-        from json import load, dump
-        with open(prefs_file, "r", encoding='utf-8') as f:
-            j = load(f)
-
-            for pref in prefs:
-                value = prefs[pref]
-                pref = pref.split('.')
-                _make_leave_in_dict(j, pref, 0, len(pref))
-                _set_value_to_dict(j, pref, value)
-
-        with open(prefs_file, 'w', encoding='utf-8') as f:
-            dump(j, f)
 
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:

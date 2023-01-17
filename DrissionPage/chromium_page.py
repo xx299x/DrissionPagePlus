@@ -14,7 +14,7 @@ from .chromium_base import Timeout, ChromiumBase
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .common import connect_browser
-from .config import DriverOptions
+from .configs.driver_options import DriverOptions
 from .session_page import DownloadSetter
 
 
@@ -418,6 +418,7 @@ class WindowSetter(object):
     def normal(self):
         """设置窗口为常规模式"""
         self._perform({'windowState': 'normal'})
+        self._perform({'windowState': 'normal'})
 
     def size(self, width=None, height=None):
         """设置窗口大小             \n
@@ -446,7 +447,7 @@ class WindowSetter(object):
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
-        return self.driver.Browser.getWindowBounds()
+        return self.driver.Browser.getWindowForTarget()
 
     def _perform(self, bounds):
         """执行改变窗口大小操作

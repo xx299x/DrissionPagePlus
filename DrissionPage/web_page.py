@@ -13,7 +13,9 @@ from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter
-from .config import DriverOptions, SessionOptions, cookies_to_tuple
+from .configs.session_options import SessionOptions
+from .configs.driver_options import DriverOptions
+from .common import cookies_to_tuple
 from .session_page import SessionPage
 
 

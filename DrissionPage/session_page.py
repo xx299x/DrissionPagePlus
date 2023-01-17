@@ -13,7 +13,8 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from .config import SessionOptions, cookies_to_tuple, cookie_to_dict
+from .configs.session_options import SessionOptions
+from .common import cookies_to_tuple, cookie_to_dict
 from .session_element import SessionElement, make_session_ele
 
 

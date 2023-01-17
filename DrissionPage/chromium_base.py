@@ -10,8 +10,7 @@ from requests import Session
 
 from .base import BasePage
 from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
-from .common import get_loc, offset_scroll
-from .config import cookies_to_tuple
+from .common import get_loc, offset_scroll, cookies_to_tuple
 from .session_element import make_session_ele
 from .chromium_driver import ChromiumDriver
 

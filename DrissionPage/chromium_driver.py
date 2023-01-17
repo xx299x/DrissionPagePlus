@@ -174,7 +174,7 @@ class ChromiumDriver(object):
         timeout = kwargs.pop("_timeout", None)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
         if 'result' not in result and 'error' in result:
-            raise CallMethodException(f"调用方法：{_method} 错误：{result['error']['message']}")
+            raise CallMethodException(f"\n调用方法：{_method}\n参数：{kwargs}\n错误：{result['error']['message']}")
 
         return result['result']
 
