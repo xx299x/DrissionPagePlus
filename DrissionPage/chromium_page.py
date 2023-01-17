@@ -65,7 +65,7 @@ class ChromiumPage(ChromiumBase):
         # 接收传递过来的ChromiumDriver，浏览器
         elif isinstance(addr_driver_opts, ChromiumDriver):
             self._tab_obj = addr_driver_opts
-            self.address = search(r'ws://(.*?)/dev', addr_driver_opts._websocket_url).group(1)
+            self.address = search(r'ws://(.*?)/dev', addr_driver_opts.websocket_url).group(1)
             self.process = None
             self.options = DriverOptions(read_file=False)
 

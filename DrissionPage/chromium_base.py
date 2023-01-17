@@ -62,8 +62,8 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         if tab_id:
-            self._tab_obj = ChromiumDriver(id=tab_id, type='page',
-                                           webSocketDebuggerUrl=f'ws://{self.address}/devtools/page/{tab_id}')
+            self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page',
+                                           ws_url=f'ws://{self.address}/devtools/page/{tab_id}')
 
         self._tab_obj.start()
         self._tab_obj.DOM.enable()
