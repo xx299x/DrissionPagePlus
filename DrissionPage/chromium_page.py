@@ -22,7 +22,7 @@ class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
 
     def __init__(self, addr_driver_opts=None, tab_id=None, timeout=None):
-        """初始化                                                                       \n
+        """
         :param addr_driver_opts: 浏览器地址:端口、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
@@ -30,7 +30,7 @@ class ChromiumPage(ChromiumBase):
         super().__init__(addr_driver_opts, tab_id, timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
-        """连接浏览器，在第一次时运行                                    \n
+        """连接浏览器，在第一次时运行                                                         \n
         :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
@@ -208,22 +208,25 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         if switch_to:
-            begin_len = len(self.tabs)
-            self._control_session.get(f'http://{self.address}/json/new')
+            begin_tabs = set(self.tabs)
+            len_tabs = len(begin_tabs)
+            self.run_cdp('Target.createTarget', url='')
 
             tabs = self.tabs
-            while len(tabs) <= begin_len:
+            while len(tabs) == len_tabs:
                 tabs = self.tabs
+                sleep(.005)
 
-            self._to_tab(tabs[0], read_doc=False)
+            new_tab = set(tabs) - begin_tabs
+            self._to_tab(new_tab.pop(), read_doc=False)
             if url:
                 self.get(url)
 
         elif url:
-            self._control_session.get(f'http://{self.address}/json/new?{url}')
+            self.run_cdp('Target.createTarget', url=url)
 
         else:
-            self._control_session.get(f'http://{self.address}/json/new')
+            self.run_cdp('Target.createTarget', url='')
 
     def set_main_tab(self, tab_id=None):
         """设置主tab                               \n
