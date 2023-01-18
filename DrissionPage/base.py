@@ -7,7 +7,8 @@ from abc import abstractmethod
 from re import sub
 from urllib.parse import quote
 
-from .common import format_html, get_loc
+from .functions.web import format_html
+from .functions.locator import get_loc
 
 
 class BaseParser(object):

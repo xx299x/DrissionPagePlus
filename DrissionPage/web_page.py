@@ -15,7 +15,7 @@ from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter
 from .configs.session_options import SessionOptions
 from .configs.driver_options import DriverOptions
-from .common import cookies_to_tuple
+from .functions.web import cookies_to_tuple
 from .session_page import SessionPage
 
 

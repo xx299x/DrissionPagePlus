@@ -13,7 +13,7 @@ from requests import Session
 from .chromium_base import Timeout, ChromiumBase
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .common import connect_browser
+from .functions.browser import connect_browser
 from .configs.driver_options import DriverOptions
 from .session_page import DownloadSetter
 

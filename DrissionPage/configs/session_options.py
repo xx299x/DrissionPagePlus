@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from DrissionPage.common import cookies_to_tuple
+from DrissionPage.functions.web import cookies_to_tuple
 from .options_manage import OptionsManager
 
 

@@ -9,8 +9,8 @@ from pathlib import Path
 from time import perf_counter, sleep
 
 from .base import DrissionElement, BaseElement
-from .common import make_absolute_link, get_loc, get_ele_txt, format_html, is_js_func, location_in_viewport, \
-    offset_scroll
+from .functions.locator import get_loc
+from .functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 

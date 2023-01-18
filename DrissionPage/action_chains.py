@@ -5,7 +5,7 @@
 """
 from time import sleep
 
-from .common import location_in_viewport
+from .functions.web import location_in_viewport
 from .keys import _modifierBit, _keyDescriptionForString
 
 
