@@ -104,8 +104,8 @@ class ChromiumPage(ChromiumBase):
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        tabs = self.run_cdp('Target.getTargets', filter=[{'type': "page"}])['targetInfos']
-        return [i['targetId'] for i in tabs]
+        j = self._control_session.get(f'http://{self.address}/json').json()
+        return [i['id'] for i in j if i['type'] == 'page']
 
     @property
     def main_tab(self):
