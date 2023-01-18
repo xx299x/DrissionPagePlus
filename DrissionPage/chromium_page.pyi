@@ -10,7 +10,7 @@ from typing import Union, Tuple, List
 from .chromium_base import ChromiumBase
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .config import DriverOptions
+from .configs.driver_options import DriverOptions
 
 
 class ChromiumPage(ChromiumBase):
@@ -19,7 +19,7 @@ class ChromiumPage(ChromiumBase):
                  addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = None,
                  tab_id: str = None,
                  timeout: float = None):
-        self.options: DriverOptions = ...
+        self._driver_options: [ChromiumDriver, DriverOptions] = ...
         self.process: popen = ...
         self._window_setter: WindowSetter = ...
         self._main_tab: str = ...

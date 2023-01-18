@@ -13,7 +13,9 @@ from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter
-from .config import DriverOptions, SessionOptions
+from .configs.chromium_options import ChromiumOptions
+from .configs.driver_options import DriverOptions
+from .configs.session_options import SessionOptions
 from .session_element import SessionElement
 from .session_page import SessionPage
 
@@ -24,7 +26,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                  mode: str = 'd',
                  timeout: float = None,
                  tab_id: str = None,
-                 driver_or_options: Union[ChromiumDriver, DriverOptions, bool] = None,
+                 driver_or_options: Union[ChromiumDriver, ChromiumOptions, DriverOptions, bool] = None,
                  session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
         self._mode: str = ...
         self._has_driver: bool = ...

@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from json import load, dump
 from pathlib import Path
 from platform import system
 from subprocess import Popen
@@ -74,34 +75,44 @@ def set_prefs(opt):
     :param opt: DriverOptions或ChromiumOptions
     :return: None
     """
-    # todo: 支持删除pref项
-    prefs = opt.experimental_options.get('prefs', None) if isinstance(opt, DriverOptions) else opt.preferences
-    if prefs and opt.user_data_path:
-        args = opt.arguments
-        user = 'Default'
-        for arg in args:
-            if arg.startswith('--profile-directory'):
-                user = arg.split('=')[-1].strip()
-                break
+    if isinstance(opt, DriverOptions):
+        prefs = opt.experimental_options.get('prefs', None)
+        del_list = []
+    else:
+        prefs = opt.preferences
+        del_list = opt._prefs_to_del
 
-        prefs_file = Path(opt.user_data_path) / user / 'Preferences'
-        if not prefs_file.exists():
-            prefs_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(prefs_file, 'w') as f:
-                f.write('{}')
+    if not opt.user_data_path:
+        return
 
-        from json import load, dump
-        with open(prefs_file, "r", encoding='utf-8') as f:
-            j = load(f)
+    args = opt.arguments
+    user = 'Default'
+    for arg in args:
+        if arg.startswith('--profile-directory'):
+            user = arg.split('=')[-1].strip()
+            break
 
-            for pref in prefs:
-                value = prefs[pref]
-                pref = pref.split('.')
-                _make_leave_in_dict(j, pref, 0, len(pref))
-                _set_value_to_dict(j, pref, value)
+    prefs_file = Path(opt.user_data_path) / user / 'Preferences'
 
-        with open(prefs_file, 'w', encoding='utf-8') as f:
-            dump(j, f)
+    if not prefs_file.exists():
+        prefs_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(prefs_file, 'w') as f:
+            f.write('{}')
+
+    with open(prefs_file, "r", encoding='utf-8') as f:
+        prefs_dict = load(f)
+
+        for pref in prefs:
+            value = prefs[pref]
+            pref = pref.split('.')
+            _make_leave_in_dict(prefs_dict, pref, 0, len(pref))
+            _set_value_to_dict(prefs_dict, pref, value)
+
+        for pref in del_list:
+            _remove_arg_from_dict(prefs_dict, pref)
+
+    with open(prefs_file, 'w', encoding='utf-8') as f:
+        dump(prefs_dict, f)
 
 
 def _run_browser(port, path: str, args) -> Popen:
@@ -130,7 +141,7 @@ def _run_browser(port, path: str, args) -> Popen:
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:
     """把prefs中a.b.c形式的属性转为a['b']['c']形式
-    :param target_dict: 要处理的dict
+    :param target_dict: 要处理的字典
     :param src: 属性层级列表[a, b, c]
     :param num: 当前处理第几个
     :param end: src长度
@@ -146,7 +157,7 @@ def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> Non
 
 def _set_value_to_dict(target_dict: dict, src: list, value) -> None:
     """把a.b.c形式的属性的值赋值到a['b']['c']形式的字典中
-    :param target_dict: 要处理的dict
+    :param target_dict: 要处理的字典
     :param src: 属性层级列表[a, b, c]
     :param value: 属性值
     :return: None
@@ -154,3 +165,22 @@ def _set_value_to_dict(target_dict: dict, src: list, value) -> None:
     src = "']['".join(src)
     src = f"target_dict['{src}']=value"
     exec(src)
+
+
+def _remove_arg_from_dict(target_dict: dict, arg: str) -> None:
+    """把a.b.c形式的属性从字典中删除
+    :param target_dict: 要处理的字典
+    :param arg: 层级属性，形式'a.b.c'
+    :return: None
+    """
+    args = arg.split('.')
+    args = [f"['{i}']" for i in args]
+    src = ''.join(args)
+    src = f"target_dict{src}"
+    try:
+        exec(src)
+        src = ''.join(args[:-1])
+        src = f"target_dict{src}.pop({args[-1][1:-1]})"
+        exec(src)
+    except:
+        pass

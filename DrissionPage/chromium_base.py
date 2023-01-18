@@ -9,18 +9,18 @@ from time import perf_counter, sleep
 from requests import Session
 
 from .base import BasePage
+from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
 from .functions.locator import get_loc
 from .functions.web import offset_scroll, cookies_to_tuple
 from .session_element import make_session_ele
-from .chromium_driver import ChromiumDriver
 
 
 class ChromiumBase(BasePage):
     """标签页、frame、页面基类"""
 
     def __init__(self, address, tab_id=None, timeout=None):
-        """初始化                                                      \n
+        """
         :param address: 浏览器 ip:port
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
@@ -29,7 +29,14 @@ class ChromiumBase(BasePage):
         self._root_id = None
         self._debug = False
         self._debug_recorder = None
-        self.timeouts = Timeout(self)
+        self._control_session = Session()
+        self._control_session.keep_alive = False
+        self._first_run = True
+        self._is_reading = False  # 用于避免不同线程重复读取document
+
+        self._timeouts = None
+        self._page_load_strategy = None
+
         self._connect_browser(address, tab_id)
         timeout = timeout if timeout is not None else self.timeouts.implicit
         super().__init__(timeout)
@@ -40,20 +47,19 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._root_id = None
-        self._control_session = Session()
-        self._control_session.keep_alive = False
-        self._first_run = True
-        self._is_reading = False  # 用于避免不同线程重复读取document
-
         self.address = addr_driver_opts
         if not tab_id:
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
-        self._set_options()
         self._init_page(tab_id)
+        self._set_options()
         self._get_document()
         self._first_run = False
+
+    def _set_options(self):
+        """用于设置浏览器运行参数"""
+        self._timeouts = Timeout(self)
+        self._page_load_strategy = 'normal'
 
     def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -62,8 +68,7 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         if tab_id:
-            self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page',
-                                           ws_url=f'ws://{self.address}/devtools/page/{tab_id}')
+            self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
         self._tab_obj.start()
         self._tab_obj.DOM.enable()
@@ -174,12 +179,6 @@ class ChromiumBase(BasePage):
             if self._debug_recorder:
                 self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
-    def _set_options(self):
-        self.set_timeouts(page_load=10,
-                          script=10,
-                          implicit=10)
-        self._page_load_strategy = 'normal'
-
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                              \n
         例：ele = page('@id=ele_id')                                 \n
@@ -269,6 +268,11 @@ class ChromiumBase(BasePage):
         return self._scroll
 
     @property
+    def timeouts(self):
+        """返回timeouts设置"""
+        return self._timeouts
+
+    @property
     def set_page_load_strategy(self):
         """返回用于设置页面加载策略的对象"""
         return PageLoadStrategy(self)
@@ -281,13 +285,13 @@ class ChromiumBase(BasePage):
         :return: None
         """
         if implicit is not None:
-            self.timeouts.implicit = implicit
+            self._timeouts.implicit = implicit
 
         if page_load is not None:
-            self.timeouts.page_load = page_load
+            self._timeouts.page_load = page_load
 
         if script is not None:
-            self.timeouts.script = script
+            self._timeouts.script = script
 
     def run_js(self, script, as_expr=False, *args):
         """运行javascript代码                                                 \n
@@ -661,11 +665,17 @@ class ChromiumBase(BasePage):
 class Timeout(object):
     """用于保存d模式timeout信息的类"""
 
-    def __init__(self, page):
+    def __init__(self, page, implicit=None, page_load=None, script=None):
+        """
+        :param page: ChromiumBase页面
+        :param implicit: 默认超时时间
+        :param page_load: 页面加载超时时间
+        :param script: js超时时间
+        """
         self._page = page
-        self.implicit = 10
-        self.page_load = 30
-        self.script = 30
+        self.implicit = 10 if implicit is None else implicit
+        self.page_load = 30 if page_load is None else page_load
+        self.script = 30 if script is None else script
 
     def __repr__(self):
         return str({'implicit': self.implicit, 'page_load': self.page_load, 'script': self.script})

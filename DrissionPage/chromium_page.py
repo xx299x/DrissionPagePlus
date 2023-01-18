@@ -5,16 +5,14 @@
 """
 from pathlib import Path
 from platform import system
-from re import search
 from time import perf_counter, sleep
 
-from requests import Session
-
-from .chromium_base import Timeout, ChromiumBase
+from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .functions.browser import connect_browser
+from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
+from .functions.browser import connect_browser
 from .session_page import DownloadSetter
 
 
@@ -23,7 +21,7 @@ class ChromiumPage(ChromiumBase):
 
     def __init__(self, addr_driver_opts=None, tab_id=None, timeout=None):
         """
-        :param addr_driver_opts: 浏览器地址:端口、ChromiumDriver对象或DriverOptions对象
+        :param addr_driver_opts: 浏览器地址:端口、ChromiumDriver对象或ChromiumOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
@@ -35,29 +33,20 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._is_loading = False
-        self._is_reading = False
-        self._root_id = None
-        self.timeouts = Timeout(self)
-        self._control_session = Session()
-        self._control_session.keep_alive = False
-        self._alert = Alert()
-        self._first_run = True
-
         # 接管或启动浏览器
-        if addr_driver_opts is None or isinstance(addr_driver_opts, DriverOptions):
-            self.options = addr_driver_opts or DriverOptions()  # 从ini文件读取
-            self.address = self.options.debugger_address
-            self.process = connect_browser(self.options)[1]
+        if addr_driver_opts is None or isinstance(addr_driver_opts, (ChromiumOptions, DriverOptions)):
+            self._driver_options = addr_driver_opts or ChromiumOptions()  # 从ini文件读取
+            self.address = self._driver_options.debugger_address
+            self.process = connect_browser(self._driver_options)[1]
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
 
         # 接收浏览器地址和端口
         elif isinstance(addr_driver_opts, str):
             self.address = addr_driver_opts
-            self.options = DriverOptions(read_file=False)
-            self.options.debugger_address = addr_driver_opts
-            self.process = connect_browser(self.options)[1]
+            self._driver_options = ChromiumOptions(read_file=False)
+            self._driver_options.debugger_address = addr_driver_opts
+            self.process = connect_browser(self._driver_options)[1]
             if not tab_id:
                 json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
@@ -65,18 +54,30 @@ class ChromiumPage(ChromiumBase):
         # 接收传递过来的ChromiumDriver，浏览器
         elif isinstance(addr_driver_opts, ChromiumDriver):
             self._tab_obj = addr_driver_opts
-            self.address = search(r'ws://(.*?)/dev', addr_driver_opts.websocket_url).group(1)
+            self.address = addr_driver_opts.address
             self.process = None
-            self.options = DriverOptions(read_file=False)
+            self._driver_options = ChromiumOptions(read_file=False)
+            self._driver_options.debugger_address = addr_driver_opts.address
 
         else:
-            raise TypeError('只能接收ChromiumDriver或DriverOptions类型参数。')
+            raise TypeError('只能接收ChromiumDriver或ChromiumOptions类型参数。')
 
-        self._set_options()
         self._init_page(tab_id)
+        self._set_options()
         self._get_document()
         self._first_run = False
+
+    def _set_options(self):
+        """从配置中读取设置"""
+        self._timeouts = Timeout(self,
+                                 page_load=self._driver_options.timeouts['pageLoad'],
+                                 script=self._driver_options.timeouts['script'],
+                                 implicit=self._driver_options.timeouts['implicit'])
+        self._page_load_strategy = self._driver_options.page_load_strategy
         self._main_tab = self.tab_id
+        self._alert = Alert()
+        self._window_setter = None
+        self._download_path = self._driver_options.download_path
 
     def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -84,17 +85,8 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         super()._init_page(tab_id)
-
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
-        self.download_set.save_path(self.options.download_path)
-
-    def _set_options(self):
-        """从配置中读取设置"""
-        self.set_timeouts(page_load=self.options.timeouts['pageLoad'],
-                          script=self.options.timeouts['script'],
-                          implicit=self.options.timeouts['implicit'])
-        self._page_load_strategy = self.options.page_load_strategy
 
     @property
     def tabs_count(self):
@@ -122,7 +114,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def set_window(self):
         """返回用于设置窗口大小的对象"""
-        if not hasattr(self, '_window_setter'):
+        if self._window_setter is None:
             self._window_setter = WindowSetter(self)
         return self._window_setter
 
@@ -403,7 +395,7 @@ class WindowSetter(object):
     """用于设置窗口大小的类"""
 
     def __init__(self, page):
-        self.driver = page._driver
+        self.driver = page.driver
         self.window_id = self._get_info()['windowId']
 
     def maximized(self):

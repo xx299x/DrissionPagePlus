@@ -928,7 +928,7 @@ class Select(object):
     """Select 类专门用于处理 d 模式下 select 标签"""
 
     def __init__(self, ele: DriverElement):
-        """初始化                      \n
+        """
         :param ele: select 元素对象
         """
         if ele.tag != 'select':

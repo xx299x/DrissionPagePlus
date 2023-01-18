@@ -22,11 +22,12 @@ class SessionPage(BasePage):
     """SessionPage封装了页面操作的常用功能，使用requests来获取、解析网页"""
 
     def __init__(self, session_or_options=None, timeout=None):
-        """初始化                                                     \n
+        """
         :param session_or_options: Session对象或SessionOptions对象
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
+        self._download_kit = None
         self._create_session(session_or_options)
         timeout = timeout if timeout is not None else self.timeout
         super().__init__(timeout)
@@ -39,12 +40,13 @@ class SessionPage(BasePage):
         if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
             options = Session_or_Options or SessionOptions()
             self._set_session(options)
-            self.timeout = options.timeout
+            self._timeout = options.timeout
             self._download_path = options.download_path
+
         elif isinstance(Session_or_Options, Session):
             self._session = Session_or_Options
+            self._timeout = 10
             self._download_path = None
-        self._download_kit = None
 
     def _set_session(self, opt):
         """根据传入字典对session进行设置    \n

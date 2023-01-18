@@ -13,7 +13,8 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BasePage
-from .config import DriverOptions, SessionOptions
+from .configs.session_options import SessionOptions
+from .configs.driver_options import DriverOptions
 from .drission import Drission
 from .driver_element import DriverElement
 from .driver_page import DriverPage

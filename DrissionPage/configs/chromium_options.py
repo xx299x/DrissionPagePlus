@@ -14,6 +14,7 @@ class ChromiumOptions(object):
         """
         self._user_data_path = None
         self._user = 'Default'
+        self._prefs_to_del = []
 
         if read_file:
             self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
@@ -52,7 +53,6 @@ class ChromiumOptions(object):
         self._download_path = None
         self._extensions = []
         self._prefs = {}
-        self._prefs_to_del = []
         self._timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
         self._debugger_address = '127.0.0.1:9222'
         self._page_load_strategy = 'normal'
@@ -97,6 +97,15 @@ class ChromiumOptions(object):
     def debugger_address(self):
         """返回浏览器地址，ip:port"""
         return self._debugger_address
+
+    @debugger_address.setter
+    def debugger_address(self, address):
+        self._debugger_address = address
+
+    @property
+    def arguments(self):
+        """返回浏览器命令行设置列表"""
+        return self._arguments
 
     @property
     def extensions(self):

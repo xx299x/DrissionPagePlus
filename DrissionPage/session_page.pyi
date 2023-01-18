@@ -12,7 +12,7 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 from .base import BasePage
-from .config import SessionOptions
+from .configs.session_options import SessionOptions
 from .session_element import SessionElement
 
 

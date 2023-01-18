@@ -31,18 +31,19 @@ class ChromiumDriver(object):
     _STARTED_ = 'started'
     _STOPPED_ = 'stopped'
 
-    def __init__(self, tab_id, tab_type, ws_url):
+    def __init__(self, tab_id, tab_type, address):
         """
         :param tab_id: 标签页id
         :param tab_type: 标签页类型
-        :param ws_url: web socket url
+        :param address: 浏览器连接地址
         """
         self.id = tab_id
         self.type = tab_type
         self.debug = False
         self.has_alert = False
 
-        self._websocket_url = ws_url
+        self._websocket_url = f'ws://{address}/devtools/{tab_type}/{tab_id}'
+        self._address = address
         self._cur_id = 0
         self._ws = None
 
@@ -63,6 +64,11 @@ class ChromiumDriver(object):
     def websocket_url(self):
         """返回websocket连接地址"""
         return self._websocket_url
+
+    @property
+    def address(self):
+        """返回连接地址"""
+        return self._address
 
     def _send(self, message, timeout=None):
         """发送信息到浏览器，并返回浏览器返回的信息

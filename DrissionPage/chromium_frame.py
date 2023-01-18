@@ -43,6 +43,11 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
+    def _set_options(self):
+        """重写设置浏览器运行参数方法"""
+        self._timeouts = self.page.timeouts
+        self._page_load_strategy = self.page.page_load_strategy
+
     def _reload(self):
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
         node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']

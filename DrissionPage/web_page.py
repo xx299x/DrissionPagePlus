@@ -13,8 +13,9 @@ from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter
-from .configs.session_options import SessionOptions
+from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
+from .configs.session_options import SessionOptions
 from .functions.web import cookies_to_tuple
 from .session_page import SessionPage
 
@@ -33,14 +34,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
+        self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
+
         self._debug = False
         self._debug_recorder = None
 
         self._session = None
         self._tab_obj = None
         self._is_loading = False
-        self.timeouts = Timeout(self)
-        self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
+
+        self._driver_options = None
+        self._session_options = None
+
         self._set_both_options(driver_or_options, session_or_options)
         self._setting_tab_id = tab_id
         self._response = None
@@ -52,6 +57,58 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         t = timeout if timeout is not None else self.timeouts.implicit
         super(ChromiumBase, self).__init__(t)  # 调用Base的__init__()
+
+    def _set_both_options(self, dr_opt, se_opt):
+        """处理两种模式的设置
+        :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
+        :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
+        :return: None
+        """
+        if isinstance(dr_opt, ChromiumDriver):
+            self._connect_browser(dr_opt)
+            self._has_driver = True
+            self._driver_options = None
+            dr_opt = False
+
+        else:
+            if dr_opt is None:
+                self._driver_options = ChromiumOptions()
+
+            elif dr_opt is False:
+                self._driver_options = ChromiumOptions(read_file=False)
+
+            elif isinstance(dr_opt, (ChromiumOptions, DriverOptions)):
+                self._driver_options = dr_opt
+
+            else:
+                raise TypeError('driver_or_options参数只能接收ChromiumDriver, ChromiumOptionsOptions、None或False。')
+
+        if isinstance(se_opt, Session):
+            self._session = se_opt
+            self._has_session = True
+            self._session_options = None
+            se_opt = False
+
+        else:
+            if se_opt is None:
+                self._session_options = SessionOptions()
+
+            elif se_opt is False:
+                self._session_options = SessionOptions(read_file=False)
+
+            elif isinstance(se_opt, SessionOptions):
+                self._session_options = se_opt
+
+            else:
+                raise TypeError('session_or_options参数只能接收Session, SessionOptions、None或False。')
+
+        self._timeouts = Timeout(self)
+        if se_opt is not False:
+            self.set_timeouts(implicit=self._session_options.timeout)
+
+        if dr_opt is not False:
+            t = self._driver_options.timeouts
+            self.set_timeouts(t['implicit'], t['pageLoad'], t['script'])
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                            \n
@@ -398,59 +455,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super()._ele(loc_or_ele, single=single)
         elif self._mode == 'd':
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single, relative=relative)
-
-    def _set_both_options(self, dr_opt, se_opt):
-        """处理两种模式的设置
-        :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
-        :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
-        :return: None
-        """
-        if isinstance(dr_opt, ChromiumDriver):
-            self._connect_browser(dr_opt)
-            self._has_driver = True
-            self._driver_options = None
-            dr_opt = False
-
-        else:
-            if dr_opt is None:
-                self._driver_options = DriverOptions()
-
-            elif dr_opt is False:
-                self._driver_options = DriverOptions(read_file=False)
-
-            elif isinstance(dr_opt, DriverOptions):
-                self._driver_options = dr_opt
-
-            else:
-                raise TypeError('driver_or_options参数只能接收ChromiumDriver, DriverOptions、None或False。')
-
-        if isinstance(se_opt, Session):
-            self._session = se_opt
-            self._has_session = True
-            self._session_options = None
-            se_opt = False
-
-        else:
-            if se_opt is None:
-                so = SessionOptions()
-
-            elif se_opt is False:
-                so = SessionOptions(read_file=False)
-
-            elif isinstance(se_opt, SessionOptions):
-                so = se_opt
-
-            else:
-                raise TypeError('session_or_options参数只能接收Session, dict, SessionOptions、None或False。')
-
-            self._session_options = so
-
-        if se_opt is not False:
-            self.set_timeouts(implicit=self._session_options.timeout)
-
-        if dr_opt is not False:
-            t = self._driver_options.timeouts
-            self.set_timeouts(t['implicit'], t['pageLoad'], t['script'])
 
     def quit(self):
         """关闭浏览器，关闭session"""

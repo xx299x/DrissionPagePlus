@@ -13,7 +13,7 @@ class ActionChains:
     """用于实现动作链的类"""
 
     def __init__(self, page):
-        """初始化                          \n
+        """
         :param page: ChromiumPage对象
         """
         self.page = page
