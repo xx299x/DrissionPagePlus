@@ -124,11 +124,9 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         self.remove_argument(arg)
-
         if value is not False:
             arg_str = arg if value is None else f'{arg}={value}'
             self._arguments.append(arg_str)
-
         return self
 
     def remove_argument(self, value):
@@ -220,7 +218,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = True if on_off else False
+        on_off = None if on_off else False
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off=True):
@@ -228,7 +226,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = True if on_off else False
+        on_off = None if on_off else False
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
     def set_no_js(self, on_off=True):
@@ -236,7 +234,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = True if on_off else False
+        on_off = None if on_off else False
         return self.set_argument('--disable-javascript', on_off)
 
     def set_mute(self, on_off=True):
@@ -244,7 +242,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = True if on_off else False
+        on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
     def set_user_agent(self, user_agent):

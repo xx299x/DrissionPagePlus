@@ -2,6 +2,7 @@
 
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
+from pprint import pprint
 
 
 class OptionsManager(object):
@@ -100,3 +101,10 @@ class OptionsManager(object):
     def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
+
+    def show(self):
+        """打印所有设置信息"""
+        for i in self._conf.sections():
+            print(f'[{i}]')
+            pprint(self.get_option(i))
+            print()

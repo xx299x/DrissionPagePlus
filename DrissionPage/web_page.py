@@ -110,6 +110,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             t = self._driver_options.timeouts
             self.set_timeouts(t['implicit'], t['pageLoad'], t['script'])
 
+    def _set_options(self):
+        """覆盖父类同名方法"""
+        pass
+
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素                                            \n
         例：ele = page('@id=ele_id')                               \n

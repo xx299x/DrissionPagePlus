@@ -38,12 +38,12 @@ class ChromiumDriver(object):
         :param address: 浏览器连接地址
         """
         self.id = tab_id
+        self.address = address
         self.type = tab_type
         self.debug = False
         self.has_alert = False
 
         self._websocket_url = f'ws://{address}/devtools/{tab_type}/{tab_id}'
-        self._address = address
         self._cur_id = 0
         self._ws = None
 
@@ -59,16 +59,6 @@ class ChromiumDriver(object):
         self.event_handlers = {}
         self.method_results = {}
         self.event_queue = Queue()
-
-    @property
-    def websocket_url(self):
-        """返回websocket连接地址"""
-        return self._websocket_url
-
-    @property
-    def address(self):
-        """返回连接地址"""
-        return self._address
 
     def _send(self, message, timeout=None):
         """发送信息到浏览器，并返回浏览器返回的信息

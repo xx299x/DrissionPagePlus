@@ -64,20 +64,24 @@ class ChromiumPage(ChromiumBase):
 
         self._init_page(tab_id)
         self._set_options()
+        self._set_chromium_options()
         self._get_document()
         self._first_run = False
 
     def _set_options(self):
-        """从配置中读取设置"""
+        """设置WebPage中与s模式共用的配置，便于WebPage覆盖掉"""
         self._timeouts = Timeout(self,
                                  page_load=self._driver_options.timeouts['pageLoad'],
                                  script=self._driver_options.timeouts['script'],
                                  implicit=self._driver_options.timeouts['implicit'])
         self._page_load_strategy = self._driver_options.page_load_strategy
+        self.download_set.save_path(self._download_path)
+
+    def _set_chromium_options(self):
+        """设置浏览器专有的配置"""
         self._main_tab = self.tab_id
         self._alert = Alert()
         self._window_setter = None
-        self._download_path = self._driver_options.download_path
 
     def _init_page(self, tab_id=None):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化

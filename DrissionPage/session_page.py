@@ -38,15 +38,14 @@ class SessionPage(BasePage):
         :return: None
         """
         if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
-            options = Session_or_Options or SessionOptions()
-            self._set_session(options)
-            self._timeout = options.timeout
-            self._download_path = options.download_path
+            self._session_options = Session_or_Options or SessionOptions()
+            self._set_session(self._session_options)
 
         elif isinstance(Session_or_Options, Session):
             self._session = Session_or_Options
-            self._timeout = 10
-            self._download_path = None
+            self._session_options = SessionOptions(read_file=False)
+
+        self._set_options()
 
     def _set_session(self, opt):
         """根据传入字典对session进行设置    \n
@@ -69,6 +68,11 @@ class SessionPage(BasePage):
             attr = opt.__getattribute__(i)
             if attr:
                 self._session.__setattr__(i, attr)
+
+    def _set_options(self):
+        """设置WebPage中与d模式共用的配置，便于WebPage覆盖掉"""
+        self._timeouts = self._session_options.timeout
+        self._download_path = self._session_options.download_path
 
     def set_cookies(self, cookies):
         cookies = cookies_to_tuple(cookies)

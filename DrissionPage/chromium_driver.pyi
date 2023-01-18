@@ -17,6 +17,7 @@ class ChromiumDriver(object):
     _STARTED_: str
     _STOPPED_: str
     id: str
+    address: str
     type: str
     debug: bool
     has_alert: bool
@@ -33,12 +34,6 @@ class ChromiumDriver(object):
     event_queue: Queue
 
     def __init__(self, tab_id: str, tab_type: str, address: str): ...
-
-    @property
-    def websocket_url(self) -> str: ...
-
-    @property
-    def address(self) -> str: ...
 
     def _send(self, message: dict, timeout: Union[int, float] = None) -> dict: ...
 
