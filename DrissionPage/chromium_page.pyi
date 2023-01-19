@@ -16,7 +16,7 @@ from .configs.driver_options import DriverOptions
 class ChromiumPage(ChromiumBase):
 
     def __init__(self,
-                 addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = None,
+                 addr_driver_opts: Union[str, ChromiumOptions, DriverOptions] = None,
                  tab_id: str = None,
                  timeout: float = None):
         self._driver_options: [ChromiumDriver, DriverOptions] = ...
@@ -50,9 +50,6 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def set_window(self) -> WindowSetter: ...
-
-    @property
-    def download_list(self) -> list: ...
 
     @property
     def download_set(self) -> ChromiumDownloadSetter: ...

@@ -21,7 +21,7 @@ class ChromiumElement(DrissionElement):
     """ChromePage页面对象中的元素对象"""
 
     def __init__(self, page, node_id=None, obj_id=None, backend_id=None):
-        """初始化，node_id和obj_id必须至少传入一个                       \n
+        """初始化，node_id和obj_id必须至少传入一个
         :param page: 元素所在ChromePage页面对象
         :param node_id: cdp中的node id
         :param obj_id: js中的object id
@@ -56,8 +56,8 @@ class ChromiumElement(DrissionElement):
         return f'<ChromiumElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                             \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: ChromiumElement对象或属性、文本
@@ -86,8 +86,7 @@ class ChromiumElement(DrissionElement):
     def attrs(self):
         """返回元素所有attribute属性"""
         attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id, not_change=True)['attributes']
-        attrs_len = len(attrs)
-        return {attrs[i]: attrs[i + 1] for i in range(0, attrs_len, 2)}
+        return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
 
     @property
     def text(self):
@@ -197,14 +196,14 @@ class ChromiumElement(DrissionElement):
         return self._scroll
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
         return super().parent(level_or_loc)
 
     def prev(self, filter_loc='', index=1, timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -213,7 +212,7 @@ class ChromiumElement(DrissionElement):
         return super().prev(index, filter_loc, timeout)
 
     def next(self, filter_loc='', index=1, timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -222,7 +221,7 @@ class ChromiumElement(DrissionElement):
         return super().next(index, filter_loc, timeout)
 
     def before(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -231,7 +230,7 @@ class ChromiumElement(DrissionElement):
         return super().before(index, filter_loc, timeout)
 
     def after(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -240,7 +239,7 @@ class ChromiumElement(DrissionElement):
         return super().after(index, filter_loc, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -248,7 +247,7 @@ class ChromiumElement(DrissionElement):
         return super().prevs(filter_loc, timeout)
 
     def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -256,7 +255,7 @@ class ChromiumElement(DrissionElement):
         return super().nexts(filter_loc, timeout)
 
     def befores(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -264,7 +263,7 @@ class ChromiumElement(DrissionElement):
         return super().befores(filter_loc, timeout)
 
     def afters(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -272,7 +271,7 @@ class ChromiumElement(DrissionElement):
         return super().afters(filter_loc, timeout)
 
     def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待子元素到达某个状态的等待器对象                    \n
+        """返回用于等待子元素到达某个状态的等待器对象
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
@@ -323,7 +322,7 @@ class ChromiumElement(DrissionElement):
         return location_in_viewport(self.page, x, y) if x else False
 
     def attr(self, attr):
-        """返回attribute属性值                           \n
+        """返回attribute属性值
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
@@ -354,7 +353,7 @@ class ChromiumElement(DrissionElement):
             return attrs.get(attr, None)
 
     def set_attr(self, attr, value):
-        """设置元素attribute属性          \n
+        """设置元素attribute属性
         :param attr: 属性名
         :param value: 属性值
         :return: None
@@ -362,14 +361,14 @@ class ChromiumElement(DrissionElement):
         self.run_js(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
 
     def remove_attr(self, attr):
-        """删除元素attribute属性          \n
+        """删除元素attribute属性
         :param attr: 属性名
         :return: None
         """
         self.run_js(f'this.removeAttribute("{attr}");')
 
     def prop(self, prop):
-        """获取property属性值            \n
+        """获取property属性值
         :param prop: 属性名
         :return: 属性值文本
         """
@@ -382,7 +381,7 @@ class ChromiumElement(DrissionElement):
                 return format_html(i['value']['value'])
 
     def set_prop(self, prop, value):
-        """设置元素property属性          \n
+        """设置元素property属性
         :param prop: 属性名
         :param value: 属性值
         :return: None
@@ -391,14 +390,14 @@ class ChromiumElement(DrissionElement):
         self.run_js(f'this.{prop}="{value}";')
 
     def set_innerHTML(self, html):
-        """设置元素innerHTML        \n
+        """设置元素innerHTML
         :param html: html文本
         :return: None
         """
         self.set_prop('innerHTML', html)
 
     def run_js(self, script, as_expr=False, *args):
-        """运行javascript代码                                                 \n
+        """运行javascript代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -407,7 +406,7 @@ class ChromiumElement(DrissionElement):
         return run_js(self, script, as_expr, self.page.timeouts.script, args, True)
 
     def run_async_js(self, script, as_expr=False, *args):
-        """以异步方式执行js代码                                                 \n
+        """以异步方式执行js代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
@@ -417,7 +416,7 @@ class ChromiumElement(DrissionElement):
         Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args, True)).start()
 
     def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本
@@ -425,7 +424,7 @@ class ChromiumElement(DrissionElement):
         return self._ele(loc_or_str, timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                 \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本组成的列表
@@ -433,7 +432,7 @@ class ChromiumElement(DrissionElement):
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高        \n
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
@@ -442,7 +441,7 @@ class ChromiumElement(DrissionElement):
         return make_session_ele(self, loc_or_str)
 
     def s_eles(self, loc_or_str=None):
-        """查找所有符合条件的元素以SessionElement列表形式返回                         \n
+        """查找所有符合条件的元素以SessionElement列表形式返回
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
@@ -451,7 +450,7 @@ class ChromiumElement(DrissionElement):
         return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
@@ -460,7 +459,7 @@ class ChromiumElement(DrissionElement):
         return find_in_chromium_ele(self, loc_or_str, single, timeout, relative=relative)
 
     def style(self, style, pseudo_ele=''):
-        """返回元素样式属性值，可获取伪元素属性值                \n
+        """返回元素样式属性值，可获取伪元素属性值
         :param style: 样式属性名称
         :param pseudo_ele: 伪元素名称（如有）
         :return: 样式属性的值
@@ -500,7 +499,7 @@ class ChromiumElement(DrissionElement):
         return data
 
     def save(self, path=None, rename=None):
-        """保存图片或其它有src属性的元素的资源                                \n
+        """保存图片或其它有src属性的元素的资源
         :param path: 文件保存路径，为None时保存到当前文件夹
         :param rename: 文件名称，为None时从资源url获取
         :return: None
@@ -518,7 +517,7 @@ class ChromiumElement(DrissionElement):
             f.write(data)
 
     def get_screenshot(self, path=None, as_bytes=None):
-        """对当前元素截图                                                                            \n
+        """对当前元素截图
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
@@ -539,7 +538,7 @@ class ChromiumElement(DrissionElement):
                                         left_top=left_top, right_bottom=right_bottom)
 
     def input(self, vals, clear=True):
-        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                          \n
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :return: None
@@ -581,7 +580,7 @@ class ChromiumElement(DrissionElement):
         self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id, not_change=True)
 
     def clear(self, by_js=False):
-        """清空元素文本                                    \n
+        """清空元素文本
         :param by_js: 是否用js方式清空
         :return: None
         """
@@ -592,8 +591,8 @@ class ChromiumElement(DrissionElement):
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
     def click(self, by_js=None, retry=False, timeout=.2, wait_loading=0):
-        """点击元素                                                                      \n
-        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击                                \n
+        """点击元素
+        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
         :param retry: 遇到其它元素遮挡时，是否重试
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
@@ -643,7 +642,7 @@ class ChromiumElement(DrissionElement):
         return False
 
     def click_at(self, offset_x=None, offset_y=None, button='left'):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点    \n
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :param button: 左键还是右键
@@ -660,7 +659,7 @@ class ChromiumElement(DrissionElement):
         self._click(x, y, 'right')
 
     def r_click_at(self, offset_x=None, offset_y=None):
-        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
+        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
@@ -674,7 +673,7 @@ class ChromiumElement(DrissionElement):
         self._click(x, y, 'middle')
 
     def _click(self, client_x, client_y, button='left'):
-        """实施点击                        \n
+        """实施点击
         :param client_x: 视口中的x坐标
         :param client_y: 视口中的y坐标
         :param button: 'left' 或 'right'
@@ -686,7 +685,7 @@ class ChromiumElement(DrissionElement):
         self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=client_x, y=client_y, button=button)
 
     def hover(self, offset_x=None, offset_y=None):
-        """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
+        """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
@@ -696,7 +695,7 @@ class ChromiumElement(DrissionElement):
         self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
 
     def drag(self, offset_x=0, offset_y=0, speed=40, shake=True):
-        """拖拽当前元素到相对位置                   \n
+        """拖拽当前元素到相对位置
         :param offset_x: x变化值
         :param offset_y: y变化值
         :param speed: 拖动的速度，传入0即瞬间到达
@@ -709,7 +708,7 @@ class ChromiumElement(DrissionElement):
         self.drag_to((offset_x, offset_y), speed, shake)
 
     def drag_to(self, ele_or_loc, speed=40, shake=True):
-        """拖拽当前元素，目标为另一个元素或坐标元组                     \n
+        """拖拽当前元素，目标为另一个元素或坐标元组
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
         :param shake: 是否随机抖动
@@ -747,7 +746,7 @@ class ChromiumElement(DrissionElement):
         actions.release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):
-        """根据传入node id获取js中的object id          \n
+        """根据传入node id获取js中的object id
         :param node_id: cdp中的node id
         :param backend_id: backend id
         :return: js中的object id
@@ -758,7 +757,7 @@ class ChromiumElement(DrissionElement):
             return self.page.run_cdp('DOM.resolveNode', backendNodeId=backend_id, not_change=True)['object']['objectId']
 
     def _get_node_id(self, obj_id=None, backend_id=None):
-        """根据传入object id获取cdp中的node id          \n
+        """根据传入object id获取cdp中的node id
         :param obj_id: js中的object id
         :param backend_id: backend id
         :return: cdp中的node id
@@ -816,7 +815,7 @@ class ChromiumElement(DrissionElement):
         return f':root{t}' if mode == 'css' else t
 
     def _get_client_rect(self, quad):
-        """按照类型返回窗口坐标                             \n
+        """按照类型返回窗口坐标
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标，大小为0时返回None
         """
@@ -857,8 +856,8 @@ class ChromiumShadowRootElement(BaseElement):
         return f'<ShadowRootElement in {self.parent_ele} >'
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                            \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: DriverElement对象或属性、文本
@@ -910,7 +909,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self.run_js('return this.innerHTML;')
 
     def run_js(self, script, as_expr=False, *args):
-        """运行javascript代码                                                 \n
+        """运行javascript代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -919,7 +918,7 @@ class ChromiumShadowRootElement(BaseElement):
         return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
-        """以异步方式执行js代码                                                 \n
+        """以异步方式执行js代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -929,7 +928,7 @@ class ChromiumShadowRootElement(BaseElement):
         Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: ChromiumElement对象
         """
@@ -950,7 +949,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self.parent_ele._ele(loc, timeout=0, relative=True)
 
     def next(self, filter_loc='', index=1):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 第几个查询结果元素
         :return: ChromiumElement对象
@@ -959,7 +958,7 @@ class ChromiumShadowRootElement(BaseElement):
         return nodes[index - 1] if nodes else None
 
     def before(self, filter_loc='', index=1):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :return: 本元素前面的某个元素或节点
@@ -968,7 +967,7 @@ class ChromiumShadowRootElement(BaseElement):
         return nodes[index - 1] if nodes else None
 
     def after(self, filter_loc='', index=1):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :return: 本元素后面的某个元素或节点
@@ -977,7 +976,7 @@ class ChromiumShadowRootElement(BaseElement):
         return nodes[index - 1] if nodes else None
 
     def nexts(self, filter_loc=''):
-        """返回后面所有兄弟元素或节点组成的列表        \n
+        """返回后面所有兄弟元素或节点组成的列表
         :param filter_loc: 用于筛选元素的查询语法
         :return: ChromiumElement对象组成的列表
         """
@@ -990,7 +989,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
 
     def befores(self, filter_loc=''):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :return: 本元素前面的元素或节点组成的列表
         """
@@ -1003,7 +1002,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
 
     def afters(self, filter_loc=''):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :return: 本元素后面的元素或节点组成的列表
         """
@@ -1013,7 +1012,7 @@ class ChromiumShadowRootElement(BaseElement):
         return eles1 + self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
 
     def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素                                   \n
+        """返回当前元素下级符合条件的第一个元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象
@@ -1021,7 +1020,7 @@ class ChromiumShadowRootElement(BaseElement):
         return self._ele(loc_or_str, timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回当前元素下级所有符合条件的子元素                                              \n
+        """返回当前元素下级所有符合条件的子元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象组成的列表
@@ -1029,21 +1028,21 @@ class ChromiumShadowRootElement(BaseElement):
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高                 \n
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self, loc_or_str)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高                 \n
+        """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象
         """
         return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个               \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部

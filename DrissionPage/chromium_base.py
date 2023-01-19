@@ -29,10 +29,6 @@ class ChromiumBase(BasePage):
         self._root_id = None
         self._debug = False
         self._debug_recorder = None
-        self._control_session = Session()
-        self._control_session.keep_alive = False
-        self._first_run = True
-        self._is_reading = False  # 用于避免不同线程重复读取document
 
         self._timeouts = None
         self._page_load_strategy = None
@@ -47,6 +43,7 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
+        self._chromium_init()
         self.address = addr_driver_opts
         if not tab_id:
             json = self._control_session.get(f'http://{self.address}/json').json()
@@ -55,6 +52,12 @@ class ChromiumBase(BasePage):
         self._set_options()
         self._get_document()
         self._first_run = False
+
+    def _chromium_init(self):
+        self._control_session = Session()
+        self._control_session.keep_alive = False
+        self._first_run = True
+        self._is_reading = False
 
     def _set_options(self):
         """用于设置浏览器运行参数"""

@@ -39,7 +39,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         if self._mode == 'd':
             try:
                 timeouts = self.drission.driver_options.timeouts
-                t = timeout if timeout is not None else timeouts['implicit']
+                t = timeout if isinstance(timeout, (int, float)) else timeouts['implicit']
                 self.set_timeouts(t, timeouts['pageLoad'], timeouts['script'])
 
             except Exception:

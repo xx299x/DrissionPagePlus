@@ -79,7 +79,7 @@ def get_ele_txt(e):
 
 
 def format_html(text):
-    """处理html编码字符             \n
+    """处理html编码字符
     :param text: html文本
     :return: 格式化后的html文本
     """
@@ -106,7 +106,7 @@ def location_in_viewport(page, loc_x, loc_y):
 
 
 def offset_scroll(ele, offset_x, offset_y):
-    """接收元素及偏移坐标，把坐标滚动到页面中间，返回该点在视口中的坐标    \n
+    """接收元素及偏移坐标，把坐标滚动到页面中间，返回该点在视口中的坐标
     有偏移量时以元素左上角坐标为基准，没有时以_click_point为基准
     :param ele: 元素对象
     :param offset_x: 偏移量x
@@ -164,7 +164,7 @@ def is_js_func(func):
 
 
 def cookie_to_dict(cookie):
-    """把Cookie对象转为dict格式                \n
+    """把Cookie对象转为dict格式
     :param cookie: Cookie对象
     :return: cookie字典
     """
@@ -199,7 +199,7 @@ def cookie_to_dict(cookie):
 
 
 def cookies_to_tuple(cookies):
-    """把cookies转为tuple格式                                                \n
+    """把cookies转为tuple格式
     :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
     :return: 返回tuple形式的cookies
     """

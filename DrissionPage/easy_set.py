@@ -27,6 +27,7 @@ def show_settings(ini_path=None):
 
 
 def set_paths(driver_path=None,
+              chrome_path=None,
               browser_path=None,
               local_port=None,
               debugger_address=None,
@@ -35,8 +36,9 @@ def set_paths(driver_path=None,
               cache_path=None,
               ini_path=None,
               check_version=False):
-    """快捷的路径设置函数                                          \n
+    """快捷的路径设置函数
     :param driver_path: chromedriver.exe路径
+    :param chrome_path: 浏览器可执行文件路径
     :param browser_path: 浏览器可执行文件路径
     :param local_port: 本地端口号
     :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
@@ -54,6 +56,9 @@ def set_paths(driver_path=None,
 
     if driver_path is not None:
         om.set_item('paths', 'chromedriver_path', format_path(driver_path))
+
+    if chrome_path is not None:
+        om.set_item('chrome_options', 'binary_location', format_path(browser_path))
 
     if browser_path is not None:
         om.set_item('chrome_options', 'binary_location', format_path(browser_path))
@@ -80,7 +85,7 @@ def set_paths(driver_path=None,
 
 
 def set_argument(arg, value=None, ini_path=None):
-    """设置浏览器配置argument属性                            \n
+    """设置浏览器配置argument属性
     :param arg: 属性名
     :param value: 属性值，有值的属性传入值，没有的传入None
     :param ini_path: 要修改的ini文件路径
@@ -92,7 +97,7 @@ def set_argument(arg, value=None, ini_path=None):
 
 
 def set_headless(on_off=True, ini_path=None):
-    """设置是否隐藏浏览器界面               \n
+    """设置是否隐藏浏览器界面
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -102,7 +107,7 @@ def set_headless(on_off=True, ini_path=None):
 
 
 def set_no_imgs(on_off=True, ini_path=None):
-    """设置是否禁止加载图片                    \n
+    """设置是否禁止加载图片
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -112,7 +117,7 @@ def set_no_imgs(on_off=True, ini_path=None):
 
 
 def set_no_js(on_off=True, ini_path=None):
-    """设置是否禁用js                              \n
+    """设置是否禁用js
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -122,7 +127,7 @@ def set_no_js(on_off=True, ini_path=None):
 
 
 def set_mute(on_off=True, ini_path=None):
-    """设置是否静音                              \n
+    """设置是否静音
     :param on_off: 开或关
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -132,7 +137,7 @@ def set_mute(on_off=True, ini_path=None):
 
 
 def set_user_agent(user_agent, ini_path=None):
-    """设置user agent                           \n
+    """设置user agent
     :param user_agent: user agent文本
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -141,7 +146,7 @@ def set_user_agent(user_agent, ini_path=None):
 
 
 def set_proxy(proxy, ini_path=None):
-    """设置代理                                  \n
+    """设置代理
     :param proxy: 代理网址和端口
     :param ini_path: 要修改的ini文件路径
     :return: None
@@ -150,7 +155,7 @@ def set_proxy(proxy, ini_path=None):
 
 
 def check_driver_version(driver_path=None, chrome_path=None):
-    """检查传入的chrome和chromedriver是否匹配  \n
+    """检查传入的chrome和chromedriver是否匹配
     :param driver_path: chromedriver.exe路径
     :param chrome_path: chrome.exe路径
     :return: 是否匹配
@@ -185,7 +190,7 @@ def get_match_driver(ini_path='default',
                      chrome_path=None,
                      show_msg=True,
                      check_version=True):
-    """自动识别chrome版本并下载匹配的driver             \n
+    """自动识别chrome版本并下载匹配的driver
     :param ini_path: 要读取和修改的ini文件路径
     :param save_path: chromedriver保存路径
     :param chrome_path: 指定chrome.exe位置
@@ -237,7 +242,7 @@ def get_chrome_path(ini_path=None,
                     from_ini=True,
                     from_regedit=True,
                     from_system_path=True):
-    """从ini文件或系统变量中获取chrome.exe的路径    \n
+    """从ini文件或系统变量中获取chrome.exe的路径
     :param ini_path: ini文件路径
     :param show_msg: 是否打印信息
     :param from_ini: 是否从ini文件获取
@@ -310,7 +315,7 @@ def get_chrome_path(ini_path=None,
 
 
 def _get_chrome_version(path: str) -> Union[str, None]:
-    """根据文件路径获取版本号              \n
+    """根据文件路径获取版本号
     :param path: chrome.exe文件路径
     :return: 版本号
     """
@@ -327,7 +332,7 @@ def _get_chrome_version(path: str) -> Union[str, None]:
 
 
 def _download_driver(version: str, save_path: str = None, show_msg: bool = True) -> Union[str, None]:
-    """根据传入的版本号到镜像网站查找，下载最相近的          \n
+    """根据传入的版本号到镜像网站查找，下载最相近的
     :param version: 本地版本号
     :return: 保存地址
     """

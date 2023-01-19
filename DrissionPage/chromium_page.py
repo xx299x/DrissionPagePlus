@@ -34,6 +34,7 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         # 接管或启动浏览器
+        self._chromium_init()
         if addr_driver_opts is None or isinstance(addr_driver_opts, (ChromiumOptions, DriverOptions)):
             self._driver_options = addr_driver_opts or ChromiumOptions()  # 从ini文件读取
             self.address = self._driver_options.debugger_address
@@ -62,9 +63,9 @@ class ChromiumPage(ChromiumBase):
         else:
             raise TypeError('只能接收ChromiumDriver或ChromiumOptions类型参数。')
 
-        self._init_page(tab_id)
         self._set_options()
         self._set_chromium_options()
+        self._init_page(tab_id)
         self._get_document()
         self._first_run = False
 
@@ -75,11 +76,9 @@ class ChromiumPage(ChromiumBase):
                                  script=self._driver_options.timeouts['script'],
                                  implicit=self._driver_options.timeouts['implicit'])
         self._page_load_strategy = self._driver_options.page_load_strategy
-        self.download_set.save_path(self._download_path)
 
     def _set_chromium_options(self):
         """设置浏览器专有的配置"""
-        self._main_tab = self.tab_id
         self._alert = Alert()
         self._window_setter = None
 
@@ -91,6 +90,13 @@ class ChromiumPage(ChromiumBase):
         super()._init_page(tab_id)
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
+        self._main_tab = self.tab_id
+        try:
+            self.run_cdp('Browser.setDownloadBehavior', behavior='allow',
+                         downloadPath=self._driver_options.download_path, not_change=True)
+        except:
+            self.run_cdp('Page.setDownloadBehavior', behavior='allow',
+                         downloadPath=self._driver_options.download_path, not_change=True)
 
     @property
     def tabs_count(self):
@@ -368,7 +374,7 @@ class ChromiumDownloadSetter(DownloadSetter):
     """用于设置下载参数的类"""
 
     def save_path(self, path):
-        """设置下载路径               \n
+        """设置下载路径
         :param path: 下载路径
         :return: None
         """
