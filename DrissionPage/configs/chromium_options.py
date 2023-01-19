@@ -390,6 +390,7 @@ class PortFinder(object):
 
             try:
                 rmtree(path)
+                return i, str(path)
             except PermissionError:
                 continue
 
