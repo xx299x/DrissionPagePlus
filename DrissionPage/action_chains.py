@@ -23,7 +23,7 @@ class ActionChains:
         self.curr_y = 0
 
     def move_to(self, ele_or_loc, offset_x=0, offset_y=0):
-        """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量                        \n
+        """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量
         当带偏移量时，偏移量相对于元素左上角坐标
         :param ele_or_loc: 元素对象、绝对坐标或文本定位符，坐标为tuple(int, int)形式
         :param offset_x: 偏移量x
@@ -64,7 +64,7 @@ class ActionChains:
         return self
 
     def move(self, offset_x=0, offset_y=0):
-        """鼠标相对当前位置移动若干位置           \n
+        """鼠标相对当前位置移动若干位置
         :param offset_x: 偏移量x
         :param offset_y: 偏移量y
         :return: self
@@ -75,7 +75,7 @@ class ActionChains:
         return self
 
     def click(self, on_ele=None):
-        """点击鼠标左键，可先移动到元素上                   \n
+        """点击鼠标左键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -85,7 +85,7 @@ class ActionChains:
         return self
 
     def r_click(self, on_ele=None):
-        """点击鼠标右键，可先移动到元素上                   \n
+        """点击鼠标右键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -95,7 +95,7 @@ class ActionChains:
         return self
 
     def m_click(self, on_ele=None):
-        """点击鼠标中键，可先移动到元素上                   \n
+        """点击鼠标中键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -105,7 +105,7 @@ class ActionChains:
         return self
 
     def hold(self, on_ele=None):
-        """按住鼠标左键，可先移动到元素上                    \n
+        """按住鼠标左键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -115,7 +115,7 @@ class ActionChains:
         return self
 
     def release(self, on_ele=None):
-        """释放鼠标左键，可先移动到元素上                   \n
+        """释放鼠标左键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -125,7 +125,7 @@ class ActionChains:
         return self
 
     def r_hold(self, on_ele=None):
-        """按住鼠标右键，可先移动到元素上                    \n
+        """按住鼠标右键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -135,7 +135,7 @@ class ActionChains:
         return self
 
     def r_release(self, on_ele=None):
-        """释放鼠标右键，可先移动到元素上                   \n
+        """释放鼠标右键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -145,7 +145,7 @@ class ActionChains:
         return self
 
     def m_hold(self, on_ele=None):
-        """按住鼠标中键，可先移动到元素上                    \n
+        """按住鼠标中键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -155,7 +155,7 @@ class ActionChains:
         return self
 
     def m_release(self, on_ele=None):
-        """释放鼠标中键，可先移动到元素上                   \n
+        """释放鼠标中键，可先移动到元素上
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
@@ -165,7 +165,7 @@ class ActionChains:
         return self
 
     def _hold(self, button):
-        """按下鼠标按键                 \n
+        """按下鼠标按键
         :param button: 要按下的按键
         :return: self
         """
@@ -174,7 +174,7 @@ class ActionChains:
         return self
 
     def _release(self, button):
-        """释放鼠标按键                 \n
+        """释放鼠标按键
         :param button: 要释放的按键
         :return: self
         """
@@ -183,7 +183,7 @@ class ActionChains:
         return self
 
     def scroll(self, delta_x=0, delta_y=0, on_ele=None):
-        """滚动鼠标滚轮，可先移动到元素上                \n
+        """滚动鼠标滚轮，可先移动到元素上
         :param delta_x: 滚轮变化值x
         :param delta_y: 滚轮变化值y
         :param on_ele: ChromiumElement元素
@@ -196,35 +196,35 @@ class ActionChains:
         return self
 
     def up(self, pixel):
-        """鼠标向上移动若干像素            \n
+        """鼠标向上移动若干像素
         :param pixel: 鼠标移动的像素值
         :return: self
         """
         return self.move(0, -pixel)
 
     def down(self, pixel):
-        """鼠标向下移动若干像素           \n
+        """鼠标向下移动若干像素
         :param pixel: 鼠标移动的像素值
         :return: self
         """
         return self.move(0, pixel)
 
     def left(self, pixel):
-        """鼠标向左移动若干像素           \n
+        """鼠标向左移动若干像素
         :param pixel: 鼠标移动的像素值
         :return: self
         """
         return self.move(-pixel, 0)
 
     def right(self, pixel):
-        """鼠标向右移动若干像素           \n
+        """鼠标向右移动若干像素
         :param pixel: 鼠标移动的像素值
         :return: self
         """
         return self.move(pixel, 0)
 
     def key_down(self, key):
-        """按下键盘上的按键                    \n
+        """按下键盘上的按键
         :param key: 按键，特殊字符见Keys
         :return: self
         """
@@ -237,7 +237,7 @@ class ActionChains:
         return self
 
     def key_up(self, key):
-        """提起键盘上的按键                    \n
+        """提起键盘上的按键
         :param key: 按键，特殊字符见Keys
         :return: self
         """
@@ -250,7 +250,7 @@ class ActionChains:
         return self
 
     def type(self, text):
-        """输入文本                 \n
+        """输入文本
         :param text: 要输入的文本
         :return: self
         """
@@ -266,7 +266,7 @@ class ActionChains:
         return self
 
     def _get_key_data(self, key, action):
-        """获取用于发送的按键信息                   \n
+        """获取用于发送的按键信息
         :param key: 按键
         :param action: 'keyDown' 或 'keyUp'
         :return: 按键信息

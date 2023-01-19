@@ -18,7 +18,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
     """
 
     def __init__(self, mode='d', drission=None, timeout=None, driver_options=None, session_options=None):
-        """初始化函数                                                                                            \n
+        """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param drission: Drission对象，不传入时会自动创建，有传入时driver_options和session_options参数无效
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
@@ -46,8 +46,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
                 self.timeout = timeout if timeout is not None else 10
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                            \n
-        例：ele = page('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: 子元素对象或属性文本
@@ -91,7 +91,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).json
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """跳转到一个url                                         \n
+        """跳转到一个url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -105,7 +105,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super().get(url, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
-        """返回第一个符合条件的元素、属性或节点文本                               \n
+        """返回第一个符合条件的元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: 元素对象或属性、文本节点文本
@@ -116,7 +116,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回页面中所有符合条件的元素、属性或节点文本                                \n
+        """返回页面中所有符合条件的元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: 元素对象或属性、文本组成的列表
@@ -127,7 +127,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
     def s_ele(self, loc_or_ele=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
@@ -137,7 +137,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).s_ele(loc_or_ele)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
@@ -147,7 +147,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self).s_eles(loc_or_str)
 
     def _ele(self, loc_or_ele, timeout=None, single=True):
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
         :param single: True则返回第一个，False则返回全部
@@ -159,7 +159,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
 
     def get_cookies(self, as_dict=False, all_domains=False):
-        """返回cookies                               \n
+        """返回cookies
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
         :return: cookies信息
@@ -177,7 +177,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     @property
     def driver(self):
-        """返回 driver 对象，如没有则创建              \n
+        """返回 driver 对象，如没有则创建
         每次访问时切换到 d 模式，用于独有函数及外部调用
         :return: WebDriver对象
         """
@@ -206,10 +206,10 @@ class MixPage(SessionPage, DriverPage, BasePage):
         return self._response.url if self._response else None
 
     def change_mode(self, mode=None, go=True, copy_cookies=True):
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式     \n
-        切换时会把当前模式的cookies复制到目标模式                    \n
-        切换后，如果go是True，调用相应的get函数使访问的页面同步        \n
-        注意：s转d时，若浏览器当前网址域名和s模式不一样，必须会跳转      \n
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式
+        切换时会把当前模式的cookies复制到目标模式
+        切换后，如果go是True，调用相应的get函数使访问的页面同步
+        注意：s转d时，若浏览器当前网址域名和s模式不一样，必须会跳转
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
         :param copy_cookies: 是否复制cookies到目标模式
@@ -244,7 +244,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
                     self.get(self._drission.driver.current_url)
 
     def set_cookies(self, cookies, refresh=True):
-        """设置cookies                                                          \n
+        """设置cookies
         :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
         :param refresh: 设置cookies后是否刷新页面
         :return: None
@@ -257,14 +257,14 @@ class MixPage(SessionPage, DriverPage, BasePage):
                 self.refresh()
 
     def cookies_to_session(self, copy_user_agent=False):
-        """从driver复制cookies到session                  \n
+        """从driver复制cookies到session
         :param copy_user_agent : 是否复制user agent信息
         """
         self._drission.cookies_to_session(copy_user_agent)
 
     def cookies_to_driver(self, url=None):
-        """从session复制cookies到driver  \n
-        chrome需要指定域才能接收cookies   \n
+        """从session复制cookies到driver
+        chrome需要指定域才能接收cookies
         :param url: 目标域
         :return: None
         """
@@ -272,8 +272,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
         self._drission.cookies_to_driver(url)
 
     def check_page(self, by_requests=False):
-        """d模式时检查网页是否符合预期                \n
-        默认由response状态检查，可重载实现针对性检查   \n
+        """d模式时检查网页是否符合预期
+        默认由response状态检查，可重载实现针对性检查
         :param by_requests: 是否用内置response检查
         :return: bool或None，None代表不知道结果
         """
@@ -299,7 +299,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
 
     # ----------------重写SessionPage的函数-----------------------
     def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """用post方式跳转到url，会切换到s模式                        \n
+        """用post方式跳转到url，会切换到s模式
         :param url: 目标url
         :param data: post方式时提交的数据
         :param show_errmsg: 是否显示和抛出异常
@@ -319,7 +319,7 @@ class MixPage(SessionPage, DriverPage, BasePage):
         return super().download
 
     def chrome_downloading(self, path=None):
-        """返回浏览器下载中的文件列表                             \n
+        """返回浏览器下载中的文件列表
         :param path: 下载文件夹路径，默认读取配置信息
         :return: 正在下载的文件列表
         """

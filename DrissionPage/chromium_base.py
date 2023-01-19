@@ -38,7 +38,7 @@ class ChromiumBase(BasePage):
         super().__init__(timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
-        """连接浏览器，在第一次时运行                                    \n
+        """连接浏览器，在第一次时运行
         :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
@@ -183,8 +183,8 @@ class ChromiumBase(BasePage):
                 self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                              \n
-        例：ele = page('@id=ele_id')                                 \n
+        """在内部查找元素
+        例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: ChromiumElement对象
@@ -281,7 +281,7 @@ class ChromiumBase(BasePage):
         return PageLoadStrategy(self)
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
-        """设置超时时间，单位为秒                   \n
+        """设置超时时间，单位为秒
         :param implicit: 查找元素超时时间
         :param page_load: 页面加载超时时间
         :param script: 脚本运行超时时间
@@ -297,7 +297,7 @@ class ChromiumBase(BasePage):
             self._timeouts.script = script
 
     def run_js(self, script, as_expr=False, *args):
-        """运行javascript代码                                                 \n
+        """运行javascript代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -307,7 +307,7 @@ class ChromiumBase(BasePage):
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
-        """以异步方式执行js代码                                                 \n
+        """以异步方式执行js代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -318,7 +318,7 @@ class ChromiumBase(BasePage):
         Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script, args)).start()
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
-        """访问url                                            \n
+        """访问url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -335,7 +335,7 @@ class ChromiumBase(BasePage):
         return self._url_available
 
     def wait_loading(self, timeout=1):
-        """阻塞程序，等待页面进入加载状态        \n
+        """阻塞程序，等待页面进入加载状态
         :param timeout: 超时时间
         :return: 等待结束时是否进入加载状态
         """
@@ -349,7 +349,7 @@ class ChromiumBase(BasePage):
             return False
 
     def get_cookies(self, as_dict=False):
-        """获取cookies信息                                              \n
+        """获取cookies信息
         :param as_dict: 为True时返回由{name: value}键值对组成的dict
         :return: cookies信息
         """
@@ -360,7 +360,7 @@ class ChromiumBase(BasePage):
             return cookies
 
     def set_cookies(self, cookies):
-        """设置cookies值                            \n
+        """设置cookies值
         :param cookies: cookies信息
         :return: None
         """
@@ -376,14 +376,14 @@ class ChromiumBase(BasePage):
         self._wait_driver.Network.setCookies(cookies=result_cookies)
 
     def set_headers(self, headers: dict) -> None:
-        """设置固定发送的headers                        \n
+        """设置固定发送的headers
         :param headers: dict格式的headers数据
         :return: None
         """
         self.run_cdp('Network.setExtraHTTPHeaders', headers=headers, not_change=True)
 
     def ele(self, loc_or_ele, timeout=None):
-        """获取第一个符合条件的元素对象                       \n
+        """获取第一个符合条件的元素对象
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
         :return: ChromiumElement对象
@@ -391,7 +391,7 @@ class ChromiumBase(BasePage):
         return self._ele(loc_or_ele, timeout=timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """获取所有符合条件的元素对象                         \n
+        """获取所有符合条件的元素对象
         :param loc_or_str: 定位符或元素对象
         :param timeout: 查找超时时间
         :return: ChromiumElement对象组成的列表
@@ -399,14 +399,14 @@ class ChromiumBase(BasePage):
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_ele=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self, loc_or_ele)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement列表形式返回                       \n
+        """查找所有符合条件的元素以SessionElement列表形式返回
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
@@ -457,7 +457,7 @@ class ChromiumBase(BasePage):
             return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
 
     def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待元素到达某个状态的等待器对象                             \n
+        """返回用于等待元素到达某个状态的等待器对象
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
@@ -465,7 +465,7 @@ class ChromiumBase(BasePage):
         return ChromiumElementWaiter(self, loc_or_ele, timeout)
 
     def scroll_to_see(self, loc_or_ele):
-        """滚动页面直到元素可见                                                        \n
+        """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
         :return: None
         """
@@ -480,7 +480,7 @@ class ChromiumBase(BasePage):
             offset_scroll(ele, 0, 0)
 
     def refresh(self, ignore_cache=False):
-        """刷新当前页面                      \n
+        """刷新当前页面
         :param ignore_cache: 是否忽略缓存
         :return: None
         """
@@ -488,14 +488,14 @@ class ChromiumBase(BasePage):
         self._driver.Page.reload(ignoreCache=ignore_cache)
 
     def forward(self, steps=1):
-        """在浏览历史中前进若干步    \n
+        """在浏览历史中前进若干步
         :param steps: 前进步数
         :return: None
         """
         self._forward_or_back(steps)
 
     def back(self, steps=1):
-        """在浏览历史中后退若干步    \n
+        """在浏览历史中后退若干步
         :param steps: 后退步数
         :return: None
         """
@@ -539,7 +539,7 @@ class ChromiumBase(BasePage):
             sleep(.1)
 
     def run_cdp(self, cmd, **cmd_args):
-        """执行Chrome DevTools Protocol语句     \n
+        """执行Chrome DevTools Protocol语句
         :param cmd: 协议项目
         :param cmd_args: 参数
         :return: 执行的结果
@@ -558,14 +558,14 @@ class ChromiumBase(BasePage):
             raise
 
     def set_user_agent(self, ua):
-        """为当前tab设置user agent，只在当前tab有效          \n
+        """为当前tab设置user agent，只在当前tab有效
         :param ua: user agent字符串
         :return: None
         """
         self._wait_driver.Network.setUserAgentOverride(userAgent=ua)
 
     def get_session_storage(self, item=None):
-        """获取sessionStorage信息，不设置item则获取全部       \n
+        """获取sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
@@ -573,7 +573,7 @@ class ChromiumBase(BasePage):
         return self.run_js(js, as_expr=True)
 
     def get_local_storage(self, item=None):
-        """获取localStorage信息，不设置item则获取全部       \n
+        """获取localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
@@ -581,7 +581,7 @@ class ChromiumBase(BasePage):
         return self.run_js(js, as_expr=True)
 
     def set_session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息                         \n
+        """设置或删除某项sessionStorage信息
         :param item: 要设置的项
         :param value: 项的值，设置为False时，删除该项
         :return: None
@@ -591,7 +591,7 @@ class ChromiumBase(BasePage):
         return self.run_js(js, as_expr=True)
 
     def set_local_storage(self, item, value):
-        """设置或删除某项localStorage信息                           \n
+        """设置或删除某项localStorage信息
         :param item: 要设置的项
         :param value: 项的值，设置为False时，删除该项
         :return: None
@@ -600,7 +600,7 @@ class ChromiumBase(BasePage):
         return self.run_js(js, as_expr=True)
 
     def clear_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
-        """清除缓存，可选要清除的项                            \n
+        """清除缓存，可选要清除的项
         :param session_storage: 是否清除sessionStorage
         :param local_storage: 是否清除localStorage
         :param cache: 是否清除cache
@@ -617,7 +617,7 @@ class ChromiumBase(BasePage):
             self._wait_driver.Network.clearBrowserCookies()
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
-        """尝试连接，重试若干次                            \n
+        """尝试连接，重试若干次
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
@@ -694,7 +694,7 @@ class PageLoadStrategy(object):
         self._page = page
 
     def __call__(self, value):
-        """设置加载策略                                  \n
+        """设置加载策略
         :param value: 可选 'normal', 'eager', 'none'
         :return: None
         """

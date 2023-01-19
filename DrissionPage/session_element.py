@@ -18,7 +18,7 @@ class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
     def __init__(self, ele, page=None):
-        """初始化对象                                                          \n
+        """初始化对象
         :param ele: 被包装的HtmlElement元素
         :param page: 元素所在页面对象，如果是从 html 文本生成的元素，则为 None
         """
@@ -34,8 +34,8 @@ class SessionElement(DrissionElement):
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                                  \n
-        例：ele2 = ele1('@id=ele_id')                                    \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
@@ -75,14 +75,14 @@ class SessionElement(DrissionElement):
         return str(self._inner_ele.text_content())
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
         return super().parent(level_or_loc)
 
     def prev(self, filter_loc='', index=1, timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -91,7 +91,7 @@ class SessionElement(DrissionElement):
         return super().prev(index, filter_loc, timeout)
 
     def next(self, filter_loc='', index=1, timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -100,7 +100,7 @@ class SessionElement(DrissionElement):
         return super().next(index, filter_loc, timeout)
 
     def before(self, filter_loc='', index=1, timeout=None):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -109,7 +109,7 @@ class SessionElement(DrissionElement):
         return super().before(index, filter_loc, timeout)
 
     def after(self, filter_loc='', index=1, timeout=None):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -118,7 +118,7 @@ class SessionElement(DrissionElement):
         return super().after(index, filter_loc, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -126,7 +126,7 @@ class SessionElement(DrissionElement):
         return super().prevs(filter_loc, timeout)
 
     def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -134,7 +134,7 @@ class SessionElement(DrissionElement):
         return super().nexts(filter_loc, timeout)
 
     def befores(self, filter_loc='', timeout=None):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -142,7 +142,7 @@ class SessionElement(DrissionElement):
         return super().befores(filter_loc, timeout)
 
     def afters(self, filter_loc='', timeout=None):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的元素或节点组成的列表
@@ -150,7 +150,7 @@ class SessionElement(DrissionElement):
         return super().afters(filter_loc, timeout)
 
     def attr(self, attr):
-        """返回attribute属性值                           \n
+        """返回attribute属性值
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
@@ -183,7 +183,7 @@ class SessionElement(DrissionElement):
             return self.inner_ele.get(attr)
 
     def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本                      \n
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
@@ -191,7 +191,7 @@ class SessionElement(DrissionElement):
         return self._ele(loc_or_str)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
@@ -199,21 +199,21 @@ class SessionElement(DrissionElement):
         return self._ele(loc_or_str, single=False)
 
     def s_ele(self, loc_or_str=None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本                       \n
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str)
 
     def s_eles(self, loc_or_str):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                       \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个           \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param single: True则返回第一个，False则返回全部
@@ -244,8 +244,8 @@ class SessionElement(DrissionElement):
 
 
 def make_session_ele(html_or_ele, loc=None, single=True):
-    """从接收到的对象或html文本中查找元素，返回SessionElement对象                 \n
-    如要直接从html生成SessionElement而不在下级查找，loc输入None即可               \n
+    """从接收到的对象或html文本中查找元素，返回SessionElement对象
+    如要直接从html生成SessionElement而不在下级查找，loc输入None即可
     :param html_or_ele: html文本、BaseParser对象
     :param loc: 定位元组或字符串，为None时不在下级查找，返回根元素
     :param single: True则返回第一个，False则返回全部

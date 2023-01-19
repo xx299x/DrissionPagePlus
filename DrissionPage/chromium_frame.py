@@ -30,8 +30,8 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                             \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: ChromiumElement对象或属性、文本
@@ -255,7 +255,7 @@ class ChromiumFrame(ChromiumBase):
         self.doc_ele.run_js('this.location.reload();')
 
     def attr(self, attr):
-        """返回frame元素attribute属性值                           \n
+        """返回frame元素attribute属性值
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
@@ -263,7 +263,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.attr(attr)
 
     def set_attr(self, attr, value):
-        """设置frame元素attribute属性          \n
+        """设置frame元素attribute属性
         :param attr: 属性名
         :param value: 属性值
         :return: None
@@ -272,7 +272,7 @@ class ChromiumFrame(ChromiumBase):
         self.frame_ele.set_attr(attr, value)
 
     def remove_attr(self, attr):
-        """删除frame元素attribute属性          \n
+        """删除frame元素attribute属性
         :param attr: 属性名
         :return: None
         """
@@ -280,7 +280,7 @@ class ChromiumFrame(ChromiumBase):
         self.frame_ele.remove_attr(attr)
 
     def run_js(self, script, as_expr=False, *args):
-        """运行javascript代码                                                 \n
+        """运行javascript代码
         :param script: js文本
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
@@ -290,7 +290,7 @@ class ChromiumFrame(ChromiumBase):
         return self.doc_ele.run_js(script, as_expr=as_expr, *args)
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
@@ -298,7 +298,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.parent(level_or_loc)
 
     def prev(self, filter_loc='', index=1, timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -308,7 +308,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.prev(filter_loc, index, timeout)
 
     def next(self, filter_loc='', index=1, timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -318,7 +318,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.next(filter_loc, index, timeout)
 
     def before(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -328,7 +328,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.before(filter_loc, index, timeout)
 
     def after(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
         :param timeout: 查找元素的超时时间
@@ -338,7 +338,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.after(filter_loc, index, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -347,7 +347,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.prevs(filter_loc, timeout)
 
     def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -356,7 +356,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.nexts(filter_loc, timeout)
 
     def befores(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -365,7 +365,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.befores(filter_loc, timeout)
 
     def afters(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -374,7 +374,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.afters(filter_loc, timeout)
 
     def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
-        """在frame内查找单个元素                         \n
+        """在frame内查找单个元素
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
         :return: ChromiumElement对象
@@ -388,7 +388,7 @@ class ChromiumFrame(ChromiumBase):
         return self.doc_ele.ele(loc_or_ele, timeout) if single else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
-        """尝试连接，重试若干次                            \n
+        """尝试连接，重试若干次
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）

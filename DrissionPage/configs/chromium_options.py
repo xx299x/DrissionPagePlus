@@ -307,11 +307,12 @@ class ChromiumOptions(object):
 
         return self
 
-    def auto_port(self, data_path):
+    def auto_port(self, data_path=None):
         """自动获取可用端口                                                                  \n
-        :param data_path: 用户文件夹保存路径
+        :param data_path: 用户文件夹保存路径，为None则保存在当前路径
         :return: 当前对象
         """
+        data_path = data_path or ''
         port, path = PortFinder().get_port(data_path)
         self.set_paths(local_port=port, user_data_path=path)
         return self

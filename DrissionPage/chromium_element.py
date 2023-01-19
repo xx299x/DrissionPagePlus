@@ -1090,7 +1090,7 @@ class ChromiumShadowRootElement(BaseElement):
 
 
 def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
-    """在chromium元素中查找                                   \n
+    """在chromium元素中查找
     :param ele: ChromiumElement对象
     :param loc: 元素定位元组
     :param single: True则返回第一个，False则返回全部
@@ -1203,7 +1203,7 @@ def _find_by_css(ele, selector, single, timeout):
 
 
 def make_chromium_ele(page, node_id=None, obj_id=None):
-    """根据node id或object id生成相应元素对象          \n
+    """根据node id或object id生成相应元素对象
     :param page: ChromiumPage对象
     :param node_id: 元素的node id
     :param obj_id: 元素的object id
@@ -1259,7 +1259,7 @@ else{a.push(e.snapshotItem(i));}}"""
 
 
 def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_change=False):
-    """运行javascript代码                                                 \n
+    """运行javascript代码
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
@@ -1434,7 +1434,7 @@ class ChromiumScroll(object):
         self._run_js('{}.scrollTo(0, {}.scrollTop);')
 
     def to_location(self, x, y):
-        """滚动到指定位置                 \n
+        """滚动到指定位置
         :param x: 水平距离
         :param y: 垂直距离
         :return: None
@@ -1442,7 +1442,7 @@ class ChromiumScroll(object):
         self._run_js(f'{{}}.scrollTo({x}, {y});')
 
     def up(self, pixel=300):
-        """向上滚动若干像素，水平位置不变    \n
+        """向上滚动若干像素，水平位置不变
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1450,14 +1450,14 @@ class ChromiumScroll(object):
         self._run_js(f'{{}}.scrollBy(0, {pixel});')
 
     def down(self, pixel=300):
-        """向下滚动若干像素，水平位置不变    \n
+        """向下滚动若干像素，水平位置不变
         :param pixel: 滚动的像素
         :return: None
         """
         self._run_js(f'{{}}.scrollBy(0, {pixel});')
 
     def left(self, pixel=300):
-        """向左滚动若干像素，垂直位置不变    \n
+        """向左滚动若干像素，垂直位置不变
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1465,7 +1465,7 @@ class ChromiumScroll(object):
         self._run_js(f'{{}}.scrollBy({pixel}, 0);')
 
     def right(self, pixel=300):
-        """向右滚动若干像素，垂直位置不变    \n
+        """向右滚动若干像素，垂直位置不变
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1485,7 +1485,7 @@ class ChromiumSelect(object):
         self._ele = ele
 
     def __call__(self, text_or_index, timeout=None):
-        """选定下拉列表中子元素                                                             \n
+        """选定下拉列表中子元素
         :param text_or_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
@@ -1507,7 +1507,7 @@ class ChromiumSelect(object):
 
     @property
     def selected_option(self):
-        """返回第一个被选中的option元素        \n
+        """返回第一个被选中的option元素
         :return: ChromiumElement对象或None
         """
         ele = self._ele.run_js('return this.options[this.selectedIndex];')
@@ -1515,7 +1515,7 @@ class ChromiumSelect(object):
 
     @property
     def selected_options(self):
-        """返回所有被选中的option元素列表        \n
+        """返回所有被选中的option元素列表
         :return: ChromiumElement对象组成的列表
         """
         return [x for x in self.options if x.is_selected]
@@ -1529,7 +1529,7 @@ class ChromiumSelect(object):
                 opt.click(by_js=True)
 
     def by_text(self, text, timeout=None):
-        """此方法用于根据text值选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据text值选择项。当元素是多选列表时，可以接收list或tuple
         :param text: text属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否选择成功
@@ -1538,7 +1538,7 @@ class ChromiumSelect(object):
         return self._select(text, 'text', False, timeout)
 
     def by_value(self, value, timeout=None):
-        """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple
         :param value: value属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否选择成功
@@ -1547,7 +1547,7 @@ class ChromiumSelect(object):
         return self._select(value, 'value', False, timeout)
 
     def by_index(self, index, timeout=None):
-        """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple
         :param index: 序号，0开始，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否选择成功
@@ -1556,7 +1556,7 @@ class ChromiumSelect(object):
         return self._select(index, 'index', False, timeout)
 
     def cancel_by_text(self, text, timeout=None):
-        """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param text: 文本，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
@@ -1565,7 +1565,7 @@ class ChromiumSelect(object):
         return self._select(text, 'text', True, timeout)
 
     def cancel_by_value(self, value, timeout=None):
-        """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param value: value属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
@@ -1574,7 +1574,7 @@ class ChromiumSelect(object):
         return self._select(value, 'value', True, timeout)
 
     def cancel_by_index(self, index, timeout=None):
-        """此方法用于根据index值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据index值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param index: 序号，0开始，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
@@ -1591,7 +1591,7 @@ class ChromiumSelect(object):
             i.click(by_js=True)
 
     def _select(self, text_value_index=None, para_type='text', deselect=False, timeout=None):
-        """选定或取消选定下拉列表中子元素                                                             \n
+        """选定或取消选定下拉列表中子元素
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选 'text'、'value'、'index'
         :param deselect: 是否取消选择
@@ -1636,7 +1636,7 @@ class ChromiumSelect(object):
                       text_value_index=None,
                       para_type='text',
                       deselect=False):
-        """选定或取消选定下拉列表中多个子元素                                                             \n
+        """选定或取消选定下拉列表中多个子元素
         :param text_value_index: 根据文本、值选或序号择选多项
         :param para_type: 参数类型，可选 'text'、'value'、'index'
         :param deselect: 是否取消选择
@@ -1664,7 +1664,7 @@ class ChromiumElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
     def __init__(self, page_or_ele, loc_or_ele, timeout=None):
-        """等待元素在dom中某种状态，如删除、显示、隐藏                         \n
+        """等待元素在dom中某种状态，如删除、显示、隐藏
         :param page_or_ele: 页面或父元素
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间

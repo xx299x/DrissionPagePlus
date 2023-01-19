@@ -28,7 +28,7 @@ class ChromiumPage(ChromiumBase):
         super().__init__(addr_driver_opts, tab_id, timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
-        """连接浏览器，在第一次时运行                                                         \n
+        """连接浏览器，在第一次时运行
         :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
@@ -140,7 +140,7 @@ class ChromiumPage(ChromiumBase):
         return ChromiumDownloadSetter(self)
 
     def get_tab(self, tab_id=None):
-        """获取一个标签页对象                                    \n
+        """获取一个标签页对象
         :param tab_id: 要获取的标签页id，为None时获取当前tab
         :return: 标签页对象
         """
@@ -148,7 +148,7 @@ class ChromiumPage(ChromiumBase):
         return ChromiumTab(self, tab_id)
 
     def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
-        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持             \n
+        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
@@ -204,7 +204,7 @@ class ChromiumPage(ChromiumBase):
         self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
 
     def new_tab(self, url=None, switch_to=True):
-        """新建一个标签页,该标签页在最后面                \n
+        """新建一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
         :param switch_to: 新建标签页后是否把焦点移过去
         :return: None
@@ -231,7 +231,7 @@ class ChromiumPage(ChromiumBase):
             self.run_cdp('Target.createTarget', url='')
 
     def set_main_tab(self, tab_id=None):
-        """设置主tab                               \n
+        """设置主tab
         :param tab_id: 标签页id，不传入则设置当前tab
         :return: None
         """
@@ -242,7 +242,7 @@ class ChromiumPage(ChromiumBase):
         self.to_tab(self._main_tab)
 
     def to_tab(self, tab_id=None, activate=True):
-        """跳转到标签页                                           \n
+        """跳转到标签页
         :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
         :return: None
@@ -250,7 +250,7 @@ class ChromiumPage(ChromiumBase):
         self._to_tab(tab_id, activate)
 
     def _to_tab(self, tab_id=None, activate=True, read_doc=True):
-        """跳转到标签页                                           \n
+        """跳转到标签页
         :param tab_id: 标签页id字符串，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
         :param read_doc: 切换后是否读取文档
@@ -274,7 +274,7 @@ class ChromiumPage(ChromiumBase):
             self._get_document()
 
     def close_tabs(self, tab_ids=None, others=False):
-        """关闭传入的标签页，默认关闭当前页。可传入多个                                                        \n
+        """关闭传入的标签页，默认关闭当前页。可传入多个
         :param tab_ids: 要关闭的标签页id，可传入id组成的列表或元组，为None时关闭当前页
         :param others: 是否关闭指定标签页之外的
         :return: None
@@ -309,14 +309,14 @@ class ChromiumPage(ChromiumBase):
         self.to_tab()
 
     def close_other_tabs(self, tab_ids=None):
-        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个                                              \n
+        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
         :param tab_ids: 要保留的标签页id，可传入id组成的列表或元组，为None时保存当前页
         :return: None
         """
         self.close_tabs(tab_ids, True)
 
     def handle_alert(self, accept=True, send=None, timeout=None):
-        """处理提示框，可以自动等待提示框出现                                                       \n
+        """处理提示框，可以自动等待提示框出现
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
@@ -426,7 +426,7 @@ class WindowSetter(object):
         self._perform({'windowState': 'normal'})
 
     def size(self, width=None, height=None):
-        """设置窗口大小             \n
+        """设置窗口大小
         :param width: 窗口宽度
         :param height: 窗口高度
         :return: None
@@ -438,7 +438,7 @@ class WindowSetter(object):
             self._perform({'width': width, 'height': height})
 
     def location(self, x=None, y=None):
-        """设置窗口在屏幕中的位置，相对左上角坐标  \n
+        """设置窗口在屏幕中的位置，相对左上角坐标
         :param x: 距离顶部距离
         :param y: 距离左边距离
         :return: None

@@ -75,7 +75,7 @@ class SessionOptions(object):
         return self._download_path
 
     def set_paths(self, download_path=None):
-        """设置默认下载路径                          \n
+        """设置默认下载路径
         :param download_path: 下载路径
         :return: 返回当前对象
         """
@@ -104,7 +104,7 @@ class SessionOptions(object):
         return self._proxies
 
     def set_proxies(self, http, https=None):
-        """设置proxies参数                                                                 \n
+        """设置proxies参数
         :param http: http代理地址
         :param https: https代理地址
         :return: 返回当前对象
@@ -123,7 +123,7 @@ class SessionOptions(object):
         return self._headers
 
     def set_headers(self, headers):
-        """设置headers参数                                                               \n
+        """设置headers参数
         :param headers: 参数值，传入None可在ini文件标记删除
         :return: 返回当前对象
         """
@@ -135,7 +135,7 @@ class SessionOptions(object):
         return self
 
     def set_a_header(self, attr, value):
-        """设置headers中一个项          \n
+        """设置headers中一个项
         :param attr: 设置名称
         :param value: 设置值
         :return: 返回当前对象
@@ -147,7 +147,7 @@ class SessionOptions(object):
         return self
 
     def remove_a_header(self, attr):
-        """从headers中删除一个设置     \n
+        """从headers中删除一个设置
         :param attr: 要删除的设置
         :return: 返回当前对象
         """
@@ -168,7 +168,7 @@ class SessionOptions(object):
         return self._cookies
 
     def set_cookies(self, cookies):
-        """设置cookies信息                                                                        \n
+        """设置cookies信息
         :param cookies: cookies，可为CookieJar, list, tuple, str, dict，传入None可在ini文件标记删除
         :return: 返回当前对象
         """
@@ -182,7 +182,7 @@ class SessionOptions(object):
         return self._auth
 
     def set_auth(self, auth):
-        """设置认证元组或对象                                                                \n
+        """设置认证元组或对象
         :param auth: 认证元组或对象
         :return: 返回当前对象
         """
@@ -197,7 +197,7 @@ class SessionOptions(object):
         return self._hooks
 
     def set_hooks(self, hooks):
-        """设置回调方法                       \n
+        """设置回调方法
         :param hooks:
         :return: 返回当前对象
         """
@@ -212,7 +212,7 @@ class SessionOptions(object):
         return self._params
 
     def set_params(self, params):
-        """设置查询参数字典                                                                  \n
+        """设置查询参数字典
         :param params: 查询参数字典
         :return: 返回当前对象
         """
@@ -225,7 +225,7 @@ class SessionOptions(object):
         return self._verify
 
     def set_verify(self, on_off):
-        """设置是否验证SSL证书                                                               \n
+        """设置是否验证SSL证书
         :param on_off: 是否验证 SSL 证书
         :return: 返回当前对象
         """
@@ -238,7 +238,7 @@ class SessionOptions(object):
         return self._cert
 
     def set_cert(self, cert):
-        """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组                            \n
+        """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组
         :param cert: 证书路径或元组
         :return: 返回当前对象
         """
@@ -253,7 +253,7 @@ class SessionOptions(object):
         return self._adapters
 
     def add_adapter(self, url, adapter):
-        """添加适配器                        \n
+        """添加适配器
         :param url: 适配器对应url
         :param adapter: 适配器对象
         :return: 返回当前对象
@@ -267,7 +267,7 @@ class SessionOptions(object):
         return self._stream
 
     def set_stream(self, on_off):
-        """设置是否使用流式响应内容            \n
+        """设置是否使用流式响应内容
         :param on_off: 是否使用流式响应内容
         :return: 返回当前对象
         """
@@ -280,7 +280,7 @@ class SessionOptions(object):
         return self._trust_env
 
     def set_trust_env(self, on_off):
-        """设置是否信任环境            \n
+        """设置是否信任环境
         :param on_off: 是否信任环境
         :return: 返回当前对象
         """
@@ -293,7 +293,7 @@ class SessionOptions(object):
         return self._max_redirects
 
     def set_max_redirects(self, times):
-        """设置最大重定向次数            \n
+        """设置最大重定向次数
         :param times: 最大重定向次数
         :return: 返回当前对象
         """
@@ -315,7 +315,7 @@ class SessionOptions(object):
                 self._del_set.remove(arg)
 
     def save(self, path=None):
-        """保存设置到文件                                              \n
+        """保存设置到文件
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
         """
@@ -373,7 +373,7 @@ class SessionOptions(object):
 
 
 def session_options_to_dict(options):
-    """把session配置对象转换为字典                 \n
+    """把session配置对象转换为字典
     :param options: session配置对象或字典
     :return: 配置字典
     """

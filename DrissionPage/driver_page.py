@@ -29,8 +29,8 @@ class DriverPage(BasePage):
         self._scroll = None
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                           \n
-        例：ele = page('@id=ele_id')                              \n
+        """在内部查找元素
+        例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: DriverElement对象或属性、文本
@@ -58,7 +58,7 @@ class DriverPage(BasePage):
         return loads(self('t:pre').text)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None):
-        """访问url                                            \n
+        """访问url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -70,7 +70,7 @@ class DriverPage(BasePage):
         return self._url_available
 
     def ele(self, loc_or_ele, timeout=None):
-        """返回页面中符合条件的第一个元素                                          \n
+        """返回页面中符合条件的第一个元素
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: DriverElement对象或属性、文本
@@ -78,7 +78,7 @@ class DriverPage(BasePage):
         return self._ele(loc_or_ele, timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回页面中所有符合条件的元素                                     \n
+        """返回页面中所有符合条件的元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: DriverElement对象或属性、文本组成的列表
@@ -86,7 +86,7 @@ class DriverPage(BasePage):
         return self._ele(loc_or_str, timeout, single=False)
 
     def s_ele(self, loc_or_ele=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高       \n
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
@@ -96,14 +96,14 @@ class DriverPage(BasePage):
             return make_session_ele(self, loc_or_ele)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement列表形式返回                       \n
+        """查找所有符合条件的元素以SessionElement列表形式返回
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
         return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self, loc_or_ele, timeout=None, single=True):
-        """返回页面中符合条件的元素，默认返回第一个                                   \n
+        """返回页面中符合条件的元素，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
@@ -144,7 +144,7 @@ class DriverPage(BasePage):
         self._wait_object = None
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False):
-        """尝试连接，重试若干次                            \n
+        """尝试连接，重试若干次
         :param to_url: 要访问的url
         :param times: 重试次数
         :param interval: 重试间隔（秒）
@@ -234,21 +234,21 @@ class DriverPage(BasePage):
 
     @property
     def to_frame(self):
-        """用于跳转到frame的对象，调用其方法实现跳转                                             \n
-        示例：                                                                               \n
-            page.to_frame.by_loc('tag:iframe')               - 通过传入frame的查询字符串定位   \n
-            page.to_frame.by_loc((By.TAG_NAME, 'iframe'))    - 通过传入定位符定位             \n
-            page.to_frame.by_id('iframe_id')                 - 通过frame的id属性定位          \n
-            page.to_frame('iframe_name')                     - 通过frame的name属性定位        \n
-            page.to_frame(iframe_element)                    - 通过传入元素对象定位            \n
-            page.to_frame(0)                                 - 通过frame的序号定位            \n
-            page.to_frame.main()                             - 跳到最顶层                    \n
+        """用于跳转到frame的对象，调用其方法实现跳转
+        示例：
+            page.to_frame.by_loc('tag:iframe')               - 通过传入frame的查询字符串定位
+            page.to_frame.by_loc((By.TAG_NAME, 'iframe'))    - 通过传入定位符定位
+            page.to_frame.by_id('iframe_id')                 - 通过frame的id属性定位
+            page.to_frame('iframe_name')                     - 通过frame的name属性定位
+            page.to_frame(iframe_element)                    - 通过传入元素对象定位
+            page.to_frame(0)                                 - 通过frame的序号定位
+            page.to_frame.main()                             - 跳到最顶层
             page.to_frame.parent()                           - 跳到上一层
         """
         return ToFrame(self)
 
     def set_timeouts(self, implicit=None, pageLoad=None, script=None):
-        """设置超时时间，单位为秒，selenium4以上版本有效       \n
+        """设置超时时间，单位为秒，selenium4以上版本有效
         :param implicit: 查找元素超时时间
         :param pageLoad: 页面加载超时时间
         :param script: 脚本运行超时时间
@@ -264,7 +264,7 @@ class DriverPage(BasePage):
             self.driver.set_script_timeout(script)
 
     def wait_ele(self, loc_or_ele, timeout=None):
-        """等待元素从dom删除、显示、隐藏                             \n
+        """等待元素从dom删除、显示、隐藏
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
@@ -272,13 +272,13 @@ class DriverPage(BasePage):
         return ElementWaiter(self, loc_or_ele, timeout)
 
     def check_page(self):
-        """检查页面是否符合预期            \n
+        """检查页面是否符合预期
         由子类自行实现各页面的判定规则
         """
         return None
 
     def run_script(self, script, *args):
-        """执行js代码                 \n
+        """执行js代码
         :param script: js文本
         :param args: 传入的参数
         :return: js执行结果
@@ -286,7 +286,7 @@ class DriverPage(BasePage):
         return self.driver.execute_script(script, *args)
 
     def run_async_script(self, script, *args):
-        """以异步方式执行js代码                 \n
+        """以异步方式执行js代码
         :param script: js文本
         :param args: 传入的参数
         :return: js执行结果
@@ -302,7 +302,7 @@ class DriverPage(BasePage):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
 
     def create_tab(self, url=''):
-        """新建并定位到一个标签页,该标签页在最后面       \n
+        """新建并定位到一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
         :return: None
         """
@@ -311,8 +311,8 @@ class DriverPage(BasePage):
             self.get(url)
 
     def close_tabs(self, num_or_handles=None):
-        """关闭传入的标签页，默认关闭当前页。可传入多个                                                     \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                 \n
+        """关闭传入的标签页，默认关闭当前页。可传入多个
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。
         :param num_or_handles:要关闭的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时关闭当前页
         :return: None
         """
@@ -324,8 +324,8 @@ class DriverPage(BasePage):
         self.to_tab(0)
 
     def close_other_tabs(self, num_or_handles=None):
-        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个                                              \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。                   \n
+        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致，不能按序号关闭。
         :param num_or_handles: 要保留的标签页序号或handle，可传入handle和序号组成的列表或元组，为None时保存当前页
         :return: None
         """
@@ -339,8 +339,8 @@ class DriverPage(BasePage):
         self.to_tab(0)
 
     def to_tab(self, num_or_handle=0):
-        """跳转到标签页                                                         \n
-        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致         \n
+        """跳转到标签页
+        注意：当程序使用的是接管的浏览器，获取到的 handle 顺序和视觉效果不一致
         :param num_or_handle: 标签页序号或handle字符串，序号第一个为0，最后为-1
         :return: None
         """
@@ -353,14 +353,14 @@ class DriverPage(BasePage):
         self.driver.switch_to.window(tab)
 
     def set_ua_to_tab(self, ua):
-        """为当前tab设置user agent，只在当前tab有效          \n
+        """为当前tab设置user agent，只在当前tab有效
         :param ua: user agent字符串
         :return: None
         """
         self.driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": ua})
 
     def get_session_storage(self, item=None):
-        """获取sessionStorage信息，不设置item则获取全部       \n
+        """获取sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
@@ -368,7 +368,7 @@ class DriverPage(BasePage):
         return self.run_script(js)
 
     def get_local_storage(self, item=None):
-        """获取localStorage信息，不设置item则获取全部       \n
+        """获取localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
@@ -376,7 +376,7 @@ class DriverPage(BasePage):
         return self.run_script(js)
 
     def set_session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息                         \n
+        """设置或删除某项sessionStorage信息
         :param item: 要设置的项
         :param value: 项的值，设置为False时，删除该项
         :return: None
@@ -385,7 +385,7 @@ class DriverPage(BasePage):
         self.run_script(s)
 
     def set_local_storage(self, item, value):
-        """设置或删除某项localStorage信息                           \n
+        """设置或删除某项localStorage信息
         :param item: 要设置的项
         :param value: 项的值，设置为False时，删除该项
         :return: None
@@ -394,7 +394,7 @@ class DriverPage(BasePage):
         self.run_script(s)
 
     def clean_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
-        """清除缓存，可选要清除的项                            \n
+        """清除缓存，可选要清除的项
         :param session_storage: 是否清除sessionStorage
         :param local_storage: 是否清除localStorage
         :param cache: 是否清除cache
@@ -411,7 +411,7 @@ class DriverPage(BasePage):
             self.run_cdp('Network.clearBrowserCookies')
 
     def screenshot(self, path=None, filename=None, as_bytes=False):
-        """截取页面可见范围截图                                           \n
+        """截取页面可见范围截图
         :param path: 保存路径
         :param filename: 图片文件名，不传入时以页面title命名
         :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
@@ -430,7 +430,7 @@ class DriverPage(BasePage):
         return img_path
 
     def scroll_to_see(self, loc_or_ele):
-        """滚动页面直到元素可见                                                        \n
+        """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
         :return: None
         """
@@ -454,7 +454,7 @@ class DriverPage(BasePage):
         self.driver.forward()
 
     def set_window_size(self, width=None, height=None):
-        """设置浏览器窗口大小，默认最大化，任一参数为0最小化  \n
+        """设置浏览器窗口大小，默认最大化，任一参数为0最小化
         :param width: 浏览器窗口高
         :param height: 浏览器窗口宽
         :return: None
@@ -474,14 +474,14 @@ class DriverPage(BasePage):
             self.driver.set_window_size(new_x, new_y)
 
     def chrome_downloading(self, download_path):
-        """返回浏览器下载中的文件列表             \n
+        """返回浏览器下载中的文件列表
         :param download_path: 下载文件夹路径
         :return: 文件列表
         """
         return glob(f'{download_path}{sep}*.crdownload')
 
     def process_alert(self, ok=True, send=None, timeout=None):
-        """处理提示框                                                            \n
+        """处理提示框
         :param ok: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间
@@ -523,7 +523,7 @@ class ToFrame(object):
         self.page = page
 
     def __call__(self, condition='main'):
-        """跳转到(i)frame，可传入id、name、序号、元素对象、定位符                  \n
+        """跳转到(i)frame，可传入id、name、序号、元素对象、定位符
         :param condition: (i)frame，可传入id、name、序号、元素对象、定位符
         :return: 当前页面对象
         """
@@ -544,7 +544,7 @@ class ToFrame(object):
         return self.page
 
     def parent(self, level=1):
-        """焦点跳转到上级框架，可指定上级层数       \n
+        """焦点跳转到上级框架，可指定上级层数
         :param level: 上面第几层框架
         :return: 框架所在页面对象
         """
@@ -555,7 +555,7 @@ class ToFrame(object):
         return self.page
 
     def by_id(self, id_):
-        """焦点跳转到id为该值的(i)frame              \n
+        """焦点跳转到id为该值的(i)frame
         :param id_: (i)frame的id属性值
         :return: 框架所在页面对象
         """
@@ -563,7 +563,7 @@ class ToFrame(object):
         return self.page
 
     def by_name(self, name):
-        """焦点跳转到name为该值的(i)frame              \n
+        """焦点跳转到name为该值的(i)frame
         :param name: (i)frame的name属性值
         :return: 框架所在页面对象
         """
@@ -571,7 +571,7 @@ class ToFrame(object):
         return self.page
 
     def by_index(self, index):
-        """焦点跳转到页面中第几个(i)frame              \n
+        """焦点跳转到页面中第几个(i)frame
         :param index: 页面中第几个(i)frame
         :return: 框架所在页面对象
         """
@@ -579,7 +579,7 @@ class ToFrame(object):
         return self.page
 
     def by_loc(self, loc):
-        """焦点跳转到根据定位符获取到的(i)frame                   \n
+        """焦点跳转到根据定位符获取到的(i)frame
         :param loc: 定位符，支持selenium原生和DriverPage定位符
         :return: 框架所在页面对象
         """
@@ -587,7 +587,7 @@ class ToFrame(object):
         return self.page
 
     def by_ele(self, ele):
-        """焦点跳转到传入的(i)frame元素对象              \n
+        """焦点跳转到传入的(i)frame元素对象
         :param ele: (i)frame元素对象
         :return: 框架所在页面对象
         """

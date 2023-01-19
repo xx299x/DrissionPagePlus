@@ -25,7 +25,7 @@ class DriverElement(DrissionElement):
     """driver模式的元素对象，包装了一个WebElement对象，并封装了常用功能"""
 
     def __init__(self, ele, page=None):
-        """初始化对象                          \n
+        """初始化对象
         :param ele: 被包装的WebElement元素
         :param page: 元素所在页面
         """
@@ -39,8 +39,8 @@ class DriverElement(DrissionElement):
         return f'<DriverElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                             \n
-        例：ele2 = ele1('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: DriverElement对象或属性、文本
@@ -97,7 +97,7 @@ class DriverElement(DrissionElement):
         return self.inner_ele.get_attribute('innerText')
 
     def attr(self, attr):
-        """获取attribute属性值            \n
+        """获取attribute属性值
         :param attr: 属性名
         :return: 属性值文本
         """
@@ -113,7 +113,7 @@ class DriverElement(DrissionElement):
             return format_html(self.inner_ele.get_attribute(attr))
 
     def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本                 \n
+        """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本
@@ -121,7 +121,7 @@ class DriverElement(DrissionElement):
         return self._ele(loc_or_str, timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回当前元素下级所有符合条件的子元素、属性或节点文本                 \n
+        """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: DriverElement对象或属性、文本组成的列表
@@ -129,21 +129,21 @@ class DriverElement(DrissionElement):
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高        \n
+        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self, loc_or_str)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement列表形式返回                         \n
+        """查找所有符合条件的元素以SessionElement列表形式返回
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
         return make_session_ele(self, loc_or_str, single=False)
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
-        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个                                      \n
+        """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
@@ -247,14 +247,14 @@ class DriverElement(DrissionElement):
         return self._scroll
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
         return super().parent(level_or_loc)
 
     def prev(self, index=1, filter_loc='', timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -264,7 +264,7 @@ class DriverElement(DrissionElement):
         return super().prev(index, filter_loc, timeout)
 
     def next(self, index=1, filter_loc='', timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -274,7 +274,7 @@ class DriverElement(DrissionElement):
         return super().next(index, filter_loc, timeout)
 
     def before(self, index=1, filter_loc='', timeout=None):
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -284,7 +284,7 @@ class DriverElement(DrissionElement):
         return super().before(index, filter_loc, timeout)
 
     def after(self, index=1, filter_loc='', timeout=None):
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元，而是整个DOM文档
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -294,7 +294,7 @@ class DriverElement(DrissionElement):
         return super().after(index, filter_loc, timeout)
 
     def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -302,7 +302,7 @@ class DriverElement(DrissionElement):
         return super().prevs(filter_loc, timeout)
 
     def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -310,7 +310,7 @@ class DriverElement(DrissionElement):
         return super().nexts(filter_loc, timeout)
 
     def befores(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -318,7 +318,7 @@ class DriverElement(DrissionElement):
         return super().befores(filter_loc, timeout)
 
     def afters(self, filter_loc='', timeout=None):
-        """返回当前元素前面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元，而是整个DOM文档        \n
+        """返回当前元素前面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元，而是整个DOM文档
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的元素或节点组成的列表
@@ -326,7 +326,7 @@ class DriverElement(DrissionElement):
         return super().afters(filter_loc, timeout)
 
     def left(self, index=1, filter_loc=''):
-        """获取网页上显示在当前元素左边的某个元素，可设置选取条件，可指定结果中第几个               \n
+        """获取网页上显示在当前元素左边的某个元素，可设置选取条件，可指定结果中第几个
         :param index: 获取第几个
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -335,7 +335,7 @@ class DriverElement(DrissionElement):
         return eles[index - 1] if index <= len(eles) else None
 
     def right(self, index=1, filter_loc=''):
-        """获取网页上显示在当前元素右边的某个元素，可设置选取条件，可指定结果中第几个               \n
+        """获取网页上显示在当前元素右边的某个元素，可设置选取条件，可指定结果中第几个
         :param index: 获取第几个
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -344,7 +344,7 @@ class DriverElement(DrissionElement):
         return eles[index - 1] if index <= len(eles) else None
 
     def above(self, index=1, filter_loc=''):
-        """获取网页上显示在当前元素上边的某个元素，可设置选取条件，可指定结果中第几个               \n
+        """获取网页上显示在当前元素上边的某个元素，可设置选取条件，可指定结果中第几个
         :param index: 获取第几个
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -353,7 +353,7 @@ class DriverElement(DrissionElement):
         return eles[index - 1] if index <= len(eles) else None
 
     def below(self, index=1, filter_loc=''):
-        """获取网页上显示在当前元素下边的某个元素，可设置选取条件，可指定结果中第几个               \n
+        """获取网页上显示在当前元素下边的某个元素，可设置选取条件，可指定结果中第几个
         :param index: 获取第几个
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -362,7 +362,7 @@ class DriverElement(DrissionElement):
         return eles[index - 1] if index <= len(eles) else None
 
     def near(self, index=1, filter_loc=''):
-        """获取网页上显示在当前元素最近的某个元素，可设置选取条件，可指定结果中第几个               \n
+        """获取网页上显示在当前元素最近的某个元素，可设置选取条件，可指定结果中第几个
         :param index: 获取第几个
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -371,42 +371,42 @@ class DriverElement(DrissionElement):
         return eles[index - 1] if index <= len(eles) else None
 
     def lefts(self, filter_loc=''):
-        """获取网页上显示在当前元素左边的所有元素，可设置选取条件，从近到远排列                    \n
+        """获取网页上显示在当前元素左边的所有元素，可设置选取条件，从近到远排列
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象组成的列表
         """
         return self._get_relative_eles('left', filter_loc)
 
     def rights(self, filter_loc=''):
-        """获取网页上显示在当前元素右边的所有元，可设置选取条件，从近到远排列                    \n
+        """获取网页上显示在当前元素右边的所有元，可设置选取条件，从近到远排列
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象组成的列表
         """
         return self._get_relative_eles('right', filter_loc)
 
     def aboves(self, filter_loc=''):
-        """获取网页上显示在当前元素上边的所有元素，可设置选取条件，从近到远排列                    \n
+        """获取网页上显示在当前元素上边的所有元素，可设置选取条件，从近到远排列
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象组成的列表
         """
         return self._get_relative_eles('left', filter_loc)
 
     def belows(self, filter_loc=''):
-        """获取网页上显示在当前元素下边的所有元素，可设置选取条件，从近到远排列                    \n
+        """获取网页上显示在当前元素下边的所有元素，可设置选取条件，从近到远排列
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象组成的列表
         """
         return self._get_relative_eles('left', filter_loc)
 
     def nears(self, filter_loc=''):
-        """获取网页上显示在当前元素附近元素，可设置选取条件，从近到远排列                    \n
+        """获取网页上显示在当前元素附近元素，可设置选取条件，从近到远排列
         :param filter_loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象组成的列表
         """
         return self._get_relative_eles('near', filter_loc)
 
     def wait_ele(self, loc_or_ele, timeout=None):
-        """等待子元素从dom删除、显示、隐藏                             \n
+        """等待子元素从dom删除、显示、隐藏
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
         :param timeout: 等待超时时间
         :return: 等待是否成功
@@ -414,7 +414,7 @@ class DriverElement(DrissionElement):
         return ElementWaiter(self, loc_or_ele, timeout)
 
     def style(self, style, pseudo_ele=''):
-        """返回元素样式属性值，可获取伪元素属性值                \n
+        """返回元素样式属性值，可获取伪元素属性值
         :param style: 样式属性名称
         :param pseudo_ele: 伪元素名称（如有）
         :return: 样式属性的值
@@ -426,8 +426,8 @@ class DriverElement(DrissionElement):
         return None if r == 'none' else r
 
     def click(self, by_js=None, timeout=None):
-        """点击元素                                                                      \n
-        尝试点击直到超时，若都失败就改用js点击                                                \n
+        """点击元素
+        尝试点击直到超时，若都失败就改用js点击
         :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
         :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间
         :return: 是否点击成功
@@ -458,7 +458,7 @@ class DriverElement(DrissionElement):
         return False
 
     def click_at(self, x=None, y=None, by_js=False):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
         :param x: 相对元素左上角坐标的x轴偏移量
         :param y: 相对元素左上角坐标的y轴偏移量
         :param by_js: 是否用js点击
@@ -489,7 +489,7 @@ class DriverElement(DrissionElement):
         ActionChains(self.page.driver).context_click(self.inner_ele).perform()
 
     def r_click_at(self, x=None, y=None):
-        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点    \n
+        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
         :param x: 相对元素左上角坐标的x轴偏移量
         :param y: 相对元素左上角坐标的y轴偏移量
         :return: None
@@ -500,7 +500,7 @@ class DriverElement(DrissionElement):
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).context_click().perform()
 
     def input(self, vals, clear=True, insure=True, timeout=None):
-        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）                          \n
+        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :param insure: 确保输入正确，解决文本框有时输入失效的问题，不能用于输入组合键
@@ -546,7 +546,7 @@ class DriverElement(DrissionElement):
                     return True
 
     def run_script(self, script, *args):
-        """执行js代码，代码中用arguments[0]表示自己    \n
+        """执行js代码，代码中用arguments[0]表示自己
         :param script: js文本
         :param args: 传入的参数
         :return: js执行结果
@@ -562,7 +562,7 @@ class DriverElement(DrissionElement):
             pass
 
     def clear(self, insure=True):
-        """清空元素文本                                    \n
+        """清空元素文本
         :param insure: 是否确保清空
         :return: 是否清空成功，不能清空的元素返回None
         """
@@ -597,7 +597,7 @@ class DriverElement(DrissionElement):
             return False
 
     def screenshot(self, path=None, filename=None, as_bytes=False):
-        """对元素进行截图                                              \n
+        """对元素进行截图
         :param path: 保存路径
         :param filename: 图片文件名，不传入时以元素tag name命名
         :param as_bytes: 是否已字节形式返回图片，为True时上面两个参数失效
@@ -627,14 +627,14 @@ class DriverElement(DrissionElement):
         return img_path
 
     def prop(self, prop):
-        """获取property属性值            \n
+        """获取property属性值
         :param prop: 属性名
         :return: 属性值文本
         """
         return format_html(self.inner_ele.get_property(prop))
 
     def set_prop(self, prop, value):
-        """设置元素property属性          \n
+        """设置元素property属性
         :param prop: 属性名
         :param value: 属性值
         :return: 是否设置成功
@@ -647,7 +647,7 @@ class DriverElement(DrissionElement):
             return False
 
     def set_attr(self, attr, value):
-        """设置元素attribute属性          \n
+        """设置元素attribute属性
         :param attr: 属性名
         :param value: 属性值
         :return: 是否设置成功
@@ -659,7 +659,7 @@ class DriverElement(DrissionElement):
             return False
 
     def remove_attr(self, attr):
-        """删除元素attribute属性          \n
+        """删除元素attribute属性
         :param attr: 属性名
         :return: 是否删除成功
         """
@@ -670,7 +670,7 @@ class DriverElement(DrissionElement):
             return False
 
     def drag(self, x, y, speed=40, shake=True):
-        """拖拽当前元素到相对位置                   \n
+        """拖拽当前元素到相对位置
         :param x: x变化值
         :param y: y变化值
         :param speed: 拖动的速度，传入0即瞬间到达
@@ -682,7 +682,7 @@ class DriverElement(DrissionElement):
         self.drag_to((x, y), speed, shake)
 
     def drag_to(self, ele_or_loc, speed=40, shake=True):
-        """拖拽当前元素，目标为另一个元素或坐标元组                     \n
+        """拖拽当前元素，目标为另一个元素或坐标元组
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
         :param shake: 是否随机抖动
@@ -722,7 +722,7 @@ class DriverElement(DrissionElement):
         actions.release().perform()
 
     def hover(self, x=None, y=None):
-        """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点    \n
+        """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点
         :param x: 相对元素左上角坐标的x轴偏移量
         :param y: 相对元素左上角坐标的y轴偏移量
         :return: None
@@ -733,7 +733,7 @@ class DriverElement(DrissionElement):
         ActionChains(self.page.driver).move_to_element_with_offset(self.inner_ele, x, y).perform()
 
     def _get_relative_eles(self, mode, loc=''):
-        """获取网页上相对于当前元素周围的某个元素，可设置选取条件                          \n
+        """获取网页上相对于当前元素周围的某个元素，可设置选取条件
         :param mode: 可选：'left', 'right', 'above', 'below', 'near'
         :param loc: 筛选条件，可用selenium的(By, str)，也可用本库定位语法
         :return: DriverElement对象
@@ -762,8 +762,8 @@ class DriverElement(DrissionElement):
 
 
 def make_driver_ele(page_or_ele, loc, single=True, timeout=None):
-    """执行driver模式元素的查找                               \n
-    页面查找元素及元素查找下级元素皆使用此方法                   \n
+    """执行driver模式元素的查找
+    页面查找元素及元素查找下级元素皆使用此方法
     :param page_or_ele: DriverPage对象或DriverElement对象
     :param loc: 元素定位元组
     :param single: True则返回第一个，False则返回全部
@@ -939,7 +939,7 @@ class Select(object):
         self.select_ele = SeleniumSelect(ele.inner_ele)
 
     def __call__(self, text_or_index, timeout=None):
-        """选定下拉列表中子元素                                                             \n
+        """选定下拉列表中子元素
         :param text_or_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
@@ -959,7 +959,7 @@ class Select(object):
 
     @property
     def selected_option(self):
-        """返回第一个被选中的option元素        \n
+        """返回第一个被选中的option元素
         :return: DriverElement对象或None
         """
         ele = self.inner_ele.run_script('return arguments[0].options[arguments[0].selectedIndex];')
@@ -967,7 +967,7 @@ class Select(object):
 
     @property
     def selected_options(self):
-        """返回所有被选中的option元素列表        \n
+        """返回所有被选中的option元素列表
         :return: DriverElement对象组成的列表
         """
         return [x for x in self.options if x.is_selected()]
@@ -977,7 +977,7 @@ class Select(object):
         self.select_ele.deselect_all()
 
     def select(self, text_or_index, timeout=None):
-        """选定下拉列表中子元素                                                             \n
+        """选定下拉列表中子元素
         :param text_or_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否选择成功
@@ -987,7 +987,7 @@ class Select(object):
         return self._select(text_or_index, i, False, timeout)
 
     def select_by_value(self, value, timeout=None):
-        """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple
         :param value: value属性值，传入list或tuple可选择多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
@@ -996,7 +996,7 @@ class Select(object):
         return self._select(value, 'value', False, timeout)
 
     def deselect(self, text_or_index, timeout=None):
-        """取消选定下拉列表中子元素                                                             \n
+        """取消选定下拉列表中子元素
         :param text_or_index: 根据文本或序号取消择选项，若允许多选，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
@@ -1006,7 +1006,7 @@ class Select(object):
         return self._select(text_or_index, i, True, timeout)
 
     def deselect_by_value(self, value, timeout=None):
-        """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple  \n
+        """此方法用于根据value值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param value: value属性值，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: None
@@ -1023,7 +1023,7 @@ class Select(object):
             i.click(by_js=True)
 
     def _select(self, text_value_index, para_type='text', deselect=False, timeout=None):
-        """选定或取消选定下拉列表中子元素                                                             \n
+        """选定或取消选定下拉列表中子元素
         :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选 'text'、'value'、'index'
         :param deselect: 是否取消选择
@@ -1072,7 +1072,7 @@ class Select(object):
             raise TypeError('只能传入str、int、list和tuple类型。')
 
     def _select_multi(self, text_value_index=None, para_type='text', deselect=False) -> bool:
-        """选定或取消选定下拉列表中多个子元素                                                             \n
+        """选定或取消选定下拉列表中多个子元素
         :param text_value_index: 根据文本、值选或序号择选多项
         :param para_type: 参数类型，可选 'text'、'value'、'index'
         :param deselect: 是否取消选择
@@ -1100,7 +1100,7 @@ class ElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
     def __init__(self, page_or_ele, loc_or_ele, timeout=None):
-        """等待元素在dom中某种状态，如删除、显示、隐藏                         \n
+        """等待元素在dom中某种状态，如删除、显示、隐藏
         :param page_or_ele: 页面或父元素
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
@@ -1142,7 +1142,7 @@ class ElementWaiter(object):
         return self._wait_ele('hidden')
 
     def _wait_ele(self, mode):
-        """执行等待              \n
+        """执行等待
         :param mode: 等待模式
         :return: 是否等待成功
         """
@@ -1215,7 +1215,7 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollTo(0,{self.t2}.scrollTop);')
 
     def to_location(self, x, y):
-        """滚动到指定位置                 \n
+        """滚动到指定位置
         :param x: 水平距离
         :param y: 垂直距离
         :return: None
@@ -1223,7 +1223,7 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollTo({x},{y});')
 
     def up(self, pixel=300):
-        """向上滚动若干像素，水平位置不变    \n
+        """向上滚动若干像素，水平位置不变
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1231,14 +1231,14 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
 
     def down(self, pixel=300):
-        """向下滚动若干像素，水平位置不变    \n
+        """向下滚动若干像素，水平位置不变
         :param pixel: 滚动的像素
         :return: None
         """
         self.driver.run_script(f'{self.t1}.scrollBy(0,{pixel});')
 
     def left(self, pixel=300):
-        """向左滚动若干像素，垂直位置不变    \n
+        """向左滚动若干像素，垂直位置不变
         :param pixel: 滚动的像素
         :return: None
         """
@@ -1246,7 +1246,7 @@ class Scroll(object):
         self.driver.run_script(f'{self.t1}.scrollBy({pixel},0);')
 
     def right(self, pixel=300):
-        """向右滚动若干像素，垂直位置不变    \n
+        """向右滚动若干像素，垂直位置不变
         :param pixel: 滚动的像素
         :return: None
         """

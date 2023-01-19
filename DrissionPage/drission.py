@@ -25,7 +25,7 @@ class Drission(object):
     """Drission类用于管理WebDriver对象和Session对象，是驱动器的角色"""
 
     def __init__(self, driver_or_options=None, session_or_options=None, ini_path=None, proxy=None):
-        """初始化，可接收现成的WebDriver和Session对象，或接收它们的配置信息生成对象                     \n
+        """初始化，可接收现成的WebDriver和Session对象，或接收它们的配置信息生成对象
         :param driver_or_options: driver对象或DriverOptions、Options类，传入False则创建空配置对象
         :param session_or_options: Session对象或设置字典，传入False则创建空配置对象
         :param ini_path: ini文件路径
@@ -93,7 +93,7 @@ class Drission(object):
 
     @property
     def driver(self):
-        """返回WebDriver对象，如未初始化则按配置信息创建。         \n
+        """返回WebDriver对象，如未初始化则按配置信息创建。
         如设置了本地调试浏览器，可自动接入或打开浏览器进程。
         """
         if self._driver is None:
@@ -130,7 +130,7 @@ class Drission(object):
 
     @session_options.setter
     def session_options(self, options):
-        """设置session配置                  \n
+        """设置session配置
         :param options: session配置字典
         :return: None
         """
@@ -144,7 +144,7 @@ class Drission(object):
 
     @proxy.setter
     def proxy(self, proxies=None):
-        """设置代理信息                \n
+        """设置代理信息
         :param proxies: 代理信息字典
         :return: None
         """
@@ -226,7 +226,7 @@ class Drission(object):
             ShowWindow(hd, sw)
 
     def set_cookies(self, cookies, set_session=False, set_driver=False):
-        """设置cookies                                                      \n
+        """设置cookies
         :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
         :param set_session: 是否设置session的cookies
         :param set_driver: 是否设置driver的cookies
@@ -283,7 +283,7 @@ class Drission(object):
                 self.driver.add_cookie(cookie)
 
     def _set_session(self, data):
-        """根据传入字典对session进行设置    \n
+        """根据传入字典对session进行设置
         :param data: session配置字典
         :return: None
         """
@@ -302,7 +302,7 @@ class Drission(object):
                 self._session.__setattr__(i, data[i])
 
     def cookies_to_session(self, copy_user_agent=False):
-        """把driver对象的cookies复制到session对象    \n
+        """把driver对象的cookies复制到session对象
         :param copy_user_agent: 是否复制ua信息
         :return: None
         """
@@ -312,7 +312,7 @@ class Drission(object):
         self.set_cookies(self.driver.get_cookies(), set_session=True)
 
     def cookies_to_driver(self, url):
-        """把session对象的cookies复制到driver对象  \n
+        """把session对象的cookies复制到driver对象
         :param url: 作用域
         :return: None
         """
@@ -362,7 +362,7 @@ class Drission(object):
 
 
 def user_agent_to_session(driver, session):
-    """把driver的user-agent复制到session    \n
+    """把driver的user-agent复制到session
     :param driver: 来源driver对象
     :param session: 目标session对象
     :return: None
@@ -374,7 +374,7 @@ def user_agent_to_session(driver, session):
 
 
 def create_driver(chrome_path, driver_path, options):
-    """创建 WebDriver 对象                            \n
+    """创建 WebDriver 对象
     :param chrome_path: chrome.exe 路径
     :param driver_path: chromedriver.exe 路径
     :param options: Options 对象
@@ -431,7 +431,7 @@ def get_chrome_hwnds_from_pid(pid):
 
 
 def kill_progress(pid=None, port=None):
-    """关闭浏览器进程                                 \n
+    """关闭浏览器进程
     :param pid: 进程id
     :param port: 端口号，如没有进程id，从端口号获取
     :return: 是否成功

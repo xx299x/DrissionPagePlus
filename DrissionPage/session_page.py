@@ -48,7 +48,7 @@ class SessionPage(BasePage):
         self._set_options()
 
     def _set_session(self, opt):
-        """根据传入字典对session进行设置    \n
+        """根据传入字典对session进行设置
         :param opt: session配置字典
         :return: None
         """
@@ -90,7 +90,7 @@ class SessionPage(BasePage):
             self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
 
     def set_headers(self, headers):
-        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的        \n
+        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的
         :param headers: dict形式的headers
         :return: None
         """
@@ -99,8 +99,8 @@ class SessionPage(BasePage):
             self.session.headers[i] = headers[i]
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                                  \n
-        例：ele2 = ele1('@id=ele_id')                                     \n
+        """在内部查找元素
+        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性文本
@@ -137,7 +137,7 @@ class SessionPage(BasePage):
         return DownloadSetter(self)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
-        """用get方式跳转到url                                 \n
+        """用get方式跳转到url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -149,7 +149,7 @@ class SessionPage(BasePage):
         return self._s_connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
-        """返回页面中符合条件的第一个元素、属性或节点文本                            \n
+        """返回页面中符合条件的第一个元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
@@ -157,7 +157,7 @@ class SessionPage(BasePage):
         return self._ele(loc_or_ele)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回页面中所有符合条件的元素、属性或节点文本                          \n
+        """返回页面中所有符合条件的元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
@@ -165,21 +165,21 @@ class SessionPage(BasePage):
         return self._ele(loc_or_str, single=False)
 
     def s_ele(self, loc_or_ele=None):
-        """返回页面中符合条件的第一个元素、属性或节点文本                          \n
+        """返回页面中符合条件的第一个元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele)
 
     def s_eles(self, loc_or_str):
-        """返回页面中符合条件的所有元素、属性或节点文本                              \n
+        """返回页面中符合条件的所有元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str, single=False)
 
     def _ele(self, loc_or_ele, timeout=None, single=True):
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                           \n
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param single: True则返回第一个，False则返回全部
@@ -188,7 +188,7 @@ class SessionPage(BasePage):
         return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, single)
 
     def get_cookies(self, as_dict=False, all_domains=False):
-        """返回cookies                               \n
+        """返回cookies
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
         :return: cookies信息
@@ -227,7 +227,7 @@ class SessionPage(BasePage):
         return self._download_kit
 
     def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """用post方式跳转到url                                 \n
+        """用post方式跳转到url
         :param url: 目标url
         :param data: 提交的数据
         :param show_errmsg: 是否显示和抛出异常
@@ -239,7 +239,7 @@ class SessionPage(BasePage):
         return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
 
     def _s_connect(self, url, mode, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """执行get或post连接                                 \n
+        """执行get或post连接
         :param url: 目标url
         :param mode: 'get' 或 'post'
         :param data: 提交的数据
@@ -267,7 +267,7 @@ class SessionPage(BasePage):
         return self._url_available
 
     def _make_response(self, url, mode='get', data=None, retry=None, interval=None, show_errmsg=False, **kwargs):
-        """生成Response对象                                                    \n
+        """生成Response对象
         :param url: 目标url
         :param mode: 'get' 或 'post'
         :param data: post方式要提交的数据
@@ -341,7 +341,7 @@ class DownloadSetter(object):
         self._page = page
 
     def save_path(self, path):
-        """设置下载保存路径           \n
+        """设置下载保存路径
         :param path: 下载保存路径
         :return: None
         """

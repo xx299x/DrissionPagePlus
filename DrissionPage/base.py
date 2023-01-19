@@ -95,7 +95,7 @@ class DrissionElement(BaseElement):
         return self.eles('xpath:.//comment()')
 
     def texts(self, text_node_only=False):
-        """返回元素内所有直接子节点的文本，包括元素和文本节点   \n
+        """返回元素内所有直接子节点的文本，包括元素和文本节点
         :param text_node_only: 是否只返回文本节点
         :return: 文本列表
         """
@@ -107,7 +107,7 @@ class DrissionElement(BaseElement):
         return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
     def parent(self, level_or_loc=1):
-        """返回上面某一级父元素，可指定层数或用查询语法定位              \n
+        """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
         :return: 上级元素对象
         """
@@ -128,7 +128,7 @@ class DrissionElement(BaseElement):
         return self._ele(loc, timeout=0, relative=True)
 
     def prev(self, index=1, filter_loc='', timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -138,7 +138,7 @@ class DrissionElement(BaseElement):
         return nodes[-1] if nodes else None
 
     def next(self, index=1, filter_loc='', timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -148,7 +148,7 @@ class DrissionElement(BaseElement):
         return nodes[0] if nodes else None
 
     def before(self, index=1, filter_loc='', timeout=None):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 前面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -158,7 +158,7 @@ class DrissionElement(BaseElement):
         return nodes[-1] if nodes else None
 
     def after(self, index=1, filter_loc='', timeout=None):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个        \n
+        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 后面第几个查询结果元素
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -168,7 +168,7 @@ class DrissionElement(BaseElement):
         return nodes[0] if nodes else None
 
     def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -176,7 +176,7 @@ class DrissionElement(BaseElement):
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout)
 
     def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素或节点文本组成的列表
@@ -184,7 +184,7 @@ class DrissionElement(BaseElement):
         return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout)
 
     def befores(self, filter_loc='', timeout=None):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的元素或节点组成的列表
@@ -192,7 +192,7 @@ class DrissionElement(BaseElement):
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
     def afters(self, filter_loc='', timeout=None):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选        \n
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的元素或节点组成的列表
@@ -200,7 +200,7 @@ class DrissionElement(BaseElement):
         return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
 
     def _get_brothers(self, index=None, filter_loc='', direction='following', brother=True, timeout=.5):
-        """按要求返回兄弟元素或节点组成的列表                            \n
+        """按要求返回兄弟元素或节点组成的列表
         :param index: 获取第几个，该参数不为None时只获取该编号的元素
         :param filter_loc: 用于筛选元素的查询语法
         :param direction: 'following' 或 'preceding'，查找的方向
@@ -295,7 +295,7 @@ class BasePage(BaseParser):
         return self._url_available
 
     def _before_connect(self, url, retry, interval):
-        """连接前的准备                    \n
+        """连接前的准备
         :param url: 要访问的url
         :param retry: 重试次数
         :param interval: 重试间隔

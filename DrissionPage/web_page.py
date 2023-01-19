@@ -24,7 +24,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
     def __init__(self, mode='d', timeout=None, tab_id=None, driver_or_options=None, session_or_options=None):
-        """初始化函数                                                                              \n
+        """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
@@ -121,8 +121,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         pass
 
     def __call__(self, loc_or_str, timeout=None):
-        """在内部查找元素                                            \n
-        例：ele = page('@id=ele_id')                               \n
+        """在内部查找元素
+        例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: 子元素对象
@@ -219,7 +219,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     @timeout.setter
     def timeout(self, second):
-        """设置通用超时时间           \n
+        """设置通用超时时间
         :param second: 秒数
         :return: None
         """
@@ -238,7 +238,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return self._download_set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
-        """跳转到一个url                                                                   \n
+        """跳转到一个url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
@@ -255,7 +255,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
-        """返回第一个符合条件的元素、属性或节点文本                                             \n
+        """返回第一个符合条件的元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: 元素对象或属性、文本节点文本
@@ -266,7 +266,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
 
     def eles(self, loc_or_str, timeout=None):
-        """返回页面中所有符合条件的元素、属性或节点文本                                          \n
+        """返回页面中所有符合条件的元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间，默认与页面等待时间一致
         :return: 元素对象或属性、文本组成的列表
@@ -277,7 +277,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
     def s_ele(self, loc_or_ele=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
@@ -287,7 +287,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).s_ele(loc_or_ele)
 
     def s_eles(self, loc_or_str):
-        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高                 \n
+        """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
@@ -297,9 +297,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).s_eles(loc_or_str)
 
     def change_mode(self, mode=None, go=True, copy_cookies=True):
-        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式                               \n
-        如copy_cookies为True，切换时会把当前模式的cookies复制到目标模式                         \n
-        切换后，如果go是True，调用相应的get函数使访问的页面同步                                  \n
+        """切换模式，接收's'或'd'，除此以外的字符串会切换为 d 模式
+        如copy_cookies为True，切换时会把当前模式的cookies复制到目标模式
+        切换后，如果go是True，调用相应的get函数使访问的页面同步
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
         :param copy_cookies: 是否复制cookies到目标模式
@@ -339,7 +339,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                         self.get(url)
 
     def cookies_to_session(self, copy_user_agent=True):
-        """把driver对象的cookies复制到session对象                                           \n
+        """把driver对象的cookies复制到session对象
         :param copy_user_agent: 是否复制ua信息
         :return: None
         """
@@ -363,7 +363,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self.set_cookies(cookies, set_driver=True)
 
     def get_cookies(self, as_dict=False, all_domains=False):
-        """返回cookies                                                                    \n
+        """返回cookies
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
         :return: cookies信息
@@ -374,7 +374,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self._get_driver_cookies(as_dict)
 
     def _get_driver_cookies(self, as_dict=False):
-        """获取浏览器cookies                                                                    \n
+        """获取浏览器cookies
         :param as_dict: 以dict形式返回
         :return: cookies信息
         """
@@ -385,7 +385,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return cookies
 
     def set_cookies(self, cookies, set_session=False, set_driver=False):
-        """添加cookies信息到浏览器或session对象                                                 \n
+        """添加cookies信息到浏览器或session对象
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
         :param set_session: 是否设置到Session对象
         :param set_driver: 是否设置到浏览器
@@ -409,7 +409,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             super().set_cookies(cookies)
 
     def set_headers(self, headers: dict) -> None:
-        """设置固定发送的headers                                                           \n
+        """设置固定发送的headers
         :param headers: dict格式的headers数据
         :return: None
         """
@@ -439,7 +439,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     # ----------------重写SessionPage的函数-----------------------
     def post(self, url: str, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """用post方式跳转到url，会切换到s模式                                                 \n
+        """用post方式跳转到url，会切换到s模式
         :param url: 目标url
         :param data: post方式时提交的数据
         :param show_errmsg: 是否显示和抛出异常
@@ -459,7 +459,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return super().download
 
     def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
-        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个                                               \n
+        """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
         :param single: True则返回第一个，False则返回全部

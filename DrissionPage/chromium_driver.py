@@ -153,7 +153,7 @@ class ChromiumDriver(object):
         return attr
 
     def call_method(self, _method, *args, **kwargs):
-        """执行cdp方法                                                                    \n
+        """执行cdp方法
         :param _method: cdp方法名
         :param args: cdp参数
         :param kwargs: cdp参数
@@ -203,7 +203,7 @@ class ChromiumDriver(object):
         return True
 
     def set_listener(self, event, callback):
-        """绑定cdp event和回调方法                                                         \n
+        """绑定cdp event和回调方法
         :param event: cdp event
         :param callback: 绑定到cdp event的回调方法
         :return: 回调方法
@@ -217,7 +217,7 @@ class ChromiumDriver(object):
         return True
 
     def get_listener(self, event):
-        """获取cdp event对应的回调方法                                                      \n
+        """获取cdp event对应的回调方法
         :param event: cdp event
         :return: 回调方法
         """
