@@ -6,6 +6,7 @@
 from http.cookiejar import Cookie
 from typing import Union
 
+from requests import Session
 from requests.cookies import RequestsCookieJar
 
 from DrissionPage.base import DrissionElement, BasePage
@@ -34,3 +35,6 @@ def cookie_to_dict(cookie: Union[Cookie, str, dict]) -> dict: ...
 
 
 def cookies_to_tuple(cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> tuple: ...
+
+
+def set_session_cookies(session: Session, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...

@@ -571,12 +571,13 @@ class ChromiumElement(DrissionElement):
             self.page.driver.Input.insertText(text=vals)
 
     def _set_file_input(self, files):
-        """设置上传控件值
+        """往上传控件写入路径
         :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
         :return: None
         """
         if isinstance(files, str):
             files = files.split('\n')
+        files = [str(Path(i).absolute()) for i in files]
         self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id, not_change=True)
 
     def clear(self, by_js=False):

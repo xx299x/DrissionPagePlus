@@ -216,3 +216,24 @@ def cookies_to_tuple(cookies):
         raise TypeError('cookies参数必须为RequestsCookieJar、list、tuple、str或dict类型。')
 
     return cookies
+
+
+def set_session_cookies(session, cookies):
+    """设置Session对象的cookies
+    :param session: Session对象
+    :param cookies: cookies信息
+    :return: None
+    """
+    cookies = cookies_to_tuple(cookies)
+    for cookie in cookies:
+        if cookie['value'] is None:
+            cookie['value'] = ''
+
+        kwargs = {x: cookie[x] for x in cookie
+                  if x.lower() in ('version', 'port', 'domain', 'path', 'secure',
+                                   'expires', 'discard', 'comment', 'comment_url', 'rest')}
+
+        if 'expiry' in cookie:
+            kwargs['expires'] = cookie['expiry']
+
+        session.cookies.set(cookie['name'], cookie['value'], **kwargs)

@@ -7,12 +7,16 @@ from pathlib import Path
 from platform import system
 from time import perf_counter, sleep
 
+from DownloadKit import DownloadKit
+from requests import Session
+
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .functions.browser import connect_browser
+from .functions.web import set_session_cookies
 from .session_page import DownloadSetter
 
 
@@ -26,6 +30,9 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 超时时间
         """
         super().__init__(addr_driver_opts, tab_id, timeout)
+        self._session = None
+        self._download_set = None
+        self._download_kit = None
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行
@@ -137,7 +144,17 @@ class ChromiumPage(ChromiumBase):
     @property
     def download_set(self):
         """返回用于设置下载参数的对象"""
-        return ChromiumDownloadSetter(self)
+        if self._download_set is None:
+            self._download_set = ChromiumDownloadSetter(self)
+        return self._download_set
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        self.cookies_to_session()
+        if self._download_kit is None:
+            self._download_kit = DownloadKit(session=self._session, goal_path=self.download_path)
+        return self._download_kit
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -344,6 +361,15 @@ class ChromiumPage(ChromiumBase):
         """显示浏览器窗口，只在Windows系统可用"""
         show_or_hide_browser(self, hide=False)
 
+    def cookies_to_session(self):
+        """把driver对象的cookies复制到session对象"""
+        if self._session is None:
+            self._session = Session()
+        selenium_user_agent = self._tab_obj.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
+        self._session.headers.update({"User-Agent": selenium_user_agent})
+
+        set_session_cookies(self._session, self.get_cookies(as_dict=True))
+
     def quit(self):
         """关闭浏览器"""
         self._tab_obj.Browser.close()
@@ -373,6 +399,10 @@ class ChromiumPage(ChromiumBase):
 class ChromiumDownloadSetter(DownloadSetter):
     """用于设置下载参数的类"""
 
+    def __init__(self, page):
+        super().__init__(page)
+        self._behavior = 'allow'
+
     def save_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -387,6 +417,31 @@ class ChromiumDownloadSetter(DownloadSetter):
             self._page.run_cdp('Browser.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
         except:
             self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
+
+        if self._page._download_kit is not None:
+            self._page._download_kit.goal_path = path
+
+    def use_browser(self):
+        """设置使用浏览器下载文件"""
+        self._page.driver.Page.downloadWillBegin = None
+        self._page.driver.Browser.downloadWillBegin = None
+        self._page.driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+        self._behavior = 'allow'
+
+    def use_DownloadKit(self):
+        """设置使用DownloadKit下载文件"""
+        self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
+        self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+        self._page.driver.Browser.setDownloadBehavior(behavior='deny')
+        self._behavior = 'deny'
+
+    def _download_by_DownloadKit(self, **kwargs):
+        gid = kwargs['guid']
+        self._page.run_cdp('Browser.cancelDownload', guid=gid, not_change=True)
+        url = kwargs['url']
+        name = kwargs['suggestedFilename']
+        print(f'下载：{url}')
+        self._page.download.add(url, goal_path=self._page.download_path, rename=name)
 
 
 class Alert(object):

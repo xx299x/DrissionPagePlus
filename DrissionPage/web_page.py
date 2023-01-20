@@ -487,10 +487,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 class WebPageDownloadSetter(ChromiumDownloadSetter):
     """用于设置下载参数的类"""
 
-    def __init__(self, page):
-        super().__init__(page)
-        self._behavior = 'allow'
-
     def save_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -501,6 +497,10 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         path.mkdir(parents=True, exist_ok=True)
         path = str(path)
         self._page._download_path = path
+
+        if self._page._download_kit is not None:
+            self._page._download_kit.goal_path = path
+
         if self._page._has_driver:
             try:
                 self._page.run_cdp('Browser.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
@@ -525,11 +525,3 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
             self._page.driver.Browser.setDownloadBehavior(behavior='deny')
         self._behavior = 'deny'
-
-    def _download_by_DownloadKit(self, **kwargs):
-        gid = kwargs['guid']
-        self._page.run_cdp('Browser.cancelDownload', guid=gid, not_change=True)
-        url = kwargs['url']
-        name = kwargs['suggestedFilename']
-        print(f'下载：{url}')
-        self._page.download.add(url, goal_path=self._page.download_path, rename=name)

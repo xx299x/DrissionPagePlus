@@ -14,7 +14,7 @@ from tldextract import extract
 
 from .base import BasePage
 from .configs.session_options import SessionOptions
-from .functions.web import cookies_to_tuple, cookie_to_dict
+from .functions.web import cookie_to_dict, set_session_cookies
 from .session_element import SessionElement, make_session_ele
 
 
@@ -71,23 +71,15 @@ class SessionPage(BasePage):
 
     def _set_options(self):
         """设置WebPage中与d模式共用的配置，便于WebPage覆盖掉"""
-        self._timeouts = self._session_options.timeout
+        self._timeout = self._session_options.timeout
         self._download_path = self._session_options.download_path
 
     def set_cookies(self, cookies):
-        cookies = cookies_to_tuple(cookies)
-        for cookie in cookies:
-            if cookie['value'] is None:
-                cookie['value'] = ''
-
-            kwargs = {x: cookie[x] for x in cookie
-                      if x.lower() in ('version', 'port', 'domain', 'path', 'secure',
-                                       'expires', 'discard', 'comment', 'comment_url', 'rest')}
-
-            if 'expiry' in cookie:
-                kwargs['expires'] = cookie['expiry']
-
-            self.session.cookies.set(cookie['name'], cookie['value'], **kwargs)
+        """为Session对象设置cookies
+        :param cookies: cookies信息
+        :return: None
+        """
+        set_session_cookies(self.session, cookies)
 
     def set_headers(self, headers):
         """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的

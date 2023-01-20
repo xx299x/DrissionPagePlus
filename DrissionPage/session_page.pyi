@@ -154,7 +154,7 @@ class SessionPage(BasePage):
 
 
 class DownloadSetter(object):
-    def __init__(self, page: SessionPage):
+    def __init__(self, page: BasePage):
         self._page: SessionPage = ...
 
     def save_path(self, path: Union[str, Path]): ...
