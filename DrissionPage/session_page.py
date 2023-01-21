@@ -28,6 +28,7 @@ class SessionPage(BasePage):
         """
         self._response = None
         self._download_kit = None
+        self._download_set = None
         self._create_session(session_or_options)
         timeout = timeout if timeout is not None else self.timeout
         super().__init__(timeout)
@@ -126,7 +127,9 @@ class SessionPage(BasePage):
     @property
     def download_set(self):
         """返回用于设置下载参数的对象"""
-        return DownloadSetter(self)
+        if self._download_set is None:
+            self._download_set = DownloadSetter(self)
+        return self._download_set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url
@@ -340,7 +343,7 @@ class DownloadSetter(object):
         path = path if path is None else str(path)
         self._page._download_path = path
         if self._page._download_kit is not None:
-            self._page._download_kit.goal_path = path
+            self._page.download.goal_path = path
 
 
 def check_headers(kwargs, headers, arg) -> bool:

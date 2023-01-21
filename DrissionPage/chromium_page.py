@@ -421,7 +421,7 @@ class ChromiumDownloadSetter(DownloadSetter):
             self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
 
         if self._page._download_kit is not None:
-            self._page._download_kit.goal_path = path
+            self._page.download.goal_path = path
 
     def use_browser(self):
         """设置使用浏览器下载文件"""

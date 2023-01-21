@@ -499,7 +499,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         self._page._download_path = path
 
         if self._page._download_kit is not None:
-            self._page._download_kit.goal_path = path
+            self._page.download.goal_path = path
 
         if self._page._has_driver:
             try:
