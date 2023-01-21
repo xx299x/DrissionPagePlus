@@ -5,6 +5,7 @@
 """
 from pathlib import Path
 from platform import system
+from threading import Thread
 from time import perf_counter, sleep
 
 from DownloadKit import DownloadKit
@@ -402,6 +403,7 @@ class ChromiumDownloadSetter(DownloadSetter):
     def __init__(self, page):
         super().__init__(page)
         self._behavior = 'allow'
+        self._download_th = None
 
     def save_path(self, path):
         """设置下载路径
@@ -436,12 +438,17 @@ class ChromiumDownloadSetter(DownloadSetter):
         self._behavior = 'deny'
 
     def _download_by_DownloadKit(self, **kwargs):
-        gid = kwargs['guid']
-        self._page.run_cdp('Browser.cancelDownload', guid=gid, not_change=True)
-        url = kwargs['url']
-        name = kwargs['suggestedFilename']
-        print(f'下载：{url}')
-        self._page.download.add(url, goal_path=self._page.download_path, rename=name)
+        """拦截浏览器下载并用downloadKit下载"""
+        if self._download_th is None or not self._download_th.is_alive():
+            self._download_th = Thread(target=self._wait_download_complete, daemon=False)
+            self._download_th.start()
+        self._page.download.add(kwargs['url'], self._page.download_path, kwargs['suggestedFilename'])
+        self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'], not_change=True)
+        print(f'下载：{kwargs["url"]}')
+
+    def _wait_download_complete(self):
+        """等待下载完成"""
+        self._page.download.wait()
 
 
 class Alert(object):
