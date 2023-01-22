@@ -22,7 +22,7 @@ setup(
         "lxml",
         "tldextract",
         "requests",
-        "DownloadKit",
+        "DownloadKit>=0.4.2",
         "FlowViewer",
         "websocket-client"
     ],

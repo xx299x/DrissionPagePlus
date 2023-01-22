@@ -12,8 +12,10 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 from .base import BasePage
+from .chromium_page import ChromiumPage
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement
+from .web_page import WebPage
 
 
 class SessionPage(BasePage):
@@ -155,7 +157,7 @@ class SessionPage(BasePage):
 
 
 class DownloadSetter(object):
-    def __init__(self, page: BasePage):
+    def __init__(self, page: Union[SessionPage, WebPage, ChromiumPage]):
         self._page: SessionPage = ...
 
     def save_path(self, path: Union[str, Path]): ...

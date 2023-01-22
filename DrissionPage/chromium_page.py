@@ -99,12 +99,13 @@ class ChromiumPage(ChromiumBase):
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
         self._main_tab = self.tab_id
-        try:
-            self.run_cdp('Browser.setDownloadBehavior', behavior='allow',
-                         downloadPath=self._driver_options.download_path, not_change=True)
-        except:
-            self.run_cdp('Page.setDownloadBehavior', behavior='allow',
-                         downloadPath=self._driver_options.download_path, not_change=True)
+        self.download_set.use_DownloadKit()
+        # try:
+        #     self.run_cdp('Browser.setDownloadBehavior', behavior='allow',
+        #                  downloadPath=self._driver_options.download_path, not_change=True)
+        # except:
+        #     self.run_cdp('Page.setDownloadBehavior', behavior='allow',
+        #                  downloadPath=self._driver_options.download_path, not_change=True)
 
     @property
     def tabs_count(self):
@@ -404,6 +405,8 @@ class ChromiumDownloadSetter(DownloadSetter):
         super().__init__(page)
         self._behavior = 'allow'
         self._download_th = None
+        self._split = False
+        self._file_exists = 'rename'
 
     def save_path(self, path):
         """设置下载路径
@@ -437,18 +440,44 @@ class ChromiumDownloadSetter(DownloadSetter):
         self._page.driver.Browser.setDownloadBehavior(behavior='deny')
         self._behavior = 'deny'
 
+    def split(self, on_off):
+        """设置是否允许拆分大文件用多线程下载
+        :param on_off: 是否启用多线程下载大文件
+        :return: None
+        """
+        self._split = on_off
+
+    @property
+    def if_file_exists(self):
+        """返回用于设置存在同名文件时处理方法的对象"""
+        return FileExists(self)
+
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""
         self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'], not_change=True)
-        self._page.download.add(kwargs['url'], self._page.download_path, kwargs['suggestedFilename'])
+        self._page.download.add(file_url=kwargs['url'], goal_path=self._page.download_path,
+                                rename=kwargs['suggestedFilename'], split=self._split, file_exists=self._file_exists)
         if self._download_th is None or not self._download_th.is_alive():
             self._download_th = Thread(target=self._wait_download_complete, daemon=False)
             self._download_th.start()
-        print(f'下载：{kwargs["url"]}')
 
     def _wait_download_complete(self):
         """等待下载完成"""
         self._page.download.wait()
+
+
+class FileExists(object):
+    def __init__(self, setter):
+        self._setter = setter
+
+    def skip(self):
+        self._setter._file_exists = 'skip'
+
+    def rename(self):
+        self._setter._file_exists = 'rename'
+
+    def overwrite(self):
+        self._setter._file_exists = 'overwrite'
 
 
 class Alert(object):
