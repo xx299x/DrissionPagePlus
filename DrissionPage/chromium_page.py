@@ -439,11 +439,11 @@ class ChromiumDownloadSetter(DownloadSetter):
 
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""
+        self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'], not_change=True)
+        self._page.download.add(kwargs['url'], self._page.download_path, kwargs['suggestedFilename'])
         if self._download_th is None or not self._download_th.is_alive():
             self._download_th = Thread(target=self._wait_download_complete, daemon=False)
             self._download_th.start()
-        self._page.download.add(kwargs['url'], self._page.download_path, kwargs['suggestedFilename'])
-        self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'], not_change=True)
         print(f'下载：{kwargs["url"]}')
 
     def _wait_download_complete(self):
