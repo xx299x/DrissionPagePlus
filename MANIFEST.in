@@ -1,2 +1,6 @@
-include DrissionPage/configs.ini
+include DrissionPage/configs/configs.ini
 include DrissionPage/*.pyi
+include DrissionPage/configs/*.py
+include DrissionPage/configs/*.pyi
+include DrissionPage/functions/*.py
+include DrissionPage/functions/*.pyi

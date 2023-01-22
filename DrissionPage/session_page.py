@@ -335,6 +335,18 @@ class DownloadSetter(object):
     def __init__(self, page):
         self._page = page
 
+    @property
+    def if_file_exists(self):
+        """返回用于设置存在同名文件时处理方法的对象"""
+        return FileExists(self)
+
+    def split(self, on_off):
+        """设置是否允许拆分大文件用多线程下载
+        :param on_off: 是否启用多线程下载大文件
+        :return: None
+        """
+        self._page.download.split = on_off
+
     def save_path(self, path):
         """设置下载保存路径
         :param path: 下载保存路径
@@ -344,6 +356,28 @@ class DownloadSetter(object):
         self._page._download_path = path
         if self._page._download_kit is not None:
             self._page.download.goal_path = path
+
+
+class FileExists(object):
+    """用于设置存在同名文件时处理方法"""
+
+    def __init__(self, setter):
+        """
+        :param setter: DownloadSetter对象
+        """
+        self._setter = setter
+
+    def skip(self):
+        """设为跳过"""
+        self._setter._page.download.file_exists = 'skip'
+
+    def rename(self):
+        """设为重命名，文件名后加序号"""
+        self._setter._page.download._file_exists = 'rename'
+
+    def overwrite(self):
+        """设为覆盖"""
+        self._setter._page.download._file_exists = 'overwrite'
 
 
 def check_headers(kwargs, headers, arg) -> bool:

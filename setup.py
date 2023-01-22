@@ -6,7 +6,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
     name="DrissionPage",
-    version="3.0.34",
+    version="3.1.0",
     author="g1879",
     author_email="g1879@qq.com",
     description="A module that integrates selenium and requests session, encapsulates common page operations.",
@@ -22,7 +22,7 @@ setup(
         "lxml",
         "tldextract",
         "requests",
-        "DownloadKit>=0.4.2",
+        "DownloadKit>=0.4.3",
         "FlowViewer",
         "websocket-client"
     ],
