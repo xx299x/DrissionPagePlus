@@ -8,7 +8,6 @@ from platform import system
 from threading import Thread
 from time import perf_counter, sleep
 
-from DownloadKit import DownloadKit
 from requests import Session
 
 from .chromium_base import ChromiumBase, Timeout
@@ -30,10 +29,8 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        super().__init__(addr_driver_opts, tab_id, timeout)
-        self._session = None
         self._download_set = None
-        self._download_kit = None
+        super().__init__(addr_driver_opts, tab_id, timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
         """连接浏览器，在第一次时运行
@@ -99,7 +96,7 @@ class ChromiumPage(ChromiumBase):
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
         self._main_tab = self.tab_id
-        self.download_set.use_DownloadKit()
+        self.download_set.by_DownloadKit()
 
     @property
     def tabs_count(self):
@@ -147,10 +144,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def download(self):
         """返回下载器对象"""
-        self.cookies_to_session()
-        if self._download_kit is None:
-            self._download_kit = DownloadKit(session=self._session, goal_path=self.download_path)
-        return self._download_kit
+        return self.download_set._switched_DownloadKit
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -286,6 +280,13 @@ class ChromiumPage(ChromiumBase):
         if read_doc and self.ready_state == 'complete':
             self._get_document()
 
+    def wait_download_begin(self, timeout=None):
+        """等待浏览器下载开始
+        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
+        :return: 是否等到下载开始
+        """
+        return self.download_set.wait_download_begin(timeout)
+
     def close_tabs(self, tab_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
         :param tab_ids: 要关闭的标签页id，可传入id组成的列表或元组，为None时关闭当前页
@@ -357,15 +358,6 @@ class ChromiumPage(ChromiumBase):
         """显示浏览器窗口，只在Windows系统可用"""
         show_or_hide_browser(self, hide=False)
 
-    def cookies_to_session(self):
-        """把driver对象的cookies复制到session对象"""
-        if self._session is None:
-            self._session = Session()
-        selenium_user_agent = self._tab_obj.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
-        self._session.headers.update({"User-Agent": selenium_user_agent})
-
-        set_session_cookies(self._session, self.get_cookies(as_dict=True))
-
     def quit(self):
         """关闭浏览器"""
         self._tab_obj.Browser.close()
@@ -399,6 +391,22 @@ class ChromiumDownloadSetter(DownloadSetter):
         super().__init__(page)
         self._behavior = 'allow'
         self._download_th = None
+        self._session = None
+        self._waiting_download = False
+        self._download_begin = False
+
+    @property
+    def session(self):
+        """返回用于DownloadKit的Session对象"""
+        if self._session is None:
+            self._session = Session()
+        return self._session
+
+    @property
+    def _switched_DownloadKit(self):
+        """返回从浏览器同步cookies后的Session对象"""
+        self._cookies_to_session()
+        return self.DownloadKit
 
     def save_path(self, path):
         """设置下载路径
@@ -415,22 +423,45 @@ class ChromiumDownloadSetter(DownloadSetter):
         except:
             self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
 
-        if self._page._download_kit is not None:
-            self._page.download.goal_path = path
+        self.DownloadKit.goal_path = path
 
-    def use_browser(self):
+    def by_browser(self):
         """设置使用浏览器下载文件"""
-        self._page.driver.Page.downloadWillBegin = None
-        self._page.driver.Browser.downloadWillBegin = None
+        self._page.driver.Page.downloadWillBegin = self._download_by_browser
+        self._page.driver.Browser.downloadWillBegin = self._download_by_browser
         self._page.driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
         self._behavior = 'allow'
 
-    def use_DownloadKit(self):
+    def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
         self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
         self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
         self._page.driver.Browser.setDownloadBehavior(behavior='deny')
         self._behavior = 'deny'
+
+    def wait_download_begin(self, timeout=None):
+        """等待浏览器下载开始
+        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
+        :return: 是否等到下载开始
+        """
+        self._waiting_download = True
+        result = False
+        timeout = timeout if timeout is not None else self._page.timeout
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self._download_begin:
+                result = True
+                break
+            sleep(.05)
+        self._download_begin = False
+        self._waiting_download = False
+        return result
+
+    def _cookies_to_session(self):
+        """把driver对象的cookies复制到session对象"""
+        ua = self._page.driver.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
+        self.session.headers.update({"User-Agent": ua})
+        set_session_cookies(self.session, self._page.get_cookies(as_dict=True))
 
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""
@@ -440,6 +471,13 @@ class ChromiumDownloadSetter(DownloadSetter):
         if self._download_th is None or not self._download_th.is_alive():
             self._download_th = Thread(target=self._wait_download_complete, daemon=False)
             self._download_th.start()
+        if self._waiting_download:
+            self._download_begin = True
+
+    def _download_by_browser(self, **kwargs):
+        """使用浏览器下载时调用"""
+        if self._waiting_download:
+            self._download_begin = True
 
     def _wait_download_complete(self):
         """等待下载完成"""

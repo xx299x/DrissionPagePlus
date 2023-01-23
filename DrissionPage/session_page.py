@@ -27,7 +27,6 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
-        self._download_kit = None
         self._download_set = None
         self._create_session(session_or_options)
         timeout = timeout if timeout is not None else self.timeout
@@ -131,6 +130,21 @@ class SessionPage(BasePage):
             self._download_set = DownloadSetter(self)
         return self._download_set
 
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set.DownloadKit
+
+    @property
+    def session(self):
+        """返回session对象"""
+        return self._session
+
+    @property
+    def response(self):
+        """返回访问url得到的response对象"""
+        return self._response
+
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url
         :param url: 目标url
@@ -202,24 +216,6 @@ class SessionPage(BasePage):
             return {x.name: x.value for x in cookies}
         else:
             return [cookie_to_dict(cookie) for cookie in cookies]
-
-    # ----------------session独有属性和方法-----------------------
-    @property
-    def session(self):
-        """返回session对象"""
-        return self._session
-
-    @property
-    def response(self):
-        """返回访问url得到的response对象"""
-        return self._response
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        if self._download_kit is None:
-            self._download_kit = DownloadKit(session=self, goal_path=self.download_path)
-        return self._download_kit
 
     def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
         """用post方式跳转到url
@@ -334,6 +330,13 @@ class DownloadSetter(object):
 
     def __init__(self, page):
         self._page = page
+        self._DownloadKit = None
+
+    @property
+    def DownloadKit(self):
+        if self._DownloadKit is None:
+            self._DownloadKit = DownloadKit(session=self._page, goal_path=self._page.download_path)
+        return self._DownloadKit
 
     @property
     def if_file_exists(self):
@@ -345,7 +348,7 @@ class DownloadSetter(object):
         :param on_off: 是否启用多线程下载大文件
         :return: None
         """
-        self._page.download.split = on_off
+        self.DownloadKit.split = on_off
 
     def save_path(self, path):
         """设置下载保存路径
@@ -354,8 +357,7 @@ class DownloadSetter(object):
         """
         path = path if path is None else str(path)
         self._page._download_path = path
-        if self._page._download_kit is not None:
-            self._page.download.goal_path = path
+        self.DownloadKit.goal_path = path
 
 
 class FileExists(object):
@@ -367,17 +369,22 @@ class FileExists(object):
         """
         self._setter = setter
 
+    def __call__(self, mode):
+        if mode not in ('skip', 'rename', 'overwrite'):
+            raise ValueError("mode参数只能是'skip', 'rename', 'overwrite'")
+        self._setter.DownloadKit.file_exists = mode
+
     def skip(self):
         """设为跳过"""
-        self._setter._page.download.file_exists = 'skip'
+        self._setter.DownloadKit.file_exists = 'skip'
 
     def rename(self):
         """设为重命名，文件名后加序号"""
-        self._setter._page.download._file_exists = 'rename'
+        self._setter.DownloadKit._file_exists = 'rename'
 
     def overwrite(self):
         """设为覆盖"""
-        self._setter._page.download._file_exists = 'overwrite'
+        self._setter.DownloadKit._file_exists = 'overwrite'
 
 
 def check_headers(kwargs, headers, arg) -> bool:

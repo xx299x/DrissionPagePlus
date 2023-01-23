@@ -46,7 +46,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._session_options = None
         self._setting_tab_id = tab_id
         self._response = None
-        self._download_kit = None
         self._download_set = None
 
         self._set_both_options(driver_or_options, session_or_options)
@@ -132,7 +131,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 's':
             return super().__call__(loc_or_str)
 
-    # -----------------共有属性和方法-------------------
     @property
     def url(self):
         """返回当前url"""
@@ -237,6 +235,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._download_set = WebPageDownloadSetter(self)
         return self._download_set
 
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set._switched_DownloadKit
+
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url
         :param url: 目标url
@@ -253,6 +256,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             if timeout is None:
                 timeout = self.timeouts.page_load if self._has_driver else self.timeout
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
+
+    def post(self, url: str, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
+        """用post方式跳转到url，会切换到s模式
+        :param url: 目标url
+        :param data: post方式时提交的数据
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数
+        :param interval: 重试间隔（秒）
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
+        self.change_mode('s', go=False)
+        return super().post(url, data, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
         """返回第一个符合条件的元素、属性或节点文本
@@ -437,27 +453,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._response = None
             self._has_session = None
 
-    # ----------------重写SessionPage的函数-----------------------
-    def post(self, url: str, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """用post方式跳转到url，会切换到s模式
-        :param url: 目标url
-        :param data: post方式时提交的数据
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param kwargs: 连接参数
-        :return: url是否可用
-        """
-        self.change_mode('s', go=False)
-        return super().post(url, data, show_errmsg, retry, interval, **kwargs)
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        if self.mode == 'd':
-            self.cookies_to_session()
-        return super().download
-
     def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
@@ -487,6 +482,17 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 class WebPageDownloadSetter(ChromiumDownloadSetter):
     """用于设置下载参数的类"""
 
+    def __init__(self, page):
+        super().__init__(page)
+        self._session = page.session
+
+    @property
+    def _switched_DownloadKit(self):
+        """返回从浏览器同步cookies后的Session对象"""
+        if self._page.mode == 'd':
+            self._cookies_to_session()
+        return self.DownloadKit
+
     def save_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -497,9 +503,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         path.mkdir(parents=True, exist_ok=True)
         path = str(path)
         self._page._download_path = path
-
-        if self._page._download_kit is not None:
-            self._page.download.goal_path = path
+        self.DownloadKit.goal_path = path
 
         if self._page._has_driver:
             try:
@@ -509,16 +513,16 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
                 self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
                                    not_change=True)
 
-    def use_browser(self):
+    def by_browser(self):
         """设置使用浏览器下载文件"""
         if not self._page._has_driver:
             raise RuntimeError('浏览器未连接。')
-        self._page.driver.Page.downloadWillBegin = None
-        self._page.driver.Browser.downloadWillBegin = None
+        self._page.driver.Page.downloadWillBegin = self._download_by_browser
+        self._page.driver.Browser.downloadWillBegin = self._download_by_browser
         self._page.driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
         self._behavior = 'allow'
 
-    def use_DownloadKit(self):
+    def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
         if self._page._has_driver:
             self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
