@@ -54,7 +54,7 @@ class ChromiumOptions(object):
             if self._auto_port:
                 port, path = PortFinder().get_port()
                 self._debugger_address = f'127.0.0.1:{port}'
-                self.set_paths(user_data_path=path)
+                self.set_argument('--user-data-dir', path)
             return
 
         self.ini_path = None
@@ -299,9 +299,11 @@ class ChromiumOptions(object):
         """
         if browser_path is not None:
             self._binary_location = str(browser_path)
+            self._auto_port = False
 
         if local_port is not None:
             self._debugger_address = f'127.0.0.1:{local_port}'
+            self._auto_port = False
 
         if debugger_address is not None:
             self._debugger_address = debugger_address
@@ -313,6 +315,7 @@ class ChromiumOptions(object):
             u = str(user_data_path)
             self.set_argument('--user-data-dir', u)
             self._user_data_path = u
+            self._auto_port = False
 
         if cache_path is not None:
             self.set_argument('--disk-cache-dir', str(cache_path))
@@ -330,7 +333,6 @@ class ChromiumOptions(object):
             self._auto_port = True
         else:
             self._auto_port = False
-            self._debugger_address = '127.0.0.1:9222'
         return self
 
     def save(self, path=None):
