@@ -1,14 +1,18 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
-from shutil import rmtree
+from tempfile import gettempdir, TemporaryDirectory
 
-from DrissionPage.functions.tools import port_is_using
+from DrissionPage.functions.tools import port_is_using, clean_folder
 from .options_manage import OptionsManager
 
 
 class ChromiumOptions(object):
     def __init__(self, read_file=True, ini_path=None):
-        """初始化，默认从文件读取设置                                                           \n
+        """
         :param read_file: 是否从默认ini文件中读取配置信息
         :param ini_path: ini文件路径，为None则读取默认ini文件
         """
@@ -17,7 +21,7 @@ class ChromiumOptions(object):
         self._prefs_to_del = []
 
         if read_file:
-            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options = om.chrome_options
 
@@ -45,6 +49,12 @@ class ChromiumOptions(object):
             self._timeouts = {'implicit': timeouts['implicit'],
                               'pageLoad': timeouts['page_load'],
                               'script': timeouts['script']}
+
+            self._auto_port = options.get('auto_port', False)
+            if self._auto_port:
+                port, path = PortFinder().get_port()
+                self._debugger_address = f'127.0.0.1:{port}'
+                self.set_paths(user_data_path=path)
             return
 
         self.ini_path = None
@@ -57,6 +67,7 @@ class ChromiumOptions(object):
         self._debugger_address = '127.0.0.1:9222'
         self._page_load_strategy = 'normal'
         self._proxy = None
+        self._auto_port = False
 
     @property
     def download_path(self):
@@ -100,6 +111,7 @@ class ChromiumOptions(object):
 
     @debugger_address.setter
     def debugger_address(self, address):
+        """设置浏览器地址，格式ip:port"""
         self._debugger_address = address
 
     @property
@@ -118,7 +130,7 @@ class ChromiumOptions(object):
         return self._prefs
 
     def set_argument(self, arg, value=None):
-        """设置浏览器配置的argument属性                                                       \n
+        """设置浏览器配置的argument属性
         :param arg: 属性名
         :param value: 属性值，有值的属性传入值，没有的传入None，如传入False，删除该项
         :return: 当前对象
@@ -130,7 +142,7 @@ class ChromiumOptions(object):
         return self
 
     def remove_argument(self, value):
-        """移除一个argument项                                                               \n
+        """移除一个argument项
         :param value: 设置项名，有值的设置项传入设置名称即可
         :return: 当前对象
         """
@@ -146,7 +158,7 @@ class ChromiumOptions(object):
         return self
 
     def add_extension(self, path):
-        """添加插件                                                                        \n
+        """添加插件
         :param path: 插件路径，可指向文件夹
         :return: 当前对象
         """
@@ -157,7 +169,7 @@ class ChromiumOptions(object):
         return self
 
     def remove_extensions(self):
-        """移除所有插件                                                                     \n
+        """移除所有插件
         :return: 当前对象
         """
         self._extensions = []
@@ -173,7 +185,7 @@ class ChromiumOptions(object):
         return self
 
     def remove_pref(self, arg):
-        """删除用户首选项设置，不能删除已设置到文件中的项                                          \n
+        """删除用户首选项设置，不能删除已设置到文件中的项
         :param arg: 设置项名称
         :return: 当前对象
         """
@@ -181,7 +193,7 @@ class ChromiumOptions(object):
         return self
 
     def remove_pref_from_file(self, arg):
-        """删除用户配置文件中已设置的项                                                        \n
+        """删除用户配置文件中已设置的项
         :param arg: 设置项名称
         :return: 当前对象
         """
@@ -189,7 +201,7 @@ class ChromiumOptions(object):
         return self
 
     def set_timeouts(self, implicit=None, pageLoad=None, script=None):
-        """设置超时时间，单位为秒                                                             \n
+        """设置超时时间，单位为秒
         :param implicit: 默认超时时间
         :param pageLoad: 页面加载超时时间
         :param script: 脚本运行超时时间
@@ -205,7 +217,7 @@ class ChromiumOptions(object):
         return self
 
     def set_user(self, user='Default'):
-        """设置使用哪个用户配置文件夹                                                          \n
+        """设置使用哪个用户配置文件夹
         :param user: 用户文件夹名称
         :return: 当前对象
         """
@@ -214,7 +226,7 @@ class ChromiumOptions(object):
         return self
 
     def set_headless(self, on_off=True):
-        """设置是否隐藏浏览器界面   \n
+        """设置是否隐藏浏览器界面
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -222,7 +234,7 @@ class ChromiumOptions(object):
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off=True):
-        """设置是否加载图片           \n
+        """设置是否加载图片
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -230,7 +242,7 @@ class ChromiumOptions(object):
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
     def set_no_js(self, on_off=True):
-        """设置是否禁用js       \n
+        """设置是否禁用js
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -238,7 +250,7 @@ class ChromiumOptions(object):
         return self.set_argument('--disable-javascript', on_off)
 
     def set_mute(self, on_off=True):
-        """设置是否静音            \n
+        """设置是否静音
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -246,14 +258,14 @@ class ChromiumOptions(object):
         return self.set_argument('--mute-audio', on_off)
 
     def set_user_agent(self, user_agent):
-        """设置user agent                  \n
+        """设置user agent
         :param user_agent: user agent文本
         :return: 当前对象
         """
         return self.set_argument('--user-agent', user_agent)
 
     def set_proxy(self, proxy):
-        """设置代理                    \n
+        """设置代理
         :param proxy: 代理url和端口
         :return: 当前对象
         """
@@ -261,7 +273,7 @@ class ChromiumOptions(object):
         return self.set_argument('--proxy-server', proxy)
 
     def set_page_load_strategy(self, value):
-        """设置page_load_strategy，可接收 'normal', 'eager', 'none'                    \n
+        """设置page_load_strategy，可接收 'normal', 'eager', 'none'
         selenium4以上版本才支持此功能
         normal：默认情况下使用, 等待所有资源下载完成
         eager：DOM访问已准备就绪, 但其他资源 (如图像) 可能仍在加载中
@@ -276,7 +288,7 @@ class ChromiumOptions(object):
 
     def set_paths(self, browser_path=None, local_port=None, debugger_address=None, download_path=None,
                   user_data_path=None, cache_path=None):
-        """快捷的路径设置函数                                                                  \n
+        """快捷的路径设置函数
         :param browser_path: 浏览器可执行文件路径
         :param local_port: 本地端口号
         :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
@@ -307,18 +319,22 @@ class ChromiumOptions(object):
 
         return self
 
-    def auto_port(self, data_path=None):
-        """自动获取可用端口                                                                  \n
-        :param data_path: 用户文件夹保存路径，为None则保存在当前路径
+    def auto_port(self, on_off=True):
+        """自动获取可用端口
+        :param on_off: 是否开启自动获取端口号
         :return: 当前对象
         """
-        data_path = data_path or ''
-        port, path = PortFinder().get_port(data_path)
-        self.set_paths(local_port=port, user_data_path=path)
+        if on_off:
+            port, path = PortFinder().get_port()
+            self.set_paths(local_port=port, user_data_path=path)
+            self._auto_port = True
+        else:
+            self._auto_port = False
+            self._debugger_address = '127.0.0.1:9222'
         return self
 
     def save(self, path=None):
-        """保存设置到文件                                                                        \n
+        """保存设置到文件
         :param path: ini文件的路径， None 保存到当前读取的配置文件，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
         """
@@ -342,7 +358,8 @@ class ChromiumOptions(object):
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
         # 设置chrome_options
-        attrs = ('debugger_address', 'binary_location', 'arguments', 'extensions', 'user', 'page_load_strategy')
+        attrs = ('debugger_address', 'binary_location', 'arguments', 'extensions', 'user', 'page_load_strategy',
+                 'auto_port')
         for i in attrs:
             om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理
@@ -372,26 +389,22 @@ class ChromiumOptions(object):
 class PortFinder(object):
     used_port = []
 
-    @staticmethod
-    def get_port(path):
-        """查找一个可用端口                                                                  \n
-        :param path: 用户文件夹保存路径
+    def __init__(self):
+        self.tmp_dir = Path(gettempdir()) / 'DrissionPageTempFolder'
+        self.tmp_dir.mkdir(parents=True, exist_ok=True)
+        if not PortFinder.used_port:
+            clean_folder(self.tmp_dir)
+
+    def get_port(self):
+        """查找一个可用端口
         :return: 可以使用的端口和用户文件夹路径组成的元组
         """
-        path = Path(path)
         for i in range(9600, 9800):
             if i in PortFinder.used_port or port_is_using('127.0.0.1', i):
                 continue
 
-            path = path / f'userData{i}'
-            if not path.exists():
-                PortFinder.used_port.append(i)
-                return i, str(path)
-
-            try:
-                rmtree(path)
-                return i, str(path)
-            except PermissionError:
-                continue
+            path = TemporaryDirectory(dir=self.tmp_dir)
+            PortFinder.used_port.append(i)
+            return i, path.name
 
         raise OSError('未找到可用端口。')

@@ -7,7 +7,7 @@ from re import split
 
 
 def get_loc(loc, translate_css=False):
-    """接收selenium定位元组或本库定位语法，转换为标准定位元组，可翻译css selector为xpath  \n
+    """接收selenium定位元组或本库定位语法，转换为标准定位元组，可翻译css selector为xpath
     :param loc: selenium定位元组或本库定位语法
     :param translate_css: 是否翻译css selector为xpath
     :return: DrissionPage定位元组
@@ -34,9 +34,9 @@ def get_loc(loc, translate_css=False):
 
 
 def str_to_loc(loc):
-    """处理元素查找语句                                                                 \n
-    查找方式：属性、tag name及属性、文本、xpath、css selector、id、class                    \n
-    @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串    \n
+    """处理元素查找语句
+    查找方式：属性、tag name及属性、文本、xpath、css selector、id、class
+    @表示属性，.表示class，#表示id，=表示精确匹配，:表示模糊匹配，无控制字符串时默认搜索该字符串
     """
     loc_by = 'xpath'
 
@@ -108,7 +108,7 @@ def str_to_loc(loc):
 
 
 def _make_single_xpath_str(tag: str, text: str) -> str:
-    """生成xpath语句                  \n
+    """生成xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
     :return: xpath字符串
@@ -145,7 +145,7 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
 
 
 def _make_multi_xpath_str(tag: str, text: str) -> str:
-    """生成多属性查找的xpath语句                    \n
+    """生成多属性查找的xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
     :return: xpath字符串
@@ -185,7 +185,7 @@ def _make_multi_xpath_str(tag: str, text: str) -> str:
 
 
 def _make_search_str(search_str: str) -> str:
-    """将"转义，不知何故不能直接用 \ 来转义 \n
+    """将"转义，不知何故不能直接用 \ 来转义
     :param search_str: 查询字符串
     :return: 把"转义后的字符串
     """
@@ -202,7 +202,7 @@ def _make_search_str(search_str: str) -> str:
 
 
 def translate_loc(loc):
-    """把By类型的loc元组转换为css selector或xpath类型的  \n
+    """把By类型的loc元组转换为css selector或xpath类型的
     :param loc: By类型的loc元组
     :return: css selector或xpath类型的loc元组
     """

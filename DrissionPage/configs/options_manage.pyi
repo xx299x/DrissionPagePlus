@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from configparser import RawConfigParser
 from typing import Any
 

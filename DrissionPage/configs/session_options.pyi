@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
 from typing import Any, Union, Tuple
 
@@ -8,7 +12,7 @@ from requests.cookies import RequestsCookieJar
 
 
 class SessionOptions(object):
-    def __init__(self, read_file: bool = True, ini_path: str = None):
+    def __init__(self, read_file: bool = True, ini_path: Union[str, Path] = None):
         self.ini_path: str = ...
         self._download_path: str = ...
         self._headers: dict = ...
@@ -107,5 +111,6 @@ class SessionOptions(object):
     def save_to_default(self) -> str: ...
 
     def as_dict(self) -> dict: ...
+
 
 def session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]: ...

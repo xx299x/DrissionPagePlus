@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
 from typing import Union, List
 
@@ -7,7 +11,7 @@ from selenium.webdriver.chrome.options import Options
 
 class DriverOptions(Options):
 
-    def __init__(self, read_file: bool = True, ini_path: str = None):
+    def __init__(self, read_file: bool = True, ini_path: Union[str, Path] = None):
         self.ini_path: str = ...
         self._driver_path: str = ...
         self._user_data_path: str = ...

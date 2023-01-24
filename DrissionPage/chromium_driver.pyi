@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from queue import Queue
 from threading import Thread, Event
 from typing import Union, Callable

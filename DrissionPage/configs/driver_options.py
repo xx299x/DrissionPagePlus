@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
 
 from selenium.webdriver.chrome.options import Options
@@ -12,7 +16,7 @@ class DriverOptions(Options):
     """
 
     def __init__(self, read_file=True, ini_path=None):
-        """初始化，默认从文件读取设置                      \n
+        """初始化，默认从文件读取设置
         :param read_file: 是否从默认ini文件中读取配置信息
         :param ini_path: ini文件路径，为None则读取默认ini文件
         """
@@ -20,7 +24,7 @@ class DriverOptions(Options):
         self._user_data_path = None
 
         if read_file:
-            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.chrome_options
 
@@ -74,7 +78,7 @@ class DriverOptions(Options):
 
     # -------------重写父类方法，实现链式操作-------------
     def add_argument(self, argument):
-        """添加一个配置项               \n
+        """添加一个配置项
         :param argument: 配置项内容
         :return: 当前对象
         """
@@ -82,7 +86,7 @@ class DriverOptions(Options):
         return self
 
     def set_capability(self, name, value):
-        """设置一个capability          \n
+        """设置一个capability
         :param name: capability名称
         :param value: capability值
         :return: 当前对象
@@ -91,7 +95,7 @@ class DriverOptions(Options):
         return self
 
     def add_extension(self, extension):
-        """添加插件                           \n
+        """添加插件
         :param extension: crx文件路径
         :return: 当前对象
         """
@@ -99,7 +103,7 @@ class DriverOptions(Options):
         return self
 
     def add_encoded_extension(self, extension):
-        """将带有扩展数据的 Base64 编码字符串添加到将用于将其提取到 ChromeDriver 的列表中  \n
+        """将带有扩展数据的 Base64 编码字符串添加到将用于将其提取到 ChromeDriver 的列表中
         :param extension: 带有扩展数据的 Base64 编码字符串
         :return: 当前对象
         """
@@ -107,7 +111,7 @@ class DriverOptions(Options):
         return self
 
     def add_experimental_option(self, name, value):
-        """添加一个实验选项到浏览器  \n
+        """添加一个实验选项到浏览器
         :param name: 选项名称
         :param value: 选项值
         :return: 当前对象
@@ -118,7 +122,7 @@ class DriverOptions(Options):
     # -------------重写父类方法结束-------------
 
     def save(self, path=None):
-        """保存设置到文件                                                                        \n
+        """保存设置到文件
         :param path: ini文件的路径， None 保存到当前读取的配置文件，传入 'default' 保存到默认ini文件
         :return: 保存文件的绝对路径
         """
@@ -161,7 +165,7 @@ class DriverOptions(Options):
         return self.save('default')
 
     def remove_argument(self, value):
-        """移除一个argument项                                    \n
+        """移除一个argument项
         :param value: 设置项名，有值的设置项传入设置名称即可
         :return: 当前对象
         """
@@ -177,7 +181,7 @@ class DriverOptions(Options):
         return self
 
     def remove_experimental_option(self, key):
-        """移除一个实验设置，传入key值删除  \n
+        """移除一个实验设置，传入key值删除
         :param key: 实验设置的名称
         :return: 当前对象
         """
@@ -187,7 +191,7 @@ class DriverOptions(Options):
         return self
 
     def remove_all_extensions(self):
-        """移除所有插件             \n
+        """移除所有插件
         :return: 当前对象
         """
         # 因插件是以整个文件储存，难以移除其中一个，故如须设置则全部移除再重设
@@ -195,7 +199,7 @@ class DriverOptions(Options):
         return self
 
     def set_argument(self, arg, value):
-        """设置浏览器配置的argument属性                          \n
+        """设置浏览器配置的argument属性
         :param arg: 属性名
         :param value: 属性值，有值的属性传入值，没有的传入bool
         :return: 当前对象
@@ -209,7 +213,7 @@ class DriverOptions(Options):
         return self
 
     def set_timeouts(self, implicit=None, pageLoad=None, script=None):
-        """设置超时时间，设置单位为秒，selenium4以上版本有效       \n
+        """设置超时时间，设置单位为秒，selenium4以上版本有效
         :param implicit: 查找元素超时时间
         :param pageLoad: 页面加载超时时间
         :param script: 脚本运行超时时间
@@ -225,7 +229,7 @@ class DriverOptions(Options):
         return self
 
     def set_headless(self, on_off=True):
-        """设置是否隐藏浏览器界面   \n
+        """设置是否隐藏浏览器界面
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -233,7 +237,7 @@ class DriverOptions(Options):
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off=True):
-        """设置是否加载图片           \n
+        """设置是否加载图片
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -241,7 +245,7 @@ class DriverOptions(Options):
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
     def set_no_js(self, on_off=True):
-        """设置是否禁用js       \n
+        """设置是否禁用js
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -249,7 +253,7 @@ class DriverOptions(Options):
         return self.set_argument('--disable-javascript', on_off)
 
     def set_mute(self, on_off=True):
-        """设置是否静音            \n
+        """设置是否静音
         :param on_off: 开或关
         :return: 当前对象
         """
@@ -257,21 +261,21 @@ class DriverOptions(Options):
         return self.set_argument('--mute-audio', on_off)
 
     def set_user_agent(self, user_agent):
-        """设置user agent                  \n
+        """设置user agent
         :param user_agent: user agent文本
         :return: 当前对象
         """
         return self.set_argument('--user-agent', user_agent)
 
     def set_proxy(self, proxy):
-        """设置代理                    \n
+        """设置代理
         :param proxy: 代理url和端口
         :return: 当前对象
         """
         return self.set_argument('--proxy-server', proxy)
 
     def set_page_load_strategy(self, value):
-        """设置page_load_strategy，可接收 'normal', 'eager', 'none'                    \n
+        """设置page_load_strategy，可接收 'normal', 'eager', 'none'
         selenium4以上版本才支持此功能
         normal：默认情况下使用, 等待所有资源下载完成
         eager：DOM访问已准备就绪, 但其他资源 (如图像) 可能仍在加载中
@@ -286,7 +290,7 @@ class DriverOptions(Options):
 
     def set_paths(self, driver_path=None, chrome_path=None, browser_path=None, local_port=None,
                   debugger_address=None, download_path=None, user_data_path=None, cache_path=None):
-        """快捷的路径设置函数                                             \n
+        """快捷的路径设置函数
         :param driver_path: chromedriver.exe路径
         :param chrome_path: chrome.exe路径
         :param browser_path: 浏览器可执行文件路径
@@ -330,7 +334,7 @@ class DriverOptions(Options):
 
 
 def chrome_options_to_dict(options):
-    """把chrome配置对象转换为字典                             \n
+    """把chrome配置对象转换为字典
     :param options: chrome配置对象，字典或DriverOptions对象
     :return: 配置字典
     """

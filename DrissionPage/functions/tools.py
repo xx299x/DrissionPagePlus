@@ -10,7 +10,7 @@ from zipfile import ZipFile
 
 
 def get_exe_from_port(port):
-    """获取端口号第一条进程的可执行文件路径      \n
+    """获取端口号第一条进程的可执行文件路径
     :param port: 端口号
     :return: 可执行文件的绝对路径
     """
@@ -25,7 +25,7 @@ def get_exe_from_port(port):
 
 
 def get_pid_from_port(port):
-    """获取端口号第一条进程的pid           \n
+    """获取端口号第一条进程的pid
     :param port: 端口号
     :return: 进程id
     """
@@ -50,7 +50,7 @@ def get_pid_from_port(port):
 
 
 def get_usable_path(path):
-    """检查文件或文件夹是否有重名，并返回可以使用的路径           \n
+    """检查文件或文件夹是否有重名，并返回可以使用的路径
     :param path: 文件或文件夹路径
     :return: 可用的路径，Path对象
     """
@@ -78,7 +78,7 @@ def get_usable_path(path):
 
 
 def make_valid_name(full_name):
-    """获取有效的文件名                  \n
+    """获取有效的文件名
     :param full_name: 文件名
     :return: 可用的文件名
     """
@@ -104,7 +104,7 @@ def make_valid_name(full_name):
 
 
 def get_long(txt):
-    """返回字符串中字符个数（一个汉字是2个字符）          \n
+    """返回字符串中字符个数（一个汉字是2个字符）
     :param txt: 字符串
     :return: 字符个数
     """
@@ -113,7 +113,7 @@ def get_long(txt):
 
 
 def port_is_using(ip, port):
-    """检查端口是否被占用               \n
+    """检查端口是否被占用
     :param ip: 浏览器地址
     :param port: 浏览器端口
     :return: bool
@@ -126,7 +126,7 @@ def port_is_using(ip, port):
 
 
 def clean_folder(folder_path, ignore=None):
-    """清空一个文件夹，除了ignore里的文件和文件夹  \n
+    """清空一个文件夹，除了ignore里的文件和文件夹
     :param folder_path: 要清空的文件夹路径
     :param ignore: 忽略列表
     :return: None

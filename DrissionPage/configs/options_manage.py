@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
 from pprint import pprint
@@ -9,10 +12,10 @@ class OptionsManager(object):
     """管理配置文件内容的类"""
 
     def __init__(self, path=None):
-        """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建  \n
+        """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建
         :param path: ini文件的路径，默认读取模块文件夹下的
         """
-        self.ini_path = str(Path(__file__).parent / 'configs.ini') if path == 'default' or path is None else path
+        self.ini_path = str(Path(__file__).parent / 'configs.ini') if path == 'default' or path is None else str(path)
         if not Path(self.ini_path).exists():
             raise FileNotFoundError('ini文件不存在。')
         self._conf = RawConfigParser()
@@ -26,7 +29,7 @@ class OptionsManager(object):
         return self.get_option(item)
 
     def get_value(self, section, item):
-        """获取配置的值         \n
+        """获取配置的值
         :param section: 段名
         :param item: 项名
         :return: 项值
@@ -39,7 +42,7 @@ class OptionsManager(object):
             return None
 
     def get_option(self, section):
-        """把section内容以字典方式返回   \n
+        """把section内容以字典方式返回
         :param section: 段名
         :return: 段内容生成的字典
         """
@@ -55,7 +58,7 @@ class OptionsManager(object):
         return option
 
     def set_item(self, section, item, value):
-        """设置配置值            \n
+        """设置配置值
         :param section: 段名
         :param item: 项名
         :param value: 项值
@@ -66,7 +69,7 @@ class OptionsManager(object):
         return self
 
     def remove_item(self, section, item):
-        """删除配置值            \n
+        """删除配置值
         :param section: 段名
         :param item: 项名
         :return: None
@@ -75,7 +78,7 @@ class OptionsManager(object):
         return self
 
     def save(self, path=None):
-        """保存配置文件                                               \n
+        """保存配置文件
         :param path: ini文件的路径，传入 'default' 保存到默认ini文件
         :return: 保存路径
         """

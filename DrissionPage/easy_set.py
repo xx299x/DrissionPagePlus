@@ -52,7 +52,7 @@ def set_paths(driver_path=None,
     om = OptionsManager(ini_path)
 
     def format_path(path: str) -> str:
-        return path or ''
+        return str(path) if path else ''
 
     if driver_path is not None:
         om.set_item('paths', 'chromedriver_path', format_path(driver_path))
@@ -64,10 +64,10 @@ def set_paths(driver_path=None,
         om.set_item('chrome_options', 'binary_location', format_path(browser_path))
 
     if local_port is not None:
-        om.set_item('chrome_options', 'debugger_address', format_path(f'127.0.0.1:{local_port}'))
+        om.set_item('chrome_options', 'debugger_address', f'127.0.0.1:{local_port}')
 
     if debugger_address is not None:
-        om.set_item('chrome_options', 'debugger_address', format_path(debugger_address))
+        om.set_item('chrome_options', 'debugger_address', debugger_address)
 
     if download_path is not None:
         om.set_item('paths', 'download_path', format_path(download_path))
@@ -84,6 +84,19 @@ def set_paths(driver_path=None,
         check_driver_version(format_path(driver_path), format_path(browser_path))
 
 
+def use_auto_port(on_off=True, ini_path=None):
+    """设置启动浏览器时使用自动分配的端口和临时文件夹
+    :param on_off: 是否开启自动端口
+    :param ini_path: 要修改的ini文件路径
+    :return: None
+    """
+    if not isinstance(on_off, bool):
+        raise TypeError('on_off参数只能输入bool值。')
+    om = OptionsManager(ini_path)
+    om.set_item('chrome_options', 'auto_port', on_off)
+    om.save()
+
+
 def set_argument(arg, value=None, ini_path=None):
     """设置浏览器配置argument属性
     :param arg: 属性名
@@ -91,9 +104,9 @@ def set_argument(arg, value=None, ini_path=None):
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
-    do = ChromiumOptions(ini_path=ini_path)
-    do.set_argument(arg, value)
-    do.save()
+    co = ChromiumOptions(ini_path=ini_path)
+    co.set_argument(arg, value)
+    co.save()
 
 
 def set_headless(on_off=True, ini_path=None):

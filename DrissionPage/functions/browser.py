@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from json import load, dump
 from pathlib import Path
 from platform import system
@@ -12,7 +16,7 @@ from .tools import port_is_using, get_exe_from_port
 
 
 def connect_browser(option):
-    """连接或启动浏览器                           \n
+    """连接或启动浏览器
     :param option: DriverOptions对象
     :return: chrome 路径和进程对象组成的元组
     """
@@ -116,7 +120,7 @@ def set_prefs(opt):
 
 
 def _run_browser(port, path: str, args) -> Popen:
-    """创建chrome进程          \n
+    """创建chrome进程
     :param port: 端口号
     :param path: 浏览器地址
     :param args: 启动参数

@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from pathlib import Path
 
 from DrissionPage.functions.web import cookies_to_tuple
@@ -33,7 +36,7 @@ class SessionOptions(object):
         self._del_set = set()  # 记录要从ini文件删除的参数
 
         if read_file:
-            self.ini_path = ini_path or str(Path(__file__).parent / 'configs.ini')
+            self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.session_options
 
