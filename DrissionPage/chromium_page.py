@@ -505,19 +505,30 @@ class WindowSetter(object):
 
     def maximized(self):
         """窗口最大化"""
+        s = self._get_info()['bounds']['windowState']
+        if s in ('fullscreen', 'minimized'):
+            self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'maximized'})
 
     def minimized(self):
         """窗口最小化"""
+        s = self._get_info()['bounds']['windowState']
+        if s == 'fullscreen':
+            self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'minimized'})
 
     def fullscreen(self):
         """设置窗口为全屏"""
+        s = self._get_info()['bounds']['windowState']
+        if s == 'minimized':
+            self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'fullscreen'})
 
     def normal(self):
         """设置窗口为常规模式"""
-        self._perform({'windowState': 'normal'})
+        s = self._get_info()['bounds']['windowState']
+        if s == 'fullscreen':
+            self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'normal'})
 
     def size(self, width=None, height=None):
@@ -527,6 +538,9 @@ class WindowSetter(object):
         :return: None
         """
         if width or height:
+            s = self._get_info()['bounds']['windowState']
+            if s != 'normal':
+                self._perform({'windowState': 'normal'})
             info = self._get_info()['bounds']
             width = width or info['width']
             height = height or info['height']
@@ -538,11 +552,11 @@ class WindowSetter(object):
         :param y: 距离左边距离
         :return: None
         """
-        if x or y:
+        if x is not None or y is not None:
             self.normal()
             info = self._get_info()['bounds']
-            x = x or info['left']
-            y = y or info['top']
+            x = x if x is not None else info['left']
+            y = y if y is not None else info['top']
             self._perform({'left': x, 'top': y})
 
     def _get_info(self):
