@@ -20,7 +20,3 @@ from .keys import Keys
 from .mix_page import MixPage
 from .drission import Drission
 from .configs.driver_options import DriverOptions
-
-from warnings import filterwarnings
-
-filterwarnings('ignore')

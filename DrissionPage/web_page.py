@@ -5,13 +5,14 @@
 """
 from pathlib import Path
 from time import sleep
+from warnings import warn
 
 from requests import Session
 from tldextract import extract
 
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver
+from .chromium_driver import ChromiumDriver, CallMethodException
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
@@ -507,9 +508,10 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
 
         if self._page._has_driver:
             try:
-                self._page.run_cdp('Browser.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
-                                   not_change=True)
-            except:
+                self._page.browser_driver.Browser.setDownloadBehavior(behavior=self._behavior, downloadPath=path,
+                                                                      eventsEnabled=True)
+            except CallMethodException:
+                warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
                 self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
                                    not_change=True)
 
@@ -517,15 +519,26 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         """设置使用浏览器下载文件"""
         if not self._page._has_driver:
             raise RuntimeError('浏览器未连接。')
-        self._page.driver.Page.downloadWillBegin = self._download_by_browser
-        self._page.driver.Browser.downloadWillBegin = self._download_by_browser
-        self._page.driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+
+        try:
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+                                                                  downloadPath=self._page.download_path)
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
+
+        except CallMethodException:
+            warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
+            self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+            self._page.driver.Page.downloadWillBegin = self._download_by_browser
+
         self._behavior = 'allow'
 
     def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
         if self._page._has_driver:
-            self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
-            self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-            self._page.driver.Browser.setDownloadBehavior(behavior='deny')
+            try:
+                self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+                self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+            except CallMethodException:
+                raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
+
         self._behavior = 'deny'

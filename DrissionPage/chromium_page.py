@@ -7,11 +7,12 @@ from pathlib import Path
 from platform import system
 from threading import Thread
 from time import perf_counter, sleep
+from warnings import warn
 
 from requests import Session
 
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver
+from .chromium_driver import ChromiumDriver, CallMethodException
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
@@ -30,6 +31,7 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 超时时间
         """
         self._download_set = None
+        self._download_path = None
         super().__init__(addr_driver_opts, tab_id, timeout)
 
     def _connect_browser(self, addr_driver_opts=None, tab_id=None):
@@ -93,10 +95,21 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         super()._init_page(tab_id)
+        ws = self._control_session.get(f'http://{self.address}/json/version').json()['webSocketDebuggerUrl']
+        self._browser_driver = ChromiumDriver(ws.split('/')[-1], 'browser', self.address)
+        self._browser_driver.start()
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
         self._main_tab = self.tab_id
-        self.download_set.by_DownloadKit()
+        try:
+            self.download_set.by_DownloadKit()
+        except RuntimeError:
+            pass
+
+    @property
+    def browser_driver(self):
+        """返回用于控制浏览器cdp的driver"""
+        return self._browser_driver
 
     @property
     def tabs_count(self):
@@ -106,7 +119,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        j = self._control_session.get(f'http://{self.address}/json').json()
+        j = self._control_session.get(f'http://{self.address}/json').json()  # 不要改用cdp
         return [i['id'] for i in j if i['type'] == 'page']
 
     @property
@@ -388,6 +401,9 @@ class ChromiumDownloadSetter(DownloadSetter):
     """用于设置下载参数的类"""
 
     def __init__(self, page):
+        """
+        :param page: ChromiumPage对象
+        """
         super().__init__(page)
         self._behavior = 'allow'
         self._download_th = None
@@ -419,24 +435,33 @@ class ChromiumDownloadSetter(DownloadSetter):
         path = str(path)
         self._page._download_path = path
         try:
-            self._page.run_cdp('Browser.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
-        except:
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=path,
+                                                                  eventsEnabled=True)
+        except CallMethodException:
+            warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
             self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
 
         self.DownloadKit.goal_path = path
 
     def by_browser(self):
         """设置使用浏览器下载文件"""
-        self._page.driver.Page.downloadWillBegin = self._download_by_browser
-        self._page.driver.Browser.downloadWillBegin = self._download_by_browser
-        self._page.driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+        try:
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+                                                                  downloadPath=self._page.download_path)
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
+        except CallMethodException:
+            self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+            self._page.driver.Page.downloadWillBegin = self._download_by_browser
+
         self._behavior = 'allow'
 
     def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
-        self._page.driver.Page.downloadWillBegin = self._download_by_DownloadKit
-        self._page.driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-        self._page.driver.Browser.setDownloadBehavior(behavior='deny')
+        try:
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+        except CallMethodException:
+            raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
         self._behavior = 'deny'
 
     def wait_download_begin(self, timeout=None):
@@ -465,7 +490,7 @@ class ChromiumDownloadSetter(DownloadSetter):
 
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""
-        self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'], not_change=True)
+        self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
         self._page.download.add(file_url=kwargs['url'], goal_path=self._page.download_path,
                                 rename=kwargs['suggestedFilename'])
         if self._download_th is None or not self._download_th.is_alive():

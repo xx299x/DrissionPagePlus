@@ -1,5 +1,5 @@
 `SessionOptions`对象用于管理`Session`对象连接配置。  
-其使用逻辑与`DriverOptions`相似。
+其使用逻辑与`ChromiumOptions`相似。
 
 !> **注意：** <br>`SessionOptions`仅用于管理启动配置，程序启动后再修改无效。
 

@@ -58,7 +58,7 @@ def set_paths(driver_path=None,
         om.set_item('paths', 'chromedriver_path', format_path(driver_path))
 
     if chrome_path is not None:
-        om.set_item('chrome_options', 'binary_location', format_path(browser_path))
+        om.set_item('chrome_options', 'binary_location', format_path(chrome_path))
 
     if browser_path is not None:
         om.set_item('chrome_options', 'binary_location', format_path(browser_path))
