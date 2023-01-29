@@ -352,7 +352,7 @@ so.save(path=r'D:\tmp\settings.ini')
 
 ## 📍 `save_to_default()`
 
-此方法用于保存配置项到固定的默认 ini 文件。默认 ini 文件是指随`DrissionPage`内置的那个。
+此方法用于保存配置项到固定的默认 ini 文件。默认 ini 文件是指随 DrissionPage 内置的那个。
 
 **参数：** 无
 
