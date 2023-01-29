@@ -16,7 +16,7 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 python 版本：3.6 及以上
 
-支持浏览器：Chromium 内核（如 Chrome 和 edge）
+支持浏览器：Chromium 内核（如 Chrome 和 Edge）
 
 *** 
 

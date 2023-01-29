@@ -22,7 +22,7 @@ from .configs.driver_options import DriverOptions
 class ChromiumPage(ChromiumBase):
 
     def __init__(self,
-                 addr_driver_opts: Union[str, ChromiumOptions, DriverOptions] = None,
+                 addr_driver_opts: Union[str, ChromiumOptions, ChromiumDriver, DriverOptions] = None,
                  tab_id: str = None,
                  timeout: float = None):
         self._driver_options: [ChromiumDriver, DriverOptions] = ...

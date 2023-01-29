@@ -1,3 +1,5 @@
+# ✨️ 概述
+
 DrissionPage 是一个基于 python 的网页自动化工具。
 
 它既能控制浏览器，也能收发数据包，甚至能把两者合而为一，
@@ -14,7 +16,7 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 python 版本：3.6 及以上
 
-支持浏览器：Chromium 内核浏览器（如 Chrome 和 edge）
+支持浏览器：Chromium 内核浏览器（如 Chrome 和 Edge）
 
 *** 
 
@@ -96,7 +98,7 @@ python 版本：3.6 及以上
 
 以下代码实现一模一样的功能，对比两者的代码量：
 
-✨️ 用显性等待方式定位第一个文本包含`some text`的元素
+🔸 用显性等待方式定位第一个文本包含`some text`的元素
 
 ```python
 # 使用 selenium：
@@ -106,7 +108,7 @@ element = WebDriverWait(driver).until(ec.presence_of_element_located((By.XPATH, 
 element = page('some text')
 ```
 
-✨️ 跳转到第一个标签页
+🔸 跳转到第一个标签页
 
 ```python
 # 使用 selenium：
@@ -116,7 +118,7 @@ driver.switch_to.window(driver.window_handles[0])
 page.to_tab(page.tabs[0])
 ```
 
-✨️ 按文本选择下拉列表
+🔸 按文本选择下拉列表
 
 ```python
 # 使用 selenium：
@@ -129,7 +131,7 @@ select_element.select_by_visible_text('text')
 element.select('text')
 ```
 
-✨️ 拖拽一个元素
+🔸 拖拽一个元素
 
 ```python
 # 使用 selenium：
@@ -139,7 +141,7 @@ ActionChains(driver).drag_and_drop(ele1, ele2).perform()
 ele1.drag_to(ele2)
 ```
 
-✨️ 滚动窗口到底部（保持水平滚动条不变）
+🔸 滚动窗口到底部（保持水平滚动条不变）
 
 ```python
 # 使用 selenium：
@@ -149,7 +151,7 @@ driver.execute_script("window.scrollTo(document.documentElement.scrollLeft, docu
 page.scroll.to_bottom()
 ```
 
-✨️ 获取伪元素内容
+🔸 获取伪元素内容
 
 ```python
 # 使用 selenium：
@@ -160,7 +162,7 @@ text = webdriver.execute_script('return window.getComputedStyle(arguments[0], ":
 text = element.pseudo_after
 ```
 
-✨️ shadow-root 操作
+🔸 shadow-root 操作
 
 ```python
 # 使用 selenium：
@@ -174,7 +176,7 @@ ele = shadow_element.ele('tag:div')
 ele.click()
 ```
 
-✨️ 随时让浏览器窗口消失和显示（Windows系统）
+🔸 随时让浏览器窗口消失和显示（Windows系统）
 
 ```python
 # selenium 无此功能
@@ -188,7 +190,7 @@ page.show_browser()  # 重新显示浏览器窗口
 
 以下代码实现一模一样的功能，对比两者的代码量：
 
-✨️ 获取元素内容
+🔸 获取元素内容
 
 ```python
 url = 'https://baike.baidu.com/item/python'
@@ -210,7 +212,7 @@ title = page('tag:h1').text
 
 Tips: DrissionPage 自带默认`headers`
 
-✨️ 下载文件
+🔸 下载文件
 
 ```python
 url = 'https://www.baidu.com/img/flexible/logo/pc/result.png'

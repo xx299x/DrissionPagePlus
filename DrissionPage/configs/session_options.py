@@ -181,7 +181,7 @@ class SessionOptions(object):
 
     @property
     def auth(self):
-        """返回auth设置信息"""
+        """返回认证设置信息"""
         return self._auth
 
     def set_auth(self, auth):
@@ -201,7 +201,7 @@ class SessionOptions(object):
 
     def set_hooks(self, hooks):
         """设置回调方法
-        :param hooks:
+        :param hooks: 回调方法
         :return: 返回当前对象
         """
         self._hooks = hooks
@@ -209,7 +209,7 @@ class SessionOptions(object):
 
     @property
     def params(self):
-        """返回params设置信息"""
+        """返回连接参数设置信息"""
         if self._params is None:
             self._params = {}
         return self._params
@@ -237,7 +237,7 @@ class SessionOptions(object):
 
     @property
     def cert(self):
-        """返回cert设置信息"""
+        """返回SSL证书设置信息"""
         return self._cert
 
     def set_cert(self, cert):
@@ -266,7 +266,7 @@ class SessionOptions(object):
 
     @property
     def stream(self):
-        """返回stream设置信息"""
+        """返回是否使用流式响应内容设置信息"""
         return self._stream
 
     def set_stream(self, on_off):
@@ -279,7 +279,7 @@ class SessionOptions(object):
 
     @property
     def trust_env(self):
-        """返回trust_env设置信息"""
+        """返回是否信任环境设置信息"""
         return self._trust_env
 
     def set_trust_env(self, on_off):
@@ -387,7 +387,7 @@ def session_options_to_dict(options):
         return options
 
     re_dict = dict()
-    attrs = ['headers', 'cookies', 'proxies', 'params', 'verify', 'stream', 'trust_env',
+    attrs = ['headers', 'cookies', 'proxies', 'params', 'verify', 'stream', 'trust_env', 'cert',
              'max_redirects', 'timeout', 'download_path']
 
     for attr in attrs:

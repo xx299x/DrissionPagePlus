@@ -91,7 +91,7 @@ class ChromiumOptions(object):
 
     @property
     def page_load_strategy(self):
-        """返回页面加载策略设置"""
+        """返回页面加载策略，'normal', 'eager', 'none'"""
         return self._page_load_strategy
 
     @property
