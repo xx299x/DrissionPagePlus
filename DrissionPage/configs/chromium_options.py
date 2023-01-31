@@ -58,7 +58,7 @@ class ChromiumOptions(object):
             return
 
         self.ini_path = None
-        self._binary_location = ""
+        self._binary_location = "chrome"
         self._arguments = []
         self._download_path = None
         self._extensions = []

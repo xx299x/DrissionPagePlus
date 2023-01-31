@@ -52,7 +52,7 @@ class ChromiumPage(ChromiumBase):
         # 接收浏览器地址和端口
         elif isinstance(addr_driver_opts, str):
             self.address = addr_driver_opts
-            self._driver_options = ChromiumOptions(read_file=False)
+            self._driver_options = ChromiumOptions()
             self._driver_options.debugger_address = addr_driver_opts
             self.process = connect_browser(self._driver_options)[1]
             if not tab_id:
