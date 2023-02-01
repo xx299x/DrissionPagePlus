@@ -168,6 +168,8 @@ class ChromiumBase(BasePage):
             if self._debug_recorder:
                 self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
 
+        self._get_document()
+
     def _onDocumentUpdated(self, **kwargs):
         """页面跳转时触发"""
         if self._debug:
@@ -177,10 +179,12 @@ class ChromiumBase(BasePage):
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
-        if self._debug and not kwargs['frame'].get('parentId', None):
-            print('navigated')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
+        if kwargs['frame'].get('parentId', None) == self.tab_id and self._first_run is False and self._is_loading:
+            self._is_loading = True
+            if self._debug:
+                print('navigated')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素

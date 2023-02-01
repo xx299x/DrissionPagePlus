@@ -261,6 +261,10 @@ class ChromiumPage(ChromiumBase):
         """跳转到主标签页"""
         self.to_tab(self._main_tab)
 
+    def to_new_tab(self):
+        """切换到最新的标签页"""
+        self.to_tab(self.tabs[0])
+
     def to_tab(self, tab_id=None, activate=True):
         """跳转到标签页
         :param tab_id: 标签页id字符串，默认跳转到main_tab
