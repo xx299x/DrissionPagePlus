@@ -81,7 +81,7 @@ class SessionElement(DrissionElement):
         """
         return super().parent(level_or_loc)
 
-    def prev(self, filter_loc='', index=1, timeout=0):
+    def prev(self, filter_loc='', index=1, timeout=None):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 前面第几个查询结果元素
@@ -90,7 +90,7 @@ class SessionElement(DrissionElement):
         """
         return super().prev(index, filter_loc, timeout)
 
-    def next(self, filter_loc='', index=1, timeout=0):
+    def next(self, filter_loc='', index=1, timeout=None):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选元素的查询语法
         :param index: 后面第几个查询结果元素
@@ -117,7 +117,7 @@ class SessionElement(DrissionElement):
         """
         return super().after(index, filter_loc, timeout)
 
-    def prevs(self, filter_loc='', timeout=0):
+    def prevs(self, filter_loc='', timeout=None):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
@@ -125,7 +125,7 @@ class SessionElement(DrissionElement):
         """
         return super().prevs(filter_loc, timeout)
 
-    def nexts(self, filter_loc='', timeout=0):
+    def nexts(self, filter_loc='', timeout=None):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间

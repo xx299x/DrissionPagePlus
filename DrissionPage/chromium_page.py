@@ -350,6 +350,7 @@ class ChromiumPage(ChromiumBase):
         :return: 提示框内容文本，未等到提示框则返回None
         """
         timeout = timeout or self.timeout
+        timeout = .1 if timeout <= 0 else timeout
         end_time = perf_counter() + timeout
         while not self._alert.activated and perf_counter() < end_time:
             sleep(.1)

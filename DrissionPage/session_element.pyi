@@ -54,12 +54,12 @@ class SessionElement(DrissionElement):
     def prev(self,
              filter_loc: Union[tuple, str] = '',
              index: int = 1,
-             timeout: float = 0) -> Union['SessionElement', str, None]: ...
+             timeout: float = None) -> Union['SessionElement', str, None]: ...
 
     def next(self,
              filter_loc: Union[tuple, str] = '',
              index: int = 1,
-             timeout: float = 0) -> Union['SessionElement', str, None]: ...
+             timeout: float = None) -> Union['SessionElement', str, None]: ...
 
     def before(self,
                filter_loc: Union[tuple, str] = '',
@@ -73,11 +73,11 @@ class SessionElement(DrissionElement):
 
     def prevs(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['SessionElement', str]]: ...
+              timeout: float = None) -> List[Union['SessionElement', str]]: ...
 
     def nexts(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0) -> List[Union['SessionElement', str]]: ...
+              timeout: float = None) -> List[Union['SessionElement', str]]: ...
 
     def befores(self,
                 filter_loc: Union[tuple, str] = '',

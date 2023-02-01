@@ -94,7 +94,7 @@ class SessionPage(BasePage):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性文本
         """
         return self.ele(loc_or_str)
@@ -160,7 +160,7 @@ class SessionPage(BasePage):
     def ele(self, loc_or_ele, timeout=None):
         """返回页面中符合条件的第一个元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_ele)
@@ -168,7 +168,7 @@ class SessionPage(BasePage):
     def eles(self, loc_or_str, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
