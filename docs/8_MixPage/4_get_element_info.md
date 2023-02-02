@@ -1,0 +1,373 @@
+获取到须要的页面元素后，可以使用元素对象获取元素的信息。
+
+本库有三种元素对象，分别是`DriverElement`、`ShadowRootElement`、`SessionElement`，前两者是 d 模式下通过浏览器页面元素生成，后者由静态文本生成。`DriverElement`
+和`SessionElement`的基本属性一致。
+
+`ShadowRootElement`由于是 shadow dom 元素，属性比较其余两种少，下文单独介绍。
+
+# ✔️ 示例
+
+```python
+from DrissionPage import MixPage
+
+page = MixPage('s')
+page.get('https://gitee.com/explore')
+
+# 获取推荐目录下所有 a 元素
+li_eles = page('tag:ul@@text():全部推荐项目').eles('t:a')
+
+for i in li_eles:  # 遍历列表
+    print(i.tag, i.text, i.attr('href'))  # 获取并打印标签名、文本、href 属性
+
+"""输出：
+a 全部推荐项目 https://gitee.com/explore/all
+a 前沿技术 https://gitee.com/explore/new-tech
+a 智能硬件 https://gitee.com/explore/hardware
+a IOT/物联网/边缘计算 https://gitee.com/explore/iot
+a 车载应用 https://gitee.com/explore/vehicle
+以下省略……
+"""
+```
+
+# ✔️ 两种模式共有属性
+
+假设`ele`为以下`div`元素的对象：
+
+```html
+<div id="div1">Hello World!
+    <p>行元素</p>
+    <!--这是注释-->
+</div>
+```
+
+## 📍 `html`
+
+此属性返回元素的`outerHTML`文本。
+
+```python
+html = ele.html
+"""返回：
+<div id="div1">Hello World!
+    <p>&#34892;&#20803;&#32032;</p>
+    <!--&#36825;&#26159;&#27880;&#37322;-->
+</div>
+"""
+```
+
+## 📍 `inner_html`
+
+此属性返回元素的`innerHTML`文本。
+
+```python
+inner_html = ele.inner_html
+"""返回：
+Hello World!
+    <p>&#34892;&#20803;&#32032;</p>
+    <!--&#36825;&#26159;&#27880;&#37322;-->
+"""
+```
+
+## 📍 `tag`
+
+此属性返回元素的标签名。
+
+```python
+tag = ele.tag  
+# 返回：div
+```
+
+## 📍 `text`
+
+此属性返回元素内所有文本组合成的字符串。  
+该字符串已格式化，即已转码，已去除多余换行符，符合人读取习惯，便于直接使用。无须重复写处理代码。
+
+```python
+text = ele.text
+"""返回：
+Hello World!
+行元素
+"""
+```
+
+## 📍 `raw_text`
+
+此属性返回元素内原始文本。
+
+```python
+text = ele.raw_text
+"""返回（注意保留了元素间的空格和换行）：
+Hello World!
+    行元素
+
+
+"""
+```
+
+## 📍 `texts()`
+
+此方法返回元素内所有直接子节点的文本，包括元素和文本节点。 它有一个参数`text_node_only`，为`True`时则只获取只返回文本节点。这个方法适用于获取文本节点和元素节点混排的情况。
+
+**参数：**
+
+- `text_node_only`：是否只返回文本节点
+
+**返回：** 文本列表
+
+```python
+texts = ele.texts()
+print(e.texts(text_node_only=True))
+print(e.texts())
+```
+
+**输出：**
+
+```console
+['Hello World!', '行元素']
+['Hello World!']
+```
+
+## 📍 `comments`
+
+```python
+comments = ele.comments
+# 返回：[<!--这是注释-->]
+```
+
+## 📍 `attrs`
+
+此属性以字典形式返回元素所有属性及值。
+
+```python
+attrs = ele.attrs  
+# 返回：{'id': 'div1'}
+```
+
+## 📍 `attr()`
+
+此方法返回元素某个`attribute`属性值。它接收一个字符串参数`attr`，返回该属性值文本，无该属性时返回`None`。  
+此属性返回的`src`、`href`属性为已补充完整的路径。`text`属性为已格式化文本，`innerText`属性为未格式化文本。
+
+**参数：**
+
+- `attr`：属性名称
+
+**返回：** 属性值文本
+
+```python
+ele_id = ele.attr('id')  
+# 返回：div1
+```
+
+## 📍 `link`
+
+此方法返回元素的 href 属性或 src 属性，没有这两个属性则返回`None`。
+
+```html
+<a href='http://www.baidu.com'>百度</a>
+```
+
+假设`a_ele`为以上元素的对象：
+
+```python
+link = a_ele.link  
+# 返回：http://www.baidu.com
+```
+
+## 📍 `page`
+
+此属性返回元素所在的页面对象。
+
+- 由页面对象生成的元素返回该页面对象，如`MixPage`，`DriverPage`，`SessionPage`
+- 由 html 文本直接生成的`SessionElement`的`page`属性为`None`。
+
+```python
+page = ele.page
+```
+
+## 📍 `inner_ele`
+
+此属性返回被当前元素包装的对应模式原本的元素对象。  
+d 模式包装的是一个 selenium 的`WebElement`对象，s 模式包装的是一个 lxml 的`HtmlElement`对象。  
+获取该对象，可直接使用该对象以该库的原生代码来执行须要的操作，便于不同项目的对接，及使用本库没有封装的功能。
+
+```python
+# 获取元素的 WebElement 对象
+web_ele = ele.inner_ele
+# 使用 selenium 原生的元素点击方法
+web_ele.find_element(By.ID, 'ele_id').click()  
+```
+
+## 📍 `xpath`
+
+此属性返回当前元素在页面中 xpath 的绝对路径。
+
+```python
+xpath = ele.xpath  
+#  返回：/html/body/div
+```
+
+## 📍 `css_path`
+
+此属性返回当前元素在页面中 css selector 的绝对路径。
+
+```python
+css = ele.css_path  
+# 返回：:nth-child(1)>:nth-child(1)>:nth-child(1)
+```
+
+## 📍 `is_valid()`
+
+此方法返回当前元素是否可用。`SessionElement`始终返回`True`，`DriverElement`视乎元素是否还在 DOM 内返回布尔值。
+
+**参数：** 无
+
+**返回：**`bool`类型
+
+```python
+is_valid = ele.is_valid()
+```
+
+# ✔️ DriverElement 独有属性
+
+## 📍 `size`
+
+此属性以字典形式返回元素的大小。
+
+```python
+size = ele.size
+# 返回：{'height': 50, 'width': 50}
+```
+
+## 📍 `location`
+
+此属性以字典形式返回元素坐标。
+
+```python
+loc = ele.location
+# 返回：{'x': 50, 'y': 50}
+```
+
+## 📍 `pseudo_before`
+
+此属性以文本形式返回当前元素的`::before`伪元素内容。
+
+```python
+before_txt = ele.pseudo_before
+```
+
+## 📍 `pseudo_after`
+
+此属性以文本形式返回当前元素的`::after`伪元素内容。
+
+```python
+after_txt = ele.pseudo_after
+```
+
+## 📍 `style()`
+
+该方法返回元素 css 样式属性值，可获取伪元素的属性。它有两个参数，`style`参数输入样式属性名称，`pseudo_ele`参数输入伪元素名称，省略则获取普通元素的 css 样式属性。
+
+**参数：**
+
+- `style`：样式名称
+- `pseudo_ele`：伪元素名称（如有）
+
+**返回：** 样式属性值
+
+```python
+# 获取 css 属性的 color 值
+prop = ele.style('color')
+
+# 获取 after 伪元素的内容
+prop = ele.style('content', 'after')
+```
+
+## 📍 `prop()`
+
+此方法返回`property`属性值。它接收一个字符串参数，返回该参数的属性值。
+
+**参数：**
+
+- `prop`：属性名称
+
+**返回：** 属性值
+
+```python
+prop = ele.prop('value')
+```
+
+## 📍 `select`
+
+此属性返回 `select` 元素用于处理下拉列表的 Select 类（“[元素操作](元素操作.md)”章节说明），非下拉列表元素返回`False`。
+
+## 📍 `is_selected()`
+
+此方法以布尔值返回元素是否选中。
+
+**参数：** 无
+
+**返回：** `bool`
+
+```python
+selected = ele.is_selected()
+```
+
+## 📍 `is_enabled()`
+
+此方法以布尔值返回元素是否可用。
+
+**参数：** 无
+
+**返回：**`bool`
+
+```python
+enable = ele.is_enabled()
+```
+
+## 📍 `is_displayed()`
+
+此方法以布尔值返回元素是否可见。
+
+**参数：** 无
+
+**返回：**`bool`
+
+```python
+displayed = ele.is_displayed()
+```
+
+# ✔️ `ShadowRootElement`属性与方法
+
+本库把 shadow dom 的`root`看作一个元素处理，可以获取属性，也可以执行其下级的查找，但其属性比较少。有如下这些：
+
+## 📍 `tag`
+
+此属性返回元素标签名，即`'shadow-root'`。
+
+## 📍 `html`
+
+此属性返回`shadow_root`的 html 文本，由`<shadow_root></shadow_root>` 标签包裹。
+
+## 📍 `inner_html`
+
+此属性返回`shadow_root`内部的 html 文本。
+
+## 📍 `page`
+
+此属性返回元素所在页面对象。
+
+## 📍 `inner_ele`
+
+此属性返回对象中保存的`shadow-root`元素。
+
+## 📍 `parent_ele`
+
+这是`ShadowRootElement`独有的属性，返回它所依附的普通元素对象。
+
+## 📍 `is_enabled()`
+
+与`DriverElement`一致。
+
+## 📍 `is_valid()`
+
+与`DriverElement`一致。
