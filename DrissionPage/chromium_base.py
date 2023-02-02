@@ -198,6 +198,7 @@ class ChromiumBase(BasePage):
     @property
     def title(self):
         """返回当前页面title"""
+        self._wait_loaded()
         return self._tab_obj.Target.getTargetInfo(targetId=self.tab_id)['targetInfo']['title']
 
     @property
@@ -225,11 +226,13 @@ class ChromiumBase(BasePage):
     @property
     def url(self):
         """返回当前页面url"""
+        self._wait_loaded()
         return self._tab_obj.Target.getTargetInfo(targetId=self.tab_id)['targetInfo']['url']
 
     @property
     def html(self):
         """返回当前页面html文本"""
+        self._wait_loaded()
         return self._wait_driver.DOM.getOuterHTML(objectId=self._root_id)['outerHTML']
 
     @property
@@ -338,13 +341,13 @@ class ChromiumBase(BasePage):
                                               timeout=timeout)
         return self._url_available
 
-    def wait_loading(self, timeout=1):
+    def wait_loading(self, timeout=None):
         """阻塞程序，等待页面进入加载状态
         :param timeout: 超时时间
         :return: 等待结束时是否进入加载状态
         """
-        if timeout:
-            timeout = 2 if timeout is True else timeout
+        if timeout != 0:
+            timeout = self.timeout if timeout in (None, True) else timeout
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
                 if self.is_loading:

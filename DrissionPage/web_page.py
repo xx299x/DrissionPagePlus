@@ -318,6 +318,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param mode: 模式字符串
         :param go: 是否跳转到原模式的url
         :param copy_cookies: 是否复制cookies到目标模式
+        :return: None
         """
         if mode is not None and mode.lower() == self._mode:
             return
