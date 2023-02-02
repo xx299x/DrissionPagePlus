@@ -24,10 +24,9 @@ from .session_page import SessionPage
 class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
-    def __init__(self, mode='d', timeout=None, tab_id=None, driver_or_options=None, session_or_options=None):
+    def __init__(self, mode='d', timeout=None, driver_or_options=None, session_or_options=None):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
-        :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
         :param driver_or_options: ChromiumDriver对象或DriverOptions对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
@@ -45,7 +44,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._tab_obj = None
         self._driver_options = None
         self._session_options = None
-        self._setting_tab_id = tab_id
         self._response = None
         self._download_set = None
 
@@ -199,7 +197,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """返回纯粹的ChromiumDriver对象，调用时切换到d模式，并连接浏览器"""
         self.change_mode('d')
         if self._tab_obj is None:
-            self._connect_browser(self._driver_options, self._setting_tab_id)
+            self._connect_browser(self._driver_options)
         return self._tab_obj
 
     @_driver.setter
@@ -329,7 +327,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         # s模式转d模式
         if self._mode == 'd':
             if self._tab_obj is None:
-                self._connect_browser(self._driver_options, self._setting_tab_id)
+                self._connect_browser(self._driver_options)
 
             self._url = None if not self._has_driver else super(SessionPage, self).url
             self._has_driver = True

@@ -127,6 +127,11 @@ class ChromiumPage(ChromiumBase):
         return self._main_tab
 
     @property
+    def latest_tab(self):
+        """返回最新的标签页id，最新标签页指最后创建或最后被激活的"""
+        return self.tabs[0]
+
+    @property
     def process_id(self):
         """返回浏览器进程id"""
         try:
@@ -260,10 +265,6 @@ class ChromiumPage(ChromiumBase):
     def to_main_tab(self):
         """跳转到主标签页"""
         self.to_tab(self._main_tab)
-
-    def to_new_tab(self):
-        """切换到最新的标签页"""
-        self.to_tab(self.tabs[0])
 
     def to_tab(self, tab_id=None, activate=True):
         """跳转到标签页

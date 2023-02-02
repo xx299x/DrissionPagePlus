@@ -436,17 +436,20 @@ class ChromiumBase(BasePage):
 
         nodeIds = None
         end_time = perf_counter() + timeout
+        ok = False
         while True:
             if count > 0:
                 count = 1 if single else count
                 try:
                     nodeIds = self._wait_driver.DOM.getSearchResults(searchId=search_result['searchId'],
                                                                      fromIndex=0, toIndex=count)
-                    break
+                    if nodeIds['nodeIds'][0] != 0:
+                        ok = True
+
                 except Exception:
                     sleep(.01)
 
-            if perf_counter() >= end_time:
+            if ok or perf_counter() >= end_time:
                 break
 
             search_result = self._wait_driver.DOM.performSearch(query=loc, includeUserAgentShadowDOM=True)
