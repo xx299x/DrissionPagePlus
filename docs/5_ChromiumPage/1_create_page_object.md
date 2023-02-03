@@ -52,9 +52,9 @@ page = ChromiumPage()
 from DrissionPage import ChromiumPage, ChromiumOptions
 
 # 创建浏览器配置对象，指定浏览器路径
-do = ChromiumOptions().set_paths(browser_path=r'D:\chrome.exe')
+co = ChromiumOptions().set_paths(browser_path=r'D:\chrome.exe')
 # 用该配置创建页面对象
-page = WebPage(addr_driver_opts=do)
+page = ChromiumPage(addr_driver_opts=co)
 ```
 
 ---

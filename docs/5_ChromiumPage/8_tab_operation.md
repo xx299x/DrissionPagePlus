@@ -278,7 +278,7 @@ tab.get('https://www.baidu.com')  # 使用标签页对象
 
 而用`ChromiumPage`，点开标签页后焦点无须移动，可直接生成一个新标签页的页面对象，对新页面进行采集，而原来列表页的对象可以继续操作下一个链接。甚至可以用多线程控制多个标签页，实现各种黑科技。
 
-我们用 gitee 的推进项目页面做个演示：[最新推荐项目 - Gitee.com](https://gitee.com/explore/all)
+我们用 gitee 的推荐项目页面做个演示：[最新推荐项目 - Gitee.com](https://gitee.com/explore/all)
 
 ```python
 from DrissionPage import ChromiumPage
