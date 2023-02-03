@@ -389,6 +389,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return self._get_driver_cookies(as_dict)
 
+    def set_user_agent(self, ua, platform=None):
+        """设置user agent，d模式下只有当前tab有效"""
+        super().set_user_agent(ua)
+        super(SessionPage, self).set_user_agent(ua, platform)
+
     def _get_driver_cookies(self, as_dict=False):
         """获取浏览器cookies
         :param as_dict: 以dict形式返回

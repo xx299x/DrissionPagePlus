@@ -567,12 +567,16 @@ class ChromiumBase(BasePage):
                 raise RuntimeError('该元素已不在当前页面中。')
             raise
 
-    def set_user_agent(self, ua):
+    def set_user_agent(self, ua, platform=None):
         """为当前tab设置user agent，只在当前tab有效
         :param ua: user agent字符串
+        :param platform: platform字符串
         :return: None
         """
-        self._wait_driver.Network.setUserAgentOverride(userAgent=ua)
+        keys = {'userAgent': ua}
+        if platform:
+            keys['platform'] = platform
+        self._wait_driver.Emulation.setUserAgentOverride(**keys)
 
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部

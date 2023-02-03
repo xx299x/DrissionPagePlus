@@ -90,6 +90,10 @@ class SessionPage(BasePage):
         for i in headers:
             self.session.headers[i] = headers[i]
 
+    def set_user_agent(self, ua):
+        """设置user agent"""
+        self.session.headers['user-agent'] = ua
+
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
