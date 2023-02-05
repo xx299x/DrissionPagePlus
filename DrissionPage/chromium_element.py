@@ -744,6 +744,7 @@ class ChromiumElement(DrissionElement):
                 y += randint(-3, 4)
             actions.move(x - current_x, y - current_y)
             current_x, current_y = x, y
+            actions.wait(.1)
         actions.release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):

@@ -255,10 +255,12 @@ class ChromiumBase(BasePage):
 
     @property
     def size(self):
-        """返回页面总长高，格式：(长, 高)"""
-        w = self.run_js('document.body.scrollWidth;', as_expr=True)
-        h = self.run_js('document.body.scrollHeight;', as_expr=True)
-        return w, h
+        """返回页面总宽高，格式：(宽, 高)"""
+        # w = self.run_js('document.body.scrollWidth;', as_expr=True)
+        # h = self.run_js('document.body.scrollHeight;', as_expr=True)
+        # return w, h
+        r = self.run_cdp('Page.getLayoutMetrics', not_change=False)['contentSize']
+        return r['width'], r['height']
 
     @property
     def active_ele(self):
