@@ -63,6 +63,9 @@ def str_to_loc(loc):
     if loc.startswith('@@') and loc != '@@':
         loc_str = _make_multi_xpath_str('*', loc)
 
+    elif loc.startswith('@|') and loc != '@|':
+        loc_str = _make_multi_xpath_str('*', loc, False)
+
     # 单属性查找
     elif loc.startswith('@') and loc != '@':
         loc_str = _make_single_xpath_str('*', loc)
@@ -75,6 +78,8 @@ def str_to_loc(loc):
         else:
             if loc[at_ind:].startswith('@@'):
                 loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
+            elif loc[at_ind:].startswith('@|'):
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)
             else:
                 loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
 
@@ -144,14 +149,15 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
     return f'//*[{arg_str}]{txt_str}' if arg_str else f'//*{txt_str}'
 
 
-def _make_multi_xpath_str(tag: str, text: str) -> str:
+def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> str:
     """生成多属性查找的xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
+    :param _and: 是否与方式
     :return: xpath字符串
     """
-    arg_list = [] if tag == '*' else [f'name()="{tag}"']
-    args = text.split('@@')
+    arg_list = []
+    args = text.split('@@') if _and else text.split('@|')
 
     for arg in args[1:]:
         r = split(r'([:=])', arg, maxsplit=1)
@@ -180,7 +186,11 @@ def _make_multi_xpath_str(tag: str, text: str) -> str:
         if arg_str:
             arg_list.append(arg_str)
 
-    arg_str = ' and '.join(arg_list)
+    arg_str = ' and '.join(arg_list) if _and else ' or '.join(arg_list)
+    if tag != '*':
+        condition = f' and ({arg_str})' if arg_str else ''
+        arg_str = f'name()="{tag}"{condition}'
+
     return f'//*[{arg_str}]' if arg_str else f'//*'
 
 
