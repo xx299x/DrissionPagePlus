@@ -146,8 +146,9 @@ class ChromiumDriver(object):
             if event['method'] in self.event_handlers:
                 try:
                     self.event_handlers[event['method']](**event['params'])
-                except Exception as e:
-                    raise RuntimeError(f"回调函数 {event['method']} 错误：{e}")
+                except Exception:
+                    pass
+                    # raise RuntimeError(f"回调函数 {event['method']} 错误：{e}")
 
             self.event_queue.task_done()
 
@@ -169,10 +170,12 @@ class ChromiumDriver(object):
             raise CallMethodException("参数必须是key=value形式。")
 
         if self._stopped.is_set():
-            raise RuntimeError("Driver已经停止。")
+            return {'tab_closed': True}
 
         timeout = kwargs.pop("_timeout", None)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
+        if result is None:
+            return {'tab_closed': True}
         if 'result' not in result and 'error' in result:
             raise CallMethodException(f"\n调用方法：{_method}\n参数：{kwargs}\n错误：{result['error']['message']}")
 
@@ -204,6 +207,9 @@ class ChromiumDriver(object):
         self._stopped.set()
         if self._ws:
             self._ws.close()
+        self.event_handlers = {}
+        self.method_results = {}
+        self.event_queue = Queue()
         return True
 
     def set_listener(self, event, callback):

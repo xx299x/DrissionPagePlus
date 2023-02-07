@@ -93,7 +93,11 @@ class ChromiumBase(BasePage):
                 if self._debug_recorder:
                     self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
 
-            self._wait_loaded()
+            try:  # 处理标签页关闭的情况
+                self._wait_loaded()
+            except ConnectionError:
+                return
+
             while True:
                 try:
                     root_id = self._tab_obj.DOM.getDocument()['root']['nodeId']
@@ -251,7 +255,10 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        return self._tab_obj.Runtime.evaluate(expression='document.readyState;')['result']['value']
+        try:
+            return self._tab_obj.Runtime.evaluate(expression='document.readyState;')['result']['value']
+        except KeyError:
+            raise ConnectionError('标签页或连接已关闭。')
 
     @property
     def size(self):
