@@ -48,7 +48,16 @@ class ChromiumFrame(ChromiumBase):
         self._timeouts = self.page.timeouts
         self._page_load_strategy = self.page.page_load_strategy
 
+    def _init_page(self, tab_id=None):
+        """避免出现服务器500错误
+        :param tab_id: 要跳转到的标签页id
+        :return: None
+        """
+        self._control_session.get(f'http://{self.address}/json')
+        super()._init_page(tab_id)
+
     def _reload(self):
+        """重新获取document"""
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
         node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
 
@@ -64,6 +73,7 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
     def _check_ok(self):
+        """"""
         if self._tab_obj._stopped.is_set():
             self._reload()
 
@@ -71,7 +81,7 @@ class ChromiumFrame(ChromiumBase):
             self._tab_obj.DOM.describeNode(nodeId=self.node_id)
         except Exception:
             self._reload()
-            sleep(2)
+            # sleep(2)
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
