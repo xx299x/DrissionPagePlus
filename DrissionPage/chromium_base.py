@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from json import loads
+from pathlib import Path
 from time import perf_counter, sleep
 
 from requests import Session
@@ -54,13 +55,15 @@ class ChromiumBase(BasePage):
         self._first_run = False
 
     def _chromium_init(self):
+        """浏览器初始设置"""
         self._control_session = Session()
         self._control_session.keep_alive = False
         self._first_run = True
         self._is_reading = False
+        self._upload_list = None
 
     def _set_options(self):
-        """用于设置浏览器运行参数"""
+        """设置与s模式共用的运行参数，便于被子类覆盖"""
         self._timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
 
@@ -190,6 +193,26 @@ class ChromiumBase(BasePage):
                 if self._debug_recorder:
                     self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
+    def _onFileChooserOpened(self, **kwargs):
+        """文件选择框打开时触发"""
+        if self._upload_list:
+            files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
+            self._tab_obj.DOM.setFileInputFiles(files=files, backendNodeId=kwargs['backendNodeId'])
+            self._upload_list = []
+
+    def set_upload_files(self, files):
+        """等待上传的文件路径
+        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
+        :return: None
+        """
+        if self._upload_list is None:
+            self._tab_obj.Page.fileChooserOpened = self._onFileChooserOpened
+            self._tab_obj.Page.setInterceptFileChooserDialog(enabled=True)
+
+        if isinstance(files, str):
+            files = files.split('\n')
+        self._upload_list = [str(Path(i).absolute()) for i in files]
+
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
@@ -295,6 +318,11 @@ class ChromiumBase(BasePage):
     def set_page_load_strategy(self):
         """返回用于设置页面加载策略的对象"""
         return PageLoadStrategy(self)
+
+    @property
+    def upload_list(self):
+        """返回等待上传文件列表"""
+        return self._upload_list
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒

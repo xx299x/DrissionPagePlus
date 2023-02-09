@@ -551,8 +551,8 @@ class ChromiumElement(DrissionElement):
         except Exception:
             self.click(by_js=True)
 
-        if clear:
-            self.clear(by_js=True)
+        if clear and vals != '\n':
+            self.clear(by_js=False)
 
         # ------------处理字符-------------
         if not isinstance(vals, (tuple, list)):
@@ -1301,8 +1301,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_chan
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
-        print(script)
-        raise RuntimeError(f'javascript错误: {exceptionDetails}')
+        raise RuntimeError(f'javascript：{script}\n错误信息: {exceptionDetails}')
 
     try:
         return _parse_js_result(page, page_or_ele, res.get('result'))
