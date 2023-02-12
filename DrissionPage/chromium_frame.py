@@ -6,7 +6,7 @@
 from re import search
 from time import sleep
 
-from .chromium_base import ChromiumBase
+from .chromium_base import ChromiumBase, ChromiumPageScroll
 from .chromium_element import ChromiumElement
 
 
@@ -259,6 +259,11 @@ class ChromiumFrame(ChromiumBase):
                 except:
                     pass
 
+    @property
+    def scroll(self):
+        """返回用于等待的对象"""
+        return ChromiumFrameScroll(self)
+
     def refresh(self):
         """刷新frame页面"""
         self._check_ok()
@@ -445,3 +450,12 @@ class ChromiumFrame(ChromiumBase):
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
         return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
+
+
+class ChromiumFrameScroll(ChromiumPageScroll):
+    def __init__(self, frame):
+        """
+        :param frame: ChromiumFrame对象
+        """
+        self._driver = frame.doc_ele
+        self.t1 = self.t2 = 'this.documentElement'

@@ -12,7 +12,7 @@ from requests.cookies import RequestsCookieJar
 
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
-from .chromium_element import ChromiumElement, ChromiumElementWaiter, ChromiumScroll
+from .chromium_element import ChromiumElement, ChromiumScroll, ChromiumElementWaiter, ChromiumWaiter
 from .chromium_frame import ChromiumFrame
 from .session_element import SessionElement
 
@@ -109,7 +109,7 @@ class ChromiumBase(BasePage):
     def page_load_strategy(self) -> str: ...
 
     @property
-    def scroll(self) -> ChromiumScroll: ...
+    def scroll(self) -> ChromiumPageScroll: ...
 
     @property
     def timeouts(self) -> Timeout: ...
@@ -119,6 +119,9 @@ class ChromiumBase(BasePage):
 
     @property
     def upload_list(self) -> list: ...
+
+    @property
+    def wait(self) -> ChromiumPageWaiter: ...
 
     def set_timeouts(self, implicit: float = None, page_load: float = None, script: float = None) -> None: ...
 
@@ -133,7 +136,7 @@ class ChromiumBase(BasePage):
             interval: float = None,
             timeout: float = None) -> Union[None, bool]: ...
 
-    def wait_loading(self, timeout: float = 1) -> bool: ...
+    def wait_loading(self, timeout: float = None) -> bool: ...
 
     def get_cookies(self, as_dict: bool = False) -> Union[list, dict]: ...
 
@@ -161,7 +164,7 @@ class ChromiumBase(BasePage):
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, ChromiumElement],
-                 timeout: float = None) -> 'ChromiumElementWaiter': ...
+                 timeout: float = None) -> ChromiumElementWaiter: ...
 
     def scroll_to_see(self, loc_or_ele: Union[str, tuple, ChromiumElement]) -> None: ...
 
@@ -205,6 +208,23 @@ class ChromiumBase(BasePage):
                    interval: float = 1,
                    show_errmsg: bool = False,
                    timeout: float = None) -> Union[bool, None]: ...
+
+
+class ChromiumPageWaiter(ChromiumWaiter):
+    def __init__(self, page: ChromiumBase):
+        self._driver: ChromiumBase = ...
+
+    def _loading(self, timeout: Union[int, float] = None, start: bool = True) -> bool: ...
+
+    def load_start(self, timeout: Union[int, float] = None) -> bool: ...
+
+    def load_complete(self, timeout: Union[int, float] = None) -> bool: ...
+
+
+class ChromiumPageScroll(ChromiumScroll):
+    def __init__(self, page: ChromiumBase): ...
+
+    def to_see(self, loc_or_ele: Union[str, tuple, ChromiumElement]) -> None: ...
 
 
 class Timeout(object):

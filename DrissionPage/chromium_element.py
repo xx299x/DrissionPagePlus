@@ -7,6 +7,7 @@ from os import sep
 from os.path import basename
 from pathlib import Path
 from time import perf_counter, sleep
+from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .functions.locator import get_loc
@@ -270,13 +271,10 @@ class ChromiumElement(DrissionElement):
         """
         return super().afters(filter_loc, timeout)
 
-    def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待子元素到达某个状态的等待器对象
-        :param loc_or_ele: 可以是元素、查询字符串、loc元组
-        :param timeout: 等待超时时间
-        :return: 用于等待的ElementWaiter对象
-        """
-        return ChromiumElementWaiter(self, loc_or_ele, timeout)
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        return ChromiumWaiter(self)
 
     @property
     def select(self):
@@ -617,7 +615,7 @@ class ChromiumElement(DrissionElement):
             return True
 
         if not by_js:
-            self.page.scroll_to_see(self)
+            self.page.scroll.to_see(self)
             if self.is_in_viewport:
                 client_x, client_y = self._client_click_point
                 if client_x:
@@ -625,7 +623,7 @@ class ChromiumElement(DrissionElement):
 
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
-                        self.page.wait_loading(wait_loading)
+                        self.page.wait.load_start(wait_loading)
                         return True
 
                     timeout = timeout if timeout is not None else self.page.timeout
@@ -634,12 +632,12 @@ class ChromiumElement(DrissionElement):
                         click = do_it(client_x, client_y, loc_x, loc_y)
 
                     if click is not None:
-                        self.page.wait_loading(wait_loading)
+                        self.page.wait.load_start(wait_loading)
                         return True
 
         if by_js is not False:
             self.run_js('this.click();')
-            self.page.wait_loading(wait_loading)
+            self.page.wait.load_start(wait_loading)
             return True
 
         return False
@@ -651,13 +649,13 @@ class ChromiumElement(DrissionElement):
         :param button: 左键还是右键
         :return: None
         """
-        self.page.scroll_to_see(self)
+        self.page.scroll.to_see(self)
         x, y = offset_scroll(self, offset_x, offset_y)
         self._click(x, y, button)
 
     def r_click(self):
         """右键单击"""
-        self.page.scroll_to_see(self)
+        self.page.scroll.to_see(self)
         x, y = self._client_click_point
         self._click(x, y, 'right')
 
@@ -671,7 +669,7 @@ class ChromiumElement(DrissionElement):
 
     def m_click(self):
         """中键单击"""
-        self.page.scroll_to_see(self)
+        self.page.scroll.to_see(self)
         x, y = self._client_click_point
         self._click(x, y, 'middle')
 
@@ -693,7 +691,7 @@ class ChromiumElement(DrissionElement):
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        self.page.scroll_to_see(self)
+        self.page.scroll.to_see(self)
         x, y = offset_scroll(self, offset_x, offset_y)
         self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
 
@@ -834,6 +832,15 @@ class ChromiumElement(DrissionElement):
         xy = self.run_js(js)
         sx, sy = xy.split(' ')
         return int(x + float(sx)), int(y + float(sy))
+
+    def wait_ele(self, loc_or_ele, timeout=None):
+        """返回用于等待子元素到达某个状态的等待器对象
+        :param loc_or_ele: 可以是元素、查询字符串、loc元组
+        :param timeout: 等待超时时间
+        :return: 用于等待的ElementWaiter对象
+        """
+        warn("此方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
+        return ChromiumElementWaiter(self, loc_or_ele, timeout)
 
 
 class ChromiumShadowRootElement(BaseElement):
@@ -1395,19 +1402,12 @@ def _send_key(ele, modifier, key):
 class ChromiumScroll(object):
     """用于滚动的对象"""
 
-    def __init__(self, page_or_ele):
+    def __init__(self, ele):
         """
-        :param page_or_ele: 页面对象、元素对象或frame对象
+        :param ele: 元素对象
         """
-        self._driver = page_or_ele
-        if isinstance(page_or_ele, ChromiumElement):
-            self.t1 = self.t2 = 'this'
-        elif 'ChromiumFrame' in str(type(page_or_ele)):
-            self._driver = page_or_ele.doc_ele
-            self.t1 = self.t2 = 'this.documentElement'
-        else:
-            self.t1 = 'window'
-            self.t2 = 'document.documentElement'
+        self._driver = ele
+        self.t1 = self.t2 = 'this'
 
     def _run_js(self, js):
         js = js.format(self.t1, self.t2, self.t2)
@@ -1660,6 +1660,38 @@ class ChromiumSelect(object):
         return success
 
 
+class ChromiumWaiter(object):
+    def __init__(self, page_or_ele):
+        """
+        :param page_or_ele: 页面对象或元素对象
+        """
+        self._driver = page_or_ele
+
+    def ele_delete(self, loc_or_ele, timeout=None):
+        """
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 是否等待成功
+        """
+        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).delete()
+
+    def ele_display(self, loc_or_ele, timeout=None):
+        """
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 是否等待成功
+        """
+        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).display()
+
+    def ele_hidden(self, loc_or_ele, timeout=None):
+        """
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 是否等待成功
+        """
+        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).hidden()
+
+
 class ChromiumElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
@@ -1693,7 +1725,7 @@ class ChromiumElementWaiter(object):
 
         end_time = perf_counter() + self.timeout
         while perf_counter() < end_time:
-            if not self.loc_or_ele.is_alive:
+            if not ele.is_alive:
                 return True
 
         return False

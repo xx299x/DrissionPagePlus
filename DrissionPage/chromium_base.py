@@ -6,13 +6,15 @@
 from json import loads
 from pathlib import Path
 from time import perf_counter, sleep
+from warnings import warn
 
 from requests import Session
 
 from .functions.tools import get_usable_path
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
-from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
+from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
+    ChromiumElementWaiter
 from .functions.locator import get_loc
 from .functions.web import offset_scroll, cookies_to_tuple
 from .session_element import make_session_ele
@@ -306,9 +308,9 @@ class ChromiumBase(BasePage):
     @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
-        self._wait_loaded()
+        self.wait.load_complete()  # todo: 用run_js()负责等待，这里删除
         if not hasattr(self, '_scroll'):
-            self._scroll = ChromiumScroll(self)
+            self._scroll = ChromiumPageScroll(self)
         return self._scroll
 
     @property
@@ -325,6 +327,11 @@ class ChromiumBase(BasePage):
     def upload_list(self):
         """返回等待上传文件列表"""
         return self._upload_list
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        return ChromiumPageWaiter(self)
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒
@@ -377,20 +384,6 @@ class ChromiumBase(BasePage):
                                               show_errmsg=show_errmsg,
                                               timeout=timeout)
         return self._url_available
-
-    def wait_loading(self, timeout=None):
-        """阻塞程序，等待页面进入加载状态
-        :param timeout: 超时时间
-        :return: 等待结束时是否进入加载状态
-        """
-        if timeout != 0:
-            timeout = self.timeout if timeout in (None, True) else timeout
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
-                if self.is_loading:
-                    return True
-                sleep(.005)
-            return False
 
     def get_cookies(self, as_dict=False):
         """获取cookies信息
@@ -503,29 +496,6 @@ class ChromiumBase(BasePage):
         else:
             return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
 
-    def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待元素到达某个状态的等待器对象
-        :param loc_or_ele: 可以是元素、查询字符串、loc元组
-        :param timeout: 等待超时时间
-        :return: 用于等待的ElementWaiter对象
-        """
-        return ChromiumElementWaiter(self, loc_or_ele, timeout)
-
-    def scroll_to_see(self, loc_or_ele):
-        """滚动页面直到元素可见
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
-        :return: None
-        """
-        ele = self.ele(loc_or_ele)
-        node_id = ele.node_id
-        try:
-            self._wait_driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
-        except Exception:
-            self.ele(loc_or_ele).run_js("this.scrollIntoView();")
-
-        if not ele.is_in_viewport:
-            offset_scroll(ele, 0, 0)
-
     def refresh(self, ignore_cache=False):
         """刷新当前页面
         :param ignore_cache: 是否忽略缓存
@@ -533,7 +503,7 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         self.driver.Page.reload(ignoreCache=ignore_cache)
-        self.wait_loading()
+        self.wait.load_start()
 
     def forward(self, steps=1):
         """在浏览历史中前进若干步
@@ -597,7 +567,7 @@ class ChromiumBase(BasePage):
             return r
 
         if 'Cannot find context with specified id' in r['error']:
-            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成，可尝试wait.load_complete()方法。')
+            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
         elif 'Could not find node with given id' in r['error']:
             raise RuntimeError('该元素已不在当前页面中。')
         elif 'tab closed' in r['error']:
@@ -763,6 +733,93 @@ class ChromiumBase(BasePage):
             return False
 
         return True
+
+    def wait_loading(self, timeout=None):
+        """阻塞程序，等待页面进入加载状态
+        :param timeout: 超时时间
+        :return: 等待结束时是否进入加载状态
+        """
+        warn("此方法即将弃用，请用wait.load_start()方法代替。", DeprecationWarning)
+        return self.wait.load_start(timeout)
+
+    def wait_ele(self, loc_or_ele, timeout=None):
+        """返回用于等待元素到达某个状态的等待器对象
+        :param loc_or_ele: 可以是元素、查询字符串、loc元组
+        :param timeout: 等待超时时间
+        :return: 用于等待的ElementWaiter对象
+        """
+        warn("此方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
+        return ChromiumElementWaiter(self, loc_or_ele, timeout)
+
+    def scroll_to_see(self, loc_or_ele):
+        """滚动页面直到元素可见
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
+        :return: None
+        """
+        warn("此方法即将弃用，请用scroll.to_see()方法代替。", DeprecationWarning)
+        self.scroll.to_see(loc_or_ele)
+
+
+class ChromiumPageWaiter(ChromiumWaiter):
+    def __init__(self, page):
+        """
+        :param page: 所属页面对象
+        """
+        super().__init__(page)
+
+    def _loading(self, timeout=None, start=True):
+        """等待页面开始加载或加载完成
+        :param timeout: 超时时间，为None时使用页面timeout属性
+        :param start: 等待开始还是结束
+        :return: 是否等待成功
+        """
+        if timeout != 0:
+            timeout = self._driver.timeout if timeout in (None, True) else timeout
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if self._driver.is_loading == start:
+                    return True
+                sleep(.005)
+            return False
+
+    def load_start(self, timeout=None):
+        """等待页面开始加载
+        :param timeout: 超时时间，为None时使用页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._loading(timeout=timeout)
+
+    def load_complete(self, timeout=None):
+        """等待页面开始加载
+        :param timeout: 超时时间，为None时使用页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._loading(timeout=timeout, start=False)
+
+
+class ChromiumPageScroll(ChromiumScroll):
+    def __init__(self, page):
+        """
+        :param page: 页面对象
+        """
+        super().__init__(page)
+        self.t1 = 'window'
+        self.t2 = 'document.documentElement'
+
+    def to_see(self, loc_or_ele):
+        """滚动页面直到元素可见
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: None
+        """
+        ele = self._driver.ele(loc_or_ele)
+        node_id = ele.node_id
+        try:
+            self._driver._wait_driver.DOM.scrollIntoViewIfNeeded(nodeId=node_id)
+        except Exception:
+            ele.run_js("this.scrollIntoView();")
+
+        if not ele.is_in_viewport:
+            offset_scroll(ele, 0, 0)
 
 
 class Timeout(object):
