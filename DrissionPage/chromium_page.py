@@ -34,67 +34,71 @@ class ChromiumPage(ChromiumBase):
         self._download_path = None
         super().__init__(addr_driver_opts, tab_id, timeout)
 
-    def _connect_browser(self, addr_driver_opts=None, tab_id=None):
-        """连接浏览器，在第一次时运行
-        :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
-        :param tab_id: 要控制的标签页id，不指定默认为激活的
+    def _set_start_options(self, addr_driver_opts, none):
+        """设置浏览器启动属性
+        :param addr_driver_opts: 'ip:port'、ChromiumDriver、ChromiumOptions
+        :param none: 用于后代继承
         :return: None
         """
-        # 接管或启动浏览器
-        self._chromium_init()
-        if addr_driver_opts is None or isinstance(addr_driver_opts, (ChromiumOptions, DriverOptions)):
-            self._driver_options = addr_driver_opts or ChromiumOptions()  # 从ini文件读取
-            self.address = self._driver_options.debugger_address
-            self.process = connect_browser(self._driver_options)[1]
-            json = self._control_session.get(f'http://{self.address}/json').json()
-            tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+        if not addr_driver_opts or isinstance(addr_driver_opts, (ChromiumOptions, DriverOptions)):
+            self._driver_options = addr_driver_opts or ChromiumOptions(addr_driver_opts)
 
         # 接收浏览器地址和端口
         elif isinstance(addr_driver_opts, str):
-            self.address = addr_driver_opts
             self._driver_options = ChromiumOptions()
             self._driver_options.debugger_address = addr_driver_opts
-            self.process = connect_browser(self._driver_options)[1]
-            if not tab_id:
-                json = self._control_session.get(f'http://{self.address}/json').json()
-                tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
 
         # 接收传递过来的ChromiumDriver，浏览器
         elif isinstance(addr_driver_opts, ChromiumDriver):
-            self._tab_obj = addr_driver_opts
-            self.address = addr_driver_opts.address
-            self.process = None
             self._driver_options = ChromiumOptions(read_file=False)
             self._driver_options.debugger_address = addr_driver_opts.address
+            self._tab_obj = addr_driver_opts
 
         else:
             raise TypeError('只能接收ChromiumDriver或ChromiumOptions类型参数。')
 
-        self._set_options()
-        self._set_chromium_options()
-        self._init_page(tab_id)
-        self._get_document()
-        self._first_run = False
+        self.address = self._driver_options.debugger_address
 
-    def _set_options(self):
-        """设置WebPage中与s模式共用的配置，便于WebPage覆盖掉"""
+    def _set_runtime_settings(self):
+        """设置运行时用到的属性"""
         self._timeouts = Timeout(self,
                                  page_load=self._driver_options.timeouts['pageLoad'],
                                  script=self._driver_options.timeouts['script'],
                                  implicit=self._driver_options.timeouts['implicit'])
         self._page_load_strategy = self._driver_options.page_load_strategy
+        self._download_path = self._driver_options.download_path
 
-    def _set_chromium_options(self):
-        """设置浏览器专有的配置"""
+    def _connect_browser(self, tab_id=None):
+        """连接浏览器，在第一次时运行
+        :param tab_id: 要控制的标签页id，不指定默认为激活的
+        :return: None
+        """
+        self._chromium_init()  # todo: 传递驱动器时是否须要
+        if self._tab_obj:
+            self.process = None
+
+        else:
+            self.process = connect_browser(self._driver_options)[1]
+            if not tab_id:
+                json = self._control_session.get(f'http://{self.address}/json').json()
+                tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+
+            self._driver_init(tab_id)
+            self._get_document()
+            self._first_run = False
+
+    def _chromium_init(self):
+        """添加ChromiumPage独有的运行配置"""
+        super()._chromium_init()
         self._alert = Alert()
         self._window_setter = None
 
-    def _init_page(self, tab_id=None):
+    def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
         :return: None
         """
-        super()._init_page(tab_id)
+        super()._driver_init(tab_id)
         ws = self._control_session.get(f'http://{self.address}/json/version').json()['webSocketDebuggerUrl']
         self._browser_driver = ChromiumDriver(ws.split('/')[-1], 'browser', self.address)
         self._browser_driver.start()
@@ -135,7 +139,7 @@ class ChromiumPage(ChromiumBase):
     def process_id(self):
         """返回浏览器进程id"""
         try:
-            return self._driver.SystemInfo.getProcessInfo()['id']
+            return self.driver.SystemInfo.getProcessInfo()['id']
         except Exception:
             return None
 
@@ -171,58 +175,6 @@ class ChromiumPage(ChromiumBase):
         """
         tab_id = tab_id or self.tab_id
         return ChromiumTab(self, tab_id)
-
-    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
-        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
-        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
-        :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
-        :param left_top: 截取范围左上角坐标
-        :param right_bottom: 截取范围右下角角坐标
-        :return: 图片完整路径或字节文本
-        """
-        if as_bytes:
-            if as_bytes is True:
-                pic_type = 'png'
-            else:
-                if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收'jpg', 'jpeg', 'png', 'webp'四种格式。")
-                pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
-
-        else:
-            if not path:
-                raise ValueError('保存为文件时必须传入路径。')
-            path = Path(path)
-            pic_type = path.suffix.lower()
-            if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
-                raise TypeError(f'不支持的文件格式：{pic_type}。')
-            pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
-
-        width, height = self.size
-        if full_page:
-            vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
-            png = self._wait_driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)['data']
-        else:
-            if left_top and right_bottom:
-                x, y = left_top
-                w = right_bottom[0] - x
-                h = right_bottom[1] - y
-                vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
-                png = self._wait_driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)[
-                    'data']
-            else:
-                png = self._wait_driver.Page.captureScreenshot(format=pic_type)['data']
-
-        from base64 import b64decode
-        png = b64decode(png)
-
-        if as_bytes:
-            return png
-
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'wb') as f:
-            f.write(png)
-        return str(path.absolute())
 
     def to_front(self):
         """激活当前标签页使其处于最前面"""
@@ -293,8 +245,8 @@ class ChromiumPage(ChromiumBase):
         if tab_id == self.tab_id:
             return
 
-        self._driver.stop()
-        self._init_page(tab_id)
+        self.driver.stop()
+        self._driver_init(tab_id)
         if read_doc and self.ready_state == 'complete':
             self._get_document()
 
@@ -328,7 +280,7 @@ class ChromiumPage(ChromiumBase):
             return
 
         if self.tab_id in tabs:
-            self._driver.stop()
+            self.driver.stop()
 
         for tab in tabs:
             self._control_session.get(f'http://{self.address}/json/close/{tab}')
@@ -364,9 +316,9 @@ class ChromiumPage(ChromiumBase):
 
         res_text = self._alert.text
         if self._alert.type == 'prompt':
-            self._driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
+            self.driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
         else:
-            self._driver.Page.handleJavaScriptDialog(accept=accept)
+            self.driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
     def hide_browser(self):
@@ -445,7 +397,7 @@ class ChromiumDownloadSetter(DownloadSetter):
                                                                   eventsEnabled=True)
         except CallMethodException:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-            self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path, not_change=True)
+            self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path)
 
         self.DownloadKit.goal_path = path
 

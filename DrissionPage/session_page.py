@@ -28,24 +28,35 @@ class SessionPage(BasePage):
         """
         self._response = None
         self._download_set = None
-        self._create_session(session_or_options)
+        self._session = None
+        self._set_start_options(session_or_options, None)
+        self._set_runtime_settings()
+        self._create_session()
         timeout = timeout if timeout is not None else self.timeout
         super().__init__(timeout)
 
-    def _create_session(self, Session_or_Options):
-        """创建内建Session对象
-        :param Session_or_Options: Session对象或SessionOptions对象
+    def _set_start_options(self, session_or_options, none):
+        """启动配置
+        :param session_or_options: Session、SessionOptions
+        :param none: 用于后代继承
         :return: None
         """
-        if Session_or_Options is None or isinstance(Session_or_Options, SessionOptions):
-            self._session_options = Session_or_Options or SessionOptions()
+        if not session_or_options or isinstance(session_or_options, SessionOptions):
+            self._session_options = session_or_options or SessionOptions(session_or_options)
+
+        elif isinstance(session_or_options, Session):
+            self._session_options = SessionOptions()
+            self._session = session_or_options
+
+    def _set_runtime_settings(self):
+        """设置运行时用到的属性"""
+        self._timeout = self._session_options.timeout
+        self._download_path = self._session_options.download_path
+
+    def _create_session(self):
+        """创建内建Session对象"""
+        if not self._session:
             self._set_session(self._session_options)
-
-        elif isinstance(Session_or_Options, Session):
-            self._session = Session_or_Options
-            self._session_options = SessionOptions(read_file=False)
-
-        self._set_options()
 
     def _set_session(self, opt):
         """根据传入字典对session进行设置
@@ -68,11 +79,6 @@ class SessionPage(BasePage):
             attr = opt.__getattribute__(i)
             if attr:
                 self._session.__setattr__(i, attr)
-
-    def _set_options(self):
-        """设置WebPage中与d模式共用的配置，便于WebPage覆盖掉"""
-        self._timeout = self._session_options.timeout
-        self._download_path = self._session_options.download_path
 
     def set_cookies(self, cookies):
         """为Session对象设置cookies
@@ -104,6 +110,12 @@ class SessionPage(BasePage):
         return self.ele(loc_or_str)
 
     # -----------------共有属性和方法-------------------
+    @property
+    def title(self):
+        """返回网页title"""
+        ele = self.ele('xpath://title')
+        return ele.text if ele else None
+
     @property
     def url(self):
         """返回当前访问url"""

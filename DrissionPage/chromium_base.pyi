@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from typing import Union, Tuple, List, Any
 
 from DataRecorder import Recorder
@@ -13,7 +14,6 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement, ChromiumElementWaiter, ChromiumScroll
 from .chromium_frame import ChromiumFrame
-from .configs.driver_options import DriverOptions
 from .session_element import SessionElement
 
 
@@ -38,13 +38,11 @@ class ChromiumBase(BasePage):
         self._debug_recorder: Recorder = ...
         self._upload_list: list = ...
 
-    def _connect_browser(self,
-                         addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = None,
-                         tab_id: str = None) -> None: ...
+    def _connect_browser(self, tab_id: str = None) -> None: ...
 
     def _chromium_init(self): ...
 
-    def _init_page(self, tab_id: str = None) -> None: ...
+    def _driver_init(self, tab_id: str) -> None: ...
 
     def _get_document(self) -> None: ...
 
@@ -64,7 +62,9 @@ class ChromiumBase(BasePage):
 
     def set_upload_files(self, files: Union[str, list, tuple]) -> None: ...
 
-    def _set_options(self) -> None: ...
+    def _set_start_options(self, address, none) -> None: ...
+
+    def _set_runtime_settings(self) -> None: ...
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
                  timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, None]: ...
@@ -75,8 +75,8 @@ class ChromiumBase(BasePage):
     @property
     def driver(self) -> ChromiumDriver: ...
 
-    @property
-    def _driver(self) -> ChromiumDriver: ...
+    # @property
+    # def _driver(self) -> ChromiumDriver: ...
 
     @property
     def _wait_driver(self) -> ChromiumDriver: ...
@@ -187,6 +187,12 @@ class ChromiumBase(BasePage):
 
     def set_local_storage(self, item: str, value: Union[str, bool]) -> None: ...
 
+    def get_screenshot(self, path: [str, Path] = None,
+                       as_bytes: [bool, str] = None,
+                       full_page: bool = False,
+                       left_top: Tuple[int, int] = None,
+                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
+
     def clear_cache(self,
                     session_storage: bool = True,
                     local_storage: bool = True,
@@ -199,8 +205,6 @@ class ChromiumBase(BasePage):
                    interval: float = 1,
                    show_errmsg: bool = False,
                    timeout: float = None) -> Union[bool, None]: ...
-
-    def _to_d_mode(self): ...
 
 
 class Timeout(object):

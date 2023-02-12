@@ -20,7 +20,7 @@ class ChromiumOptions(object):
         self._user = 'Default'
         self._prefs_to_del = []
 
-        if read_file:
+        if read_file is not False:
             self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options = om.chrome_options

@@ -17,7 +17,7 @@ class ChromiumTab(ChromiumBase):
         self.page = page
         super().__init__(page.address, tab_id, page.timeout)
 
-    def _set_options(self):
+    def _set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
         self._timeouts = self.page.timeouts
         self._page_load_strategy = self.page.page_load_strategy

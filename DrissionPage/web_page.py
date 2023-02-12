@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from time import sleep
 from warnings import warn
 
 from requests import Session
@@ -34,7 +33,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
-        self._has_driver, self._has_session = (None, True) if self._mode == 's' else (True, None)
+        self._has_driver = True
+        self._has_session = True
 
         self._debug = False
         self._debug_recorder = None
@@ -47,15 +47,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
         self._download_set = None
 
-        self._set_both_options(driver_or_options, session_or_options)
-
-        if self._mode == 'd':
-            self._to_d_mode()
+        self._set_start_options(driver_or_options, session_or_options)
+        self._set_runtime_settings()
+        self._connect_browser()
+        self._create_session()
 
         t = timeout if isinstance(timeout, (int, float)) else self.timeouts.implicit
         super(ChromiumBase, self).__init__(t)  # 调用Base的__init__()
 
-    def _set_both_options(self, dr_opt, se_opt):
+    def _set_start_options(self, dr_opt, se_opt):
         """处理两种模式的设置
         :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
         :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
@@ -63,9 +63,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         # 浏览器配置
         if isinstance(dr_opt, ChromiumDriver):
-            self._connect_browser(dr_opt)
-            self._has_driver = True
-            # self._driver_options = None
+            self._tab_obj = dr_opt
+            self._driver_options = ChromiumOptions()
+            self._driver_options.debugger_address = dr_opt.address
             dr_opt = False
 
         else:
@@ -81,11 +81,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             else:
                 raise TypeError('driver_or_options参数只能接收ChromiumDriver, ChromiumOptions、None或False。')
 
+        self.address = self._driver_options.debugger_address
+
         # Session配置
         if isinstance(se_opt, Session):
             self._session = se_opt
-            self._has_session = True
-            self._session_options = SessionOptions(read_file=False)
+            self._session_options = SessionOptions()
             se_opt = False
 
         else:
@@ -101,10 +102,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             else:
                 raise TypeError('session_or_options参数只能接收Session, SessionOptions、None或False。')
 
-        # 通用配置
         self._timeouts = Timeout(self)
         self._page_load_strategy = self._driver_options.page_load_strategy
         self._download_path = None
+
         if se_opt is not False:
             self.set_timeouts(implicit=self._session_options.timeout)
             self._download_path = self._session_options.download_path
@@ -114,8 +115,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self.set_timeouts(t['implicit'], t['pageLoad'], t['script'])
             self._download_path = self._driver_options.download_path
 
-    def _set_options(self):
-        """覆盖父类同名方法"""
+    def _set_runtime_settings(self):
+        """设置运行时用到的属性"""
         pass
 
     def __call__(self, loc_or_str, timeout=None):
@@ -139,6 +140,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self._session_url
 
     @property
+    def title(self):
+        """返回当前页面title"""
+        if self._mode == 's':
+            return super().title
+        elif self._mode == 'd':
+            return super(SessionPage, self).title
+
+    @property
     def html(self):
         """返回页面html文本"""
         if self._mode == 's':
@@ -157,7 +166,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def response(self):
         """返回 s 模式获取到的 Response 对象，切换到 s 模式"""
-        self.change_mode('s')
         return self._response
 
     @property
@@ -177,32 +185,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
             self._set_session(self._session_options)
-
         return self._session
-
-    @property
-    def driver(self):
-        """返回纯粹的ChromiumDriver对象"""
-        return self._tab_obj
-
-    @property
-    def _wait_driver(self):
-        """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
-        while self._is_loading:
-            sleep(.1)
-        return self._driver
-
-    @property
-    def _driver(self):
-        """返回纯粹的ChromiumDriver对象，调用时切换到d模式，并连接浏览器"""
-        self.change_mode('d')
-        if self._tab_obj is None:
-            self._connect_browser(self._driver_options)
-        return self._tab_obj
-
-    @_driver.setter
-    def _driver(self, tab):
-        self._tab_obj = tab
 
     @property
     def _session_url(self):
@@ -266,7 +249,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        self.change_mode('s', go=False)
         return super().post(url, data, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
@@ -447,6 +429,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 self.driver.Browser.close()
             except Exception:
                 pass
+            self._tab_obj = None
             self._has_driver = None
 
     def close_session(self):
@@ -516,8 +499,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
                                                                       eventsEnabled=True)
             except CallMethodException:
                 warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-                self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path,
-                                   not_change=True)
+                self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path)
 
     def by_browser(self):
         """设置使用浏览器下载文件"""

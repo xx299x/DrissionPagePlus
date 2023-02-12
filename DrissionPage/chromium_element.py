@@ -68,14 +68,14 @@ class ChromiumElement(DrissionElement):
     def tag(self):
         """返回元素tag"""
         if self._tag is None:
-            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)['node'][
+            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node'][
                 'localName'].lower()
         return self._tag
 
     @property
     def html(self):
         """返回元素outerHTML文本"""
-        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id, not_change=True)['outerHTML']
+        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
 
     @property
     def inner_html(self):
@@ -85,7 +85,7 @@ class ChromiumElement(DrissionElement):
     @property
     def attrs(self):
         """返回元素所有attribute属性"""
-        attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id, not_change=True)['attributes']
+        attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
         return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
 
     @property
@@ -123,7 +123,7 @@ class ChromiumElement(DrissionElement):
     def size(self):
         """返回元素宽和高"""
         try:
-            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id, not_change=True)['model']
+            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
             return model['height'], model['width']
         except Exception:
             return 0, 0
@@ -167,7 +167,7 @@ class ChromiumElement(DrissionElement):
     @property
     def shadow_root(self):
         """返回当前元素的shadow_root元素对象"""
-        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id, not_change=True)['node']
+        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id)['node']
         if not info.get('shadowRoots', None):
             return None
 
@@ -372,7 +372,7 @@ class ChromiumElement(DrissionElement):
         :param prop: 属性名
         :return: 属性值文本
         """
-        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id, not_change=True)['result']
+        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id)['result']
         for i in p:
             if i['name'] == prop:
                 if 'value' not in i or 'value' not in i['value']:
@@ -403,7 +403,7 @@ class ChromiumElement(DrissionElement):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
-        return run_js(self, script, as_expr, self.page.timeouts.script, args, True)
+        return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
         """以异步方式执行js代码
@@ -483,7 +483,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)['node']
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
         try:
@@ -534,6 +534,8 @@ class ChromiumElement(DrissionElement):
         height, width = self.size
         left_top = (left, top)
         right_bottom = (left + width, top + height)
+        if not path:
+            path = f'{self.tag}.jpg'
         return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
                                         left_top=left_top, right_bottom=right_bottom)
 
@@ -547,7 +549,7 @@ class ChromiumElement(DrissionElement):
             return self._set_file_input(vals)
 
         try:
-            self.page.run_cdp('DOM.focus', nodeId=self._node_id, not_change=True)
+            self.page.run_cdp('DOM.focus', nodeId=self._node_id)
         except Exception:
             self.click(by_js=True)
 
@@ -578,7 +580,7 @@ class ChromiumElement(DrissionElement):
         if isinstance(files, str):
             files = files.split('\n')
         files = [str(Path(i).absolute()) for i in files]
-        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id, not_change=True)
+        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
 
     def clear(self, by_js=False):
         """清空元素文本
@@ -754,9 +756,9 @@ class ChromiumElement(DrissionElement):
         :return: js中的object id
         """
         if node_id:
-            return self.page.run_cdp('DOM.resolveNode', nodeId=node_id, not_change=True)['object']['objectId']
+            return self.page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
         else:
-            return self.page.run_cdp('DOM.resolveNode', backendNodeId=backend_id, not_change=True)['object']['objectId']
+            return self.page.run_cdp('DOM.resolveNode', backendNodeId=backend_id)['object']['objectId']
 
     def _get_node_id(self, obj_id=None, backend_id=None):
         """根据传入object id获取cdp中的node id
@@ -765,16 +767,16 @@ class ChromiumElement(DrissionElement):
         :return: cdp中的node id
         """
         if obj_id:
-            return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
+            return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
         else:
-            return self.page.run_cdp('DOM.describeNode', backendNodeId=backend_id, not_change=True)['node']['nodeId']
+            return self.page.run_cdp('DOM.describeNode', backendNodeId=backend_id)['node']['nodeId']
 
     def _get_backend_id(self, node_id):
         """根据传入node id获取backend id
         :param node_id:
         :return: backend id
         """
-        return self.page.run_cdp('DOM.describeNode', nodeId=node_id, not_change=True)['node']['backendNodeId']
+        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
 
     def _get_ele_path(self, mode):
         """返获取css路径或xpath路径"""
@@ -822,7 +824,7 @@ class ChromiumElement(DrissionElement):
         :return: 四个角坐标，大小为0时返回None
         """
         try:
-            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id, not_change=True)['model'][quad]
+            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
         except Exception:
             return None
 
@@ -875,7 +877,7 @@ class ChromiumShadowRootElement(BaseElement):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id, not_change=True)
+            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)
             return True
         except Exception:
             return False
@@ -1066,29 +1068,29 @@ class ChromiumShadowRootElement(BaseElement):
         css_paths = [i.css_path[47:] for i in eles]
         if single:
             node_id = self.page.run_cdp('DOM.querySelector',
-                                        nodeId=self._node_id, selector=css_paths[0], not_change=True)['nodeId']
+                                        nodeId=self._node_id, selector=css_paths[0])['nodeId']
             return make_chromium_ele(self.page, node_id=node_id) if node_id else None
 
         else:
             results = []
             for i in css_paths:
                 node_id = self.page.run_cdp('DOM.querySelector',
-                                            nodeId=self._node_id, selector=i, not_change=True)['nodeId']
+                                            nodeId=self._node_id, selector=i)['nodeId']
                 if node_id:
                     results.append(make_chromium_ele(self.page, node_id=node_id))
             return results
 
     def _get_node_id(self, obj_id):
         """返回元素node id"""
-        return self.page.run_cdp('DOM.requestNode', objectId=obj_id, not_change=True)['nodeId']
+        return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
 
     def _get_obj_id(self, back_id):
         """返回元素object id"""
-        return self.page.run_cdp('DOM.resolveNode', backendNodeId=back_id, not_change=True)['object']['objectId']
+        return self.page.run_cdp('DOM.resolveNode', backendNodeId=back_id)['object']['objectId']
 
     def _get_backend_id(self, node_id):
         """返回元素object id"""
-        return self.page.run_cdp('DOM.describeNode', nodeId=node_id, not_change=True)['node']['backendNodeId']
+        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
 
 
 def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
@@ -1260,14 +1262,13 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_change=False):
+def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     """运行javascript代码
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
     :param timeout: 超时时间
     :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
-    :param not_change: 执行时是否切换页面对象模式
     :return: js执行结果
     """
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
@@ -1283,8 +1284,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_chan
                            returnByValue=False,
                            awaitPromise=True,
                            userGesture=True,
-                           timeout=timeout * 1000,
-                           not_change=not_change)
+                           timeout=timeout * 1000)
 
     else:
         args = args or ()
@@ -1296,8 +1296,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None, not_chan
                            arguments=[_convert_argument(arg) for arg in args],
                            returnByValue=False,
                            awaitPromise=True,
-                           userGesture=True,
-                           not_change=not_change)
+                           userGesture=True)
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:

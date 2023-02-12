@@ -9,6 +9,7 @@ from time import perf_counter, sleep
 
 from requests import Session
 
+from .functions.tools import get_usable_path
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElementWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
@@ -30,27 +31,36 @@ class ChromiumBase(BasePage):
         self._root_id = None
         self._debug = False
         self._debug_recorder = None
+        self._tab_obj = None
 
-        self._timeouts = None
-        self._page_load_strategy = None
-
-        self._connect_browser(address, tab_id)
+        self._set_start_options(address, None)
+        self._set_runtime_settings()
+        self._connect_browser(tab_id)
         timeout = timeout if timeout is not None else self.timeouts.implicit
         super().__init__(timeout)
 
-    def _connect_browser(self, addr_driver_opts=None, tab_id=None):
+    def _set_start_options(self, address, none):
+        """设置浏览器启动属性
+        :param address: 'ip:port'
+        :param none: 用于后代继承
+        :return: None
+        """
+        self.address = address
+
+    def _set_runtime_settings(self):
+        self._timeouts = Timeout(self)
+        self._page_load_strategy = 'normal'
+
+    def _connect_browser(self, tab_id=None):
         """连接浏览器，在第一次时运行
-        :param addr_driver_opts: 浏览器地址、ChromiumDriver对象或DriverOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
         self._chromium_init()
-        self.address = addr_driver_opts
         if not tab_id:
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
-        self._init_page(tab_id)
-        self._set_options()
+        self._driver_init(tab_id)
         self._get_document()
         self._first_run = False
 
@@ -62,19 +72,13 @@ class ChromiumBase(BasePage):
         self._is_reading = False
         self._upload_list = None
 
-    def _set_options(self):
-        """设置与s模式共用的运行参数，便于被子类覆盖"""
-        self._timeouts = Timeout(self)
-        self._page_load_strategy = 'normal'
-
-    def _init_page(self, tab_id=None):
+    def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
         :return: None
         """
         self._is_loading = True
-        if tab_id:
-            self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
+        self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
         self._tab_obj.start()
         self._tab_obj.DOM.enable()
@@ -231,11 +235,8 @@ class ChromiumBase(BasePage):
     @property
     def driver(self):
         """返回用于控制浏览器的ChromiumDriver对象"""
-        return self._tab_obj
-
-    @property
-    def _driver(self):
-        """返回用于控制浏览器的ChromiumDriver对象"""
+        if self._tab_obj is None:
+            raise RuntimeError('浏览器已关闭或链接已断开。')
         return self._tab_obj
 
     @property
@@ -243,7 +244,7 @@ class ChromiumBase(BasePage):
         """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
         while self._is_loading:
             sleep(.1)
-        return self._tab_obj
+        return self.driver
 
     @property
     def is_loading(self):
@@ -289,7 +290,7 @@ class ChromiumBase(BasePage):
         # w = self.run_js('document.body.scrollWidth;', as_expr=True)
         # h = self.run_js('document.body.scrollHeight;', as_expr=True)
         # return w, h
-        r = self.run_cdp('Page.getLayoutMetrics', not_change=False)['contentSize']
+        r = self.run_cdp('Page.getLayoutMetrics')['contentSize']
         return r['width'], r['height']
 
     @property
@@ -305,6 +306,7 @@ class ChromiumBase(BasePage):
     @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
+        self._wait_loaded()
         if not hasattr(self, '_scroll'):
             self._scroll = ChromiumScroll(self)
         return self._scroll
@@ -347,7 +349,6 @@ class ChromiumBase(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
-        self._to_d_mode()
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
@@ -357,7 +358,6 @@ class ChromiumBase(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: None
         """
-        self._to_d_mode()
         from threading import Thread
         Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script, args)).start()
 
@@ -424,7 +424,7 @@ class ChromiumBase(BasePage):
         :param headers: dict格式的headers数据
         :return: None
         """
-        self.run_cdp('Network.setExtraHTTPHeaders', headers=headers, not_change=True)
+        self.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
     def ele(self, loc_or_ele, timeout=None):
         """获取第一个符合条件的元素对象
@@ -532,7 +532,8 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
-        self._driver.Page.reload(ignoreCache=ignore_cache)
+        self.driver.Page.reload(ignoreCache=ignore_cache)
+        self.wait_loading()
 
     def forward(self, steps=1):
         """在浏览历史中前进若干步
@@ -591,18 +592,18 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        if cmd_args.get('not_change', None):
-            driver = self._tab_obj
-            cmd_args.pop('not_change')
-        else:
-            driver = self._driver
+        r = self.driver.call_method(cmd, **cmd_args)
+        if 'error' not in r:
+            return r
 
-        try:
-            return driver.call_method(cmd, **cmd_args)
-        except Exception as e:
-            if 'Could not find node with given id' in str(e):
-                raise RuntimeError('该元素已不在当前页面中。')
-            raise
+        if 'Cannot find context with specified id' in r['error']:
+            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成，可尝试wait.load_complete()方法。')
+        elif 'Could not find node with given id' in r['error']:
+            raise RuntimeError('该元素已不在当前页面中。')
+        elif 'tab closed' in r['error']:
+            raise RuntimeError('标签页已关闭。')
+        else:
+            raise RuntimeError(r)
 
     def set_user_agent(self, ua, platform=None):
         """为当前tab设置user agent，只在当前tab有效
@@ -650,6 +651,58 @@ class ChromiumBase(BasePage):
         js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
         return self.run_js(js, as_expr=True)
 
+    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
+        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
+        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
+        :param left_top: 截取范围左上角坐标
+        :param right_bottom: 截取范围右下角角坐标
+        :return: 图片完整路径或字节文本
+        """
+        if as_bytes:
+            if as_bytes is True:
+                pic_type = 'png'
+            else:
+                if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
+                    raise ValueError("只能接收'jpg', 'jpeg', 'png', 'webp'四种格式。")
+                pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
+
+        else:
+            if not path:
+                path = f'{self.title}.jpg'
+            path = get_usable_path(path)
+            pic_type = path.suffix.lower()
+            if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
+                raise TypeError(f'不支持的文件格式：{pic_type}。')
+            pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+
+        width, height = self.size
+        if full_page:
+            vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
+            png = self._wait_driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)['data']
+        else:
+            if left_top and right_bottom:
+                x, y = left_top
+                w = right_bottom[0] - x
+                h = right_bottom[1] - y
+                vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
+                png = self._wait_driver.Page.captureScreenshot(format=pic_type, captureBeyondViewport=True, clip=vp)[
+                    'data']
+            else:
+                png = self._wait_driver.Page.captureScreenshot(format=pic_type)['data']
+
+        from base64 import b64decode
+        png = b64decode(png)
+
+        if as_bytes:
+            return png
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'wb') as f:
+            f.write(png)
+        return str(path.absolute())
+
     def clear_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
         """清除缓存，可选要清除的项
         :param session_storage: 是否清除sessionStorage
@@ -681,7 +734,7 @@ class ChromiumBase(BasePage):
 
         for t in range(times + 1):
             err = None
-            result = self._driver.Page.navigate(url=to_url)
+            result = self.driver.Page.navigate(url=to_url)
 
             is_timeout = not self._wait_loaded(timeout)
             while self.is_loading:
@@ -710,10 +763,6 @@ class ChromiumBase(BasePage):
             return False
 
         return True
-
-    def _to_d_mode(self):
-        """用于使WebPage切换到d模式"""
-        return self._driver
 
 
 class Timeout(object):

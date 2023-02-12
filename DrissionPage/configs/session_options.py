@@ -35,7 +35,7 @@ class SessionOptions(object):
 
         self._del_set = set()  # 记录要从ini文件删除的参数
 
-        if read_file:
+        if read_file is not False:
             self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
             om = OptionsManager(self.ini_path)
             options_dict = om.session_options

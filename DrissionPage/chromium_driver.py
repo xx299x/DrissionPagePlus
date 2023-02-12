@@ -165,19 +165,23 @@ class ChromiumDriver(object):
         :return: 执行结果
         """
         if not self._started:
-            raise RuntimeError("不能在启动前调用方法。")
+            self.start()
+            # raise RuntimeError("不能在启动前调用方法。")
         if args:
             raise CallMethodException("参数必须是key=value形式。")
 
         if self._stopped.is_set():
-            return {'tab_closed': True}
+            return {'error': 'tab closed', 'type': 'tab_closed'}
 
         timeout = kwargs.pop("_timeout", None)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
         if result is None:
-            return {'tab_closed': True}
+            return {'error': 'tab closed', 'type': 'tab_closed'}
         if 'result' not in result and 'error' in result:
-            raise CallMethodException(f"\n调用方法：{_method}\n参数：{kwargs}\n错误：{result['error']['message']}")
+            return {'error': result['error']['message'],
+                    'type': 'call_method_error',
+                    'method': _method,
+                    'args': kwargs}
 
         return result['result']
 
@@ -201,7 +205,7 @@ class ChromiumDriver(object):
         if self._stopped.is_set():
             return False
         if not self._started:
-            raise RuntimeError("Driver正在运行。")
+            raise RuntimeError("Driver未在运行。")
 
         self.status = self._STOPPED_
         self._stopped.set()

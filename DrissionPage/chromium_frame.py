@@ -14,7 +14,7 @@ class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
         self.page = page
         self.address = page.address
-        node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id, not_change=True)['node']
+        node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id)['node']
         self.frame_id = node['frameId']
         self._backend_id = ele.backend_id
         self._frame_ele = ele
@@ -43,23 +43,23 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
-    def _set_options(self):
+    def _runtime_settings(self):
         """重写设置浏览器运行参数方法"""
         self._timeouts = self.page.timeouts
         self._page_load_strategy = self.page.page_load_strategy
 
-    def _init_page(self, tab_id=None):
+    def _driver_init(self, tab_id):
         """避免出现服务器500错误
         :param tab_id: 要跳转到的标签页id
         :return: None
         """
         self._control_session.get(f'http://{self.address}/json')
-        super()._init_page(tab_id)
+        super()._driver_init(tab_id)
 
     def _reload(self):
         """重新获取document"""
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id, not_change=True)['node']
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id)['node']
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -95,7 +95,7 @@ class ChromiumFrame(ChromiumBase):
                 try:
                     if self._is_diff_domain is False:
                         node = self.page.run_cdp('DOM.describeNode',
-                                                 backendNodeId=self.backend_id, not_change=True)['node']
+                                                 backendNodeId=self.backend_id)['node']
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
 
                     else:
@@ -171,7 +171,7 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         tag = self.tag
         out_html = self.page.run_cdp('DOM.getOuterHTML',
-                                     nodeId=self.frame_ele.node_id, not_change=True)['outerHTML']
+                                     nodeId=self.frame_ele.node_id)['outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 
@@ -412,7 +412,7 @@ class ChromiumFrame(ChromiumBase):
 
         for t in range(times + 1):
             err = None
-            result = self._driver.Page.navigate(url=to_url, frameId=self.frame_id)
+            result = self.driver.Page.navigate(url=to_url, frameId=self.frame_id)
 
             is_timeout = not self._wait_loaded(timeout)
             while self.is_loading:
@@ -444,4 +444,4 @@ class ChromiumFrame(ChromiumBase):
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
-        return self.frame_id in str(self.page.run_cdp('Page.getFrameTree', not_change=True)['frameTree'])
+        return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
