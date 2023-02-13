@@ -10,13 +10,12 @@ from time import perf_counter, sleep
 from warnings import warn
 
 from .base import DrissionElement, BaseElement
+from .functions.constants import FRAME_ELEMENT
 from .functions.errors import ContextLossError, ElementLossError
 from .functions.locator import get_loc
 from .functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
-
-__FRAME_ELEMENT__ = ('iframe', 'frame')
 
 
 class ChromiumElement(DrissionElement):
@@ -71,8 +70,7 @@ class ChromiumElement(DrissionElement):
     def tag(self):
         """返回元素tag"""
         if self._tag is None:
-            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node'][
-                'localName'].lower()
+            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']['localName'].lower()
         return self._tag
 
     @property
@@ -438,7 +436,7 @@ class ChromiumElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        if self.tag in ('iframe', 'frame'):
+        if self.tag in FRAME_ELEMENT:
             return make_session_ele(self.inner_html, loc_or_str)
         return make_session_ele(self, loc_or_str)
 
@@ -447,7 +445,7 @@ class ChromiumElement(DrissionElement):
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
-        if self.tag in ('iframe', 'frame'):
+        if self.tag in FRAME_ELEMENT:
             return make_session_ele(self.inner_html, loc_or_str, single=False)
         return make_session_ele(self, loc_or_str, single=False)
 
@@ -565,12 +563,12 @@ class ChromiumElement(DrissionElement):
 
         if modifier != 0:  # 包含修饰符
             for key in vals:
-                _send_key(self, modifier, key)
+                send_key(self, modifier, key)
             return
 
         if vals.endswith('\n'):
             self.page.run_cdp('Input.insertText', text=vals[:-1])
-            _send_key(self, modifier, '\n')
+            send_key(self, modifier, '\n')
         else:
             self.page.run_cdp('Input.insertText', text=vals)
 
@@ -1131,23 +1129,24 @@ def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
 
     # ---------------执行查找-----------------
     if loc[0] == 'xpath':
-        return _find_by_xpath(ele, loc[1], single, timeout, relative=relative)
+        return find_by_xpath(ele, loc[1], single, timeout, relative=relative)
 
     else:
-        return _find_by_css(ele, loc[1], single, timeout)
+        return find_by_css(ele, loc[1], single, timeout)
 
 
-def _find_by_xpath(ele, xpath, single, timeout, relative=True):
+def find_by_xpath(ele, xpath, single, timeout, relative=True):
     """执行用xpath在元素中查找元素
     :param ele: 在此元素中查找
     :param xpath: 查找语句
     :param single: 是否只返回第一个结果
     :param timeout: 超时时间
+    :param relative: 是否相对定位
     :return: ChromiumElement或其组成的列表
     """
     type_txt = '9' if single else '7'
-    node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame') and not relative else 'this'
-    js = _make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
+    node_txt = 'this.contentDocument' if ele.tag in FRAME_ELEMENT and not relative else 'this'
+    js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
@@ -1156,7 +1155,7 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
 
     if 'exceptionDetails' in r:
         if 'The result is not a node set' in r['result']['description']:
-            js = _make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
+            js = make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
             r = ele.page.run_cdp('Runtime.callFunctionOn',
                                  functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
                                  userGesture=True)
@@ -1183,7 +1182,7 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
                 for i in r[:-1]]
 
 
-def _find_by_css(ele, selector, single, timeout):
+def find_by_css(ele, selector, single, timeout):
     """执行用css selector在元素中查找元素
     :param ele: 在此元素中查找
     :param selector: 查找语句
@@ -1226,14 +1225,14 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
     :return: ChromiumElement对象或ChromiumFrame对象
     """
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id)
-    if ele.tag in ('iframe', 'frame'):
+    if ele.tag in FRAME_ELEMENT:
         from .chromium_frame import ChromiumFrame
         ele = ChromiumFrame(page, ele)
 
     return ele
 
 
-def _make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt):
+def make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt):
     """生成用xpath在元素中查找元素的js文本
     :param xpath: xpath文本
     :param type_txt: 查找类型
@@ -1302,7 +1301,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
             if not is_js_func(script):
                 script = f'function(){{{script}}}'
             res = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=script, objectId=obj_id,
-                               arguments=[_convert_argument(arg) for arg in args], returnByValue=False,
+                               arguments=[convert_argument(arg) for arg in args], returnByValue=False,
                                awaitPromise=True, userGesture=True)
 
     except ContextLossError:
@@ -1319,12 +1318,12 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         raise RuntimeError(f'javascript：{script}\n错误信息: {exceptionDetails}')
 
     try:
-        return _parse_js_result(page, page_or_ele, res.get('result'))
+        return parse_js_result(page, page_or_ele, res.get('result'))
     except Exception:
         return res
 
 
-def _parse_js_result(page, ele, result):
+def parse_js_result(page, ele, result):
     """解析js返回的结果"""
     if 'unserializableValue' in result:
         return result['unserializableValue']
@@ -1348,7 +1347,7 @@ def _parse_js_result(page, ele, result):
         elif sub_type == 'array':
             r = page.run_cdp('Runtime.getProperties', objectId=result['result']['objectId'],
                              ownProperties=True)['result']
-            return [_parse_js_result(page, ele, result=i['value']) for i in r]
+            return [parse_js_result(page, ele, result=i['value']) for i in r]
 
         else:
             return result['value']
@@ -1360,7 +1359,7 @@ def _parse_js_result(page, ele, result):
         return result['value']
 
 
-def _convert_argument(arg):
+def convert_argument(arg):
     """把参数转换成js能够接收的形式"""
     if isinstance(arg, ChromiumElement):
         return {'objectId': arg.obj_id}
@@ -1375,7 +1374,7 @@ def _convert_argument(arg):
         return {'unserializableValue': '-Infinity'}
 
 
-def _send_enter(ele):
+def send_enter(ele):
     """发送回车"""
     data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
             'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
@@ -1385,7 +1384,7 @@ def _send_enter(ele):
     ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
-def _send_key(ele, modifier, key):
+def send_key(ele, modifier, key):
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in _keyDefinitions:
         ele.page.run_cdp('Input.insertText', text=key)

@@ -14,6 +14,7 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
+from .functions.constants import HANDLE_ALERT_METHOD
 from .functions.errors import ContextLossError, ElementLossError, AlertExistsError
 from .functions.locator import get_loc
 from .functions.tools import get_usable_path
@@ -75,6 +76,7 @@ class ChromiumBase(BasePage):
         self._is_reading = False
         self._upload_list = None
         self._wait = None
+        self._set = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -210,19 +212,6 @@ class ChromiumBase(BasePage):
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
             self._upload_list = []
 
-    def set_upload_files(self, files):
-        """等待上传的文件路径
-        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
-        :return: None
-        """
-        if self._upload_list is None:
-            self._tab_obj.Page.fileChooserOpened = self._onFileChooserOpened
-            self.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
-
-        if isinstance(files, str):
-            files = files.split('\n')
-        self._upload_list = [str(Path(i).absolute()) for i in files]
-
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
@@ -317,11 +306,6 @@ class ChromiumBase(BasePage):
         return self._timeouts
 
     @property
-    def set_page_load_strategy(self):
-        """返回用于设置页面加载策略的对象"""
-        return PageLoadStrategy(self)
-
-    @property
     def upload_list(self):
         """返回等待上传文件列表"""
         return self._upload_list
@@ -333,21 +317,12 @@ class ChromiumBase(BasePage):
             self._wait = ChromiumPageWaiter(self)
         return self._wait
 
-    def set_timeouts(self, implicit=None, page_load=None, script=None):
-        """设置超时时间，单位为秒
-        :param implicit: 查找元素超时时间
-        :param page_load: 页面加载超时时间
-        :param script: 脚本运行超时时间
-        :return: None
-        """
-        if implicit is not None:
-            self._timeouts.implicit = implicit
-
-        if page_load is not None:
-            self._timeouts.page_load = page_load
-
-        if script is not None:
-            self._timeouts.script = script
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumBaseSetter(self)
+        return self._set
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -355,7 +330,7 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        if self.driver.has_alert and cmd != 'Page.handleJavaScriptDialog':
+        if self.driver.has_alert and cmd != HANDLE_ALERT_METHOD:
             raise AlertExistsError('存在未处理的提示框。')
 
         r = self.driver.call_method(cmd, **cmd_args)
@@ -438,29 +413,6 @@ class ChromiumBase(BasePage):
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
             return cookies
-
-    def set_cookies(self, cookies):
-        """设置cookies值
-        :param cookies: cookies信息
-        :return: None
-        """
-        cookies = cookies_to_tuple(cookies)
-        result_cookies = []
-        for cookie in cookies:
-            if not cookie.get('domain', None):
-                continue
-            c = {'value': '' if cookie['value'] is None else cookie['value'],
-                 'name': cookie['name'],
-                 'domain': cookie['domain']}
-            result_cookies.append(c)
-        self.run_cdp_loaded('Network.setCookies', cookies=result_cookies)
-
-    def set_headers(self, headers: dict) -> None:
-        """设置固定发送的headers
-        :param headers: dict格式的headers数据
-        :return: None
-        """
-        self.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
     def ele(self, loc_or_ele, timeout=None):
         """获取第一个符合条件的元素对象
@@ -599,17 +551,6 @@ class ChromiumBase(BasePage):
         while self.ready_state != 'complete':
             sleep(.1)
 
-    def set_user_agent(self, ua, platform=None):
-        """为当前tab设置user agent，只在当前tab有效
-        :param ua: user agent字符串
-        :param platform: platform字符串
-        :return: None
-        """
-        keys = {'userAgent': ua}
-        if platform:
-            keys['platform'] = platform
-        self.run_cdp('Emulation.setUserAgentOverride', **keys)
-
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
@@ -624,25 +565,6 @@ class ChromiumBase(BasePage):
         :return: localStorage一个或所有项内容
         """
         js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
-        return self.run_js_loaded(js, as_expr=True)
-
-    def set_session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'sessionStorage.removeItem("{item}");' if item is False \
-            else f'sessionStorage.setItem("{item}","{value}");'
-        return self.run_js_loaded(js, as_expr=True)
-
-    def set_local_storage(self, item, value):
-        """设置或删除某项localStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
         return self.run_js_loaded(js, as_expr=True)
 
     def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
@@ -785,6 +707,164 @@ class ChromiumBase(BasePage):
         """
         warn("此方法即将弃用，请用scroll.to_see()方法代替。", DeprecationWarning)
         self.scroll.to_see(loc_or_ele)
+
+    def set_timeouts(self, implicit=None, page_load=None, script=None):
+        """设置超时时间，单位为秒
+        :param implicit: 查找元素超时时间
+        :param page_load: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.timeouts()方法代替。", DeprecationWarning)
+        self.set.timeouts(implicit, page_load, script)
+
+    def set_session_storage(self, item, value):
+        """设置或删除某项sessionStorage信息
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.session_storage()方法代替。", DeprecationWarning)
+        return self.set.session_storage(item, value)
+
+    def set_local_storage(self, item, value):
+        """设置或删除某项localStorage信息
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.local_storage()方法代替。", DeprecationWarning)
+        return self.set.local_storage(item, value)
+
+    def set_user_agent(self, ua, platform=None):
+        """为当前tab设置user agent，只在当前tab有效
+        :param ua: user agent字符串
+        :param platform: platform字符串
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
+        self.set.user_agent(ua, platform)
+
+    def set_cookies(self, cookies):
+        """设置cookies值
+        :param cookies: cookies信息
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
+        self.set.cookies(cookies)
+
+    def set_upload_files(self, files):
+        """等待上传的文件路径
+        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.upload_files()方法代替。", DeprecationWarning)
+        self.set.upload_files(files)
+
+    def set_headers(self, headers: dict) -> None:
+        """设置固定发送的headers
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
+        self.set.headers(headers)
+
+    @property
+    def set_page_load_strategy(self):
+        """返回用于设置页面加载策略的对象"""
+        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        return self.set.load_strategy
+
+
+class ChromiumBaseSetter(object):
+    def __init__(self, page):
+        self._page = page
+
+    @property
+    def load_strategy(self):
+        """返回用于设置页面加载策略的对象"""
+        return PageLoadStrategy(self._page)
+
+    def timeouts(self, implicit=None, page_load=None, script=None):
+        """设置超时时间，单位为秒
+        :param implicit: 查找元素超时时间
+        :param page_load: 页面加载超时时间
+        :param script: 脚本运行超时时间
+        :return: None
+        """
+        if implicit is not None:
+            self._page.timeouts.implicit = implicit
+
+        if page_load is not None:
+            self._page.timeouts.page_load = page_load
+
+        if script is not None:
+            self._page.timeouts.script = script
+
+    def user_agent(self, ua, platform=None):
+        """为当前tab设置user agent，只在当前tab有效
+        :param ua: user agent字符串
+        :param platform: platform字符串
+        :return: None
+        """
+        keys = {'userAgent': ua}
+        if platform:
+            keys['platform'] = platform
+        self._page.run_cdp('Emulation.setUserAgentOverride', **keys)
+
+    def session_storage(self, item, value):
+        """设置或删除某项sessionStorage信息
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
+        return self._page.run_js_loaded(js, as_expr=True)
+
+    def local_storage(self, item, value):
+        """设置或删除某项localStorage信息
+        :param item: 要设置的项
+        :param value: 项的值，设置为False时，删除该项
+        :return: None
+        """
+        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
+        return self._page.run_js_loaded(js, as_expr=True)
+
+    def cookies(self, cookies):
+        """设置cookies值
+        :param cookies: cookies信息
+        :return: None
+        """
+        cookies = cookies_to_tuple(cookies)
+        result_cookies = []
+        for cookie in cookies:
+            if not cookie.get('domain', None):
+                continue
+            c = {'value': '' if cookie['value'] is None else cookie['value'],
+                 'name': cookie['name'],
+                 'domain': cookie['domain']}
+            result_cookies.append(c)
+        self._page.run_cdp_loaded('Network.setCookies', cookies=result_cookies)
+
+    def upload_files(self, files):
+        """等待上传的文件路径
+        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
+        :return: None
+        """
+        if self._page._upload_list is None:
+            self._page.driver.Page.fileChooserOpened = self._page._onFileChooserOpened
+            self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
+
+        if isinstance(files, str):
+            files = files.split('\n')
+        self._page._upload_list = [str(Path(i).absolute()) for i in files]
+
+    def headers(self, headers: dict) -> None:
+        """设置固定发送的headers
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
 
 class ChromiumPageWaiter(ChromiumWaiter):

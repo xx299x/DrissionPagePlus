@@ -5,8 +5,8 @@
 """
 from typing import Union, Tuple, List, Any
 
-from .chromium_element import ChromiumElement, ChromiumScroll
-from .chromium_base import ChromiumBase, ChromiumPageScroll
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
+from .chromium_element import ChromiumElement
 
 
 class ChromiumFrame(ChromiumBase):
@@ -105,6 +105,9 @@ class ChromiumFrame(ChromiumBase):
     @property
     def scroll(self) -> ChromiumFrameScroll: ...
 
+    @property
+    def set(self) -> ChromiumFrameSetter: ...
+
     def refresh(self) -> None: ...
 
     def attr(self, attr: str) -> Union[str, None]: ...
@@ -170,3 +173,9 @@ class ChromiumFrame(ChromiumBase):
 
 class ChromiumFrameScroll(ChromiumPageScroll):
     def __init__(self, frame: ChromiumFrame) -> None: ...
+
+
+class ChromiumFrameSetter(ChromiumBaseSetter):
+    _page: ChromiumFrame = ...
+
+    def attr(self, attr: str, value: str) -> None: ...

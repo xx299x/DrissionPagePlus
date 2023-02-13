@@ -5,8 +5,9 @@
 """
 from re import search
 from time import sleep
+from warnings import warn
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
 from .chromium_element import ChromiumElement
 
 
@@ -267,6 +268,13 @@ class ChromiumFrame(ChromiumBase):
         """返回用于等待的对象"""
         return ChromiumFrameScroll(self)
 
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumFrameSetter(self)
+        return self._set
+
     def refresh(self):
         """刷新frame页面"""
         self._check_ok()
@@ -279,15 +287,6 @@ class ChromiumFrame(ChromiumBase):
         """
         self._check_ok()
         return self.frame_ele.attr(attr)
-
-    def set_attr(self, attr, value):
-        """设置frame元素attribute属性
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self._check_ok()
-        self.frame_ele.set_attr(attr, value)
 
     def remove_attr(self, attr):
         """删除frame元素attribute属性
@@ -454,6 +453,15 @@ class ChromiumFrame(ChromiumBase):
         """返回当前frame是否同域"""
         return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
 
+    def set_attr(self, attr, value):
+        """设置frame元素attribute属性
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
+        self.set.attr(attr, value)
+
 
 class ChromiumFrameScroll(ChromiumPageScroll):
     def __init__(self, frame):
@@ -462,3 +470,14 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         """
         self._driver = frame.doc_ele
         self.t1 = self.t2 = 'this.documentElement'
+
+
+class ChromiumFrameSetter(ChromiumBaseSetter):
+    def attr(self, attr, value):
+        """设置frame元素attribute属性
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        self._page._check_ok()
+        self._page.frame_ele.set_attr(attr, value)

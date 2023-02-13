@@ -6,6 +6,7 @@
 from re import search
 from time import sleep
 from urllib.parse import urlparse
+from warnings import warn
 
 from DownloadKit import DownloadKit
 from requests import Session, Response
@@ -52,6 +53,7 @@ class SessionPage(BasePage):
         """设置运行时用到的属性"""
         self._timeout = self._session_options.timeout
         self._download_path = self._session_options.download_path
+        self._set = None
 
     def _create_session(self):
         """创建内建Session对象"""
@@ -68,7 +70,7 @@ class SessionPage(BasePage):
         if opt.headers:
             self._session.headers = CaseInsensitiveDict(opt.headers)
         if opt.cookies:
-            self.set_cookies(opt.cookies)
+            self.set.cookies(opt.cookies)
         if opt.adapters:
             for url, adapter in opt.adapters:
                 self._session.mount(url, adapter)
@@ -79,26 +81,6 @@ class SessionPage(BasePage):
             attr = opt.__getattribute__(i)
             if attr:
                 self._session.__setattr__(i, attr)
-
-    def set_cookies(self, cookies):
-        """为Session对象设置cookies
-        :param cookies: cookies信息
-        :return: None
-        """
-        set_session_cookies(self.session, cookies)
-
-    def set_headers(self, headers):
-        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的
-        :param headers: dict形式的headers
-        :return: None
-        """
-        headers = CaseInsensitiveDict(headers)
-        for i in headers:
-            self.session.headers[i] = headers[i]
-
-    def set_user_agent(self, ua):
-        """设置user agent"""
-        self.session.headers['user-agent'] = ua
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -160,6 +142,13 @@ class SessionPage(BasePage):
     def response(self):
         """返回访问url得到的response对象"""
         return self._response
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = SessionPageSetter(self)
+        return self._set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """用get方式跳转到url
@@ -339,6 +328,52 @@ class SessionPage(BasePage):
             if show_errmsg:
                 raise ConnectionError(f'状态码：{r.status_code}')
             return r, f'状态码：{r.status_code}'
+
+    def set_cookies(self, cookies):
+        """为Session对象设置cookies
+        :param cookies: cookies信息
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        self.set.cookies(cookies)
+
+    def set_headers(self, headers):
+        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的
+        :param headers: dict形式的headers
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        self.set.headers(headers)
+
+    def set_user_agent(self, ua):
+        """设置user agent"""
+        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        self.set.user_agent(ua)
+
+
+class SessionPageSetter(object):
+    def __init__(self, page):
+        self._page = page
+
+    def cookies(self, cookies):
+        """为Session对象设置cookies
+        :param cookies: cookies信息
+        :return: None
+        """
+        set_session_cookies(self._page.session, cookies)
+
+    def headers(self, headers):
+        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的
+        :param headers: dict形式的headers
+        :return: None
+        """
+        headers = CaseInsensitiveDict(headers)
+        for i in headers:
+            self._page.session.headers[i] = headers[i]
+
+    def user_agent(self, ua):
+        """设置user agent"""
+        self._page.session.headers['user-agent'] = ua
 
 
 class DownloadSetter(object):

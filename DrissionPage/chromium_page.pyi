@@ -11,12 +11,12 @@ from typing import Union, Tuple, List
 from DownloadKit import DownloadKit
 from requests import Session
 
-from session_page import DownloadSetter
-from .configs.chromium_options import ChromiumOptions
-from .chromium_base import ChromiumBase
+from .chromium_base import ChromiumBase, ChromiumBaseSetter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
+from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
+from .session_page import DownloadSetter
 
 
 class ChromiumPage(ChromiumBase):
@@ -59,6 +59,9 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def process_id(self) -> Union[None, int]: ...
+
+    @property
+    def set(self) -> ChromiumPageSetter: ...
 
     @property
     def set_window(self) -> WindowSetter: ...
@@ -178,3 +181,12 @@ def get_browser_progress_id(progress: Union[popen, None], address: str) -> Union
 
 
 def get_chrome_hwnds_from_pid(pid: str, title: str) -> list: ...
+
+
+class ChromiumPageSetter(ChromiumBaseSetter):
+    _page: ChromiumPage = ...
+
+    def main_tab(self, tab_id: str = None) -> None: ...
+
+    @property
+    def windows(self) -> WindowSetter: ...

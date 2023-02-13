@@ -11,7 +11,7 @@ from warnings import warn
 
 from requests import Session
 
-from .chromium_base import ChromiumBase, Timeout
+from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
 from .chromium_driver import ChromiumDriver, CallMethodException
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
@@ -91,7 +91,6 @@ class ChromiumPage(ChromiumBase):
         """添加ChromiumPage独有的运行配置"""
         super()._chromium_init()
         self._alert = Alert()
-        self._window_setter = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -148,11 +147,11 @@ class ChromiumPage(ChromiumBase):
         return None
 
     @property
-    def set_window(self):
-        """返回用于设置窗口大小的对象"""
-        if self._window_setter is None:
-            self._window_setter = WindowSetter(self)
-        return self._window_setter
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumPageSetter(self)
+        return self._set
 
     @property
     def download_path(self):
@@ -210,13 +209,6 @@ class ChromiumPage(ChromiumBase):
 
         else:
             self.run_cdp('Target.createTarget', url='')
-
-    def set_main_tab(self, tab_id=None):
-        """设置主tab
-        :param tab_id: 标签页id，不传入则设置当前tab
-        :return: None
-        """
-        self._main_tab = tab_id or self.tab_id
 
     def to_main_tab(self):
         """跳转到主标签页"""
@@ -357,6 +349,20 @@ class ChromiumPage(ChromiumBase):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._tab_obj.has_alert = True
+
+    def set_main_tab(self, tab_id=None):
+        """设置主tab
+        :param tab_id: 标签页id，不传入则设置当前tab
+        :return: None
+        """
+        warn("此方法即将弃用，请用set.main_tab()方法代替。", DeprecationWarning)
+        self.set.main_tab(tab_id)
+
+    @property
+    def set_window(self):
+        """返回用于设置窗口大小的对象"""
+        warn("此方法即将弃用，请用set.window.xxxx()方法代替。", DeprecationWarning)
+        return WindowSetter(self)
 
 
 class ChromiumDownloadSetter(DownloadSetter):
@@ -556,6 +562,20 @@ class WindowSetter(object):
         :return: None
         """
         self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+
+
+class ChromiumPageSetter(ChromiumBaseSetter):
+    def main_tab(self, tab_id=None):
+        """设置主tab
+        :param tab_id: 标签页id，不传入则设置当前tab
+        :return: None
+        """
+        self._page._main_tab = tab_id or self._page.tab_id
+
+    @property
+    def windows(self):
+        """返回用于设置浏览器窗口的对象"""
+        return WindowSetter(self._page)
 
 
 def show_or_hide_browser(page, hide=True):

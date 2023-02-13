@@ -12,12 +12,12 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
-from .chromium_page import ChromiumPage, ChromiumDownloadSetter
+from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement
-from .session_page import SessionPage
+from .session_page import SessionPage, SessionPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -124,9 +124,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def set_user_agent(self, ua: str, platform: str = None) -> None: ...
 
-    def _get_driver_cookies(self, as_dict: bool = False) -> dict: ...
+    def set_headers(self, headers: dict) -> None: ...
 
     def set_cookies(self, cookies, set_session: bool = False, set_driver: bool = False) -> None: ...
+
+    def _get_driver_cookies(self, as_dict: bool = False) -> dict: ...
 
     def close_driver(self) -> None: ...
 
@@ -156,6 +158,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def download(self) -> DownloadKit: ...
 
+    @property
+    def set(self) -> WebPageSetter: ...
+
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
              timeout: float = None, single: bool = True, relative: bool = False) \
@@ -168,6 +173,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def quit(self) -> None: ...
 
     def _on_download_begin(self, **kwargs): ...
+
+
+class WebPageSetter(ChromiumPageSetter):
+    _page: WebPage = ...
+    _session_setter: SessionPageSetter = ...
+    _chromium_setter: ChromiumPageSetter = ...
+
+    def user_agent(self, ua: str, platform: str = None) -> None: ...
+
+    def headers(self, headers: dict) -> None: ...
+
+    def cookies(self, cookies, set_session: bool = False, set_driver: bool = False) -> None: ...
 
 
 class WebPageDownloadSetter(ChromiumDownloadSetter):
