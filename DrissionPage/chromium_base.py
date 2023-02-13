@@ -36,6 +36,7 @@ class ChromiumBase(BasePage):
         self._debug = False
         self._debug_recorder = None
         self._tab_obj = None
+        self._set = None
 
         self._set_start_options(address, None)
         self._set_runtime_settings()
@@ -76,7 +77,6 @@ class ChromiumBase(BasePage):
         self._is_reading = False
         self._upload_list = None
         self._wait = None
-        self._set = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化

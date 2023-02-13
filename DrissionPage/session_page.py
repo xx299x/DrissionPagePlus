@@ -30,6 +30,7 @@ class SessionPage(BasePage):
         self._response = None
         self._download_set = None
         self._session = None
+        self._set = None
         self._set_start_options(session_or_options, None)
         self._set_runtime_settings()
         self._create_session()
@@ -53,7 +54,6 @@ class SessionPage(BasePage):
         """设置运行时用到的属性"""
         self._timeout = self._session_options.timeout
         self._download_path = self._session_options.download_path
-        self._set = None
 
     def _create_session(self):
         """创建内建Session对象"""
