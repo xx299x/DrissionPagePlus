@@ -78,7 +78,7 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
         try:
-            self._tab_obj.DOM.describeNode(nodeId=self.node_id)
+            self.run_cdp('DOM.describeNode', nodeId=self.node_id)
         except Exception:
             self._reload()
             # sleep(2)
@@ -99,7 +99,7 @@ class ChromiumFrame(ChromiumBase):
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
 
                     else:
-                        b_id = self._tab_obj.DOM.getDocument()['root']['backendNodeId']
+                        b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
                         self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
                     break

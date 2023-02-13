@@ -485,7 +485,7 @@ class ChromiumElement(DrissionElement):
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
         try:
-            result = self.page.driver.Page.getResourceContent(frameId=frame, url=src)
+            result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
         except Exception:
             return None
 
@@ -565,10 +565,10 @@ class ChromiumElement(DrissionElement):
             return
 
         if vals.endswith('\n'):
-            self.page.driver.Input.insertText(text=vals[:-1])
+            self.page.run_cdp('Input.insertText', text=vals[:-1])
             _send_key(self, modifier, '\n')
         else:
-            self.page.driver.Input.insertText(text=vals)
+            self.page.run_cdp('Input.insertText', text=vals)
 
     def _set_file_input(self, files):
         """往上传控件写入路径
@@ -604,7 +604,7 @@ class ChromiumElement(DrissionElement):
         def do_it(cx, cy, lx, ly):
             """无遮挡返回True，有遮挡返回False，无元素返回None"""
             try:
-                r = self.page.driver.DOM.getNodeForLocation(x=lx, y=ly)
+                r = self.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
             except Exception:
                 return None
 
@@ -680,10 +680,11 @@ class ChromiumElement(DrissionElement):
         :param button: 'left' 或 'right'
         :return: None
         """
-        self.page.driver.Input.dispatchMouseEvent(type='mousePressed', x=client_x, y=client_y, button=button,
-                                                  clickCount=1)
+        self.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
+                          x=client_x, y=client_y, button=button, clickCount=1)
         sleep(.05)
-        self.page.driver.Input.dispatchMouseEvent(type='mouseReleased', x=client_x, y=client_y, button=button)
+        self.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
+                          x=client_x, y=client_y, button=button)
 
     def hover(self, offset_x=None, offset_y=None):
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点
@@ -693,7 +694,7 @@ class ChromiumElement(DrissionElement):
         """
         self.page.scroll.to_see(self)
         x, y = offset_scroll(self, offset_x, offset_y)
-        self.page.driver.Input.dispatchMouseEvent(type='mouseMoved', x=x, y=y)
+        self.page.run_cdp('Input.dispatchMouseEvent', type='mouseMoved', x=x, y=y)
 
     def drag(self, offset_x=0, offset_y=0, speed=40, shake=True):
         """拖拽当前元素到相对位置
@@ -1172,7 +1173,7 @@ def _find_by_xpath(ele, xpath, single, timeout, relative=True):
     if r['result']['description'] == 'NodeList(0)':
         return []
     else:
-        r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+        r = ele.page.run_cdp('Runtime.getProperties', objectId=r['result']['objectId'], ownProperties=True)['result']
         return [make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
                 if i['value']['type'] == 'object' else i['value']['value']
                 for i in r[:-1]]
@@ -1209,7 +1210,7 @@ def _find_by_css(ele, selector, single, timeout):
     if r['result']['description'] == 'NodeList(0)':
         return []
     else:
-        r = ele.page.driver.Runtime.getProperties(objectId=r['result']['objectId'], ownProperties=True)['result']
+        r = ele.page.run_cdp('Runtime.getProperties', objectId=r['result']['objectId'], ownProperties=True)['result']
         return [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
@@ -1337,7 +1338,7 @@ def _parse_js_result(page, ele, result):
                 return make_chromium_ele(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
-            r = page.driver.Runtime.getProperties(objectId=result['result']['objectId'], ownProperties=True)['result']
+            r = page.run_cdp('Runtime.getProperties', objectId=result['result']['objectId'], ownProperties=True)['result']
             return [_parse_js_result(page, ele, result=i['value']) for i in r]
 
         else:
@@ -1370,15 +1371,15 @@ def _send_enter(ele):
     data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
             'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
 
-    ele.page.driver.Input.dispatchKeyEvent(**data)
+    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
     data['type'] = 'keyUp'
-    ele.page.driver.Input.dispatchKeyEvent(**data)
+    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
 def _send_key(ele, modifier, key):
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in _keyDefinitions:
-        ele.page.driver.Input.insertText(text=key)
+        ele.page.run_cdp('Input.insertText', text=key)
 
     else:
         description = _keyDescriptionForString(modifier, key)
@@ -1394,9 +1395,9 @@ def _send_key(ele, modifier, key):
                 'location': description['location'],
                 'isKeypad': description['location'] == 3}
 
-        ele.page.driver.Input.dispatchKeyEvent(**data)
+        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'
-        ele.page.driver.Input.dispatchKeyEvent(**data)
+        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
 class ChromiumScroll(object):

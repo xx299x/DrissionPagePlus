@@ -342,7 +342,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: None
         """
         if copy_user_agent:
-            selenium_user_agent = self._tab_obj.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
+            selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
         self.set_cookies(self._get_driver_cookies(as_dict=True), set_session=True)
@@ -381,7 +381,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param as_dict: 以dict形式返回
         :return: cookies信息
         """
-        cookies = self._tab_obj.Network.getCookies()['cookies']
+        cookies = self.run_cdp('Network.getCookies')['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         else:
@@ -405,7 +405,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                      'name': cookie['name'],
                      'domain': cookie['domain']}
                 result_cookies.append(c)
-            self._tab_obj.Network.setCookies(cookies=result_cookies)
+            self.run_cdp('Network.setCookies', cookies=result_cookies)
 
         # 添加cookie到session
         if set_session:
