@@ -29,6 +29,3 @@ def clean_folder(folder_path: Union[str, Path], ignore: list = None) -> None: ..
 
 
 def unzip(zip_path: str, to_path: str) -> Union[list, None]: ...
-
-
-class AlertExistsError(Exception): ...

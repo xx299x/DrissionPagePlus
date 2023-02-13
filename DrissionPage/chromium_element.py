@@ -10,6 +10,7 @@ from time import perf_counter, sleep
 from warnings import warn
 
 from .base import DrissionElement, BaseElement
+from .functions.errors import ContextLossError, ElementLossError
 from .functions.locator import get_loc
 from .functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
@@ -47,7 +48,7 @@ class ChromiumElement(DrissionElement):
             self._node_id = self._get_node_id(obj_id=self._obj_id)
             self._backend_id = backend_id
         else:
-            raise RuntimeError('元素可能已失效。')
+            raise ElementLossError('原来获取到的元素对象已不在页面内。')
 
         doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
@@ -1291,27 +1292,27 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         obj_id = page_or_ele._root_id
         is_page = True
 
-    if as_expr:
-        res = page.driver.Runtime.evaluate(expression=script,
-                                           returnByValue=False,
-                                           awaitPromise=True,
-                                           userGesture=True,
-                                           timeout=timeout * 1000)
+    try:
+        if as_expr:
+            res = page.run_cdp('Runtime.evaluate', expression=script, returnByValue=False,
+                               awaitPromise=True, userGesture=True, timeout=timeout * 1000)
 
-    else:
-        args = args or ()
-        if not is_js_func(script):
-            script = f'function(){{{script}}}'
-        res = page.driver.Runtime.callFunctionOn(functionDeclaration=script,
-                                                 objectId=obj_id,
-                                                 arguments=[_convert_argument(arg) for arg in args],
-                                                 returnByValue=False,
-                                                 awaitPromise=True,
-                                                 userGesture=True)
+        else:
+            args = args or ()
+            if not is_js_func(script):
+                script = f'function(){{{script}}}'
+            res = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=script, objectId=obj_id,
+                               arguments=[_convert_argument(arg) for arg in args], returnByValue=False,
+                               awaitPromise=True, userGesture=True)
 
-    if 'Cannot find context with specified id' in res.get('error', ''):
-        txt = '页面已被刷新，请尝试等待页面加载完成再执行操作。' if is_page else '元素已不在页面内。'
-        raise RuntimeError(txt)
+    except ContextLossError:
+        if is_page:
+            raise ContextLossError('页面已被刷新，请尝试等待页面加载完成再执行操作。')
+        else:
+            raise ElementLossError('原来获取到的元素对象已不在页面内。')
+
+    if res is None and page.driver.has_alert:  # 存在alert的情况
+        return None
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:

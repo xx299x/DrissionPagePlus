@@ -10,13 +10,13 @@ from warnings import warn
 
 from requests import Session
 
-from .functions.tools import AlertExistsError
-from .functions.tools import get_usable_path
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
+from .functions.errors import ContextLossError, ElementLossError, AlertExistsError
 from .functions.locator import get_loc
+from .functions.tools import get_usable_path
 from .functions.web import offset_scroll, cookies_to_tuple
 from .session_element import make_session_ele
 
@@ -139,6 +139,8 @@ class ChromiumBase(BasePage):
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             state = self.ready_state
+            if state is None:  # 存在alert的情况
+                return None
 
             if self._debug_recorder:
                 self._debug_recorder.add_data((perf_counter(), 'waiting', state))
@@ -280,7 +282,10 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
+        try:
+            return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
+        except AlertExistsError:
+            return None
 
     @property
     def size(self):
@@ -350,18 +355,21 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
+        if self.driver.has_alert and cmd != 'Page.handleJavaScriptDialog':
+            raise AlertExistsError('存在未处理的提示框。')
+
         r = self.driver.call_method(cmd, **cmd_args)
         if 'error' not in r:
             return r
 
         if 'Cannot find context with specified id' in r['error']:
-            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
+            raise ContextLossError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
         elif 'Could not find node with given id' in r['error']:
-            raise RuntimeError('该元素已不在当前页面中。')
+            raise ElementLossError('该元素已不在当前页面中。')
         elif 'tab closed' in r['error']:
             raise RuntimeError('标签页已关闭。')
         elif 'alert exists' in r['error']:
-            raise AlertExistsError('存在未处理的提示框。')
+            pass
         else:
             raise RuntimeError(r)
 
@@ -723,7 +731,10 @@ class ChromiumBase(BasePage):
             err = None
             result = self.run_cdp('Page.navigate', url=to_url)
 
-            is_timeout = not self._wait_loaded(timeout)
+            is_timeout = self._wait_loaded(timeout)
+            if is_timeout is None:
+                return None
+            is_timeout = not is_timeout
             self.wait.load_complete()
 
             if is_timeout:

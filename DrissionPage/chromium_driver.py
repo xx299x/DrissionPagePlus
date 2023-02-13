@@ -99,8 +99,8 @@ class ChromiumDriver(object):
 
                 except Empty:
                     if self.has_alert:
-                        return {'error': {'message': 'alert exists'},
-                                'type': 'alert_exists'}
+                        return {'error': {'message': 'alert exists'}, 'type': 'alert_exists'}
+
                     if isinstance(timeout, (int, float)) and timeout <= 0:
                         raise TimeoutError(f"调用{message['method']}超时。")
 

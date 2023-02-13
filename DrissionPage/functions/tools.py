@@ -149,7 +149,3 @@ def unzip(zip_path, to_path):
 
     with ZipFile(zip_path, 'r') as f:
         return [f.extract(f.namelist()[0], path=to_path)]
-
-
-class AlertExistsError(Exception):
-    pass
