@@ -10,6 +10,7 @@ from warnings import warn
 
 from requests import Session
 
+from .functions.tools import AlertExistsError
 from .functions.tools import get_usable_path
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
@@ -73,6 +74,7 @@ class ChromiumBase(BasePage):
         self._first_run = True
         self._is_reading = False
         self._upload_list = None
+        self._wait = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -278,24 +280,18 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        try:
-            return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
-        except KeyError:
-            raise ConnectionError('标签页或连接已关闭。')
+        return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
 
     @property
     def size(self):
         """返回页面总宽高，格式：(宽, 高)"""
-        # w = self.run_js('document.body.scrollWidth;', as_expr=True)
-        # h = self.run_js('document.body.scrollHeight;', as_expr=True)
-        # return w, h
         r = self.run_cdp_loaded('Page.getLayoutMetrics')['contentSize']
         return r['width'], r['height']
 
     @property
     def active_ele(self):
         """返回当前焦点所在元素"""
-        return self.run_js('return document.activeElement;')
+        return self.run_js_loaded('return document.activeElement;')
 
     @property
     def page_load_strategy(self):
@@ -328,7 +324,9 @@ class ChromiumBase(BasePage):
     @property
     def wait(self):
         """返回用于等待的对象"""
-        return ChromiumPageWaiter(self)
+        if self._wait is None:
+            self._wait = ChromiumPageWaiter(self)
+        return self._wait
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒
@@ -346,6 +344,36 @@ class ChromiumBase(BasePage):
         if script is not None:
             self._timeouts.script = script
 
+    def run_cdp(self, cmd, **cmd_args):
+        """执行Chrome DevTools Protocol语句
+        :param cmd: 协议项目
+        :param cmd_args: 参数
+        :return: 执行的结果
+        """
+        r = self.driver.call_method(cmd, **cmd_args)
+        if 'error' not in r:
+            return r
+
+        if 'Cannot find context with specified id' in r['error']:
+            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
+        elif 'Could not find node with given id' in r['error']:
+            raise RuntimeError('该元素已不在当前页面中。')
+        elif 'tab closed' in r['error']:
+            raise RuntimeError('标签页已关闭。')
+        elif 'alert exists' in r['error']:
+            raise AlertExistsError('存在未处理的提示框。')
+        else:
+            raise RuntimeError(r)
+
+    def run_cdp_loaded(self, cmd, **cmd_args):
+        """执行Chrome DevTools Protocol语句，执行前等待页面加载完毕
+        :param cmd: 协议项目
+        :param cmd_args: 参数
+        :return: 执行的结果
+        """
+        self.wait.load_complete()
+        return self.run_cdp(cmd, **cmd_args)
+
     def run_js(self, script, as_expr=False, *args):
         """运行javascript代码
         :param script: js文本
@@ -353,6 +381,16 @@ class ChromiumBase(BasePage):
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :return: 运行的结果
         """
+        return run_js(self, script, as_expr, self.timeouts.script, args)
+
+    def run_js_loaded(self, script, as_expr=False, *args):
+        """运行javascript代码，执行前等待页面加载完毕
+        :param script: js文本
+        :param as_expr: 是否作为表达式运行，为True时args无效
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :return: 运行的结果
+        """
+        self.wait.load_complete()
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
     def run_async_js(self, script, as_expr=False, *args):
@@ -553,35 +591,6 @@ class ChromiumBase(BasePage):
         while self.ready_state != 'complete':
             sleep(.1)
 
-    def run_cdp(self, cmd, **cmd_args):
-        """执行Chrome DevTools Protocol语句
-        :param cmd: 协议项目
-        :param cmd_args: 参数
-        :return: 执行的结果
-        """
-        r = self.driver.call_method(cmd, **cmd_args)
-        if 'error' not in r:
-            return r
-
-        if 'Cannot find context with specified id' in r['error']:
-            raise RuntimeError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
-        elif 'Could not find node with given id' in r['error']:
-            raise RuntimeError('该元素已不在当前页面中。')
-        elif 'tab closed' in r['error']:
-            raise RuntimeError('标签页已关闭。')
-        else:
-            raise RuntimeError(r)
-
-    def run_cdp_loaded(self, cmd, **cmd_args):
-        """执行Chrome DevTools Protocol语句，执行前等待页面加载完毕
-        :param cmd: 协议项目
-        :param cmd_args: 参数
-        :return: 执行的结果
-        """
-        while self.is_loading:
-            sleep(.1)
-        return self.run_cdp(cmd, **cmd_args)
-
     def set_user_agent(self, ua, platform=None):
         """为当前tab设置user agent，只在当前tab有效
         :param ua: user agent字符串
@@ -599,7 +608,7 @@ class ChromiumBase(BasePage):
         :return: sessionStorage一个或所有项内容
         """
         js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
-        return self.run_js(js, as_expr=True)
+        return self.run_js_loaded(js, as_expr=True)
 
     def get_local_storage(self, item=None):
         """获取localStorage信息，不设置item则获取全部
@@ -607,7 +616,7 @@ class ChromiumBase(BasePage):
         :return: localStorage一个或所有项内容
         """
         js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
-        return self.run_js(js, as_expr=True)
+        return self.run_js_loaded(js, as_expr=True)
 
     def set_session_storage(self, item, value):
         """设置或删除某项sessionStorage信息
@@ -617,7 +626,7 @@ class ChromiumBase(BasePage):
         """
         js = f'sessionStorage.removeItem("{item}");' if item is False \
             else f'sessionStorage.setItem("{item}","{value}");'
-        return self.run_js(js, as_expr=True)
+        return self.run_js_loaded(js, as_expr=True)
 
     def set_local_storage(self, item, value):
         """设置或删除某项localStorage信息
@@ -626,7 +635,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self.run_js(js, as_expr=True)
+        return self.run_js_loaded(js, as_expr=True)
 
     def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
@@ -715,8 +724,7 @@ class ChromiumBase(BasePage):
             result = self.run_cdp('Page.navigate', url=to_url)
 
             is_timeout = not self._wait_loaded(timeout)
-            while self.is_loading:
-                sleep(.1)
+            self.wait.load_complete()
 
             if is_timeout:
                 err = TimeoutError('页面连接超时。')
@@ -824,7 +832,7 @@ class ChromiumPageScroll(ChromiumScroll):
         try:
             self._driver.run_cdp_loaded('DOM.scrollIntoViewIfNeeded', nodeId=node_id)
         except Exception:
-            ele.run_js("this.scrollIntoView();")
+            ele.run_js_loaded("this.scrollIntoView();")
 
         if not ele.is_in_viewport:
             offset_scroll(ele, 0, 0)

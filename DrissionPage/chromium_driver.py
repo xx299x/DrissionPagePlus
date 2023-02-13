@@ -99,7 +99,8 @@ class ChromiumDriver(object):
 
                 except Empty:
                     if self.has_alert:
-                        return {'result': {'alert': True}}
+                        return {'error': {'message': 'alert exists'},
+                                'type': 'alert_exists'}
                     if isinstance(timeout, (int, float)) and timeout <= 0:
                         raise TimeoutError(f"调用{message['method']}超时。")
 
@@ -179,7 +180,7 @@ class ChromiumDriver(object):
             return {'error': 'tab closed', 'type': 'tab_closed'}
         if 'result' not in result and 'error' in result:
             return {'error': result['error']['message'],
-                    'type': 'call_method_error',
+                    'type': result.get('type', 'call_method_error'),
                     'method': _method,
                     'args': kwargs}
 

@@ -53,8 +53,11 @@ class ChromiumFrame(ChromiumBase):
         :param tab_id: 要跳转到的标签页id
         :return: None
         """
-        self._control_session.get(f'http://{self.address}/json')
-        super()._driver_init(tab_id)
+        try:
+            super()._driver_init(tab_id)
+        except:
+            self._control_session.get(f'http://{self.address}/json')
+            super()._driver_init(tab_id)
 
     def _reload(self):
         """重新获取document"""

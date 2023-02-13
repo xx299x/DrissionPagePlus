@@ -32,6 +32,7 @@ class ChromiumElement(DrissionElement):
         self._select = None
         self._scroll = None
         self._tag = None
+        self._wait = None
 
         if node_id:
             self._node_id = node_id
@@ -274,7 +275,9 @@ class ChromiumElement(DrissionElement):
     @property
     def wait(self):
         """返回用于等待的对象"""
-        return ChromiumWaiter(self)
+        if self._wait is None:
+            self._wait = ChromiumWaiter(self)
+        return self._wait
 
     @property
     def select(self):
@@ -356,7 +359,7 @@ class ChromiumElement(DrissionElement):
         :param value: 属性值
         :return: None
         """
-        self.run_js(f'this.setAttribute(arguments[0], arguments[1]);', False, attr, str(value))
+        self.page.run_cdp('DOM.setAttributeValue', nodeId=self.node_id, name=attr, value=str(value))
 
     def remove_attr(self, attr):
         """删除元素attribute属性
@@ -1282,29 +1285,33 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
         page = page_or_ele.page
         obj_id = page_or_ele.obj_id
+        is_page = False
     else:
         page = page_or_ele
         obj_id = page_or_ele._root_id
+        is_page = True
 
     if as_expr:
-        res = page.run_cdp('Runtime.evaluate',
-                           expression=script,
-                           returnByValue=False,
-                           awaitPromise=True,
-                           userGesture=True,
-                           timeout=timeout * 1000)
+        res = page.driver.Runtime.evaluate(expression=script,
+                                           returnByValue=False,
+                                           awaitPromise=True,
+                                           userGesture=True,
+                                           timeout=timeout * 1000)
 
     else:
         args = args or ()
         if not is_js_func(script):
             script = f'function(){{{script}}}'
-        res = page.run_cdp('Runtime.callFunctionOn',
-                           functionDeclaration=script,
-                           objectId=obj_id,
-                           arguments=[_convert_argument(arg) for arg in args],
-                           returnByValue=False,
-                           awaitPromise=True,
-                           userGesture=True)
+        res = page.driver.Runtime.callFunctionOn(functionDeclaration=script,
+                                                 objectId=obj_id,
+                                                 arguments=[_convert_argument(arg) for arg in args],
+                                                 returnByValue=False,
+                                                 awaitPromise=True,
+                                                 userGesture=True)
+
+    if 'Cannot find context with specified id' in res.get('error', ''):
+        txt = '页面已被刷新，请尝试等待页面加载完成再执行操作。' if is_page else '元素已不在页面内。'
+        raise RuntimeError(txt)
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
@@ -1338,7 +1345,8 @@ def _parse_js_result(page, ele, result):
                 return make_chromium_ele(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
-            r = page.run_cdp('Runtime.getProperties', objectId=result['result']['objectId'], ownProperties=True)['result']
+            r = page.run_cdp('Runtime.getProperties', objectId=result['result']['objectId'],
+                             ownProperties=True)['result']
             return [_parse_js_result(page, ele, result=i['value']) for i in r]
 
         else:

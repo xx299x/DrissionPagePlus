@@ -138,10 +138,14 @@ class ChromiumPage(ChromiumBase):
     @property
     def process_id(self):
         """返回浏览器进程id"""
-        try:
-            return self.driver.SystemInfo.getProcessInfo()['id']
-        except Exception:
-            return None
+        if self.process:
+            return self.process.pid
+
+        r = self.browser_driver.SystemInfo.getProcessInfo()['processInfo']
+        for i in r:
+            if i['type'] == 'browser':
+                return i['id']
+        return None
 
     @property
     def set_window(self):
@@ -483,8 +487,8 @@ class WindowSetter(object):
     """用于设置窗口大小的类"""
 
     def __init__(self, page):
-        self.driver = page.driver
-        self.window_id = self._get_info()['windowId']
+        self._page = page
+        self._window_id = self._get_info()['windowId']
 
     def maximized(self):
         """窗口最大化"""
@@ -544,14 +548,14 @@ class WindowSetter(object):
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
-        return self.driver.Browser.getWindowForTarget()
+        return self._page.run_cdp('Browser.getWindowForTarget')
 
     def _perform(self, bounds):
         """执行改变窗口大小操作
         :param bounds: 控制数据
         :return: None
         """
-        self.driver.Browser.setWindowBounds(windowId=self.window_id, bounds=bounds)
+        self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
 
 
 def show_or_hide_browser(page, hide=True):
