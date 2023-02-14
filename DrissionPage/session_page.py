@@ -355,6 +355,13 @@ class SessionPageSetter(object):
     def __init__(self, page):
         self._page = page
 
+    def timeout(self, second):
+        """设置连接超时时间
+        :param second: 秒数
+        :return: None
+        """
+        self._page.timeout = second
+
     def cookies(self, cookies):
         """为Session对象设置cookies
         :param cookies: cookies信息
@@ -363,17 +370,99 @@ class SessionPageSetter(object):
         set_session_cookies(self._page.session, cookies)
 
     def headers(self, headers):
-        """设置通用的headers，设置的headers值回逐个覆盖原有的，不会清理原来的
+        """设置通用的headers
         :param headers: dict形式的headers
         :return: None
         """
-        headers = CaseInsensitiveDict(headers)
-        for i in headers:
-            self._page.session.headers[i] = headers[i]
+        self._page.session.headers = CaseInsensitiveDict(headers)
+
+    def header(self, attr, value):
+        """设置headers中一个项
+        :param attr: 设置名称
+        :param value: 设置值
+        :return: None
+        """
+        self._page.session.headers[attr.lower()] = value
 
     def user_agent(self, ua):
-        """设置user agent"""
+        """设置user agent
+        :param ua: user agent
+        :return: None
+        """
         self._page.session.headers['user-agent'] = ua
+
+    def proxies(self, http, https=None):
+        """设置proxies参数
+        :param http: http代理地址
+        :param https: https代理地址
+        :return: None
+        """
+        proxies = None if http == https is None else {'http': http, 'https': https or http}
+        self._page.session.proxies = proxies
+
+    def auth(self, auth):
+        """设置认证元组或对象
+        :param auth: 认证元组或对象
+        :return: None
+        """
+        self._page.session.auth = auth
+
+    def hooks(self, hooks):
+        """设置回调方法
+        :param hooks: 回调方法
+        :return: None
+        """
+        self._page.session.hooks = hooks
+
+    def params(self, params):
+        """设置查询参数字典
+        :param params: 查询参数字典
+        :return: None
+        """
+        self._page.session.params = params
+
+    def verify(self, on_off):
+        """设置是否验证SSL证书
+        :param on_off: 是否验证 SSL 证书
+        :return: None
+        """
+        self._page.session.verify = on_off
+
+    def cert(self, cert):
+        """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组
+        :param cert: 证书路径或元组
+        :return: None
+        """
+        self._page.session.cert = cert
+
+    def stream(self, on_off):
+        """设置是否使用流式响应内容
+        :param on_off: 是否使用流式响应内容
+        :return: None
+        """
+        self._page.session.stream = on_off
+
+    def trust_env(self, on_off):
+        """设置是否信任环境
+        :param on_off: 是否信任环境
+        :return: None
+        """
+        self._page.session.trust_env = on_off
+
+    def max_redirects(self, times):
+        """设置最大重定向次数
+        :param times: 最大重定向次数
+        :return: None
+        """
+        self._page.session.max_redirects = times
+
+    def add_adapter(self, url, adapter):
+        """添加适配器
+        :param url: 适配器对应url
+        :param adapter: 适配器对象
+        :return: None
+        """
+        self._page.session.mount(url, adapter)
 
 
 class DownloadSetter(object):

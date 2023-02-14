@@ -2,7 +2,7 @@
 
 DrissionPage 是一个基于 python 的网页自动化工具。
 
-它既能控制浏览器，也能收发数据包，甚至能把两者合而为一，
+它既能控制浏览器，也能收发数据包，甚至能把两者合而为一。
 
 可兼顾浏览器自动化的便利性和 requests 的高效率。
 
@@ -10,7 +10,15 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 它的语法简洁而优雅，代码量少，对新手友好。
 
-***
+---
+
+<a href='https://gitee.com/g1879/DrissionPage/stargazers'><img src='https://gitee.com/g1879/DrissionPage/badge/star.svg?theme=dark' alt='star'></img></a> <a href='https://gitee.com/g1879/DrissionPage/members'><img src='https://gitee.com/g1879/DrissionPage/badge/fork.svg?theme=dark' alt='fork'></img></a>
+
+项目地址：[gitee](https://gitee.com/g1879/DrissionPage)    |    [github](https://github.com/g1879/DrissionPage) 
+
+您的星星是对我最大的支持💖
+
+--- 
 
 支持系统：Windows、Linux、Mac
 
@@ -18,17 +26,13 @@ python 版本：3.6 及以上
 
 支持浏览器：Chromium 内核浏览器（如 Chrome 和 Edge）
 
-*** 
+---
 
-<a href='https://gitee.com/g1879/DrissionPage/stargazers'><img src='https://gitee.com/g1879/DrissionPage/badge/star.svg?theme=dark' alt='star'></img></a> <a href='https://gitee.com/g1879/DrissionPage/members'><img src='https://gitee.com/g1879/DrissionPage/badge/fork.svg?theme=dark' alt='fork'></img></a>
-
-项目地址：[gitee](https://gitee.com/g1879/DrissionPage)    |    [github](https://github.com/g1879/DrissionPage)
+**📖 使用文档：**  [点击查看](http://g1879.gitee.io/drissionpagedocs)
 
 **交流QQ群：**  897838127
 
-**联系邮箱：**  g1879@qq.com
-
-**📖 使用文档：**  [点击查看](http://g1879.gitee.io/drissionpagedocs)
+---
 
 # 📕 背景
 
@@ -40,9 +44,13 @@ python 版本：3.6 及以上
 
 以前的版本是对 selenium 进行重新封装实现的。从 3.0 开始，作者另起炉灶，对底层进行了重新开发，摆脱对 selenium 的依赖，增强了功能，提升了运行效率。
 
+--- 
+
 # 💡 理念
 
 简洁！易用 ！方便！
+
+--- 
 
 # ☀️ 特性和亮点
 
@@ -93,6 +101,8 @@ python 版本：3.6 及以上
 - 高度集成的便利功能，从每个细节中体现
 
 - 还有很多细节，这里不一一列举，欢迎实际使用中体验：）
+
+--- 
 
 # 🌟 简单演示
 
@@ -277,18 +287,26 @@ Git 命令学习 https://oschina.gitee.io/learn-git-branching/
 Git 命令学习
 ```
 
+--- 
+
 # 🛠 使用方法
 
 [点击跳转到使用文档](http://g1879.gitee.io/drissionpage)
 
+--- 
+
 # 🔖 版本历史
 
-[点击查看版本历史](http://g1879.gitee.io/drissionpage/#/%E7%89%88%E6%9C%AC%E5%8E%86%E5%8F%B2)
+[点击查看版本历史](http://g1879.gitee.io/drissionpagedocs/10_history/)
+
+--- 
 
 # 🖐🏻 免责声明
 
 请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage
 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
+
+---  
 
 # ☕ 请我喝咖啡
 

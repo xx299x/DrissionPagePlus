@@ -206,7 +206,7 @@ class ChromiumDriver(object):
         if self._stopped.is_set():
             return False
         if not self._started:
-            raise RuntimeError("Driver未在运行。")
+            return True
 
         self.status = self._STOPPED_
         self._stopped.set()
