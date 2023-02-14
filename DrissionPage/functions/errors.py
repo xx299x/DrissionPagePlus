@@ -9,3 +9,7 @@ class ContextLossError(Exception):
 
 class ElementLossError(Exception):
     pass
+
+
+class CallMethodException(Exception):
+    pass

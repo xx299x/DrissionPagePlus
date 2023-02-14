@@ -15,7 +15,7 @@ from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
 from .functions.constants import HANDLE_ALERT_METHOD
-from .functions.errors import ContextLossError, ElementLossError, AlertExistsError
+from .functions.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodException
 from .functions.locator import get_loc
 from .functions.tools import get_usable_path
 from .functions.web import offset_scroll, cookies_to_tuple
@@ -337,14 +337,16 @@ class ChromiumBase(BasePage):
         if 'error' not in r:
             return r
 
-        if 'Cannot find context with specified id' in r['error']:
+        if r['error'] == 'Cannot find context with specified id':
             raise ContextLossError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
-        elif 'Could not find node with given id' in r['error']:
+        elif r['error'] in ('Could not find node with given id', 'Could not find object with given id'):
             raise ElementLossError('该元素已不在当前页面中。')
-        elif 'tab closed' in r['error']:
+        elif r['error'] == 'tab closed':
             raise RuntimeError('标签页已关闭。')
-        elif 'alert exists' in r['error']:
+        elif r['error'] == 'alert exists':
             pass
+        elif r['type'] == 'call_method_error':
+            raise CallMethodException(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
         else:
             raise RuntimeError(r)
 
@@ -919,11 +921,10 @@ class ChromiumPageScroll(ChromiumScroll):
         :return: None
         """
         ele = self._driver.ele(loc_or_ele)
-        node_id = ele.node_id
         try:
-            self._driver.run_cdp_loaded('DOM.scrollIntoViewIfNeeded', nodeId=node_id)
+            self._driver.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.node_id)
         except Exception:
-            ele.run_js_loaded("this.scrollIntoView();")
+            ele.run_js("this.scrollIntoView();")
 
         if not ele.is_in_viewport:
             offset_scroll(ele, 0, 0)

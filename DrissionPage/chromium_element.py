@@ -11,7 +11,7 @@ from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .functions.constants import FRAME_ELEMENT
-from .functions.errors import ContextLossError, ElementLossError
+from .functions.errors import ContextLossError, ElementLossError, CallMethodException
 from .functions.locator import get_loc
 from .functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
@@ -826,7 +826,7 @@ class ChromiumElement(DrissionElement):
         """
         try:
             return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
-        except Exception:
+        except CallMethodException:
             return None
 
     def _get_absolute_rect(self, x, y):

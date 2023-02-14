@@ -471,6 +471,20 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         self._driver = frame.doc_ele
         self.t1 = self.t2 = 'this.documentElement'
 
+    def to_see(self, loc_or_ele):
+        """滚动页面直到元素可见
+        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :return: None
+        """
+        ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver.ele(loc_or_ele)
+        try:
+            self._driver.page.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.node_id)
+        except Exception:
+            ele.run_js("this.scrollIntoView();")
+
+        # if not ele.is_in_viewport:
+        #     offset_scroll(ele, 0, 0)
+
 
 class ChromiumFrameSetter(ChromiumBaseSetter):
     def attr(self, attr, value):

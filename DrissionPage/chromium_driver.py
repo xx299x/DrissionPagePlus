@@ -11,6 +11,8 @@ from threading import Thread, Event
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
 
+from .functions.errors import CallMethodException
+
 
 class GenericAttr(object):
     def __init__(self, name, tab):
@@ -52,8 +54,8 @@ class ChromiumDriver(object):
         self._ws = None
 
         self._recv_th = Thread(target=self._recv_loop)
-        self._recv_th.daemon = True
         self._handle_event_th = Thread(target=self._handle_event_loop)
+        self._recv_th.daemon = True
         self._handle_event_th.daemon = True
 
         self._stopped = Event()
@@ -120,7 +122,7 @@ class ChromiumDriver(object):
                 continue
             except (WebSocketException, OSError, WebSocketConnectionClosedException):
                 if not self._stopped.is_set():
-                    self._stopped.set()
+                    self.stop()
                 return
 
             if self.debug:
@@ -212,9 +214,10 @@ class ChromiumDriver(object):
         self._stopped.set()
         if self._ws:
             self._ws.close()
-        self.event_handlers = {}
-        self.method_results = {}
-        self.event_queue = Queue()
+            self._ws = None
+        self.event_handlers = None
+        self.method_results = None
+        self.event_queue = None
         return True
 
     def set_listener(self, event, callback):
@@ -242,7 +245,3 @@ class ChromiumDriver(object):
         return f"<ChromiumDriver {self.id}>"
 
     __repr__ = __str__
-
-
-class CallMethodException(Exception):
-    pass

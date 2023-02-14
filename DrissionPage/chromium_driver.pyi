@@ -33,9 +33,9 @@ class ChromiumDriver(object):
     _stopped: Event
     _started: bool
     status: str
-    event_handlers: dict
-    method_results: dict
-    event_queue: Queue
+    event_handlers: Union[dict, None]
+    method_results: Union[dict, None]
+    event_queue: Union[Queue, None]
 
     def __init__(self, tab_id: str, tab_type: str, address: str): ...
 
@@ -58,6 +58,3 @@ class ChromiumDriver(object):
     def get_listener(self, event: str) -> Union[Callable, None]: ...
 
     def __str__(self) -> str: ...
-
-
-class CallMethodException(Exception): ...
