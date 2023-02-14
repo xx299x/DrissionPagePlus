@@ -270,10 +270,10 @@ class ChromiumBase(BasePage):
 
     @property
     def ready_state(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'，有弹出框时返回None"""
         try:
             return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
-        except AlertExistsError:
+        except (AlertExistsError, TypeError):
             return None
 
     @property
