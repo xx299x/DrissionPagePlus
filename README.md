@@ -312,4 +312,4 @@ Git 命令学习
 
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
-![](https://gitee.com/g1879/DrissionPage/raw/master/docs/imgs/code.jpg)
+![](http://g1879.gitee.io/drissionpagedocs/imgs/code.jpg)
