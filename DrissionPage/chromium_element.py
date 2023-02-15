@@ -31,6 +31,7 @@ class ChromiumElement(DrissionElement):
         super().__init__(page)
         self._select = None
         self._scroll = None
+        self._click = None
         self._tag = None
         self._wait = None
 
@@ -195,6 +196,13 @@ class ChromiumElement(DrissionElement):
         if self._scroll is None:
             self._scroll = ChromiumScroll(self)
         return self._scroll
+
+    @property
+    def click(self):
+        """返回用于点击的对象"""
+        if self._click is None:
+            self._click = Click(self)
+        return self._click
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -593,101 +601,6 @@ class ChromiumElement(DrissionElement):
         else:
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def click(self, by_js=None, retry=False, timeout=.2, wait_loading=0):
-        """点击元素
-        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击
-        :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
-        :param retry: 遇到其它元素遮挡时，是否重试
-        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
-        :param wait_loading: 等待页面进入加载状态超时时间
-        :return: 是否点击成功
-        """
-
-        def do_it(cx, cy, lx, ly):
-            """无遮挡返回True，有遮挡返回False，无元素返回None"""
-            try:
-                r = self.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
-            except Exception:
-                return None
-
-            if retry and r.get('nodeId') != self._node_id:
-                return False
-
-            self._click(cx, cy)
-            return True
-
-        if not by_js:
-            self.page.scroll.to_see(self)
-            if self.is_in_viewport:
-                client_x, client_y = self._client_click_point
-                if client_x:
-                    loc_x, loc_y = self._click_point
-
-                    click = do_it(client_x, client_y, loc_x, loc_y)
-                    if click:
-                        self.page.wait.load_start(wait_loading)
-                        return True
-
-                    timeout = timeout if timeout is not None else self.page.timeout
-                    end_time = perf_counter() + timeout
-                    while click is False and perf_counter() < end_time:
-                        click = do_it(client_x, client_y, loc_x, loc_y)
-
-                    if click is not None:
-                        self.page.wait.load_start(wait_loading)
-                        return True
-
-        if by_js is not False:
-            self.run_js('this.click();')
-            self.page.wait.load_start(wait_loading)
-            return True
-
-        return False
-
-    def click_at(self, offset_x=None, offset_y=None, button='left'):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :param button: 左键还是右键
-        :return: None
-        """
-        self.page.scroll.to_see(self)
-        x, y = offset_scroll(self, offset_x, offset_y)
-        self._click(x, y, button)
-
-    def r_click(self):
-        """右键单击"""
-        self.page.scroll.to_see(self)
-        x, y = self._client_click_point
-        self._click(x, y, 'right')
-
-    def r_click_at(self, offset_x=None, offset_y=None):
-        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :return: None
-        """
-        self.click_at(offset_x, offset_y, 'right')
-
-    def m_click(self):
-        """中键单击"""
-        self.page.scroll.to_see(self)
-        x, y = self._client_click_point
-        self._click(x, y, 'middle')
-
-    def _click(self, client_x, client_y, button='left'):
-        """实施点击
-        :param client_x: 视口中的x坐标
-        :param client_y: 视口中的y坐标
-        :param button: 'left' 或 'right'
-        :return: None
-        """
-        self.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
-                          x=client_x, y=client_y, button=button, clickCount=1)
-        sleep(.05)
-        self.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
-                          x=client_x, y=client_y, button=button)
-
     def hover(self, offset_x=None, offset_y=None):
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点
         :param offset_x: 相对元素左上角坐标的x轴偏移量
@@ -844,6 +757,35 @@ class ChromiumElement(DrissionElement):
         """
         warn("此方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
         return ChromiumElementWaiter(self, loc_or_ele, timeout)
+
+    def click_at(self, offset_x=None, offset_y=None, button='left'):
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :param button: 左键还是右键
+        :return: None
+        """
+        warn("此方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
+        self.click.left_at(offset_x, offset_y, button)
+
+    def r_click(self):
+        """右键单击"""
+        warn("此方法即将弃用，请用click.right()方法代替。", DeprecationWarning)
+        self.click.right()
+
+    def r_click_at(self, offset_x=None, offset_y=None):
+        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :return: None
+        """
+        warn("此方法即将弃用，请用click.right_at()方法代替。", DeprecationWarning)
+        self.click.right_at(offset_x, offset_y)
+
+    def m_click(self):
+        """中键单击"""
+        warn("此方法即将弃用，请用click.middle()方法代替。", DeprecationWarning)
+        self.click.middle()
 
 
 class ChromiumShadowRootElement(BaseElement):
@@ -1170,7 +1112,8 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
                              userGesture=True)
 
     if single:
-        return NoneElement() if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return NoneElement() if r['result']['subtype'] == 'null' \
+            else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':
         return []
@@ -1207,7 +1150,8 @@ def find_by_css(ele, selector, single, timeout):
                              userGesture=True)
 
     if single:
-        return NoneElement() if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return NoneElement() if r['result']['subtype'] == 'null' \
+            else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':
         return []
@@ -1405,6 +1349,120 @@ def send_key(ele, modifier, key):
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
+
+
+class Click(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    def __call__(self, by_js=None, retry=False, timeout=.2, wait_loading=0):
+        """点击元素
+        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击
+        :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
+        :param retry: 遇到其它元素遮挡时，是否重试
+        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
+        :param wait_loading: 等待页面进入加载状态超时时间
+        :return: 是否点击成功
+        """
+        return self.left(by_js, retry, timeout, wait_loading)
+
+    def left(self, by_js=None, retry=False, timeout=.2, wait_loading=0):
+        """点击元素
+        如果遇到遮挡，会重新尝试点击直到超时，若都失败就改用js点击
+        :param by_js: 是否用js点击，为True时直接用js点击，为False时重试失败也不会改用js
+        :param retry: 遇到其它元素遮挡时，是否重试
+        :param timeout: 尝试点击的超时时间，不指定则使用父页面的超时时间，retry为True时才生效
+        :param wait_loading: 等待页面进入加载状态超时时间
+        :return: 是否点击成功
+        """
+
+        def do_it(cx, cy, lx, ly):
+            """无遮挡返回True，有遮挡返回False，无元素返回None"""
+            try:
+                r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
+            except Exception:
+                return None
+
+            if retry and r.get('nodeId') != self._ele.node_id:
+                return False
+
+            self._click(cx, cy)
+            return True
+
+        if not by_js:
+            self._ele.page.scroll.to_see(self._ele)
+            if self._ele.is_in_viewport:
+                client_x, client_y = self._ele._client_click_point
+                if client_x:
+                    loc_x, loc_y = self._ele._click_point
+
+                    click = do_it(client_x, client_y, loc_x, loc_y)
+                    if click:
+                        self._ele.page.wait.load_start(wait_loading)
+                        return True
+
+                    timeout = timeout if timeout is not None else self._ele.page.timeout
+                    end_time = perf_counter() + timeout
+                    while click is False and perf_counter() < end_time:
+                        click = do_it(client_x, client_y, loc_x, loc_y)
+
+                    if click is not None:
+                        self._ele.page.wait.load_start(wait_loading)
+                        return True
+
+        if by_js is not False:
+            self._ele.run_js('this.click();')
+            self._ele.page.wait.load_start(wait_loading)
+            return True
+
+        return False
+
+    def left_at(self, offset_x=None, offset_y=None, button='left'):
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :param button: 左键还是右键
+        :return: None
+        """
+        self._ele.page.scroll.to_see(self._ele)
+        x, y = offset_scroll(self._ele, offset_x, offset_y)
+        self._click(x, y, button)
+
+    def right(self):
+        """右键单击"""
+        self._ele.page.scroll.to_see(self._ele)
+        x, y = self._ele._client_click_point
+        self._click(x, y, 'right')
+
+    def right_at(self, offset_x=None, offset_y=None):
+        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :return: None
+        """
+        self.left_at(offset_x, offset_y, 'right')
+
+    def middle(self):
+        """中键单击"""
+        self._ele.page.scroll.to_see(self._ele)
+        x, y = self._ele._client_click_point
+        self._click(x, y, 'middle')
+
+    def _click(self, client_x, client_y, button='left'):
+        """实施点击
+        :param client_x: 视口中的x坐标
+        :param client_y: 视口中的y坐标
+        :param button: 'left' 或 'right'
+        :return: None
+        """
+        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
+                               x=client_x, y=client_y, button=button, clickCount=1)
+        sleep(.05)
+        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
+                               x=client_x, y=client_y, button=button)
 
 
 class ChromiumScroll(object):
