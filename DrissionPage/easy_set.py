@@ -14,7 +14,7 @@ from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .configs.options_manage import OptionsManager
 from .drission import Drission
-from .functions.tools import unzip
+from .common.tools import unzip
 from .session_page import SessionPage
 
 
@@ -287,8 +287,9 @@ def get_chrome_path(ini_path=None,
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                                  r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
-                                 # r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon\version',
                                  reserved=0, access=winreg.KEY_READ)
+            # key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Google\Chrome\BLBeacon\version',
+            #                      reserved=0, access=winreg.KEY_READ)
             k = winreg.EnumValue(key, 0)
             winreg.CloseKey(key)
 

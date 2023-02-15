@@ -33,9 +33,9 @@ class ChromiumDriver(object):
     _stopped: Event
     _started: bool
     status: str
-    event_handlers: Union[dict, None]
-    method_results: Union[dict, None]
-    event_queue: Union[Queue, None]
+    event_handlers: dict
+    method_results: dict
+    event_queue: Queue
 
     def __init__(self, tab_id: str, tab_type: str, address: str): ...
 

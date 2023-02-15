@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
+from .common.constants import NoneElement
 from .base import DrissionElement, BaseElement
 from .chromium_base import ChromiumBase
 from .chromium_frame import ChromiumFrame
@@ -183,20 +184,20 @@ class ChromiumElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, str, None]: ...
+            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, str, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, None]: ...
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None, single: bool = True, relative: bool = False) \
-            -> Union[ChromiumElement, ChromiumFrame, str, None, List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
+            -> Union[ChromiumElement, ChromiumFrame, str, NoneElement, List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 
     def style(self, style: str, pseudo_ele: str = '') -> str: ...
 
@@ -315,13 +316,13 @@ class ChromiumShadowRootElement(BaseElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, None]: ...
+            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, ChromiumFrame]]: ...
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, None]: ...
+    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
@@ -329,7 +330,7 @@ class ChromiumShadowRootElement(BaseElement):
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
              single: bool = True, relative: bool = False) \
-            -> Union[ChromiumElement, ChromiumFrame, None, str, List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
+            -> Union[ChromiumElement, ChromiumFrame, NoneElement, str, List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 
     def _get_node_id(self, obj_id: str) -> str: ...
 
@@ -342,21 +343,21 @@ def find_in_chromium_ele(ele: ChromiumElement,
                          loc: Union[str, Tuple[str, str]],
                          single: bool = True,
                          timeout: float = None,
-                         relative: bool = True) -> Union[
-    ChromiumElement, str, None, List[Union[ChromiumElement, str]]]: ...
+                         relative: bool = True)\
+        -> Union[ChromiumElement, str, NoneElement, List[Union[ChromiumElement, str]]]: ...
 
 
 def find_by_xpath(ele: ChromiumElement,
                   xpath: str,
                   single: bool,
                   timeout: float,
-                  relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement], None]: ...
+                  relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
 def find_by_css(ele: ChromiumElement,
                 selector: str,
                 single: bool,
-                timeout: float) -> Union[ChromiumElement, List[ChromiumElement], None]: ...
+                timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
 def make_chromium_ele(page: ChromiumBase, node_id: str = ..., obj_id: str = ...) -> Union[

@@ -9,7 +9,7 @@ from typing import Union
 from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BaseElement
-from .functions.locator import get_loc
+from .common.locator import get_loc
 from .driver_element import make_driver_ele
 from .session_element import make_session_ele, SessionElement
 

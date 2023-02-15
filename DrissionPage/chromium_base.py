@@ -14,11 +14,11 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
-from .functions.constants import HANDLE_ALERT_METHOD
-from .functions.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodException
-from .functions.locator import get_loc
-from .functions.tools import get_usable_path
-from .functions.web import offset_scroll, cookies_to_tuple
+from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
+from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError
+from .common.locator import get_loc
+from .common.tools import get_usable_path
+from .common.web import offset_scroll, cookies_to_tuple
 from .session_element import make_session_ele
 
 
@@ -106,9 +106,9 @@ class ChromiumBase(BasePage):
                 if self._debug_recorder:
                     self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
 
-            try:  # 处理标签页关闭的情况
+            try:  # 遇到过网站在标签页关闭时触发读取文档导致错误，屏蔽掉
                 self._wait_loaded()
-            except ConnectionError:
+            except TabClosedError:
                 return
 
             while True:
@@ -331,22 +331,22 @@ class ChromiumBase(BasePage):
         :return: 执行的结果
         """
         if self.driver.has_alert and cmd != HANDLE_ALERT_METHOD:
-            raise AlertExistsError('存在未处理的提示框。')
+            raise AlertExistsError
 
         r = self.driver.call_method(cmd, **cmd_args)
-        if 'error' not in r:
+        if ERROR not in r:
             return r
 
-        if r['error'] == 'Cannot find context with specified id':
-            raise ContextLossError('页面被刷新，请操作前尝试等待页面刷新或加载完成。')
-        elif r['error'] in ('Could not find node with given id', 'Could not find object with given id'):
-            raise ElementLossError('该元素已不在当前页面中。')
-        elif r['error'] == 'tab closed':
-            raise RuntimeError('标签页已关闭。')
-        elif r['error'] == 'alert exists':
+        if r[ERROR] == 'Cannot find context with specified id':
+            raise ContextLossError
+        elif r[ERROR] in ('Could not find node with given id', 'Could not find object with given id'):
+            raise ElementLossError
+        elif r[ERROR] == 'tab closed':
+            raise TabClosedError
+        elif r[ERROR] == 'alert exists':
             pass
         elif r['type'] == 'call_method_error':
-            raise CallMethodException(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
+            raise CallMethodError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
         else:
             raise RuntimeError(r)
 
@@ -486,7 +486,7 @@ class ChromiumBase(BasePage):
             count = search_result['resultCount']
 
         if not nodeIds:
-            return None if single else []
+            return NoneElement() if single else []
 
         if single:
             return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
@@ -583,7 +583,7 @@ class ChromiumBase(BasePage):
                 pic_type = 'png'
             else:
                 if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收'jpg', 'jpeg', 'png', 'webp'四种格式。")
+                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
 
         else:

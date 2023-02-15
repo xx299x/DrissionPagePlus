@@ -15,7 +15,7 @@ from tldextract import extract
 
 from .base import BasePage
 from .configs.session_options import SessionOptions
-from .functions.web import cookie_to_dict, set_session_cookies
+from .common.web import cookie_to_dict, set_session_cookies
 from .session_element import SessionElement, make_session_ele
 
 

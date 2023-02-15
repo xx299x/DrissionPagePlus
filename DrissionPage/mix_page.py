@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from .base import BasePage
+from .common.constants import NoneElement
 from .drission import Drission
 from .driver_page import DriverPage
 from .session_page import SessionPage
@@ -154,7 +155,8 @@ class MixPage(SessionPage, DriverPage, BasePage):
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super()._ele(loc_or_ele, single=single)
+            r = super()._ele(loc_or_ele, single=single)
+            return None if isinstance(r, NoneElement) else r
         elif self._mode == 'd':
             return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single)
 

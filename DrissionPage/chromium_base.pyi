@@ -10,6 +10,7 @@ from DataRecorder import Recorder
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
+from .common.constants import NoneElement
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement, ChromiumScroll, ChromiumElementWaiter, ChromiumWaiter
@@ -150,21 +151,21 @@ class ChromiumBase(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, None]: ...
+            timeout: float = None) -> Union[ChromiumElement, ChromiumFrame, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, ChromiumFrame]]: ...
 
     def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) \
-            -> Union[SessionElement, str, None]: ...
+            -> Union[SessionElement, str, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
              timeout: float = None, single: bool = True, relative: bool = False) \
-            -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...
+            -> Union[ChromiumElement, ChromiumFrame, NoneElement, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def wait_ele(self,
                  loc_or_ele: Union[str, tuple, ChromiumElement],

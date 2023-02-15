@@ -13,6 +13,7 @@ from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
+from .common.constants import NoneElement
 from .base import BasePage
 from .chromium_page import ChromiumPage
 from .configs.session_options import SessionOptions
@@ -52,7 +53,7 @@ class SessionPage(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 timeout: float = None) -> Union[SessionElement, str, None]: ...
+                 timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -95,21 +96,22 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            timeout: float = None) -> Union[SessionElement, str, None]: ...
+            timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[SessionElement, str]]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) -> Union[SessionElement, str, None]: ...
+              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) \
+            -> Union[SessionElement, str, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
     def _ele(self,
              loc_or_ele: Union[Tuple[str, str], str, SessionElement],
              timeout: float = None,
-             single: bool = True) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...
+             single: bool = True) -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
 
     def get_cookies(self,
                     as_dict: bool = False,

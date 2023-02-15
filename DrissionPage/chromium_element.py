@@ -10,10 +10,10 @@ from time import perf_counter, sleep
 from warnings import warn
 
 from .base import DrissionElement, BaseElement
-from .functions.constants import FRAME_ELEMENT
-from .functions.errors import ContextLossError, ElementLossError, CallMethodException
-from .functions.locator import get_loc
-from .functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
+from .common.constants import FRAME_ELEMENT, NoneElement
+from .common.errors import ContextLossError, ElementLossError, CallMethodError
+from .common.locator import get_loc
+from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 
@@ -826,7 +826,7 @@ class ChromiumElement(DrissionElement):
         """
         try:
             return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
-        except CallMethodException:
+        except CallMethodError:
             return None
 
     def _get_absolute_rect(self, x, y):
@@ -1073,13 +1073,12 @@ class ChromiumShadowRootElement(BaseElement):
             eles = make_session_ele(self.html).eles(loc)
 
         if not eles:
-            return None if single else eles
+            return NoneElement() if single else eles
 
         css_paths = [i.css_path[47:] for i in eles]
         if single:
-            node_id = self.page.run_cdp('DOM.querySelector',
-                                        nodeId=self._node_id, selector=css_paths[0])['nodeId']
-            return make_chromium_ele(self.page, node_id=node_id) if node_id else None
+            node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css_paths[0])['nodeId']
+            return make_chromium_ele(self.page, node_id=node_id) if node_id else NoneElement()
 
         else:
             results = []
@@ -1171,7 +1170,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
                              userGesture=True)
 
     if single:
-        return None if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return NoneElement() if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':
         return []
@@ -1208,7 +1207,7 @@ def find_by_css(ele, selector, single, timeout):
                              userGesture=True)
 
     if single:
-        return None if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
+        return NoneElement() if r['result']['subtype'] == 'null' else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':
         return []
@@ -1729,7 +1728,7 @@ class ChromiumElementWaiter(object):
                     return True
 
         ele = self.driver(self.loc_or_ele, timeout=.5)
-        if ele is None:
+        if not ele:
             return True
 
         end_time = perf_counter() + self.timeout
@@ -1753,7 +1752,7 @@ class ChromiumElementWaiter(object):
         :return: 是否等待成功
         """
         target = self.driver(self.loc_or_ele)
-        if target is None:
+        if not target:
             return None
 
         end_time = perf_counter() + self.timeout

@@ -11,8 +11,9 @@ from tldextract import extract
 
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver, CallMethodException
+from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
+from .common.errors import CallMethodError
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .configs.session_options import SessionOptions
@@ -527,7 +528,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             try:
                 self._page.browser_driver.Browser.setDownloadBehavior(behavior=self._behavior, downloadPath=path,
                                                                       eventsEnabled=True)
-            except CallMethodException:
+            except CallMethodError:
                 warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
                 self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path)
 
@@ -541,7 +542,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
                                                                   downloadPath=self._page.download_path)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
 
-        except CallMethodException:
+        except CallMethodError:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
             self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
             self._page.driver.Page.downloadWillBegin = self._download_by_browser
@@ -554,7 +555,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             try:
                 self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
                 self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-            except CallMethodException:
+            except CallMethodError:
                 raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
 
         self._behavior = 'deny'

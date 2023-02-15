@@ -14,9 +14,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
-from .functions.tools import get_pid_from_port
-from .functions.browser import connect_browser
-from .functions.web import cookies_to_tuple
+from .common.tools import get_pid_from_port
+from .common.browser import connect_browser
+from .common.web import cookies_to_tuple
 from .configs.session_options import SessionOptions, session_options_to_dict
 from .configs.driver_options import DriverOptions
 

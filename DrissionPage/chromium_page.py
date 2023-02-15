@@ -12,12 +12,13 @@ from warnings import warn
 from requests import Session
 
 from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
-from .chromium_driver import ChromiumDriver, CallMethodException
+from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
-from .functions.browser import connect_browser
-from .functions.web import set_session_cookies
+from .common.browser import connect_browser
+from .common.errors import CallMethodError
+from .common.web import set_session_cookies
 from .session_page import DownloadSetter
 
 
@@ -405,7 +406,7 @@ class ChromiumDownloadSetter(DownloadSetter):
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=path,
                                                                   eventsEnabled=True)
-        except CallMethodException:
+        except CallMethodError:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
             self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path)
 
@@ -417,7 +418,7 @@ class ChromiumDownloadSetter(DownloadSetter):
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
-        except CallMethodException:
+        except CallMethodError:
             self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
             self._page.driver.Page.downloadWillBegin = self._download_by_browser
 
@@ -428,7 +429,7 @@ class ChromiumDownloadSetter(DownloadSetter):
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-        except CallMethodException:
+        except CallMethodError:
             raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
         self._behavior = 'deny'
 

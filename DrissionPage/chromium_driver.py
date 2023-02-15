@@ -11,7 +11,7 @@ from threading import Thread, Event
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
 
-from .functions.errors import CallMethodException
+from .common.errors import CallMethodError
 
 
 class GenericAttr(object):
@@ -171,7 +171,7 @@ class ChromiumDriver(object):
             self.start()
             # raise RuntimeError("不能在启动前调用方法。")
         if args:
-            raise CallMethodException("参数必须是key=value形式。")
+            raise CallMethodError("参数必须是key=value形式。")
 
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
@@ -215,9 +215,9 @@ class ChromiumDriver(object):
         if self._ws:
             self._ws.close()
             self._ws = None
-        self.event_handlers = None
-        self.method_results = None
-        self.event_queue = None
+        self.event_handlers.clear()
+        self.method_results.clear()
+        self.event_queue.queue.clear()
         return True
 
     def set_listener(self, event, callback):

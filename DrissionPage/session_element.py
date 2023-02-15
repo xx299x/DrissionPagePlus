@@ -10,8 +10,9 @@ from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
 from .base import DrissionElement, BasePage, BaseElement
-from .functions.web import get_ele_txt, make_absolute_link
-from .functions.locator import get_loc
+from .common.constants import NoneElement
+from .common.locator import get_loc
+from .common.web import get_ele_txt, make_absolute_link
 
 
 class SessionElement(DrissionElement):
@@ -343,7 +344,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
             elif isinstance(ele, str):
                 return ele
             else:
-                return None
+                return NoneElement()
 
         else:  # 返回全部
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']

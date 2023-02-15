@@ -7,12 +7,13 @@ from typing import Union, List, Tuple
 
 from lxml.html import HtmlElement
 
-from .driver_page import DriverPage
 from .base import DrissionElement, BaseElement
 from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
+from .common.constants import NoneElement
 from .driver_element import DriverElement
+from .driver_page import DriverPage
 from .session_page import SessionPage
 
 
@@ -91,14 +92,14 @@ class SessionElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union['SessionElement', str, None]: ...
+            timeout: float = None) -> Union['SessionElement', str, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union['SessionElement', str]]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None) -> Union['SessionElement', str, None]: ...
+              loc_or_str: Union[Tuple[str, str], str] = None) -> Union['SessionElement', str, NoneElement]: ...
 
     def s_eles(self,
                loc_or_str: Union[Tuple[str, str], str]) -> List[Union['SessionElement', str]]: ...
@@ -107,7 +108,7 @@ class SessionElement(DrissionElement):
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
              single: bool = True,
-             relative: bool = False) -> Union['SessionElement', str, None, List[Union['SessionElement', str]]]: ...
+             relative: bool = False) -> Union['SessionElement', str, NoneElement, List[Union['SessionElement', str]]]: ...
 
     def _get_ele_path(self, mode: str) -> str: ...
 
@@ -115,4 +116,4 @@ class SessionElement(DrissionElement):
 def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, DriverElement, BaseElement,
                                         ChromiumFrame, ChromiumBase, DriverPage],
                      loc: Union[str, Tuple[str, str]] = None,
-                     single: bool = True) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...
+                     single: bool = True) -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
