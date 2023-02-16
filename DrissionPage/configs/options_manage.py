@@ -13,9 +13,18 @@ class OptionsManager(object):
 
     def __init__(self, path=None):
         """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建
-        :param path: ini文件的路径，默认读取模块文件夹下的
+        :param path: ini文件的路径，为None则找项目文件夹下的，找不到则读取模块文件夹下的
         """
-        self.ini_path = str(Path(__file__).parent / 'configs.ini') if path == 'default' or path is None else str(path)
+        if path is None:
+            if Path('dp_configs.ini').exists():
+                self.ini_path = 'dp_configs.ini'
+            else:
+                self.ini_path = str(Path(__file__).parent / 'configs.ini')
+        elif path == 'default':
+            self.ini_path = str(Path(__file__).parent / 'configs.ini')
+        else:
+            self.ini_path = str(path)
+
         if not Path(self.ini_path).exists():
             raise FileNotFoundError('ini文件不存在。')
         self._conf = RawConfigParser()

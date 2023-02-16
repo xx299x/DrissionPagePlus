@@ -21,8 +21,9 @@ class ChromiumOptions(object):
         self._prefs_to_del = []
 
         if read_file is not False:
-            self.ini_path = str(ini_path) if ini_path else str(Path(__file__).parent / 'configs.ini')
-            om = OptionsManager(self.ini_path)
+            ini_path = str(ini_path) if ini_path else None
+            om = OptionsManager(ini_path)
+            self.ini_path = om.ini_path
             options = om.chrome_options
 
             self._download_path = om.paths.get('download_path', None)

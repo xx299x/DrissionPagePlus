@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Union
 
 
+def configs_to_here(file_name: Union[Path, str] = None) -> None: ...
+
+
 def show_settings(ini_path: Union[str, Path] = None) -> None: ...
 
 
