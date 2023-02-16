@@ -52,8 +52,9 @@ class ChromiumElement(DrissionElement):
             self._node_id = self._get_node_id(obj_id=self._obj_id)
             self._backend_id = backend_id
         else:
-            raise ElementLossError('原来获取到的元素对象已不在页面内。')
+            raise ElementLossError
 
+        self._ids = ChromiumElementIds(self)
         doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
 
@@ -106,24 +107,9 @@ class ChromiumElement(DrissionElement):
 
     # -----------------d模式独有属性-------------------
     @property
-    def obj_id(self):
-        """返回js中的object id"""
-        return self._obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        return self._node_id
-
-    @property
-    def backend_id(self):
-        """返回backend id"""
-        return self._backend_id
-
-    @property
-    def doc_id(self):
-        """返回所在document的object id"""
-        return self._doc_id
+    def ids(self):
+        """返回获取内置id的对象"""
+        return self._ids
 
     @property
     def size(self):
@@ -170,7 +156,7 @@ class ChromiumElement(DrissionElement):
     @property
     def shadow_root(self):
         """返回当前元素的shadow_root元素对象"""
-        info = self.page.run_cdp('DOM.describeNode', nodeId=self.node_id)['node']
+        info = self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)['node']
         if not info.get('shadowRoots', None):
             return None
 
@@ -668,7 +654,6 @@ class ChromiumElement(DrissionElement):
         self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
 
     # ---------------准备废弃-----------------
-
     def wait_ele(self, loc_or_ele, timeout=None):
         """返回用于等待子元素到达某个状态的等待器对象
         :param loc_or_ele: 可以是元素、查询字符串、loc元组
@@ -793,6 +778,30 @@ class ChromiumElement(DrissionElement):
         warn("pseudo_after属性即将弃用，请用pseudo.after属性代替。", DeprecationWarning)
         return self.pseudo.after
 
+    @property
+    def obj_id(self):
+        """返回js中的object id"""
+        warn("obj_id属性即将弃用，请用ids.obj_id属性代替。", DeprecationWarning)
+        return self._obj_id
+
+    @property
+    def node_id(self):
+        """返回cdp中的node id"""
+        warn("node_id属性即将弃用，请用ids.node_id属性代替。", DeprecationWarning)
+        return self._node_id
+
+    @property
+    def backend_id(self):
+        """返回backend id"""
+        warn("backend_id属性即将弃用，请用ids.backend_id属性代替。", DeprecationWarning)
+        return self._backend_id
+
+    @property
+    def doc_id(self):
+        """返回所在document的object id"""
+        warn("doc_id属性即将弃用，请用ids.doc_id属性代替。", DeprecationWarning)
+        return self._doc_id
+
 
 class ChromiumShadowRootElement(BaseElement):
     """ChromiumShadowRootElement是用于处理ShadowRoot的类，使用方法和ChromiumElement基本一致"""
@@ -813,6 +822,8 @@ class ChromiumShadowRootElement(BaseElement):
             self._obj_id = obj_id
             self._node_id = self._get_node_id(obj_id)
             self._backend_id = self._get_backend_id(self._node_id)
+        self._ids = Ids(self)
+        self._states = None
 
     def __repr__(self):
         return f'<ShadowRootElement in {self.parent_ele} >'
@@ -825,35 +836,6 @@ class ChromiumShadowRootElement(BaseElement):
         :return: DriverElement对象或属性、文本
         """
         return self.ele(loc_or_str, timeout)
-
-    @property
-    def is_enabled(self):
-        """返回元素是否可用"""
-        return not self.run_js('return this.disabled;')
-
-    @property
-    def is_alive(self):
-        """返回元素是否仍在DOM中"""
-        try:
-            self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)
-            return True
-        except Exception:
-            return False
-
-    @property
-    def node_id(self):
-        """返回元素cdp中的node id"""
-        return self._node_id
-
-    @property
-    def obj_id(self):
-        """返回元素js中的object id"""
-        return self._obj_id
-
-    @property
-    def backend_id(self):
-        """返回backend id"""
-        return self._backend_id
 
     @property
     def tag(self):
@@ -869,6 +851,18 @@ class ChromiumShadowRootElement(BaseElement):
     def inner_html(self):
         """返回内部的html文本"""
         return self.run_js('return this.innerHTML;')
+
+    @property
+    def ids(self):
+        """返回获取内置id的对象"""
+        return self._ids
+
+    @property
+    def states(self):
+        """返回用于获取元素状态的对象"""
+        if self._states is None:
+            self._states = ShadowRootElementStates(self)
+        return self._states
 
     def run_js(self, script, as_expr=False, *args):
         """运行javascript代码
@@ -1049,6 +1043,64 @@ class ChromiumShadowRootElement(BaseElement):
         """返回元素object id"""
         return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
 
+    # ------------准备废弃--------------
+    @property
+    def obj_id(self):
+        """返回js中的object id"""
+        warn("obj_id属性即将弃用，请用ids.obj_id属性代替。", DeprecationWarning)
+        return self._obj_id
+
+    @property
+    def node_id(self):
+        """返回cdp中的node id"""
+        warn("node_id属性即将弃用，请用ids.node_id属性代替。", DeprecationWarning)
+        return self._node_id
+
+    @property
+    def backend_id(self):
+        """返回backend id"""
+        warn("backend_id属性即将弃用，请用ids.backend_id属性代替。", DeprecationWarning)
+        return self._backend_id
+
+    @property
+    def is_enabled(self):
+        """返回元素是否可用"""
+        warn("is_enabled属性即将弃用，请用states.is_enabled属性代替。", DeprecationWarning)
+        return self.states.is_enabled
+
+    @property
+    def is_alive(self):
+        """返回元素是否仍在DOM中"""
+        warn("is_alive属性即将弃用，请用states.is_alive属性代替。", DeprecationWarning)
+        return self.states.is_alive
+
+
+class Ids(object):
+    def __init__(self, ele):
+        self._ele = ele
+
+    @property
+    def node_id(self):
+        """返回元素cdp中的node id"""
+        return self._ele._node_id
+
+    @property
+    def obj_id(self):
+        """返回元素js中的object id"""
+        return self._ele._obj_id
+
+    @property
+    def backend_id(self):
+        """返回backend id"""
+        return self._ele._backend_id
+
+
+class ChromiumElementIds(Ids):
+    @property
+    def doc_id(self):
+        """返回所在document的object id"""
+        return self._ele._doc_id
+
 
 def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
     """在chromium元素中查找
@@ -1095,7 +1147,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     node_txt = 'this.contentDocument' if ele.tag in FRAME_ELEMENT and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     r = ele.page.run_cdp('Runtime.callFunctionOn',
-                         functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
+                         functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
     if r['result']['type'] == 'string':
         return r['result']['value']
@@ -1104,7 +1156,8 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
         if 'The result is not a node set' in r['result']['description']:
             js = make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
             r = ele.page.run_cdp('Runtime.callFunctionOn',
-                                 functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
+                                 functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False,
+                                 awaitPromise=True,
                                  userGesture=True)
             return r['result']['value']
         else:
@@ -1114,7 +1167,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
         r = ele.page.run_cdp('Runtime.callFunctionOn',
-                             functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
+                             functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                              userGesture=True)
 
     if single:
@@ -1143,7 +1196,7 @@ def find_by_css(ele, selector, single, timeout):
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
     r = ele.page.run_cdp('Runtime.callFunctionOn',
-                         functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
+                         functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
     if 'exceptionDetails' in r:
         raise SyntaxError(f'查询语句错误：\n{r}')
@@ -1152,7 +1205,7 @@ def find_by_css(ele, selector, single, timeout):
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
         r = ele.page.run_cdp('Runtime.callFunctionOn',
-                             functionDeclaration=js, objectId=ele.obj_id, returnByValue=False, awaitPromise=True,
+                             functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                              userGesture=True)
 
     if single:
@@ -1233,7 +1286,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     """
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRootElement)):
         page = page_or_ele.page
-        obj_id = page_or_ele.obj_id
+        obj_id = page_or_ele.ids.obj_id
         is_page = False
     else:
         page = page_or_ele
@@ -1311,7 +1364,7 @@ def parse_js_result(page, ele, result):
 def convert_argument(arg):
     """把参数转换成js能够接收的形式"""
     if isinstance(arg, ChromiumElement):
-        return {'objectId': arg.obj_id}
+        return {'objectId': arg.ids.obj_id}
 
     elif isinstance(arg, (int, float, str, bool)):
         return {'value': arg}
@@ -1397,6 +1450,28 @@ class ChromiumElementStates(object):
         return location_in_viewport(self._ele.page, x, y) if x else False
 
 
+class ShadowRootElementStates(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    @property
+    def is_enabled(self):
+        """返回元素是否可用"""
+        return not self._ele.run_js('return this.disabled;')
+
+    @property
+    def is_alive(self):
+        """返回元素是否仍在DOM中"""
+        try:
+            self._ele.page.run_cdp('DOM.describeNode', nodeId=self._ele.ids.node_id)
+            return True
+        except Exception:
+            return False
+
+
 class ChromiumElementSetter(object):
     def __init__(self, ele):
         """
@@ -1410,7 +1485,7 @@ class ChromiumElementSetter(object):
         :param value: 属性值
         :return: None
         """
-        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele.node_id, name=attr, value=str(value))
+        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele.ids.node_id, name=attr, value=str(value))
 
     def prop(self, prop, value):
         """设置元素property属性
@@ -1485,7 +1560,7 @@ class Locations(object):
         :return: 四个角坐标，大小为0时返回None
         """
         try:
-            return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.node_id)['model'][quad]
+            return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
         except CallMethodError:
             return None
 
@@ -1532,7 +1607,7 @@ class Click(object):
             except Exception:
                 return None
 
-            if retry and r.get('nodeId') != self._ele.node_id:
+            if retry and r.get('nodeId') != self._ele.ids.node_id:
                 return False
 
             self._click(cx, cy)

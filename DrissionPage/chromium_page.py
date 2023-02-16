@@ -358,6 +358,7 @@ class ChromiumPage(ChromiumBase):
         self._alert.response_text = None
         self._tab_obj.has_alert = True
 
+    # --------------准备弃用-------------
     def set_main_tab(self, tab_id=None):
         """设置主tab
         :param tab_id: 标签页id，不传入则设置当前tab

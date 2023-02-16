@@ -400,6 +400,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 self.driver.Browser.close()
             except Exception:
                 pass
+            self._tab_obj.stop()
             self._tab_obj = None
             self._has_driver = None
 
@@ -437,6 +438,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._tab_obj = None
             self._has_driver = None
 
+    # ---------------准备废弃---------------
     def set_cookies(self, cookies, set_session=False, set_driver=False):
         """添加cookies信息到浏览器或session对象
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`

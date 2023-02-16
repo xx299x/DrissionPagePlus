@@ -329,6 +329,7 @@ class SessionPage(BasePage):
                 raise ConnectionError(f'状态码：{r.status_code}')
             return r, f'状态码：{r.status_code}'
 
+    # --------------准备废弃----------------
     def set_cookies(self, cookies):
         """为Session对象设置cookies
         :param cookies: cookies信息

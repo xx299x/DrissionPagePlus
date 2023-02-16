@@ -15,10 +15,11 @@ class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
         self.page = page
         self.address = page.address
-        node = page.run_cdp('DOM.describeNode', nodeId=ele.node_id)['node']
+        node = page.run_cdp('DOM.describeNode', nodeId=ele.ids.node_id)['node']
         self.frame_id = node['frameId']
-        self._backend_id = ele.backend_id
+        self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
+        self._states = None
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -29,6 +30,7 @@ class ChromiumFrame(ChromiumBase):
             super().__init__(page.address, self.frame_id, page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+        self._ids = ChromiumFrameIds(self)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -63,7 +65,7 @@ class ChromiumFrame(ChromiumBase):
     def _reload(self):
         """重新获取document"""
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.node_id)['node']
+        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.ids.node_id)['node']
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -82,7 +84,7 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
         try:
-            self.run_cdp('DOM.describeNode', nodeId=self.node_id)
+            self.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
         except Exception:
             self._reload()
             # sleep(2)
@@ -99,7 +101,7 @@ class ChromiumFrame(ChromiumBase):
                 try:
                     if self._is_diff_domain is False:
                         node = self.page.run_cdp('DOM.describeNode',
-                                                 backendNodeId=self.backend_id)['node']
+                                                 backendNodeId=self.ids.backend_id)['node']
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
 
                     else:
@@ -133,24 +135,8 @@ class ChromiumFrame(ChromiumBase):
             self._get_new_document()
 
     @property
-    def tab_id(self):
-        """返回当前标签页id"""
-        return self.page.tab_id
-
-    @property
-    def backend_id(self):
-        """返回cdp中的node id"""
-        return self._backend_id
-
-    @property
-    def obj_id(self):
-        """返回frame元素的object id"""
-        return self.frame_ele.obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        return self.frame_ele.node_id
+    def ids(self):
+        return self._ids
 
     @property
     def frame_ele(self):
@@ -175,7 +161,7 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         tag = self.tag
         out_html = self.page.run_cdp('DOM.getOuterHTML',
-                                     nodeId=self.frame_ele.node_id)['outerHTML']
+                                     nodeId=self.frame_ele.ids.node_id)['outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 
@@ -230,12 +216,6 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.location
 
     @property
-    def is_displayed(self):
-        """返回frame元素是否显示"""
-        self._check_ok()
-        return self.frame_ele.states.is_displayed
-
-    @property
     def xpath(self):
         """返回frame的xpath绝对路径"""
         self._check_ok()
@@ -274,6 +254,13 @@ class ChromiumFrame(ChromiumBase):
         if self._set is None:
             self._set = ChromiumFrameSetter(self)
         return self._set
+
+    @property
+    def states(self):
+        """返回用于获取状态信息的对象"""
+        if self._states is None:
+            self._states = ChromiumFrameStates(self)
+        return self._states
 
     def refresh(self):
         """刷新frame页面"""
@@ -453,6 +440,7 @@ class ChromiumFrame(ChromiumBase):
         """返回当前frame是否同域"""
         return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
 
+    # -------------准备废弃------------
     def set_attr(self, attr, value):
         """设置frame元素attribute属性
         :param attr: 属性名
@@ -461,6 +449,71 @@ class ChromiumFrame(ChromiumBase):
         """
         warn("set_attr()方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
         self.set.attr(attr, value)
+
+    @property
+    def is_displayed(self):
+        """返回frame元素是否显示"""
+        warn("is_displayed属性即将弃用，请用states.is_displayed属性代替。", DeprecationWarning)
+        return self.states.is_displayed()
+
+    @property
+    def tab_id(self):
+        """返回当前标签页id"""
+        warn("tab_id属性即将弃用，请用ids.tab_id属性代替。", DeprecationWarning)
+        return self.ids.tab_id
+
+    @property
+    def backend_id(self):
+        """返回cdp中的node id"""
+        warn("backend_id属性即将弃用，请用ids.backend_id属性代替。", DeprecationWarning)
+        return self.ids.backend_id
+
+    @property
+    def obj_id(self):
+        """返回frame元素的object id"""
+        warn("obj_id属性即将弃用，请用ids.obj_id属性代替。", DeprecationWarning)
+        return self.ids.obj_id
+
+    @property
+    def node_id(self):
+        """返回cdp中的node id"""
+        warn("node_id属性即将弃用，请用ids.node_id属性代替。", DeprecationWarning)
+        return self.ids.node_id
+
+
+class ChromiumFrameIds(object):
+    def __init__(self, frame):
+        self._frame = frame
+
+    @property
+    def tab_id(self):
+        """返回当前标签页id"""
+        return self._frame.page.tab_id
+
+    @property
+    def backend_id(self):
+        """返回cdp中的node id"""
+        return self._frame._backend_id
+
+    @property
+    def obj_id(self):
+        """返回frame元素的object id"""
+        return self._frame.frame_ele.ids.obj_id
+
+    @property
+    def node_id(self):
+        """返回cdp中的node id"""
+        return self._frame.frame_ele.ids.node_id
+
+
+class ChromiumFrameStates(object):
+    def __init__(self, frame):
+        self._frame = frame
+
+    def is_displayed(self):
+        """返回frame元素是否显示"""
+        self._frame._check_ok()
+        return self._frame.frame_ele.states.is_displayed
 
 
 class ChromiumFrameScroll(ChromiumPageScroll):
