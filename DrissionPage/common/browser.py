@@ -11,7 +11,7 @@ from time import perf_counter, sleep
 
 from requests import get as requests_get
 
-from DrissionPage.configs.driver_options import DriverOptions
+from DrissionPage.configs.chromium_options import ChromiumOptions
 from .tools import port_is_using, get_exe_from_port
 
 
@@ -65,7 +65,7 @@ def get_launch_args(opt):
     result = list(result)
 
     # ----------处理插件extensions-------------
-    ext = opt._extension_files if isinstance(opt, DriverOptions) else opt.extensions
+    ext = opt.extensions if isinstance(opt, ChromiumOptions) else opt._extension_files
     if ext:
         ext = ','.join(set(ext))
         ext = f'--load-extension={ext}'
@@ -79,12 +79,12 @@ def set_prefs(opt):
     :param opt: DriverOptions或ChromiumOptions
     :return: None
     """
-    if isinstance(opt, DriverOptions):
-        prefs = opt.experimental_options.get('prefs', None)
-        del_list = []
-    else:
+    if isinstance(opt, ChromiumOptions):
         prefs = opt.preferences
         del_list = opt._prefs_to_del
+    else:
+        prefs = opt.experimental_options.get('prefs', None)
+        del_list = []
 
     if not opt.user_data_path:
         return

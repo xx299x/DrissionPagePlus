@@ -11,7 +11,7 @@ from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .common.constants import FRAME_ELEMENT, NoneElement
-from .common.errors import ContextLossError, ElementLossError, CallMethodError
+from .common.errors import ContextLossError, ElementLossError, CallMethodError, JavaScriptError
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
@@ -31,6 +31,10 @@ class ChromiumElement(DrissionElement):
         super().__init__(page)
         self._select = None
         self._scroll = None
+        self._locations = None
+        self._set = None
+        self._states = None
+        self._pseudo = None
         self._click = None
         self._tag = None
         self._wait = None
@@ -131,40 +135,37 @@ class ChromiumElement(DrissionElement):
             return 0, 0
 
     @property
-    def client_location(self):
-        """返回元素左上角在视口中的坐标"""
-        m = self._get_client_rect('border')
-        return (int(m[0]), int(m[1])) if m else (0, 0)
+    def set(self):
+        """返回用于设置元素属性的对象"""
+        if self._set is None:
+            self._set = ChromiumElementSetter(self)
+        return self._set
 
     @property
-    def client_midpoint(self):
-        """返回元素中间点在视口中的坐标"""
-        m = self._get_client_rect('border')
-        return (int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)) if m else (0, 0)
+    def states(self):
+        """返回用于获取元素状态的对象"""
+        if self._states is None:
+            self._states = ChromiumElementStates(self)
+        return self._states
+
+    @property
+    def pseudo(self):
+        """返回用于获取伪元素内容的对象"""
+        if self._pseudo is None:
+            self._pseudo = Pseudo(self)
+        return self._pseudo
 
     @property
     def location(self):
         """返回元素左上角的绝对坐标"""
-        cl = self.client_location
-        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
+        return self.locations.page_location
 
     @property
-    def midpoint(self):
-        """返回元素中间点的绝对坐标"""
-        cl = self.client_midpoint
-        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
-
-    @property
-    def _client_click_point(self):
-        """返回元素左上角可接受点击的点视口坐标"""
-        m = self._get_client_rect('padding')
-        return (int(self.client_midpoint[0]), int(m[1]) + 1) if m else (0, 0)
-
-    @property
-    def _click_point(self):
-        """返回元素左上角可接受点击的点的绝对坐标"""
-        cl = self._client_click_point
-        return self._get_absolute_rect(cl[0], cl[1]) if cl else (0, 0)
+    def locations(self):
+        """返回用于获取元素位置的对象"""
+        if self._locations is None:
+            self._locations = Locations(self)
+        return self._locations
 
     @property
     def shadow_root(self):
@@ -181,16 +182,6 @@ class ChromiumElement(DrissionElement):
         return self.shadow_root
 
     @property
-    def pseudo_before(self):
-        """返回当前元素的::before伪元素内容"""
-        return self.style('content', 'before')
-
-    @property
-    def pseudo_after(self):
-        """返回当前元素的::after伪元素内容"""
-        return self.style('content', 'after')
-
-    @property
     def scroll(self):
         """用于滚动滚动条的对象"""
         if self._scroll is None:
@@ -203,6 +194,24 @@ class ChromiumElement(DrissionElement):
         if self._click is None:
             self._click = Click(self)
         return self._click
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = ChromiumWaiter(self)
+        return self._wait
+
+    @property
+    def select(self):
+        """返回专门处理下拉列表的Select类，非下拉列表元素返回False"""
+        if self._select is None:
+            if self.tag != 'select':
+                self._select = False
+            else:
+                self._select = ChromiumSelect(self)
+
+        return self._select
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -279,56 +288,6 @@ class ChromiumElement(DrissionElement):
         """
         return super().afters(filter_loc, timeout)
 
-    @property
-    def wait(self):
-        """返回用于等待的对象"""
-        if self._wait is None:
-            self._wait = ChromiumWaiter(self)
-        return self._wait
-
-    @property
-    def select(self):
-        """返回专门处理下拉列表的Select类，非下拉列表元素返回False"""
-        if self._select is None:
-            if self.tag != 'select':
-                self._select = False
-            else:
-                self._select = ChromiumSelect(self)
-
-        return self._select
-
-    @property
-    def is_selected(self):
-        """返回元素是否被选择"""
-        return self.run_js('return this.selected;')
-
-    @property
-    def is_displayed(self):
-        """返回元素是否显示"""
-        return not (self.style('visibility') == 'hidden'
-                    or self.run_js('return this.offsetParent === null;')
-                    or self.style('display') == 'none')
-
-    @property
-    def is_enabled(self):
-        """返回元素是否可用"""
-        return not self.run_js('return this.disabled;')
-
-    @property
-    def is_alive(self):
-        """返回元素是否仍在DOM中"""
-        try:
-            d = self.attrs
-            return True
-        except Exception:
-            return False
-
-    @property
-    def is_in_viewport(self):
-        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
-        x, y = self._click_point
-        return location_in_viewport(self.page, x, y) if x else False
-
     def attr(self, attr):
         """返回attribute属性值
         :param attr: 属性名
@@ -360,14 +319,6 @@ class ChromiumElement(DrissionElement):
         else:
             return attrs.get(attr, None)
 
-    def set_attr(self, attr, value):
-        """设置元素attribute属性
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self.page.run_cdp('DOM.setAttributeValue', nodeId=self.node_id, name=attr, value=str(value))
-
     def remove_attr(self, attr):
         """删除元素attribute属性
         :param attr: 属性名
@@ -387,22 +338,6 @@ class ChromiumElement(DrissionElement):
                     return None
 
                 return format_html(i['value']['value'])
-
-    def set_prop(self, prop, value):
-        """设置元素property属性
-        :param prop: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        value = value.replace('"', r'\"')
-        self.run_js(f'this.{prop}="{value}";')
-
-    def set_innerHTML(self, html):
-        """设置元素innerHTML
-        :param html: html文本
-        :return: None
-        """
-        self.set_prop('innerHTML', html)
 
     def run_js(self, script, as_expr=False, *args):
         """运行javascript代码
@@ -580,16 +515,6 @@ class ChromiumElement(DrissionElement):
         else:
             self.page.run_cdp('Input.insertText', text=vals)
 
-    def _set_file_input(self, files):
-        """往上传控件写入路径
-        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
-        :return: None
-        """
-        if isinstance(files, str):
-            files = files.split('\n')
-        files = [str(Path(i).absolute()) for i in files]
-        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
-
     def clear(self, by_js=False):
         """清空元素文本
         :param by_js: 是否用js方式清空
@@ -619,7 +544,7 @@ class ChromiumElement(DrissionElement):
         :param shake: 是否随机抖动
         :return: None
         """
-        curr_x, curr_y = self.midpoint
+        curr_x, curr_y = self.locations.midpoint
         offset_x += curr_x
         offset_y += curr_y
         self.drag_to((offset_x, offset_y), speed, shake)
@@ -633,13 +558,13 @@ class ChromiumElement(DrissionElement):
         """
         # x, y：目标点坐标
         if isinstance(ele_or_loc, ChromiumElement):
-            target_x, target_y = ele_or_loc.midpoint
+            target_x, target_y = ele_or_loc.locations.midpoint
         elif isinstance(ele_or_loc, (list, tuple)):
             target_x, target_y = ele_or_loc
         else:
             raise TypeError('需要ChromiumElement对象或坐标。')
 
-        current_x, current_y = self.midpoint
+        current_x, current_y = self.locations.midpoint
         width = target_x - current_x
         height = target_y - current_y
         num = 0 if not speed else int(((abs(width) ** 2 + abs(height) ** 2) ** .5) // speed)
@@ -732,22 +657,17 @@ class ChromiumElement(DrissionElement):
         t = self.run_js(js)
         return f':root{t}' if mode == 'css' else t
 
-    def _get_client_rect(self, quad):
-        """按照类型返回窗口坐标
-        :param quad: 方框类型，margin border padding
-        :return: 四个角坐标，大小为0时返回None
+    def _set_file_input(self, files):
+        """往上传控件写入路径
+        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
+        :return: None
         """
-        try:
-            return self.page.run_cdp('DOM.getBoxModel', nodeId=self.node_id)['model'][quad]
-        except CallMethodError:
-            return None
+        if isinstance(files, str):
+            files = files.split('\n')
+        files = [str(Path(i).absolute()) for i in files]
+        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
 
-    def _get_absolute_rect(self, x, y):
-        """根据绝对坐标获取窗口坐标"""
-        js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
-        xy = self.run_js(js)
-        sx, sy = xy.split(' ')
-        return int(x + float(sx)), int(y + float(sy))
+    # ---------------准备废弃-----------------
 
     def wait_ele(self, loc_or_ele, timeout=None):
         """返回用于等待子元素到达某个状态的等待器对象
@@ -755,7 +675,7 @@ class ChromiumElement(DrissionElement):
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
         """
-        warn("此方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
+        warn("wait_ele()方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
         return ChromiumElementWaiter(self, loc_or_ele, timeout)
 
     def click_at(self, offset_x=None, offset_y=None, button='left'):
@@ -765,12 +685,12 @@ class ChromiumElement(DrissionElement):
         :param button: 左键还是右键
         :return: None
         """
-        warn("此方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
+        warn("click_at()方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
         self.click.left_at(offset_x, offset_y, button)
 
     def r_click(self):
         """右键单击"""
-        warn("此方法即将弃用，请用click.right()方法代替。", DeprecationWarning)
+        warn("r_click()方法即将弃用，请用click.right()方法代替。", DeprecationWarning)
         self.click.right()
 
     def r_click_at(self, offset_x=None, offset_y=None):
@@ -779,13 +699,99 @@ class ChromiumElement(DrissionElement):
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        warn("此方法即将弃用，请用click.right_at()方法代替。", DeprecationWarning)
+        warn("r_click_at()方法即将弃用，请用click.right_at()方法代替。", DeprecationWarning)
         self.click.right_at(offset_x, offset_y)
 
     def m_click(self):
         """中键单击"""
-        warn("此方法即将弃用，请用click.middle()方法代替。", DeprecationWarning)
+        warn("m_click()方法即将弃用，请用click.middle()方法代替。", DeprecationWarning)
         self.click.middle()
+
+    @property
+    def client_location(self):
+        """返回元素左上角在视口中的坐标"""
+        warn("client_location属性即将弃用，请用locations.viewport_location代替。", DeprecationWarning)
+        return self.locations.viewport_location
+
+    @property
+    def client_midpoint(self):
+        """返回元素中间点在视口中的坐标"""
+        warn("client_midpoint属性即将弃用，请用locations.client_midpoint代替。", DeprecationWarning)
+        return self.locations.viewport_midpoint
+
+    @property
+    def midpoint(self):
+        """返回元素中间点的绝对坐标"""
+        warn("midpoint属性即将弃用，请用locations.midpoint代替。", DeprecationWarning)
+        return self.locations.midpoint
+
+    def set_attr(self, attr, value):
+        """设置元素attribute属性
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        warn("set_attr()方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
+        self.set.attr(attr, value)
+
+    def set_prop(self, prop, value):
+        """设置元素property属性
+        :param prop: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        warn("set_prop()方法即将弃用，请用set.prop()方法代替。", DeprecationWarning)
+        self.set.prop(prop, value)
+
+    def set_innerHTML(self, html):
+        """设置元素innerHTML
+        :param html: html文本
+        :return: None
+        """
+        warn("set_innerHTML()方法即将弃用，请用set.innerHTML()方法代替。", DeprecationWarning)
+        self.set.innerHTML(html)
+
+    @property
+    def is_selected(self):
+        """返回元素是否被选择"""
+        warn("is_selected属性即将弃用，请用states.is_selected属性代替。", DeprecationWarning)
+        return self.states.is_selected
+
+    @property
+    def is_displayed(self):
+        """返回元素是否显示"""
+        warn("is_displayed属性即将弃用，请用states.is_displayed属性代替。", DeprecationWarning)
+        return self.states.is_displayed
+
+    @property
+    def is_enabled(self):
+        """返回元素是否可用"""
+        warn("is_enabled属性即将弃用，请用states.is_enabled属性代替。", DeprecationWarning)
+        return self.states.is_enabled
+
+    @property
+    def is_alive(self):
+        """返回元素是否仍在DOM中"""
+        warn("is_alive属性即将弃用，请用states.is_alive属性代替。", DeprecationWarning)
+        return self.states.is_alive
+
+    @property
+    def is_in_viewport(self):
+        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
+        warn("is_in_viewport属性即将弃用，请用states.is_in_viewport属性代替。", DeprecationWarning)
+        return self.states.is_in_viewport
+
+    @property
+    def pseudo_before(self):
+        """返回当前元素的::before伪元素内容"""
+        warn("pseudo_before属性即将弃用，请用pseudo.before属性代替。", DeprecationWarning)
+        return self.pseudo.before
+
+    @property
+    def pseudo_after(self):
+        """返回当前元素的::after伪元素内容"""
+        warn("pseudo_after属性即将弃用，请用pseudo.after属性代替。", DeprecationWarning)
+        return self.pseudo.after
 
 
 class ChromiumShadowRootElement(BaseElement):
@@ -1258,7 +1264,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
 
     exceptionDetails = res.get('exceptionDetails')
     if exceptionDetails:
-        raise RuntimeError(f'javascript：{script}\n错误信息: {exceptionDetails}')
+        raise JavaScriptError(f'\njavascript运行错误：\n{script}\n错误信息: \n{exceptionDetails}')
 
     try:
         return parse_js_result(page, page_or_ele, res.get('result'))
@@ -1351,6 +1357,146 @@ def send_key(ele, modifier, key):
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
+class ChromiumElementStates(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    @property
+    def is_selected(self):
+        """返回元素是否被选择"""
+        return self._ele.run_js('return this.selected;')
+
+    @property
+    def is_displayed(self):
+        """返回元素是否显示"""
+        return not (self._ele.style('visibility') == 'hidden'
+                    or self._ele.run_js('return this.offsetParent === null;')
+                    or self._ele.style('display') == 'none')
+
+    @property
+    def is_enabled(self):
+        """返回元素是否可用"""
+        return not self._ele.run_js('return this.disabled;')
+
+    @property
+    def is_alive(self):
+        """返回元素是否仍在DOM中"""
+        try:
+            d = self._ele.attrs
+            return True
+        except Exception:
+            return False
+
+    @property
+    def is_in_viewport(self):
+        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
+        x, y = self._ele.locations.click_point
+        return location_in_viewport(self._ele.page, x, y) if x else False
+
+
+class ChromiumElementSetter(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    def attr(self, attr, value):
+        """设置元素attribute属性
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele.node_id, name=attr, value=str(value))
+
+    def prop(self, prop, value):
+        """设置元素property属性
+        :param prop: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        value = value.replace('"', r'\"')
+        self._ele.run_js(f'this.{prop}="{value}";')
+
+    def innerHTML(self, html):
+        """设置元素innerHTML
+        :param html: html文本
+        :return: None
+        """
+        self.prop('innerHTML', html)
+
+
+class Locations(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    @property
+    def page_location(self):
+        """返回元素左上角的绝对坐标"""
+        cl = self.viewport_location
+        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+
+    @property
+    def midpoint(self):
+        """返回元素中间点的绝对坐标"""
+        cl = self.viewport_midpoint
+        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+
+    @property
+    def viewport_location(self):
+        """返回元素左上角在视口中的坐标"""
+        m = self._get_viewport_rect('border')
+        return (int(m[0]), int(m[1])) if m else (0, 0)
+
+    @property
+    def viewport_midpoint(self):
+        """返回元素中间点在视口中的坐标"""
+        m = self._get_viewport_rect('border')
+        return (int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)) if m else (0, 0)
+
+    @property
+    def viewport_click_point(self):
+        """返回元素左上角可接受点击的点视口坐标"""
+        m = self._get_viewport_rect('padding')
+        return (int(self.viewport_midpoint[0]), int(m[1]) + 1) if m else (0, 0)
+
+    @property
+    def click_point(self):
+        """返回元素左上角可接受点击的点的绝对坐标"""
+        cl = self.viewport_click_point
+        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+
+    @property
+    def screen_location(self):
+        """返回元素在屏幕上坐标，左上角为(0, 0)"""
+        vx, vy = self._ele.page.rect.viewport_location
+        ex, ey = self.viewport_location
+        return vx + ex, ey + vy
+
+    def _get_viewport_rect(self, quad):
+        """按照类型返回在可视窗口中的范围
+        :param quad: 方框类型，margin border padding
+        :return: 四个角坐标，大小为0时返回None
+        """
+        try:
+            return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.node_id)['model'][quad]
+        except CallMethodError:
+            return None
+
+    def _get_page_coord(self, x, y):
+        """根据绝对坐标获取窗口坐标"""
+        js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
+        xy = self._ele.run_js(js)
+        sx, sy = xy.split(' ')
+        return int(x + float(sx)), int(y + float(sy))
+
+
 class Click(object):
     def __init__(self, ele):
         """
@@ -1394,10 +1540,10 @@ class Click(object):
 
         if not by_js:
             self._ele.page.scroll.to_see(self._ele)
-            if self._ele.is_in_viewport:
-                client_x, client_y = self._ele._client_click_point
+            if self._ele.states.is_in_viewport:
+                client_x, client_y = self._ele.locations.viewport_click_point
                 if client_x:
-                    loc_x, loc_y = self._ele._click_point
+                    loc_x, loc_y = self._ele.locations.click_point
 
                     click = do_it(client_x, client_y, loc_x, loc_y)
                     if click:
@@ -1584,14 +1730,14 @@ class ChromiumSelect(object):
         """返回所有被选中的option元素列表
         :return: ChromiumElement对象组成的列表
         """
-        return [x for x in self.options if x.is_selected]
+        return [x for x in self.options if x.states.is_selected]
 
     def clear(self):
         """清除所有已选项"""
         if not self.is_multi:
             raise NotImplementedError("只能在多选菜单执行此操作。")
         for opt in self.options:
-            if opt.is_selected:
+            if opt.states.is_selected:
                 opt.click(by_js=True)
 
     def by_text(self, text, timeout=None):
@@ -1782,7 +1928,7 @@ class ChromiumElementWaiter(object):
         if isinstance(self.loc_or_ele, ChromiumElement):
             end_time = perf_counter() + self.timeout
             while perf_counter() < end_time:
-                if not self.loc_or_ele.is_alive:
+                if not self.loc_or_ele.states.is_alive:
                     return True
 
         ele = self.driver(self.loc_or_ele, timeout=.5)
@@ -1791,7 +1937,7 @@ class ChromiumElementWaiter(object):
 
         end_time = perf_counter() + self.timeout
         while perf_counter() < end_time:
-            if not ele.is_alive:
+            if not ele.states.is_alive:
                 return True
 
         return False
@@ -1815,10 +1961,28 @@ class ChromiumElementWaiter(object):
 
         end_time = perf_counter() + self.timeout
         while perf_counter() < end_time:
-            if mode == 'display' and target.is_displayed:
+            if mode == 'display' and target.states.is_displayed:
                 return True
 
-            elif mode == 'hidden' and not target.is_displayed:
+            elif mode == 'hidden' and not target.states.is_displayed:
                 return True
 
         return False
+
+
+class Pseudo(object):
+    def __init__(self, ele):
+        """
+        :param ele: ChromiumElement
+        """
+        self._ele = ele
+
+    @property
+    def before(self):
+        """返回当前元素的::before伪元素内容"""
+        return self._ele.style('content', 'before')
+
+    @property
+    def after(self):
+        """返回当前元素的::after伪元素内容"""
+        return self._ele.style('content', 'after')

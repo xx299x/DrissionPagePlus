@@ -233,7 +233,7 @@ class ChromiumFrame(ChromiumBase):
     def is_displayed(self):
         """返回frame元素是否显示"""
         self._check_ok()
-        return self.frame_ele.is_displayed
+        return self.frame_ele.states.is_displayed
 
     @property
     def xpath(self):
@@ -459,7 +459,7 @@ class ChromiumFrame(ChromiumBase):
         :param value: 属性值
         :return: None
         """
-        warn("此方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
+        warn("set_attr()方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
         self.set.attr(attr, value)
 
 
@@ -494,4 +494,4 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
         :return: None
         """
         self._page._check_ok()
-        self._page.frame_ele.set_attr(attr, value)
+        self._page.frame_ele.set.attr(attr, value)

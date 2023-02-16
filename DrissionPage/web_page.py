@@ -445,7 +445,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: None
         """
         # 添加cookie到driver
-        warn("此方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
+        warn("set_cookies()方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
         self.set.cookies(cookies, set_session, set_driver)
 
     def set_headers(self, headers) -> None:
@@ -453,12 +453,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param headers: dict格式的headers数据
         :return: None
         """
-        warn("此方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
+        warn("set_headers()方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
         self.set.headers(headers)
 
     def set_user_agent(self, ua, platform=None):
         """设置user agent，d模式下只有当前tab有效"""
-        warn("此方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
+        warn("set_user_agent()方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
         self.set.user_agent(ua, platform)
 
 

@@ -334,7 +334,7 @@ class SessionPage(BasePage):
         :param cookies: cookies信息
         :return: None
         """
-        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        warn("set_cookies()方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
         self.set.cookies(cookies)
 
     def set_headers(self, headers):
@@ -342,12 +342,12 @@ class SessionPage(BasePage):
         :param headers: dict形式的headers
         :return: None
         """
-        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        warn("set_headers()方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
         self.set.headers(headers)
 
     def set_user_agent(self, ua):
         """设置user agent"""
-        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        warn("set_user_agent()方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
         self.set.user_agent(ua)
 
 

@@ -77,6 +77,7 @@ class ChromiumBase(BasePage):
         self._is_reading = False
         self._upload_list = None
         self._wait = None
+        self._scroll = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -296,7 +297,7 @@ class ChromiumBase(BasePage):
     def scroll(self):
         """返回用于滚动滚动条的对象"""
         self.wait.load_complete()
-        if not hasattr(self, '_scroll'):
+        if self._scroll is None:
             self._scroll = ChromiumPageScroll(self)
         return self._scroll
 
@@ -685,12 +686,13 @@ class ChromiumBase(BasePage):
 
         return True
 
+    # ------------------准备废弃----------------------
     def wait_loading(self, timeout=None):
         """阻塞程序，等待页面进入加载状态
         :param timeout: 超时时间
         :return: 等待结束时是否进入加载状态
         """
-        warn("此方法即将弃用，请用wait.load_start()方法代替。", DeprecationWarning)
+        warn("wait_loading()方法即将弃用，请用wait.load_start()方法代替。", DeprecationWarning)
         return self.wait.load_start(timeout)
 
     def wait_ele(self, loc_or_ele, timeout=None):
@@ -699,7 +701,7 @@ class ChromiumBase(BasePage):
         :param timeout: 等待超时时间
         :return: 用于等待的ElementWaiter对象
         """
-        warn("此方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
+        warn("wait_ele()方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
         return ChromiumElementWaiter(self, loc_or_ele, timeout)
 
     def scroll_to_see(self, loc_or_ele):
@@ -707,7 +709,7 @@ class ChromiumBase(BasePage):
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
         :return: None
         """
-        warn("此方法即将弃用，请用scroll.to_see()方法代替。", DeprecationWarning)
+        warn("scroll_to_see()方法即将弃用，请用scroll.to_see()方法代替。", DeprecationWarning)
         self.scroll.to_see(loc_or_ele)
 
     def set_timeouts(self, implicit=None, page_load=None, script=None):
@@ -717,7 +719,7 @@ class ChromiumBase(BasePage):
         :param script: 脚本运行超时时间
         :return: None
         """
-        warn("此方法即将弃用，请用set.timeouts()方法代替。", DeprecationWarning)
+        warn("set_timeouts()方法即将弃用，请用set.timeouts()方法代替。", DeprecationWarning)
         self.set.timeouts(implicit, page_load, script)
 
     def set_session_storage(self, item, value):
@@ -726,7 +728,7 @@ class ChromiumBase(BasePage):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        warn("此方法即将弃用，请用set.session_storage()方法代替。", DeprecationWarning)
+        warn("set_session_storage()方法即将弃用，请用set.session_storage()方法代替。", DeprecationWarning)
         return self.set.session_storage(item, value)
 
     def set_local_storage(self, item, value):
@@ -735,7 +737,7 @@ class ChromiumBase(BasePage):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        warn("此方法即将弃用，请用set.local_storage()方法代替。", DeprecationWarning)
+        warn("set_local_storage()方法即将弃用，请用set.local_storage()方法代替。", DeprecationWarning)
         return self.set.local_storage(item, value)
 
     def set_user_agent(self, ua, platform=None):
@@ -744,7 +746,7 @@ class ChromiumBase(BasePage):
         :param platform: platform字符串
         :return: None
         """
-        warn("此方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
+        warn("set_user_agent()方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
         self.set.user_agent(ua, platform)
 
     def set_cookies(self, cookies):
@@ -752,7 +754,7 @@ class ChromiumBase(BasePage):
         :param cookies: cookies信息
         :return: None
         """
-        warn("此方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
+        warn("set_cookies()方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
         self.set.cookies(cookies)
 
     def set_upload_files(self, files):
@@ -760,7 +762,7 @@ class ChromiumBase(BasePage):
         :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
         :return: None
         """
-        warn("此方法即将弃用，请用set.upload_files()方法代替。", DeprecationWarning)
+        warn("set_upload_files()方法即将弃用，请用set.upload_files()方法代替。", DeprecationWarning)
         self.set.upload_files(files)
 
     def set_headers(self, headers: dict) -> None:
@@ -768,13 +770,13 @@ class ChromiumBase(BasePage):
         :param headers: dict格式的headers数据
         :return: None
         """
-        warn("此方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
+        warn("set_headers()方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
         self.set.headers(headers)
 
     @property
     def set_page_load_strategy(self):
         """返回用于设置页面加载策略的对象"""
-        warn("此方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
+        warn("set_page_load_strategy()方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
         return self.set.load_strategy
 
 
@@ -926,7 +928,7 @@ class ChromiumPageScroll(ChromiumScroll):
         except Exception:
             ele.run_js("this.scrollIntoView();")
 
-        if not ele.is_in_viewport:
+        if not ele.states.is_in_viewport:
             offset_scroll(ele, 0, 0)
 
 

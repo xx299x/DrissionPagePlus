@@ -92,6 +92,7 @@ class ChromiumPage(ChromiumBase):
         """添加ChromiumPage独有的运行配置"""
         super()._chromium_init()
         self._alert = Alert()
+        self._rect = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -171,6 +172,12 @@ class ChromiumPage(ChromiumBase):
     def download(self):
         """返回下载器对象"""
         return self.download_set._switched_DownloadKit
+
+    @property
+    def rect(self):
+        if self._rect is None:
+            self._rect = ChromiumTabRect(self)
+        return self._rect
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -356,14 +363,80 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 标签页id，不传入则设置当前tab
         :return: None
         """
-        warn("此方法即将弃用，请用set.main_tab()方法代替。", DeprecationWarning)
+        warn("set_main_tab()方法即将弃用，请用set.main_tab()方法代替。", DeprecationWarning)
         self.set.main_tab(tab_id)
 
     @property
     def set_window(self):
         """返回用于设置窗口大小的对象"""
-        warn("此方法即将弃用，请用set.window.xxxx()方法代替。", DeprecationWarning)
+        warn("set_window()方法即将弃用，请用set.window.xxxx()方法代替。", DeprecationWarning)
         return WindowSetter(self)
+
+
+class ChromiumTabRect(object):
+    def __init__(self, page):
+        self._page = page
+
+    @property
+    def browser_location(self):
+        """返回浏览器在屏幕上的坐标"""
+        r = self._get_browser_rect()
+        if r['windowState'] in ('maximized', 'fullscreen'):
+            return 0, 0
+        return r['left'] + 7, r['top']
+
+    @property
+    def page_location(self):
+        """返回页面左上角在屏幕中坐标，左上角为(0, 0)"""
+        w, h = self.viewport_location
+        r = self._get_page_rect()['layoutViewport']
+        return w - r['pageX'], h - r['pageY']
+
+    @property
+    def viewport_location(self):
+        """返回视口在屏幕中坐标，左上角为(0, 0)"""
+        w_bl, h_bl = self.browser_location
+        w_bs, h_bs = self.browser_size
+        w_vs, h_vs = self.viewport_size_with_scrollbar
+        return w_bl + w_bs - w_vs, h_bl + h_bs - h_vs
+
+    @property
+    def browser_size(self):
+        """返回浏览器大小"""
+        r = self._get_browser_rect()
+        if r['windowState'] == 'fullscreen':
+            return r['width'], r['height']
+        elif r['windowState'] == 'maximized':
+            return r['width'] - 16, r['height'] - 16
+        else:
+            return r['width'] - 16, r['height'] - 7
+
+    @property
+    def page_size(self):
+        """返回页面总宽高，格式：(宽, 高)"""
+        r = self._get_page_rect()['contentSize']
+        return r['width'], r['height']
+
+    @property
+    def viewport_size(self):
+        """返回视口宽高，不包括滚动条，格式：(宽, 高)"""
+        r = self._get_page_rect()['visualViewport']
+        return r['clientWidth'], r['clientHeight']
+
+    @property
+    def viewport_size_with_scrollbar(self):
+        """返回视口宽高，包括滚动条，格式：(宽, 高)"""
+        r = self._page.run_js('return window.innerWidth.toString() + " " + window.innerHeight.toString();')
+        w, h = r.split(' ')
+        return int(w), int(h)
+
+    def _get_page_rect(self):
+        """获取页面范围信息"""
+        return self._page.run_cdp_loaded('Page.getLayoutMetrics')
+
+    def _get_browser_rect(self):
+        """获取浏览器范围信息"""
+        return self._page.browser_driver.Browser.getWindowForTarget(targetId=self._page.tab_id)['bounds']
 
 
 class ChromiumDownloadSetter(DownloadSetter):
@@ -536,8 +609,8 @@ class WindowSetter(object):
             if s != 'normal':
                 self._perform({'windowState': 'normal'})
             info = self._get_info()['bounds']
-            width = width or info['width']
-            height = height or info['height']
+            width = width - 16 if width else info['width']
+            height = height + 7 if height else info['height']
             self._perform({'width': width, 'height': height})
 
     def location(self, x=None, y=None):
@@ -551,7 +624,7 @@ class WindowSetter(object):
             info = self._get_info()['bounds']
             x = x if x is not None else info['left']
             y = y if y is not None else info['top']
-            self._perform({'left': x, 'top': y})
+            self._perform({'left': x - 8, 'top': y})
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
@@ -574,7 +647,7 @@ class ChromiumPageSetter(ChromiumBaseSetter):
         self._page._main_tab = tab_id or self._page.tab_id
 
     @property
-    def windows(self):
+    def window(self):
         """返回用于设置浏览器窗口的对象"""
         return WindowSetter(self._page)
 

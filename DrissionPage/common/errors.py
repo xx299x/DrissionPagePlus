@@ -34,3 +34,7 @@ class TabClosedError(BaseError):
 
 class NotElementFoundError(BaseError):
     _info = '没有找到元素。'
+
+
+class JavaScriptError(BaseError):
+    _info = 'JavaScript运行错误。'
