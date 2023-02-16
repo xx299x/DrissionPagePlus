@@ -17,6 +17,7 @@ setup(
     url="https://gitee.com/g1879/DrissionPage",
     include_package_data=True,
     packages=find_packages(),
+    zip_safe=False,
     install_requires=[
         "selenium",
         "lxml",
@@ -24,7 +25,8 @@ setup(
         "requests",
         "DownloadKit>=0.5.0",
         "FlowViewer",
-        "websocket-client"
+        "websocket-client",
+        'click~=8.1.3'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",
@@ -32,5 +34,10 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    python_requires='>=3.6'
+    python_requires='>=3.6',
+    entry_points={
+        'console_scripts': [
+            'dp = DrissionPage.cli:main',
+        ],
+    },
 )
