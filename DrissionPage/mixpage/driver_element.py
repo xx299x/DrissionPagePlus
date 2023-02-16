@@ -15,9 +15,9 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
-from .common.locator import str_to_loc, get_loc
-from .common.tools import get_usable_path
-from .common.web import format_html, get_ele_txt
+from DrissionPage.common.locator import str_to_loc, get_loc
+from DrissionPage.common.tools import get_usable_path
+from DrissionPage.common.web import format_html, get_ele_txt
 from .session_element import make_session_ele
 
 

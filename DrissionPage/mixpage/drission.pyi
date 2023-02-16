@@ -12,8 +12,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 
-from .configs.driver_options import DriverOptions
-from .configs.session_options import SessionOptions
+from DrissionPage.configs.driver_options import DriverOptions
+from DrissionPage.configs.session_options import SessionOptions
 
 
 class Drission(object):

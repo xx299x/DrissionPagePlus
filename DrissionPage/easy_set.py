@@ -13,7 +13,7 @@ from selenium import webdriver
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .configs.options_manage import OptionsManager
-from .drission import Drission
+from DrissionPage.mixpage.drission import Drission
 from .common.tools import unzip
 from .session_page import SessionPage
 

@@ -6,11 +6,11 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
-from .common.constants import NoneElement
 from .base import DrissionElement, BaseElement
 from .chromium_base import ChromiumBase
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage
+from .common.constants import NoneElement
 from .session_element import SessionElement
 from .web_page import WebPage
 
@@ -98,12 +98,6 @@ class ChromiumElement(DrissionElement):
 
     @property
     def midpoint(self) -> Tuple[int, int]: ...
-
-    @property
-    def _client_click_point(self) -> Tuple[int, int]: ...
-
-    @property
-    def _click_point(self) -> Tuple[int, int]: ...
 
     @property
     def shadow_root(self) -> Union[None, ChromiumShadowRootElement]: ...

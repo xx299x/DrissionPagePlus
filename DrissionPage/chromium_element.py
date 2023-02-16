@@ -1580,7 +1580,7 @@ class Click(object):
     def right(self):
         """右键单击"""
         self._ele.page.scroll.to_see(self._ele)
-        x, y = self._ele._client_click_point
+        x, y = self._ele.locations.viewport_click_point
         self._click(x, y, 'right')
 
     def right_at(self, offset_x=None, offset_y=None):
@@ -1594,7 +1594,7 @@ class Click(object):
     def middle(self):
         """中键单击"""
         self._ele.page.scroll.to_see(self._ele)
-        x, y = self._ele._client_click_point
+        x, y = self._ele.locations.viewport_click_point
         self._click(x, y, 'middle')
 
     def _click(self, client_x, client_y, button='left'):

@@ -17,6 +17,6 @@ from .action_chains import ActionChains
 from .keys import Keys
 
 # 旧版页面类和启动配置类
-from .mix_page import MixPage
-from .drission import Drission
+from .mixpage.mix_page import MixPage
+from .mixpage.drission import Drission
 from .configs.driver_options import DriverOptions
