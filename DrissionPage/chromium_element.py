@@ -144,7 +144,7 @@ class ChromiumElement(DrissionElement):
     @property
     def location(self):
         """返回元素左上角的绝对坐标"""
-        return self.locations.page_location
+        return self.locations.location
 
     @property
     def locations(self):
@@ -671,7 +671,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         warn("click_at()方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
-        self.click.left_at(offset_x, offset_y, button)
+        self.click.left_at(offset_x, offset_y)
 
     def r_click(self):
         """右键单击"""
@@ -1512,7 +1512,7 @@ class Locations(object):
         self._ele = ele
 
     @property
-    def page_location(self):
+    def location(self):
         """返回元素左上角的绝对坐标"""
         cl = self.viewport_location
         return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
@@ -1521,6 +1521,12 @@ class Locations(object):
     def midpoint(self):
         """返回元素中间点的绝对坐标"""
         cl = self.viewport_midpoint
+        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+
+    @property
+    def click_point(self):
+        """返回元素接受点击的点的绝对坐标"""
+        cl = self.viewport_click_point
         return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
 
     @property
@@ -1537,21 +1543,29 @@ class Locations(object):
 
     @property
     def viewport_click_point(self):
-        """返回元素左上角可接受点击的点视口坐标"""
+        """返回元素接受点击的点视口坐标"""
         m = self._get_viewport_rect('padding')
         return (int(self.viewport_midpoint[0]), int(m[1]) + 1) if m else (0, 0)
 
     @property
-    def click_point(self):
-        """返回元素左上角可接受点击的点的绝对坐标"""
-        cl = self.viewport_click_point
-        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
-
-    @property
     def screen_location(self):
-        """返回元素在屏幕上坐标，左上角为(0, 0)"""
+        """返回元素左上角在屏幕上坐标，左上角为(0, 0)"""
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_location
+        return vx + ex, ey + vy
+
+    @property
+    def screen_midpoint(self):
+        """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
+        vx, vy = self._ele.page.rect.viewport_location
+        ex, ey = self.viewport_midpoint
+        return vx + ex, ey + vy
+
+    @property
+    def screen_click_point(self):
+        """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
+        vx, vy = self._ele.page.rect.viewport_location
+        ex, ey = self.viewport_click_point
         return vx + ex, ey + vy
 
     def _get_viewport_rect(self, quad):
@@ -1561,7 +1575,7 @@ class Locations(object):
         """
         try:
             return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
-        except CallMethodError:
+        except Exception:
             return None
 
     def _get_page_coord(self, x, y):
@@ -1641,22 +1655,25 @@ class Click(object):
 
         return False
 
-    def left_at(self, offset_x=None, offset_y=None, button='left'):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :param button: 左键还是右键
-        :return: None
-        """
-        self._ele.page.scroll.to_see(self._ele)
-        x, y = offset_scroll(self._ele, offset_x, offset_y)
-        self._click(x, y, button)
-
     def right(self):
         """右键单击"""
         self._ele.page.scroll.to_see(self._ele)
         x, y = self._ele.locations.viewport_click_point
         self._click(x, y, 'right')
+
+    def middle(self):
+        """中键单击"""
+        self._ele.page.scroll.to_see(self._ele)
+        x, y = self._ele.locations.viewport_click_point
+        self._click(x, y, 'middle')
+
+    def left_at(self, offset_x=None, offset_y=None):
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :return: None
+        """
+        self.at(offset_x, offset_y, button='left')
 
     def right_at(self, offset_x=None, offset_y=None):
         """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
@@ -1664,13 +1681,18 @@ class Click(object):
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :return: None
         """
-        self.left_at(offset_x, offset_y, 'right')
+        self.at(offset_x, offset_y, button='right')
 
-    def middle(self):
-        """中键单击"""
+    def at(self, offset_x=None, offset_y=None, button='left'):
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素click_point
+        :param offset_x: 相对元素左上角坐标的x轴偏移量
+        :param offset_y: 相对元素左上角坐标的y轴偏移量
+        :param button: 点击哪个键，可选 left, middle, right, back, forward
+        :return: None
+        """
         self._ele.page.scroll.to_see(self._ele)
-        x, y = self._ele.locations.viewport_click_point
-        self._click(x, y, 'middle')
+        x, y = offset_scroll(self._ele, offset_x, offset_y)
+        self._click(x, y, button)
 
     def _click(self, client_x, client_y, button='left'):
         """实施点击
