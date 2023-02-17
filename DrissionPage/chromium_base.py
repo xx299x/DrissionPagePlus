@@ -360,30 +360,30 @@ class ChromiumBase(BasePage):
         self.wait.load_complete()
         return self.run_cdp(cmd, **cmd_args)
 
-    def run_js(self, script, as_expr=False, *args):
+    def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
-    def run_js_loaded(self, script, as_expr=False, *args):
+    def run_js_loaded(self, script, *args, as_expr=False):
         """运行javascript代码，执行前等待页面加载完毕
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
         self.wait.load_complete()
         return run_js(self, script, as_expr, self.timeouts.script, args)
 
-    def run_async_js(self, script, as_expr=False, *args):
+    def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: None
         """
         from threading import Thread

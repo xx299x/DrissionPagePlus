@@ -11,7 +11,7 @@ from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .common.constants import FRAME_ELEMENT, NoneElement
-from .common.errors import ContextLossError, ElementLossError, CallMethodError, JavaScriptError
+from .common.errors import ContextLossError, ElementLossError, JavaScriptError
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
@@ -325,20 +325,20 @@ class ChromiumElement(DrissionElement):
 
                 return format_html(i['value']['value'])
 
-    def run_js(self, script, as_expr=False, *args):
+    def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
         return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
-    def run_async_js(self, script, as_expr=False, *args):
+    def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
+        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[2]...
         :return: None
         """
         from threading import Thread
@@ -864,20 +864,20 @@ class ChromiumShadowRootElement(BaseElement):
             self._states = ShadowRootElementStates(self)
         return self._states
 
-    def run_js(self, script, as_expr=False, *args):
+    def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
         return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
-    def run_async_js(self, script, as_expr=False, *args):
+    def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: None
         """
         from threading import Thread

@@ -283,11 +283,11 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         self.frame_ele.remove_attr(attr)
 
-    def run_js(self, script, as_expr=False, *args):
+    def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param as_expr: 是否作为表达式运行，为True时args无效
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
         self._check_ok()
