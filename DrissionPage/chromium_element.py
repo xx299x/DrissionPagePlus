@@ -11,7 +11,7 @@ from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .common.constants import FRAME_ELEMENT, NoneElement
-from .common.errors import ContextLossError, ElementLossError, JavaScriptError
+from .common.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
@@ -1515,37 +1515,37 @@ class Locations(object):
     def location(self):
         """返回元素左上角的绝对坐标"""
         cl = self.viewport_location
-        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+        return self._get_page_coord(cl[0], cl[1])
 
     @property
     def midpoint(self):
         """返回元素中间点的绝对坐标"""
         cl = self.viewport_midpoint
-        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+        return self._get_page_coord(cl[0], cl[1])
 
     @property
     def click_point(self):
         """返回元素接受点击的点的绝对坐标"""
         cl = self.viewport_click_point
-        return self._get_page_coord(cl[0], cl[1]) if cl else (0, 0)
+        return self._get_page_coord(cl[0], cl[1])
 
     @property
     def viewport_location(self):
         """返回元素左上角在视口中的坐标"""
         m = self._get_viewport_rect('border')
-        return (int(m[0]), int(m[1])) if m else (0, 0)
+        return int(m[0]), int(m[1])
 
     @property
     def viewport_midpoint(self):
         """返回元素中间点在视口中的坐标"""
         m = self._get_viewport_rect('border')
-        return (int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)) if m else (0, 0)
+        return int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)
 
     @property
     def viewport_click_point(self):
         """返回元素接受点击的点视口坐标"""
         m = self._get_viewport_rect('padding')
-        return (int(self.viewport_midpoint[0]), int(m[1]) + 1) if m else (0, 0)
+        return int(self.viewport_midpoint[0]), int(m[1]) + 1
 
     @property
     def screen_location(self):
@@ -1573,10 +1573,7 @@ class Locations(object):
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标，大小为0时返回None
         """
-        try:
-            return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
-        except Exception:
-            return None
+        return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
 
     def _get_page_coord(self, x, y):
         """根据绝对坐标获取窗口坐标"""
@@ -1628,25 +1625,29 @@ class Click(object):
             return True
 
         if not by_js:
-            self._ele.page.scroll.to_see(self._ele)
-            if self._ele.states.is_in_viewport:
-                client_x, client_y = self._ele.locations.viewport_click_point
-                if client_x:
-                    loc_x, loc_y = self._ele.locations.click_point
+            try:
+                self._ele.page.scroll.to_see(self._ele)
+                if self._ele.states.is_in_viewport:
+                    client_x, client_y = self._ele.locations.viewport_click_point
+                    if client_x:
+                        loc_x, loc_y = self._ele.locations.click_point
 
-                    click = do_it(client_x, client_y, loc_x, loc_y)
-                    if click:
-                        self._ele.page.wait.load_start(wait_loading)
-                        return True
-
-                    timeout = timeout if timeout is not None else self._ele.page.timeout
-                    end_time = perf_counter() + timeout
-                    while click is False and perf_counter() < end_time:
                         click = do_it(client_x, client_y, loc_x, loc_y)
+                        if click:
+                            self._ele.page.wait.load_start(wait_loading)
+                            return True
 
-                    if click is not None:
-                        self._ele.page.wait.load_start(wait_loading)
-                        return True
+                        timeout = timeout if timeout is not None else self._ele.page.timeout
+                        end_time = perf_counter() + timeout
+                        while click is False and perf_counter() < end_time:
+                            click = do_it(client_x, client_y, loc_x, loc_y)
+
+                        if click is not None:
+                            self._ele.page.wait.load_start(wait_loading)
+                            return True
+
+            except NoRectError:
+                by_js = True
 
         if by_js is not False:
             self._ele.run_js('this.click();')

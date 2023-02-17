@@ -84,7 +84,7 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
         try:
-            self.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
+            self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
         except Exception:
             self._reload()
             # sleep(2)
@@ -291,7 +291,7 @@ class ChromiumFrame(ChromiumBase):
         :return: 运行的结果
         """
         self._check_ok()
-        return self.doc_ele.run_js(script, as_expr=as_expr, *args)
+        return self.doc_ele.run_js(script, *args, as_expr=as_expr)
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -531,7 +531,7 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         """
         ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver.ele(loc_or_ele)
         try:
-            self._driver.page.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.node_id)
+            self._driver.page.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.ids.node_id)
         except Exception:
             ele.run_js("this.scrollIntoView();")
 

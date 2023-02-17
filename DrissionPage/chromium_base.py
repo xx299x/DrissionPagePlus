@@ -15,7 +15,8 @@ from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
 from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
-from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError
+from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
+    NoRectError
 from .common.locator import get_loc
 from .common.tools import get_usable_path
 from .common.web import offset_scroll, cookies_to_tuple
@@ -346,6 +347,8 @@ class ChromiumBase(BasePage):
             raise TabClosedError
         elif r[ERROR] == 'alert exists':
             pass
+        elif r[ERROR] in ('Node does not have a layout object', 'Could not compute box model.'):
+            raise NoRectError
         elif r['type'] == 'call_method_error':
             raise CallMethodError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
         else:
@@ -924,7 +927,7 @@ class ChromiumPageScroll(ChromiumScroll):
         """
         ele = self._driver.ele(loc_or_ele)
         try:
-            self._driver.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.node_id)
+            self._driver.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.ids.node_id)
         except Exception:
             ele.run_js("this.scrollIntoView();")
 

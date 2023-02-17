@@ -38,3 +38,7 @@ class NotElementFoundError(BaseError):
 
 class JavaScriptError(BaseError):
     _info = 'JavaScript运行错误。'
+
+
+class NoRectError(BaseError):
+    _info = '该元素没有位置及大小。'
