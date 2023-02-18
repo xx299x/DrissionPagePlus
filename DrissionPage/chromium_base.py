@@ -760,14 +760,6 @@ class ChromiumBase(BasePage):
         warn("set_cookies()方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
         self.set.cookies(cookies)
 
-    def set_upload_files(self, files):
-        """等待上传的文件路径
-        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
-        :return: None
-        """
-        warn("set_upload_files()方法即将弃用，请用set.upload_files()方法代替。", DeprecationWarning)
-        self.set.upload_files(files)
-
     def set_headers(self, headers: dict) -> None:
         """设置固定发送的headers
         :param headers: dict格式的headers数据

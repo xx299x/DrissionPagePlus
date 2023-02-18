@@ -18,14 +18,14 @@ from .common.tools import unzip
 from .session_page import SessionPage
 
 
-def configs_to_here(file_name=None):
+def configs_to_here(save_name=None):
     """把默认ini文件复制到当前目录
-    :param file_name: 指定文件名，为None则命名为'dp_configs.ini'
+    :param save_name: 指定文件名，为None则命名为'dp_configs.ini'
     :return: None
     """
     om = OptionsManager('default')
-    file_name = str(file_name) if file_name is not None else 'dp_configs.ini'
-    om.save(file_name)
+    save_name = str(save_name) if save_name is not None else 'dp_configs.ini'
+    om.save(save_name)
 
 
 def show_settings(ini_path=None):
