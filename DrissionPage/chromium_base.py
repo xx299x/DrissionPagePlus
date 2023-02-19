@@ -917,7 +917,7 @@ class ChromiumPageWaiter(ChromiumWaiter):
         """
         return self._loading(timeout=timeout, start=False)
 
-    def input_upload_paths(self):
+    def upload_paths_inputted(self):
         """等待自动填写上传文件路径"""
         while self._driver._upload_list:
             sleep(.01)
