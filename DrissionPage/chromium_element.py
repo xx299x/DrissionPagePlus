@@ -114,11 +114,8 @@ class ChromiumElement(DrissionElement):
     @property
     def size(self):
         """返回元素宽和高"""
-        try:
-            model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
-            return model['height'], model['width']
-        except Exception:
-            return 0, 0
+        model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
+        return model['height'], model['width']
 
     @property
     def set(self):
@@ -459,6 +456,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
+        self.page.scroll.to_see(self)
         left, top = self.location
         height, width = self.size
         left_top = (left, top)

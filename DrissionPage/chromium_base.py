@@ -19,7 +19,7 @@ from .common.errors import ContextLossError, ElementLossError, AlertExistsError,
     NoRectError, ElementNotFoundError
 from .common.locator import get_loc
 from .common.tools import get_usable_path
-from .common.web import offset_scroll, cookies_to_tuple
+from .common.web import cookies_to_tuple
 from .session_element import make_session_ele
 
 
@@ -626,7 +626,7 @@ class ChromiumBase(BasePage):
                 h = right_bottom[1] - y
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=True, clip=vp)['data']
+                                          captureBeyondViewport=False, clip=vp)['data']
             else:
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
 
@@ -938,13 +938,7 @@ class ChromiumPageScroll(ChromiumScroll):
         :return: None
         """
         ele = self._driver.ele(loc_or_ele)
-        try:
-            self._driver.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.ids.node_id)
-        except Exception:
-            ele.run_js("this.scrollIntoView();")
-
-        if not ele.states.is_in_viewport:
-            offset_scroll(ele, 0, 0)
+        ele.run_js('this.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});')
 
 
 class Timeout(object):
