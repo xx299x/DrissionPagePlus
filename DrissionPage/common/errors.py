@@ -21,7 +21,7 @@ class ContextLossError(BaseError):
 
 
 class ElementLossError(BaseError):
-    _info = '该元素对象已不在当前页面中。'
+    _info = '页面内无此对象，可能因刷新已失效。'
 
 
 class CallMethodError(BaseError):
@@ -32,7 +32,7 @@ class TabClosedError(BaseError):
     _info = '标签页已关闭。'
 
 
-class NotElementFoundError(BaseError):
+class ElementNotFoundError(BaseError):
     _info = '没有找到元素。'
 
 

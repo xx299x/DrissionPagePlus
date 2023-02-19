@@ -16,7 +16,7 @@ from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, r
     ChromiumElementWaiter
 from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError
+    NoRectError, ElementNotFoundError
 from .common.locator import get_loc
 from .common.tools import get_usable_path
 from .common.web import offset_scroll, cookies_to_tuple
@@ -212,7 +212,10 @@ class ChromiumBase(BasePage):
         if self._upload_list:
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
-            self._upload_list = []
+
+            self.driver.Page.fileChooserOpened = None
+            self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
+            self._upload_list = None
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -233,8 +236,7 @@ class ChromiumBase(BasePage):
     @property
     def _wait_driver(self):
         """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
-        while self._is_loading:
-            sleep(.1)
+        self.wait.load_complete()
         return self.driver
 
     @property
@@ -461,6 +463,8 @@ class ChromiumBase(BasePage):
             loc = get_loc(loc_or_ele)[1]
         elif isinstance(loc_or_ele, ChromiumElement) or str(type(loc_or_ele)).endswith(".ChromiumFrame'>"):
             return loc_or_ele
+        elif not loc_or_ele:
+            raise ElementNotFoundError
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
 
@@ -556,6 +560,17 @@ class ChromiumBase(BasePage):
         self.run_cdp('Page.stopLoading')
         while self.ready_state != 'complete':
             sleep(.1)
+
+    def remove_ele(self, loc_or_ele):
+        """从页面上删除一个元素
+        :param loc_or_ele: 元素对象或定位符
+        :return: None
+        """
+        if not loc_or_ele:
+            return
+        ele = self._ele(loc_or_ele)
+        if ele:
+            self.run_cdp('DOM.removeNode', nodeId=ele.ids.node_id)
 
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部
@@ -850,7 +865,7 @@ class ChromiumBaseSetter(object):
         :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
         :return: None
         """
-        if self._page._upload_list is None:
+        if not self._page._upload_list:
             self._page.driver.Page.fileChooserOpened = self._page._onFileChooserOpened
             self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
 
@@ -885,7 +900,7 @@ class ChromiumPageWaiter(ChromiumWaiter):
             while perf_counter() < end_time:
                 if self._driver.is_loading == start:
                     return True
-                sleep(.005)
+                sleep(.01)
             return False
 
     def load_start(self, timeout=None):
@@ -901,6 +916,11 @@ class ChromiumPageWaiter(ChromiumWaiter):
         :return: 是否等待成功
         """
         return self._loading(timeout=timeout, start=False)
+
+    def input_upload_paths(self):
+        """等待自动填写上传文件路径"""
+        while self._driver._upload_list:
+            sleep(.01)
 
 
 class ChromiumPageScroll(ChromiumScroll):

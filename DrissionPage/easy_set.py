@@ -10,11 +10,11 @@ from typing import Union
 
 from selenium import webdriver
 
+from DrissionPage.mixpage.drission import Drission
+from .common.tools import unzip
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .configs.options_manage import OptionsManager
-from DrissionPage.mixpage.drission import Drission
-from .common.tools import unzip
 from .session_page import SessionPage
 
 

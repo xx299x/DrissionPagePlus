@@ -4,11 +4,12 @@
 @Contact :   g1879@qq.com
 """
 from re import search
-from time import sleep
+from time import sleep, perf_counter
 from warnings import warn
 
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
 from .chromium_element import ChromiumElement
+from .common.errors import ElementNotFoundError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -31,6 +32,10 @@ class ChromiumFrame(ChromiumBase):
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
         self._ids = ChromiumFrameIds(self)
+
+        end_time = perf_counter() + 2
+        while perf_counter() < end_time and self.url == 'about:blank':
+            sleep(.1)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -79,7 +84,7 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
     def _check_ok(self):
-        """"""
+        """检查iframe元素是否还能使用，不能使用则重新加载"""
         if self._tab_obj._stopped.is_set():
             self._reload()
 
@@ -383,11 +388,13 @@ class ChromiumFrame(ChromiumBase):
         :param timeout: 查找超时时间
         :return: ChromiumElement对象
         """
+        if not loc_or_ele:
+            raise ElementNotFoundError
+
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
 
-        while self.is_loading:
-            sleep(.05)
+        self.wait.load_complete()
 
         return self.doc_ele.ele(loc_or_ele, timeout) if single else self.doc_ele.eles(loc_or_ele, timeout)
 
@@ -409,8 +416,7 @@ class ChromiumFrame(ChromiumBase):
             result = self.driver.Page.navigate(url=to_url, frameId=self.frame_id)
 
             is_timeout = not self._wait_loaded(timeout)
-            while self.is_loading:
-                sleep(.1)
+            self.wait.load_complete()
 
             if is_timeout:
                 err = TimeoutError('页面连接超时。')

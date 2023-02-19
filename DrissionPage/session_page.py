@@ -14,8 +14,9 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from .configs.session_options import SessionOptions
+from .common.errors import ElementNotFoundError
 from .common.web import cookie_to_dict, set_session_cookies
+from .configs.session_options import SessionOptions
 from .session_element import SessionElement, make_session_ele
 
 
@@ -199,6 +200,8 @@ class SessionPage(BasePage):
         :param single: True则返回第一个，False则返回全部
         :return: SessionElement对象
         """
+        if not loc_or_ele:
+            raise ElementNotFoundError
         return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, single)
 
     def get_cookies(self, as_dict=False, all_domains=False):
