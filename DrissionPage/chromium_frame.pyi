@@ -6,7 +6,7 @@
 from typing import Union, Tuple, List, Any
 
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
-from .chromium_element import ChromiumElement
+from .chromium_element import ChromiumElement, Locations
 
 
 class ChromiumFrame(ChromiumBase):
@@ -82,6 +82,9 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def location(self) -> Tuple[int, int]: ...
+
+    @property
+    def locations(self) -> Locations: ...
 
     @property
     def xpath(self) -> str: ...

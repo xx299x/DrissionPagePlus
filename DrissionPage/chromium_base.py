@@ -937,8 +937,17 @@ class ChromiumPageScroll(ChromiumScroll):
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: None
         """
+        ID = None
         ele = self._driver.ele(loc_or_ele)
-        ele.run_js('this.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});')
+        ele.run_js('this.scrollIntoView({behavior: "auto", block: "nearest", inline: "nearest"});')
+        x, y = ele.location
+        try:
+            ID = ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y).get('nodeId', None)
+        except Exception:
+            pass
+
+        if ID != ele.ids.node_id:
+            ele.run_js('this.scrollIntoView({behavior: "auto", block: "center", inline: "center"});')
 
 
 class Timeout(object):

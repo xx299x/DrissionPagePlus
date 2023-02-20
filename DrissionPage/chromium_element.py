@@ -12,9 +12,9 @@ from warnings import warn
 from .base import DrissionElement, BaseElement
 from .common.constants import FRAME_ELEMENT, NoneElement
 from .common.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError
+from .common.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
-from .keys import _keys_to_typing, _keyDescriptionForString, _keyDefinitions
 from .session_element import make_session_ele
 
 
@@ -457,6 +457,7 @@ class ChromiumElement(DrissionElement):
                 sleep(.1)
 
         self.page.scroll.to_see(self)
+        sleep(1)
         left, top = self.location
         height, width = self.size
         left_top = (left, top)
@@ -486,7 +487,7 @@ class ChromiumElement(DrissionElement):
         # ------------处理字符-------------
         if not isinstance(vals, (tuple, list)):
             vals = (str(vals),)
-        modifier, vals = _keys_to_typing(vals)
+        modifier, vals = keys_to_typing(vals)
 
         if modifier != 0:  # 包含修饰符
             for key in vals:
@@ -1386,11 +1387,11 @@ def send_enter(ele):
 
 def send_key(ele, modifier, key):
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
-    if key not in _keyDefinitions:
+    if key not in keyDefinitions:
         ele.page.run_cdp('Input.insertText', text=key)
 
     else:
-        description = _keyDescriptionForString(modifier, key)
+        description = keyDescriptionForString(modifier, key)
         text = description['text']
         data = {'type': 'keyDown' if text else 'rawKeyDown',
                 'modifiers': modifier,
@@ -1574,11 +1575,14 @@ class Locations(object):
         return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
 
     def _get_page_coord(self, x, y):
-        """根据绝对坐标获取窗口坐标"""
-        js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
-        xy = self._ele.run_js(js)
-        sx, sy = xy.split(' ')
-        return int(x + float(sx)), int(y + float(sy))
+        """根据视口坐标获取绝对坐标"""
+        # js = 'return document.documentElement.scrollLeft+" "+document.documentElement.scrollTop;'
+        # xy = self._ele.run_js(js)
+        # sx, sy = xy.split(' ')
+        r = self._ele.page.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
+        sx = r['pageX']
+        sy = r['pageY']
+        return x + sx, y + sy
 
 
 class Click(object):

@@ -5,8 +5,8 @@
 """
 from time import sleep
 
+from .common.keys import modifierBit, keyDescriptionForString
 from .common.web import location_in_viewport
-from .keys import _modifierBit, _keyDescriptionForString
 
 
 class ActionChains:
@@ -230,7 +230,7 @@ class ActionChains:
         :return: self
         """
         if key in ('\ue009', '\ue008', '\ue00a', '\ue03d'):  # 如果上修饰符，添加到变量
-            self.modifier |= _modifierBit.get(key, 0)
+            self.modifier |= modifierBit.get(key, 0)
             return self
 
         data = self._get_key_data(key, 'keyDown')
@@ -243,7 +243,7 @@ class ActionChains:
         :return: self
         """
         if key in ('\ue009', '\ue008', '\ue00a', '\ue03d'):  # 如果上修饰符，添加到变量
-            self.modifier ^= _modifierBit.get(key, 0)
+            self.modifier ^= modifierBit.get(key, 0)
             return self
 
         data = self._get_key_data(key, 'keyUp')
@@ -272,7 +272,7 @@ class ActionChains:
         :param action: 'keyDown' 或 'keyUp'
         :return: 按键信息
         """
-        description = _keyDescriptionForString(self.modifier, key)
+        description = keyDescriptionForString(self.modifier, key)
         text = description['text']
         if action != 'keyUp':
             action = 'keyDown' if text else 'rawKeyDown'

@@ -81,7 +81,7 @@ class Keys:
     # ZENKAKU_HANKAKU = '\ue040'
 
 
-_keyDefinitions = {
+keyDefinitions = {
     '0': {'keyCode': 48, 'key': '0', 'code': 'Digit0'},
     '1': {'keyCode': 49, 'key': '1', 'code': 'Digit1'},
     '2': {'keyCode': 50, 'key': '2', 'code': 'Digit2'},
@@ -333,20 +333,20 @@ _keyDefinitions = {
     '}': {'keyCode': 221, 'key': '}', 'code': 'BracketRight'},
     '"': {'keyCode': 222, 'key': '"', 'code': 'Quote'},
 }
-_modifierBit = {'\ue00a': 1,
-                '\ue009': 2,
-                '\ue03d': 4,
-                '\ue008': 8}
+modifierBit = {'\ue00a': 1,
+               '\ue009': 2,
+               '\ue03d': 4,
+               '\ue008': 8}
 
 
-def _keys_to_typing(value) -> Tuple[int, str]:
+def keys_to_typing(value) -> Tuple[int, str]:
     """把要输入的内容连成字符串，去掉其中 ctrl 等键。
         返回的modifier表示是否有按下组合键"""
     typing: List[str] = []
     modifier = 0
     for val in value:
         if val in ('\ue009', '\ue008', '\ue00a', '\ue03d'):
-            modifier |= _modifierBit.get(val, 0)
+            modifier |= modifierBit.get(val, 0)
             continue
         if isinstance(val, (int, float)):
             val = str(val)
@@ -359,7 +359,7 @@ def _keys_to_typing(value) -> Tuple[int, str]:
     return modifier, ''.join(typing)
 
 
-def _keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C901
+def keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C901
     shift = _modifiers & 8
     description = {'key': '',
                    'keyCode': 0,

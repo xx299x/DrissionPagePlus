@@ -14,7 +14,7 @@ from .configs.session_options import SessionOptions
 
 # 常用工具
 from .action_chains import ActionChains
-from .keys import Keys
+from .common.keys import Keys
 
 # 旧版页面类和启动配置类
 from .mixpage.mix_page import MixPage

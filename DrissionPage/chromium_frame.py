@@ -221,6 +221,11 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.location
 
     @property
+    def locations(self):
+        """返回用于获取元素位置的对象"""
+        return self.frame_ele.locations
+
+    @property
     def xpath(self):
         """返回frame的xpath绝对路径"""
         self._check_ok()
@@ -296,7 +301,10 @@ class ChromiumFrame(ChromiumBase):
         :return: 运行的结果
         """
         self._check_ok()
-        return self.doc_ele.run_js(script, *args, as_expr=as_expr)
+        if script.startswith('this.scrollIntoView'):
+            return self.frame_ele.run_js(script, *args, as_expr=as_expr)
+        else:
+            return self.doc_ele.run_js(script, *args, as_expr=as_expr)
 
     def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -381,6 +389,22 @@ class ChromiumFrame(ChromiumBase):
         """
         self._check_ok()
         return self.frame_ele.afters(filter_loc, timeout)
+
+    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
+        """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
+        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
+        :param left_top: 截取范围左上角坐标
+        :param right_bottom: 截取范围右下角角坐标
+        :return: 图片完整路径或字节文本
+        """
+        if full_page:
+            raise RuntimeError('暂未实现对iframe全页截图功能。')
+        if left_top is None and right_bottom is None:
+            return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes)
+        else:
+            raise RuntimeError('暂未实现对异域iframe内元素截图功能。')
 
     def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
         """在frame内查找单个元素
