@@ -367,7 +367,7 @@ def keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C
                    'text': '',
                    'location': 0}
 
-    definition: Dict = _keyDefinitions.get(keyString)  # type: ignore
+    definition: Dict = keyDefinitions.get(keyString)  # type: ignore
     if not definition:
         raise ValueError(f'未知按键：{keyString}')
 
