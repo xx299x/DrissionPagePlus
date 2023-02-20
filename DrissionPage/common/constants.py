@@ -6,6 +6,10 @@ FRAME_ELEMENT = ('iframe', 'frame')
 ERROR = 'error'
 
 
+class Settings(object):
+    raise_ele_not_found = False
+
+
 class NoneElement(object):
     _instance = None
 

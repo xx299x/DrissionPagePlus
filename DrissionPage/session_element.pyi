@@ -104,11 +104,13 @@ class SessionElement(DrissionElement):
     def s_eles(self,
                loc_or_str: Union[Tuple[str, str], str]) -> List[Union['SessionElement', str]]: ...
 
-    def _ele(self,
+    def _find_elements(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
              single: bool = True,
-             relative: bool = False) -> Union['SessionElement', str, NoneElement, List[Union['SessionElement', str]]]: ...
+             relative: bool = False,
+             raise_err: bool = None) \
+            -> Union['SessionElement', str, NoneElement, List[Union['SessionElement', str]]]: ...
 
     def _get_ele_path(self, mode: str) -> str: ...
 
@@ -116,4 +118,5 @@ class SessionElement(DrissionElement):
 def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, DriverElement, BaseElement,
                                         ChromiumFrame, ChromiumBase, DriverPage],
                      loc: Union[str, Tuple[str, str]] = None,
-                     single: bool = True) -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
+                     single: bool = True) -> Union[
+    SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...

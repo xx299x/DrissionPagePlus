@@ -102,10 +102,9 @@ class SessionPage(BasePage):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
-    def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-             timeout: float = None,
-             single: bool = True) -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
+    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+             timeout: float = None, single: bool = True, raise_err: bool =None)\
+            -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
 
     def get_cookies(self,
                     as_dict: bool = False,

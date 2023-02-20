@@ -160,9 +160,8 @@ class ChromiumElement(DrissionElement):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[Union[SessionElement, str]]: ...
 
-    def _ele(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None, single: bool = True, relative: bool = False) \
+    def _find_elements(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None,
+             single: bool = True, relative: bool = False, raise_err: bool = False) \
             -> Union[ChromiumElement, ChromiumFrame, str, NoneElement,
                      List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 
@@ -289,10 +288,8 @@ class ChromiumShadowRootElement(BaseElement):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
-    def _ele(self,
-             loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None,
-             single: bool = True, relative: bool = False) \
+    def _find_elements(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None,
+             single: bool = True, relative: bool = False, raise_err: bool = None) \
             -> Union[
                 ChromiumElement, ChromiumFrame, NoneElement, str, List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 

@@ -413,17 +413,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._response = None
             self._has_session = None
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
         :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super()._ele(loc_or_ele, single=single)
+            return super()._find_elements(loc_or_ele, single=single)
         elif self._mode == 'd':
-            return super(SessionPage, self)._ele(loc_or_ele, timeout=timeout, single=single, relative=relative)
+            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single, relative=relative)
 
     def quit(self):
         """关闭浏览器，关闭session"""

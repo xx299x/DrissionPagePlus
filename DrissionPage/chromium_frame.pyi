@@ -150,9 +150,8 @@ class ChromiumFrame(ChromiumBase):
                filter_loc: Union[tuple, str] = ...,
                timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
-    def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-             timeout: float = None, single: bool = True, relative: bool = False) \
+    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+             timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool=None) \
             -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def _d_connect(self,

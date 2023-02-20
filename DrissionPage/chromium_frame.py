@@ -9,7 +9,6 @@ from warnings import warn
 
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
 from .chromium_element import ChromiumElement
-from .common.errors import ElementNotFoundError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -180,7 +179,8 @@ class ChromiumFrame(ChromiumBase):
     def title(self):
         """返回页面title"""
         self._check_ok()
-        return self.ele('t:title').text
+        r = self._ele('t:title', raise_err=False)
+        return r.text if r else None
 
     @property
     def cookies(self):
@@ -406,21 +406,21 @@ class ChromiumFrame(ChromiumBase):
         else:
             raise RuntimeError('暂未实现对异域iframe内元素截图功能。')
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """在frame内查找单个元素
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
+        :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
         """
-        if not loc_or_ele:
-            raise ElementNotFoundError
-
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
 
         self.wait.load_complete()
 
-        return self.doc_ele.ele(loc_or_ele, timeout) if single else self.doc_ele.eles(loc_or_ele, timeout)
+        return self.doc_ele._ele(loc_or_ele, timeout, raise_err=raise_err) if single else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次
@@ -559,14 +559,8 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
         :return: None
         """
-        ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver.ele(loc_or_ele)
-        try:
-            self._driver.page.run_cdp('DOM.scrollIntoViewIfNeeded', nodeId=ele.ids.node_id)
-        except Exception:
-            ele.run_js("this.scrollIntoView();")
-
-        # if not ele.is_in_viewport:
-        #     offset_scroll(ele, 0, 0)
+        ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver._ele(loc_or_ele)
+        ele.run_js('this.scrollIntoView({behavior: "auto", block: "center", inline: "center"});')
 
 
 class ChromiumFrameSetter(ChromiumBaseSetter):

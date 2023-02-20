@@ -16,7 +16,7 @@ from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, r
     ChromiumElementWaiter
 from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError, ElementNotFoundError
+    NoRectError
 from .common.locator import get_loc
 from .common.tools import get_usable_path
 from .common.web import cookies_to_tuple
@@ -452,19 +452,19 @@ class ChromiumBase(BasePage):
         """
         return make_session_ele(self, loc_or_str, single=False)
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """执行元素查找
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
         :param single: 是否只返回第一个
+        :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或元素对象组成的列表
         """
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
         elif isinstance(loc_or_ele, ChromiumElement) or str(type(loc_or_ele)).endswith(".ChromiumFrame'>"):
             return loc_or_ele
-        elif not loc_or_ele:
-            raise ElementNotFoundError
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
 
@@ -568,7 +568,7 @@ class ChromiumBase(BasePage):
         """
         if not loc_or_ele:
             return
-        ele = self._ele(loc_or_ele)
+        ele = self._ele(loc_or_ele, raise_err=False)
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele.ids.node_id)
 
@@ -938,7 +938,7 @@ class ChromiumPageScroll(ChromiumScroll):
         :return: None
         """
         ID = None
-        ele = self._driver.ele(loc_or_ele)
+        ele = self._driver._ele(loc_or_ele)
         ele.run_js('this.scrollIntoView({behavior: "auto", block: "nearest", inline: "nearest"});')
         x, y = ele.location
         try:

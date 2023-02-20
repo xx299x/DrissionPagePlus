@@ -149,9 +149,9 @@ class ChromiumBase(BasePage):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
-    def _ele(self,
+    def _find_elements(self,
              loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-             timeout: float = None, single: bool = True, relative: bool = False) \
+             timeout: float = None, single: bool = True, relative: bool = False, raise_err:bool=None) \
             -> Union[ChromiumElement, ChromiumFrame, NoneElement, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def refresh(self, ignore_cache: bool = False) -> None: ...

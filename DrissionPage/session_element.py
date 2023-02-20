@@ -213,12 +213,13 @@ class SessionElement(DrissionElement):
         """
         return self._ele(loc_or_str, single=False)
 
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param single: True则返回第一个，False则返回全部
         :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """
         return make_session_ele(self, loc_or_str, single)

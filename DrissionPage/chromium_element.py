@@ -10,8 +10,8 @@ from time import perf_counter, sleep
 from warnings import warn
 
 from .base import DrissionElement, BaseElement
-from .common.constants import FRAME_ELEMENT, NoneElement
-from .common.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError
+from .common.constants import FRAME_ELEMENT, NoneElement, Settings
+from .common.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError
 from .common.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
@@ -375,11 +375,13 @@ class ChromiumElement(DrissionElement):
             return make_session_ele(self.inner_html, loc_or_str, single=False)
         return make_session_ele(self, loc_or_str, single=False)
 
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或文本、属性或其组成的列表
         """
         return find_in_chromium_ele(self, loc_or_str, single, timeout, relative=relative)
@@ -901,7 +903,7 @@ class ChromiumShadowRootElement(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self.parent_ele._ele(loc, timeout=0, relative=True)
+        return self.parent_ele._ele(loc, timeout=0, relative=True, raise_err=False)
 
     def next(self, filter_loc='', index=1):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -910,7 +912,12 @@ class ChromiumShadowRootElement(BaseElement):
         :return: ChromiumElement对象
         """
         nodes = self.nexts(filter_loc=filter_loc)
-        return nodes[index - 1] if nodes else None
+        if nodes:
+            return nodes[index - 1]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def before(self, filter_loc='', index=1):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -919,7 +926,12 @@ class ChromiumShadowRootElement(BaseElement):
         :return: 本元素前面的某个元素或节点
         """
         nodes = self.befores(filter_loc=filter_loc)
-        return nodes[index - 1] if nodes else None
+        if nodes:
+            return nodes[index - 1]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def after(self, filter_loc='', index=1):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -928,7 +940,12 @@ class ChromiumShadowRootElement(BaseElement):
         :return: 本元素后面的某个元素或节点
         """
         nodes = self.afters(filter_loc=filter_loc)
-        return nodes[index - 1] if nodes else None
+        if nodes:
+            return nodes[index - 1]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def nexts(self, filter_loc=''):
         """返回后面所有兄弟元素或节点组成的列表
@@ -941,7 +958,7 @@ class ChromiumShadowRootElement(BaseElement):
 
         loc = loc[1].lstrip('./')
         xpath = f'xpath:./{loc}'
-        return self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
+        return self.parent_ele._ele(xpath, single=False, relative=True)
 
     def befores(self, filter_loc=''):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -954,7 +971,7 @@ class ChromiumShadowRootElement(BaseElement):
 
         loc = loc[1].lstrip('./')
         xpath = f'xpath:./preceding::{loc}'
-        return self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
+        return self.parent_ele._ele(xpath, single=False, relative=True)
 
     def afters(self, filter_loc=''):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -964,7 +981,7 @@ class ChromiumShadowRootElement(BaseElement):
         eles1 = self.nexts(filter_loc)
         loc = get_loc(filter_loc, True)[1].lstrip('./')
         xpath = f'xpath:./following::{loc}'
-        return eles1 + self.parent_ele._ele(xpath, timeout=0.1, single=False, relative=True)
+        return eles1 + self.parent_ele._ele(xpath, single=False, relative=True)
 
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素
@@ -996,11 +1013,13 @@ class ChromiumShadowRootElement(BaseElement):
         """
         return make_session_ele(self, loc_or_str, single=False)
 
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
+    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间
         :param single: True则返回第一个，False则返回全部
+        :param relative: WebPage用的表示是否相对定位的参数
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或其组成的列表
         """
         loc = get_loc(loc_or_str)
@@ -1914,11 +1933,11 @@ class ChromiumSelect(object):
 
         def do_select():
             if para_type == 'text':
-                ele = self._ele(f'tx={text_value_index}', timeout=0)
+                ele = self._ele._ele(f'tx={text_value_index}', timeout=0, raise_err=False)
             elif para_type == 'value':
-                ele = self._ele(f'@value={text_value_index}', timeout=0)
+                ele = self._ele._ele(f'@value={text_value_index}', timeout=0, raise_err=False)
             elif para_type == 'index':
-                ele = self._ele(f'x:.//option[{int(text_value_index)}]', timeout=0)
+                ele = self._ele._ele(f'x:.//option[{int(text_value_index)}]', timeout=0, raise_err=False)
             else:
                 raise ValueError('para_type参数只能传入"text"、"value"或"index"。')
 
@@ -2031,7 +2050,7 @@ class ChromiumElementWaiter(object):
                 if not self.loc_or_ele.states.is_alive:
                     return True
 
-        ele = self.driver(self.loc_or_ele, timeout=.5)
+        ele = self.driver._ele(self.loc_or_ele, timeout=.5, raise_err=False)
         if not ele:
             return True
 
@@ -2055,7 +2074,7 @@ class ChromiumElementWaiter(object):
         :param mode: 等待模式
         :return: 是否等待成功
         """
-        target = self.driver(self.loc_or_ele)
+        target = self.driver._ele(self.loc_or_ele, raise_err=False)
         if not target:
             return None
 

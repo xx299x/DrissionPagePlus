@@ -14,7 +14,6 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from .common.errors import ElementNotFoundError
 from .common.web import cookie_to_dict, set_session_cookies
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement, make_session_ele
@@ -96,7 +95,7 @@ class SessionPage(BasePage):
     @property
     def title(self):
         """返回网页title"""
-        ele = self.ele('xpath://title')
+        ele = self._ele('xpath://title', raise_err=False)
         return ele.text if ele else None
 
     @property
@@ -193,15 +192,14 @@ class SessionPage(BasePage):
         """
         return self._ele(loc_or_str, single=False)
 
-    def _ele(self, loc_or_ele, timeout=None, single=True):
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param single: True则返回第一个，False则返回全部
+        :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """
-        if not loc_or_ele:
-            raise ElementNotFoundError
         return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, single)
 
     def get_cookies(self, as_dict=False, all_domains=False):

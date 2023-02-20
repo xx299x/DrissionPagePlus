@@ -7,6 +7,8 @@ from abc import abstractmethod
 from re import sub
 from urllib.parse import quote
 
+from .common.constants import Settings, NoneElement
+from .common.errors import ElementNotFoundError
 from .common.web import format_html
 from .common.locator import get_loc
 
@@ -34,8 +36,11 @@ class BaseParser(object):
     def s_eles(self, loc_or_str):
         pass
 
+    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+        pass
+
     @abstractmethod
-    def _ele(self, loc_or_ele, timeout=None, single=True):
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
         pass
 
 
@@ -50,10 +55,6 @@ class BaseElement(BaseParser):
     def tag(self):
         return
 
-    @abstractmethod
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
-        pass
-
     def parent(self, level_or_loc=1):
         pass
 
@@ -67,6 +68,18 @@ class BaseElement(BaseParser):
         pass
 
     def nexts(self):
+        pass
+
+    def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
+        r = self._find_elements(loc_or_str,  timeout=timeout, single=single, relative=relative, raise_err=raise_err)
+        if not single or raise_err is False:
+            return r
+        if not r and (Settings.raise_ele_not_found or raise_err is True):
+            raise ElementNotFoundError
+        return r
+
+    @abstractmethod
+    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
         pass
 
 
@@ -125,7 +138,7 @@ class DrissionElement(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self._ele(loc, timeout=0, relative=True)
+        return self._ele(loc, timeout=0, relative=True, raise_err=False)
 
     def prev(self, index=1, filter_loc='', timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -135,7 +148,12 @@ class DrissionElement(BaseElement):
         :return: 兄弟元素
         """
         nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout)
-        return nodes[-1] if nodes else None
+        if nodes:
+            return nodes[-1]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def next(self, index=1, filter_loc='', timeout=0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -145,7 +163,12 @@ class DrissionElement(BaseElement):
         :return: 兄弟元素
         """
         nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout)
-        return nodes[0] if nodes else None
+        if nodes:
+            return nodes[0]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def before(self, index=1, filter_loc='', timeout=None):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -155,7 +178,12 @@ class DrissionElement(BaseElement):
         :return: 本元素前面的某个元素或节点
         """
         nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout)
-        return nodes[-1] if nodes else None
+        if nodes:
+            return nodes[-1]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def after(self, index=1, filter_loc='', timeout=None):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -165,7 +193,12 @@ class DrissionElement(BaseElement):
         :return: 本元素后面的某个元素或节点
         """
         nodes = self._get_brothers(index, filter_loc, 'following', False, timeout)
-        return nodes[0] if nodes else None
+        if nodes:
+            return nodes[0]
+        if Settings.raise_ele_not_found:
+            raise ElementNotFoundError
+        else:
+            return NoneElement()
 
     def prevs(self, filter_loc='', timeout=0):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -271,7 +304,7 @@ class BasePage(BaseParser):
     @property
     def title(self):
         """返回网页title"""
-        ele = self.ele('xpath://title')
+        ele = self._ele('xpath://title', raise_err=False)
         return ele.text if ele else None
 
     @property
@@ -321,4 +354,18 @@ class BasePage(BaseParser):
 
     @abstractmethod
     def get(self, url, show_errmsg=False, retry=None, interval=None):
+        pass
+
+    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+        if not loc_or_ele:
+            raise ElementNotFoundError
+        r = self._find_elements(loc_or_ele,  timeout=timeout, single=single, raise_err=raise_err)
+        if not single or raise_err is False:
+            return r
+        if not r and (Settings().raise_ele_not_found is True or raise_err is True):
+            raise ElementNotFoundError
+        return r
+
+    @abstractmethod
+    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
         pass

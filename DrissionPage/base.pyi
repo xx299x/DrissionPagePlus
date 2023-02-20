@@ -6,6 +6,8 @@
 from abc import abstractmethod
 from typing import Union, Tuple, List
 
+from .common.constants import NoneElement
+
 
 class BaseParser(object):
 
@@ -23,8 +25,10 @@ class BaseParser(object):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]): ...
 
+    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+
     @abstractmethod
-    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True): ...
+    def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
 
 
 class BaseElement(BaseParser):
@@ -36,9 +40,12 @@ class BaseElement(BaseParser):
     @property
     def tag(self) -> str: ...
 
-    @abstractmethod
     def _ele(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None, single: bool = True,
-             relative: bool = False): ...
+             relative: bool = False, raise_err: bool = None): ...
+
+    @abstractmethod
+    def _find_elements(self, loc_or_str, timeout: float = None, single: bool = True, relative: bool = False,
+                       raise_err: bool = None): ...
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1): ...
 
@@ -76,22 +83,22 @@ class DrissionElement(BaseElement):
     def prev(self,
              index: int = 1,
              filter_loc: Union[tuple, str] = '',
-             timeout: float = 0) -> Union[DrissionElement, str, None]: ...
+             timeout: float = 0) -> Union[DrissionElement, str, NoneElement]: ...
 
     def next(self,
              index: int = 1,
              filter_loc: Union[tuple, str] = '',
-             timeout: float = 0) -> Union[DrissionElement, str, None]: ...
+             timeout: float = 0) -> Union[DrissionElement, str, NoneElement]: ...
 
     def before(self,
                index: int = 1,
                filter_loc: Union[tuple, str] = '',
-               timeout: float = None) -> Union[DrissionElement, str, None]: ...
+               timeout: float = None) -> Union[DrissionElement, str, NoneElement]: ...
 
     def after(self,
               index: int = 1,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = None) -> Union[DrissionElement, str, None]: ...
+              timeout: float = None) -> Union[DrissionElement, str, NoneElement]: ...
 
     def prevs(self,
               filter_loc: Union[tuple, str] = '',
@@ -173,3 +180,8 @@ class BasePage(BaseParser):
             show_errmsg: bool = False,
             retry: int = None,
             interval: float = None): ...
+
+    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+
+    @abstractmethod
+    def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...

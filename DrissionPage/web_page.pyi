@@ -155,9 +155,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def set(self) -> WebPageSetter: ...
 
-    def _ele(self,
-             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
-             timeout: float = None, single: bool = True, relative: bool = False) \
+    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+             timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool =None) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...
 
