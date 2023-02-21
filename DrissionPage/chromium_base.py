@@ -338,7 +338,8 @@ class ChromiumBase(BasePage):
         error = r[ERROR]
         if error == 'Cannot find context with specified id':
             raise ContextLossError
-        elif error.startswith('Could not find ') and error.endswith(' id'):
+        elif error in ('Could not find node with given id', 'Could not find object with given id',
+                       'No node with given id found'):
             raise ElementLossError
         elif error == 'tab closed':
             raise TabClosedError
@@ -465,11 +466,13 @@ class ChromiumBase(BasePage):
 
         ok = False
         nodeIds = None
-        search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
-        count = search_result['resultCount']
 
         timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
+
+        search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+        count = search_result['resultCount']
+
         while True:
             if count > 0:
                 count = 1 if single else count
@@ -482,19 +485,21 @@ class ChromiumBase(BasePage):
                 except Exception:
                     sleep(.01)
 
-            if ok or perf_counter() >= end_time:
-                break
+            if ok:
+                try:
+                    if single:
+                        return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                    else:
+                        return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+
+                except ElementLossError:
+                    ok = False
 
             search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
 
-        if not nodeIds:
-            return NoneElement() if single else []
-
-        if single:
-            return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
-        else:
-            return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+            if perf_counter() >= end_time:
+                return NoneElement() if single else []
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
