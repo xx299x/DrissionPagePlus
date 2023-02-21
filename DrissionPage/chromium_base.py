@@ -33,7 +33,7 @@ class ChromiumBase(BasePage):
         :param timeout: 超时时间
         """
         self._is_loading = None
-        self._root_id = None
+        self._root_id = None  # object id
         self._debug = False
         self._debug_recorder = None
         self._tab_obj = None
@@ -571,6 +571,26 @@ class ChromiumBase(BasePage):
         ele = self._ele(loc_or_ele, raise_err=False)
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele.ids.node_id)
+
+    def get_frame(self, loc_ind_ele):
+        """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从1开始
+        :param loc_ind_ele: 定位符、iframe序号、ChromiumFrame对象
+        :return: ChromiumFrame对象
+        """
+        if isinstance(loc_ind_ele, (str, tuple)):
+            ele = self._ele(loc_ind_ele)
+            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+                raise RuntimeError('该定位符不是指向frame元素。')
+            return ele
+        elif isinstance(loc_ind_ele, int):
+            if loc_ind_ele < 1:
+                raise ValueError('序号必须大于0。')
+            xpath = f'x:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
+            return self._ele(xpath)
+        elif str(type(loc_ind_ele)).endswith(".ChromiumFrame'>"):
+            return loc_ind_ele
+        else:
+            raise TypeError('必须传入定位符、iframe序号、ChromiumFrame对象其中之一。')
 
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部
