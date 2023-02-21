@@ -115,10 +115,10 @@ class ChromiumBase(BasePage):
 
             while True:
                 try:
-                    root_id = self.run_cdp('DOM.getDocument')['root']['nodeId']
+                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                    self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
                     if self._debug_recorder:
-                        self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{root_id}'))
-                    self._root_id = self.run_cdp('DOM.resolveNode', nodeId=root_id)['object']['objectId']
+                        self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
                     break
 
                 except Exception:
@@ -962,11 +962,11 @@ class ChromiumPageScroll(ChromiumScroll):
         ele.run_js('this.scrollIntoView({behavior: "auto", block: "nearest", inline: "nearest"});')
         x, y = ele.location
         try:
-            ID = ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y).get('nodeId', None)
+            ID = ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y).get('backendNodeId', None)
         except Exception:
             pass
 
-        if ID != ele.ids.node_id:
+        if ID != ele.ids.backend_id:
             ele.run_js('this.scrollIntoView({behavior: "auto", block: "center", inline: "center"});')
 
 

@@ -22,7 +22,7 @@ class ChromiumElement(DrissionElement):
     """ChromePage页面对象中的元素对象"""
 
     def __init__(self, page, node_id=None, obj_id=None, backend_id=None):
-        """初始化，node_id和obj_id必须至少传入一个
+        """初始化，node_id、obj_id和backend_id必须至少传入一个
         :param page: 元素所在ChromePage页面对象
         :param node_id: cdp中的node id
         :param obj_id: js中的object id
@@ -76,13 +76,14 @@ class ChromiumElement(DrissionElement):
     def tag(self):
         """返回元素tag"""
         if self._tag is None:
-            self._tag = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']['localName'].lower()
+            self._tag = self.page.run_cdp('DOM.describeNode',
+                                          backendNodeId=self._backend_id)['node']['localName'].lower()
         return self._tag
 
     @property
     def html(self):
         """返回元素outerHTML文本"""
-        return self.page.run_cdp('DOM.getOuterHTML', nodeId=self._node_id)['outerHTML']
+        return self.page.run_cdp('DOM.getOuterHTML', backendNodeId=self._backend_id)['outerHTML']
 
     @property
     def inner_html(self):
@@ -114,7 +115,7 @@ class ChromiumElement(DrissionElement):
     @property
     def size(self):
         """返回元素宽和高"""
-        model = self.page.run_cdp('DOM.getBoxModel', nodeId=self._node_id)['model']
+        model = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']
         return model['height'], model['width']
 
     @property
@@ -153,7 +154,7 @@ class ChromiumElement(DrissionElement):
     @property
     def shadow_root(self):
         """返回当前元素的shadow_root元素对象"""
-        info = self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)['node']
+        info = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
         if not info.get('shadowRoots', None):
             return None
 
@@ -411,7 +412,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._node_id)['node']
+        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
         frame = node.get('frameId', None)
         frame = frame or self.page.tab_id
         try:
@@ -479,7 +480,7 @@ class ChromiumElement(DrissionElement):
             return self._set_file_input(vals)
 
         try:
-            self.page.run_cdp('DOM.focus', nodeId=self._node_id)
+            self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
         except Exception:
             self.click(by_js=True)
 
@@ -652,7 +653,7 @@ class ChromiumElement(DrissionElement):
         if isinstance(files, str):
             files = files.split('\n')
         files = [str(Path(i).absolute()) for i in files]
-        self.page.run_cdp('DOM.setFileInputFiles', files=files, nodeId=self._node_id)
+        self.page.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=self._backend_id)
 
     # ---------------准备废弃-----------------
     def wait_ele(self, loc_or_ele, timeout=None):
@@ -1043,8 +1044,7 @@ class ChromiumShadowRootElement(BaseElement):
         else:
             results = []
             for i in css_paths:
-                node_id = self.page.run_cdp('DOM.querySelector',
-                                            nodeId=self._node_id, selector=i)['nodeId']
+                node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
                 if node_id:
                     results.append(make_chromium_ele(self.page, node_id=node_id))
             return results
@@ -1484,7 +1484,7 @@ class ShadowRootElementStates(object):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            self._ele.page.run_cdp('DOM.describeNode', nodeId=self._ele.ids.node_id)
+            self._ele.page.run_cdp('DOM.describeNode', backendNodeId=self._ele.ids.backend_id)
             return True
         except Exception:
             return False
@@ -1591,7 +1591,7 @@ class Locations(object):
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标，大小为0时返回None
         """
-        return self._ele.page.run_cdp('DOM.getBoxModel', nodeId=self._ele.ids.node_id)['model'][quad]
+        return self._ele.page.run_cdp('DOM.getBoxModel', backendNodeId=self._ele.ids.backend_id)['model'][quad]
 
     def _get_page_coord(self, x, y):
         """根据视口坐标获取绝对坐标"""

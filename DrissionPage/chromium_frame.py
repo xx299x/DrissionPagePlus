@@ -15,7 +15,7 @@ class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
         self.page = page
         self.address = page.address
-        node = page.run_cdp('DOM.describeNode', nodeId=ele.ids.node_id)['node']
+        node = page.run_cdp('DOM.describeNode', backendNodeId=ele.ids.backend_id)['node']
         self.frame_id = node['frameId']
         self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
@@ -69,7 +69,7 @@ class ChromiumFrame(ChromiumBase):
     def _reload(self):
         """重新获取document"""
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
-        node = self.page.run_cdp('DOM.describeNode', nodeId=self._frame_ele.ids.node_id)['node']
+        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -88,7 +88,7 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
         try:
-            self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
+            self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)
         except Exception:
             self._reload()
             # sleep(2)
@@ -164,8 +164,7 @@ class ChromiumFrame(ChromiumBase):
         """返回元素outerHTML文本"""
         self._check_ok()
         tag = self.tag
-        out_html = self.page.run_cdp('DOM.getOuterHTML',
-                                     nodeId=self.frame_ele.ids.node_id)['outerHTML']
+        out_html = self.page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele.ids.backend_id)['outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 
