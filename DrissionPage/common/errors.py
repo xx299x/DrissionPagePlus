@@ -21,7 +21,7 @@ class ContextLossError(BaseError):
 
 
 class ElementLossError(BaseError):
-    _info = '页面内无此对象，可能因刷新已失效。'
+    _info = '元素对象因刷新已失效。'
 
 
 class CallMethodError(BaseError):

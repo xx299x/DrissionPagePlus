@@ -77,9 +77,6 @@ class ChromiumBase(BasePage):
     def driver(self) -> ChromiumDriver: ...
 
     @property
-    def _wait_driver(self) -> ChromiumDriver: ...
-
-    @property
     def is_loading(self) -> bool: ...
 
     @property

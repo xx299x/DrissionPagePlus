@@ -234,12 +234,6 @@ class ChromiumBase(BasePage):
         return self._tab_obj
 
     @property
-    def _wait_driver(self):
-        """返回用于控制浏览器的ChromiumDriver对象，会先等待页面加载完毕"""
-        self.wait.load_complete()
-        return self.driver
-
-    @property
     def is_loading(self):
         """返回页面是否正在加载状态"""
         return self._is_loading
@@ -341,15 +335,16 @@ class ChromiumBase(BasePage):
         if ERROR not in r:
             return r
 
-        if r[ERROR] == 'Cannot find context with specified id':
+        error = r[ERROR]
+        if error == 'Cannot find context with specified id':
             raise ContextLossError
-        elif r[ERROR] in ('Could not find node with given id', 'Could not find object with given id'):
+        elif error.startswith('Could not find ') and error.endswith(' id'):
             raise ElementLossError
-        elif r[ERROR] == 'tab closed':
+        elif error == 'tab closed':
             raise TabClosedError
-        elif r[ERROR] == 'alert exists':
+        elif error == 'alert exists':
             pass
-        elif r[ERROR] in ('Node does not have a layout object', 'Could not compute box model.'):
+        elif error in ('Node does not have a layout object', 'Could not compute box model.'):
             raise NoRectError
         elif r['type'] == 'call_method_error':
             raise CallMethodError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
@@ -468,19 +463,19 @@ class ChromiumBase(BasePage):
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
 
-        timeout = timeout if timeout is not None else self.timeout
+        ok = False
+        nodeIds = None
         search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
         count = search_result['resultCount']
 
-        nodeIds = None
+        timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
-        ok = False
         while True:
             if count > 0:
                 count = 1 if single else count
                 try:
-                    nodeIds = self._wait_driver.DOM.getSearchResults(searchId=search_result['searchId'],
-                                                                     fromIndex=0, toIndex=count)
+                    nodeIds = self.run_cdp_loaded('DOM.getSearchResults', searchId=search_result['searchId'],
+                                                  fromIndex=0, toIndex=count)
                     if nodeIds['nodeIds'][0] != 0:
                         ok = True
 

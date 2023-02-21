@@ -68,6 +68,10 @@ class ChromiumFrame(ChromiumBase):
 
     def _reload(self):
         """重新获取document"""
+        debug = self._debug
+        if debug:
+            print('reload')
+
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
         node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
 
@@ -75,23 +79,33 @@ class ChromiumFrame(ChromiumBase):
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
             super().__init__(self.address, self.page.tab_id, self.page.timeout)
+            self._debug = debug
         else:
             self._is_diff_domain = True
             self._tab_obj.stop()
             super().__init__(self.address, self.frame_id, self.page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+            self._debug = debug
 
     def _check_ok(self):
-        """检查iframe元素是否还能使用，不能使用则重新加载"""
+        """用于应付同域异域之间跳转导致元素丢失问题"""
         if self._tab_obj._stopped.is_set():
             self._reload()
 
         try:
-            self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)
+            self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
         except Exception:
             self._reload()
             # sleep(2)
+
+    def _onLoadEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        # 用于覆盖父类方法，不能删
+        if self._debug:
+            print('loadEventFired')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
@@ -104,8 +118,7 @@ class ChromiumFrame(ChromiumBase):
             while True:
                 try:
                     if self._is_diff_domain is False:
-                        node = self.page.run_cdp('DOM.describeNode',
-                                                 backendNodeId=self.ids.backend_id)['node']
+                        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
                         self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
 
                     else:
@@ -414,12 +427,14 @@ class ChromiumFrame(ChromiumBase):
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
         """
+        self._check_ok()
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
 
         self.wait.load_complete()
 
-        return self.doc_ele._ele(loc_or_ele, timeout, raise_err=raise_err) if single else self.doc_ele.eles(loc_or_ele, timeout)
+        return self.doc_ele._ele(loc_or_ele, timeout, raise_err=raise_err) \
+            if single else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次
@@ -439,6 +454,7 @@ class ChromiumFrame(ChromiumBase):
             result = self.driver.Page.navigate(url=to_url, frameId=self.frame_id)
 
             is_timeout = not self._wait_loaded(timeout)
+            sleep(.5)
             self.wait.load_complete()
 
             if is_timeout:
