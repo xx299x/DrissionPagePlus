@@ -15,7 +15,6 @@ from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
 from .common.errors import CallMethodError
 from .configs.chromium_options import ChromiumOptions
-from .configs.driver_options import DriverOptions
 from .configs.session_options import SessionOptions
 from .session_page import SessionPage, SessionPageSetter
 
@@ -76,7 +75,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             elif dr_opt is False:
                 self._driver_options = ChromiumOptions(read_file=False)
 
-            elif isinstance(dr_opt, (ChromiumOptions, DriverOptions)):
+            elif str(type(dr_opt)).endswith(("ChromiumOptions'>", "DriverOptions'>")):
                 self._driver_options = dr_opt
 
             else:

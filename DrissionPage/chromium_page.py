@@ -14,11 +14,10 @@ from requests import Session
 from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .configs.chromium_options import ChromiumOptions
-from .configs.driver_options import DriverOptions
 from .common.browser import connect_browser
 from .common.errors import CallMethodError
 from .common.web import set_session_cookies
+from .configs.chromium_options import ChromiumOptions
 from .session_page import DownloadSetter
 
 
@@ -41,7 +40,7 @@ class ChromiumPage(ChromiumBase):
         :param none: 用于后代继承
         :return: None
         """
-        if not addr_driver_opts or isinstance(addr_driver_opts, (ChromiumOptions, DriverOptions)):
+        if not addr_driver_opts or str(type(addr_driver_opts)).endswith(("ChromiumOptions'>", "DriverOptions'>")):
             self._driver_options = addr_driver_opts or ChromiumOptions(addr_driver_opts)
 
         # 接收浏览器地址和端口
