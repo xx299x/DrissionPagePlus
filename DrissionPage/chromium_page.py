@@ -15,9 +15,9 @@ from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .common.browser import connect_browser
-from .common.errors import CallMethodError
 from .common.web import set_session_cookies
 from .configs.chromium_options import ChromiumOptions
+from .errors import CallMethodError
 from .session_page import DownloadSetter
 
 

@@ -11,7 +11,7 @@ from threading import Thread, Event
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
 
-from .common.errors import CallMethodError
+from .errors import CallMethodError
 
 
 class GenericAttr(object):

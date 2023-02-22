@@ -13,9 +13,9 @@ from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
-from .common.errors import CallMethodError
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
+from .errors import CallMethodError
 from .session_page import SessionPage, SessionPageSetter
 
 

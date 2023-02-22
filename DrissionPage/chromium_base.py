@@ -15,11 +15,11 @@ from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
 from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
-from .common.errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError
 from .common.locator import get_loc
 from .common.tools import get_usable_path
 from .common.web import cookies_to_tuple
+from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
+    NoRectError
 from .session_element import make_session_ele
 
 

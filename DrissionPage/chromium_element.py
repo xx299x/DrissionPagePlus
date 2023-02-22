@@ -11,11 +11,11 @@ from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .common.constants import FRAME_ELEMENT, NoneElement, Settings
-from .common.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CallMethodError
 from .common.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .common.locator import get_loc
 from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
+from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
+    CallMethodError
 from .session_element import make_session_ele
 
 
