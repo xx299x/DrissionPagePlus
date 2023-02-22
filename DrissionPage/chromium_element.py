@@ -528,24 +528,22 @@ class ChromiumElement(DrissionElement):
         x, y = offset_scroll(self, offset_x, offset_y)
         self.page.run_cdp('Input.dispatchMouseEvent', type='mouseMoved', x=x, y=y)
 
-    def drag(self, offset_x=0, offset_y=0, speed=40, shake=True):
+    def drag(self, offset_x=0, offset_y=0, speed=40):
         """拖拽当前元素到相对位置
         :param offset_x: x变化值
         :param offset_y: y变化值
         :param speed: 拖动的速度，传入0即瞬间到达
-        :param shake: 是否随机抖动
         :return: None
         """
         curr_x, curr_y = self.locations.midpoint
         offset_x += curr_x
         offset_y += curr_y
-        self.drag_to((offset_x, offset_y), speed, shake)
+        self.drag_to((offset_x, offset_y), speed)
 
-    def drag_to(self, ele_or_loc, speed=40, shake=True):
+    def drag_to(self, ele_or_loc, speed=40):
         """拖拽当前元素，目标为另一个元素或坐标元组
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
-        :param shake: 是否随机抖动
         :return: None
         """
         # x, y：目标点坐标
@@ -566,18 +564,14 @@ class ChromiumElement(DrissionElement):
         points.append((target_x, target_y))
 
         from .action_chains import ActionChains
-        from random import randint
         actions = ActionChains(self.page)
         actions.hold(self)
 
         # 逐个访问要经过的点
         for x, y in points:
-            if shake:
-                x += randint(-3, 4)
-                y += randint(-3, 4)
             actions.move(x - current_x, y - current_y)
             current_x, current_y = x, y
-            actions.wait(.1)
+            actions.wait(.05)
         actions.release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):
@@ -832,7 +826,7 @@ class ChromiumShadowRoot(BaseElement):
         self._states = None
 
     def __repr__(self):
-        return f'<ShadowRootElement in {self.parent_ele} >'
+        return f'<ChromiumShadowRoot in {self.parent_ele}>'
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -867,7 +861,7 @@ class ChromiumShadowRoot(BaseElement):
     def states(self):
         """返回用于获取元素状态的对象"""
         if self._states is None:
-            self._states = ShadowRootElementStates(self)
+            self._states = ShadowRootStates(self)
         return self._states
 
     def run_js(self, script, *args, as_expr=False):
@@ -1472,7 +1466,7 @@ class ChromiumElementStates(object):
         return location_in_viewport(self._ele.page, x, y) if x else False
 
 
-class ShadowRootElementStates(object):
+class ShadowRootStates(object):
     def __init__(self, ele):
         """
         :param ele: ChromiumElement

@@ -80,9 +80,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('left').wait(.05)._release('left')
+        self._hold(on_ele, 'left').wait(.05)._release('left')
         return self
 
     def r_click(self, on_ele=None):
@@ -90,9 +88,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('right').wait(.05)._release('right')
+        self._hold(on_ele, 'right').wait(.05)._release('right')
         return self
 
     def m_click(self, on_ele=None):
@@ -100,9 +96,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('middle').wait(.05)._release('middle')
+        self._hold(on_ele, 'middle').wait(.05)._release('middle')
         return self
 
     def hold(self, on_ele=None):
@@ -110,9 +104,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('left')
+        self._hold(on_ele, 'left')
         return self
 
     def release(self, on_ele=None):
@@ -130,9 +122,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('right')
+        self._hold(on_ele, 'right')
         return self
 
     def r_release(self, on_ele=None):
@@ -150,9 +140,7 @@ class ActionChains:
         :param on_ele: ChromiumElement元素或文本定位符
         :return: self
         """
-        if on_ele:
-            self.move_to(on_ele)
-        self._hold('middle')
+        self._hold(on_ele, 'middle')
         return self
 
     def m_release(self, on_ele=None):
@@ -165,11 +153,14 @@ class ActionChains:
         self._release('middle')
         return self
 
-    def _hold(self, button):
+    def _hold(self, on_ele=None, button='left'):
         """按下鼠标按键
+        :param on_ele: ChromiumElement元素或文本定位符
         :param button: 要按下的按键
         :return: self
         """
+        if on_ele:
+            self.move_to(on_ele.locations.click_point)
         self._dr.Input.dispatchMouseEvent(type='mousePressed', button=button, clickCount=1,
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
