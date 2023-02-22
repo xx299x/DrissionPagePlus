@@ -532,12 +532,20 @@ class ChromiumDownloadSetter(DownloadSetter):
 
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""
-        self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
-        self._page.download.add(file_url=kwargs['url'], goal_path=self._page.download_path,
-                                rename=kwargs['suggestedFilename'])
-        if self._download_th is None or not self._download_th.is_alive():
-            self._download_th = Thread(target=self._wait_download_complete, daemon=False)
-            self._download_th.start()
+        url = kwargs['url']
+        if url.startswith('blob:'):
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+                                                                  downloadPath=self._page.download_path)
+            sleep(2)
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+        else:
+            self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
+            self._page.download.add(file_url=url, goal_path=self._page.download_path,
+                                    rename=kwargs['suggestedFilename'])
+            if self._download_th is None or not self._download_th.is_alive():
+                self._download_th = Thread(target=self._wait_download_complete, daemon=False)
+                self._download_th.start()
+
         if self._waiting_download:
             self._download_begin = True
 

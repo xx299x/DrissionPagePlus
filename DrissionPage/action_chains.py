@@ -160,7 +160,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele.locations.click_point)
+            self.move_to(on_ele)
         self._dr.Input.dispatchMouseEvent(type='mousePressed', button=button, clickCount=1,
                                           x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
