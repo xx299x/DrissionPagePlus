@@ -184,7 +184,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
-            self._set_session(self._session_options)
+            self._create_session()
         return self._session
 
     @property

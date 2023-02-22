@@ -538,6 +538,7 @@ class ChromiumDownloadSetter(DownloadSetter):
                                                                   downloadPath=self._page.download_path)
             sleep(2)
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+
         else:
             self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
             self._page.download.add(file_url=url, goal_path=self._page.download_path,
