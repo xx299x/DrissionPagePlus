@@ -19,7 +19,6 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        "selenium",
         "lxml",
         "tldextract",
         "requests",

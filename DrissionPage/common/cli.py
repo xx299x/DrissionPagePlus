@@ -1,9 +1,9 @@
-import click
+from click import command, option
 from DrissionPage.easy_set import set_paths
 
 
-@click.command()
-@click.option("-p", "--browser-path", help="Setting browser path.")
+@command()
+@option("-p", "--browser-path", help="Setting browser path.")
 def main(browser_path):
     """DrissionPage CLI."""
     if browser_path:
