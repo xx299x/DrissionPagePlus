@@ -99,14 +99,6 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
             # sleep(2)
 
-    def _onLoadEventFired(self, **kwargs):
-        """在页面刷新、变化后重新读取页面内容"""
-        # 用于覆盖父类方法，不能删
-        if self._debug:
-            print('loadEventFired')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
-
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
         if not self._is_reading:
@@ -136,6 +128,14 @@ class ChromiumFrame(ChromiumBase):
 
             self._is_loading = False
             self._is_reading = False
+
+    def _onLoadEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        # 用于覆盖父类方法，不能删
+        if self._debug:
+            print('loadEventFired')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
 
     def _onFrameStartedLoading(self, **kwargs):
         """页面开始加载时触发"""

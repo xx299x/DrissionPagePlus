@@ -317,7 +317,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
         page = None
         html_or_ele = fromstring(html_or_ele)
 
-    # ShadowRootElement, ChromiumShadowRootElement, ChromiumFrame
+    # ShadowRootElement, ChromiumShadowRoot, ChromiumFrame
     elif isinstance(html_or_ele, BaseElement) or the_type.endswith(".ChromiumFrame'>"):
         page = html_or_ele.page
         html_or_ele = fromstring(html_or_ele.html)

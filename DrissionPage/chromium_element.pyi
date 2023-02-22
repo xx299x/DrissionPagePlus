@@ -83,10 +83,10 @@ class ChromiumElement(DrissionElement):
     def pseudo(self) -> Pseudo: ...
 
     @property
-    def shadow_root(self) -> Union[None, ChromiumShadowRootElement]: ...
+    def shadow_root(self) -> Union[None, ChromiumShadowRoot]: ...
 
     @property
-    def sr(self) -> Union[None, ChromiumShadowRootElement]: ...
+    def sr(self) -> Union[None, ChromiumShadowRoot]: ...
 
     @property
     def scroll(self) -> ChromiumScroll: ...
@@ -217,7 +217,7 @@ class ChromiumElementStates(object):
     def is_in_viewport(self) -> bool: ...
 
 
-class ChromiumShadowRootElement(BaseElement):
+class ChromiumShadowRoot(BaseElement):
 
     def __init__(self,
                  parent_ele: ChromiumElement,
@@ -301,8 +301,8 @@ class ChromiumShadowRootElement(BaseElement):
 
 
 class Ids(object):
-    def __init__(self, ele: Union[ChromiumElement, ChromiumShadowRootElement]):
-        self._ele: Union[ChromiumElement, ChromiumShadowRootElement] = ...
+    def __init__(self, ele: Union[ChromiumElement, ChromiumShadowRoot]):
+        self._ele: Union[ChromiumElement, ChromiumShadowRoot] = ...
 
     @property
     def node_id(self) -> str: ...
@@ -347,7 +347,7 @@ def make_chromium_ele(page: ChromiumBase, node_id: str = ..., obj_id: str = ...)
 def make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str: ...
 
 
-def run_js(page_or_ele: Union[ChromiumBase, ChromiumElement, ChromiumShadowRootElement], script: str,
+def run_js(page_or_ele: Union[ChromiumBase, ChromiumElement, ChromiumShadowRoot], script: str,
            as_expr: bool = False, timeout: float = None, args: tuple = ...) -> Any: ...
 
 
@@ -375,11 +375,11 @@ class ChromiumElementSetter(object):
 
 
 class ShadowRootElementStates(object):
-    def __init__(self, ele: ChromiumShadowRootElement):
+    def __init__(self, ele: ChromiumShadowRoot):
         """
         :param ele: ChromiumElement
         """
-        self._ele: ChromiumShadowRootElement = ...
+        self._ele: ChromiumShadowRoot = ...
 
     @property
     def is_enabled(self) -> bool: ...
