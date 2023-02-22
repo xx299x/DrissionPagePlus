@@ -229,6 +229,3 @@ def check_headers(kwargs: Union[dict, CaseInsensitiveDict], headers: Union[dict,
 
 
 def set_charset(response: Response) -> Response: ...
-
-
-def set_session(opt: SessionOptions) -> Session: ...

@@ -58,7 +58,7 @@ class SessionPage(BasePage):
     def _create_session(self):
         """创建内建Session对象"""
         if not self._session:
-            self._session = set_session(self._session_options)
+            self._session = self._session_options.make_session()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -533,28 +533,3 @@ def set_charset(response) -> Response:
         response.encoding = charset
 
     return response
-
-
-def set_session(opt):
-    """根据传入配置对象创建Session对象
-    :param opt: SessionOptions对象
-    :return: Session
-    """
-    s = Session()
-
-    if opt.headers:
-        s.headers = CaseInsensitiveDict(opt.headers)
-    if opt.cookies:
-        set_session_cookies(s, opt.cookies)
-    if opt.adapters:
-        for url, adapter in opt.adapters:
-            s.mount(url, adapter)
-
-    attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
-             'cert', 'stream', 'trust_env', 'max_redirects']
-    for i in attrs:
-        attr = opt.__getattribute__(i)
-        if attr:
-            s.__setattr__(i, attr)
-
-    return s

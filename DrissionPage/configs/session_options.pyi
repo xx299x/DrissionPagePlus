@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import Any, Union, Tuple
 
+from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
@@ -111,6 +112,8 @@ class SessionOptions(object):
     def save_to_default(self) -> str: ...
 
     def as_dict(self) -> dict: ...
+
+    def make_session(self) -> Session: ...
 
 
 def session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]: ...

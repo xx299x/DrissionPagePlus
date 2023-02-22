@@ -5,7 +5,10 @@
 """
 from pathlib import Path
 
-from DrissionPage.common.web import cookies_to_tuple
+from requests import Session
+from requests.structures import CaseInsensitiveDict
+
+from DrissionPage.common.web import cookies_to_tuple, set_session_cookies
 from .options_manage import OptionsManager
 
 
@@ -374,6 +377,27 @@ class SessionOptions(object):
     def as_dict(self):
         """以字典形式返回本对象"""
         return session_options_to_dict(self)
+
+    def make_session(self):
+        """根据内在的配置生成Session对象"""
+        s = Session()
+
+        if self.headers:
+            s.headers = CaseInsensitiveDict(self.headers)
+        if self.cookies:
+            set_session_cookies(s, self.cookies)
+        if self.adapters:
+            for url, adapter in self.adapters:
+                s.mount(url, adapter)
+
+        attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
+                 'cert', 'stream', 'trust_env', 'max_redirects']
+        for i in attrs:
+            attr = self.__getattribute__(i)
+            if attr:
+                s.__setattr__(i, attr)
+
+        return s
 
 
 def session_options_to_dict(options):
