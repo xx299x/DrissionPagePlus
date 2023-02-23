@@ -5,8 +5,8 @@
 """
 from time import sleep
 
-from .common.keys import modifierBit, keyDescriptionForString
-from .common.web import location_in_viewport
+from .commons.keys import modifierBit, keyDescriptionForString
+from .commons.web import location_in_viewport
 
 
 class ActionChains:

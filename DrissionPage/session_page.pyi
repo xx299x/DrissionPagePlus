@@ -13,7 +13,7 @@ from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from .common.constants import NoneElement
+from .commons.constants import NoneElement
 from .base import BasePage
 from .chromium_page import ChromiumPage
 from .configs.session_options import SessionOptions

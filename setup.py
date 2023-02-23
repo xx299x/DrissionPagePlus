@@ -6,10 +6,10 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
     name="DrissionPage",
-    version="3.2.0",
+    version="3.2.1",
     author="g1879",
     author_email="g1879@qq.com",
-    description="A module that integrates selenium and requests session, encapsulates common page operations.",
+    description="Python based web automation tool. It can control the browser and send and receive data packets.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="BSD",
@@ -36,7 +36,7 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'dp = DrissionPage.common.cli:main',
+            'dp = DrissionPage.commons.cli:main',
         ],
     },
 )

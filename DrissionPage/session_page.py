@@ -14,7 +14,7 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from .common.web import cookie_to_dict, set_session_cookies
+from .commons.web import cookie_to_dict, set_session_cookies
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement, make_session_ele
 

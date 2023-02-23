@@ -11,11 +11,11 @@ from warnings import warn
 
 from requests import Session
 
-from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
+from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .common.browser import connect_browser
-from .common.web import set_session_cookies
+from .commons.browser import connect_browser
+from .commons.web import set_session_cookies
 from .configs.chromium_options import ChromiumOptions
 from .errors import CallMethodError
 from .session_page import DownloadSetter
@@ -106,7 +106,7 @@ class ChromiumPage(ChromiumBase):
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
         self._main_tab = self.tab_id
         try:
-            self.download_set.by_DownloadKit()
+            self.download_set.by_browser()
         except RuntimeError:
             pass
 
@@ -177,6 +177,13 @@ class ChromiumPage(ChromiumBase):
         if self._rect is None:
             self._rect = ChromiumTabRect(self)
         return self._rect
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = ChromiumPageWaiter(self)
+        return self._wait
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -252,13 +259,6 @@ class ChromiumPage(ChromiumBase):
         self._driver_init(tab_id)
         if read_doc and self.ready_state == 'complete':
             self._get_document()
-
-    def wait_download_begin(self, timeout=None):
-        """等待浏览器下载开始
-        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-        :return: 是否等到下载开始
-        """
-        return self.download_set.wait_download_begin(timeout)
 
     def close_tabs(self, tab_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
@@ -371,6 +371,23 @@ class ChromiumPage(ChromiumBase):
         """返回用于设置窗口大小的对象"""
         warn("set_window()方法即将弃用，请用set.window.xxxx()方法代替。", DeprecationWarning)
         return WindowSetter(self)
+
+    def wait_download_begin(self, timeout=None):
+        """等待浏览器下载开始
+        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
+        :return: 是否等到下载开始
+        """
+        warn("wait_download_begin()方法即将弃用，请用wait.download_begin()方法代替。", DeprecationWarning)
+        return self.download_set.wait_download_begin(timeout)
+
+
+class ChromiumPageWaiter(ChromiumBaseWaiter):
+    def download_begin(self, timeout=None):
+        """等待浏览器下载开始
+        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
+        :return: 是否等到下载开始
+        """
+        return self._driver.download_set.wait_download_begin(timeout)
 
 
 class ChromiumTabRect(object):
@@ -526,7 +543,7 @@ class ChromiumDownloadSetter(DownloadSetter):
 
     def _cookies_to_session(self):
         """把driver对象的cookies复制到session对象"""
-        ua = self._page.driver.Runtime.evaluate(expression='navigator.userAgent;')['result']['value']
+        ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
         self.session.headers.update({"User-Agent": ua})
         set_session_cookies(self.session, self._page.get_cookies(as_dict=True))
 
@@ -576,6 +593,9 @@ class WindowSetter(object):
     """用于设置窗口大小的类"""
 
     def __init__(self, page):
+        """
+        :param page: 页面对象
+        """
         self._page = page
         self._window_id = self._get_info()['windowId']
 

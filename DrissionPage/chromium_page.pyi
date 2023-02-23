@@ -11,7 +11,7 @@ from typing import Union, Tuple, List
 from DownloadKit import DownloadKit
 from requests import Session
 
-from .chromium_base import ChromiumBase, ChromiumBaseSetter
+from .chromium_base import ChromiumBase, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
@@ -56,6 +56,9 @@ class ChromiumPage(ChromiumBase):
     def rect(self) -> ChromiumTabRect: ...
 
     @property
+    def wait(self) -> ChromiumPageWaiter: ...
+
+    @property
     def main_tab(self) -> str: ...
 
     @property
@@ -88,8 +91,6 @@ class ChromiumPage(ChromiumBase):
 
     def _to_tab(self, tab_id: str = None, activate: bool = True, read_doc: bool = True) -> None: ...
 
-    def wait_download_begin(self, timeout: Union[int, float] = None) -> bool: ...
-
     def close_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None, others: bool = False) -> None: ...
 
     def close_other_tabs(self, tab_ids: Union[str, List[str], Tuple[str]] = None) -> None: ...
@@ -105,6 +106,12 @@ class ChromiumPage(ChromiumBase):
     def _on_alert_close(self, **kwargs): ...
 
     def _on_alert_open(self, **kwargs): ...
+
+
+class ChromiumPageWaiter(ChromiumBaseWaiter):
+    _driver: ChromiumPage = ...
+
+    def download_begin(self, timeout: Union[int, float] = None) -> bool: ...
 
 
 class ChromiumTabRect(object):

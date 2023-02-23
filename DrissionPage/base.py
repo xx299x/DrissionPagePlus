@@ -7,9 +7,9 @@ from abc import abstractmethod
 from re import sub
 from urllib.parse import quote
 
-from .common.constants import Settings, NoneElement
-from .common.locator import get_loc
-from .common.web import format_html
+from .commons.constants import Settings, NoneElement
+from .commons.locator import get_loc
+from .commons.web import format_html
 from .errors import ElementNotFoundError
 
 

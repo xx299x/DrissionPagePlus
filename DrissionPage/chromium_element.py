@@ -10,20 +10,20 @@ from time import perf_counter, sleep
 from warnings import warn
 
 from .base import DrissionElement, BaseElement
-from .common.constants import FRAME_ELEMENT, NoneElement, Settings
-from .common.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
-from .common.locator import get_loc
-from .common.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
+from .commons.constants import FRAME_ELEMENT, NoneElement, Settings
+from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
+from .commons.locator import get_loc
+from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
     CallMethodError
 from .session_element import make_session_ele
 
 
 class ChromiumElement(DrissionElement):
-    """ChromePage页面对象中的元素对象"""
+    """控制浏览器元素的对象"""
 
     def __init__(self, page, node_id=None, obj_id=None, backend_id=None):
-        """初始化，node_id、obj_id和backend_id必须至少传入一个
+        """node_id、obj_id和backend_id必须至少传入一个
         :param page: 元素所在ChromePage页面对象
         :param node_id: cdp中的node id
         :param obj_id: js中的object id
@@ -66,7 +66,6 @@ class ChromiumElement(DrissionElement):
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
-        例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
         :return: ChromiumElement对象或属性、文本
@@ -97,7 +96,7 @@ class ChromiumElement(DrissionElement):
         try:
             attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
             return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
-        except CallMethodError:
+        except CallMethodError:  # 文档根元素不能调用此方法
             return {}
 
     @property
@@ -118,7 +117,7 @@ class ChromiumElement(DrissionElement):
 
     @property
     def size(self):
-        """返回元素宽和高"""
+        """返回元素宽和高组成的元组"""
         model = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']
         return model['height'], model['width']
 
@@ -277,7 +276,7 @@ class ChromiumElement(DrissionElement):
         return super().afters(filter_loc, timeout)
 
     def attr(self, attr):
-        """返回attribute属性值
+        """返回一个attribute属性值
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
@@ -308,14 +307,14 @@ class ChromiumElement(DrissionElement):
             return attrs.get(attr, None)
 
     def remove_attr(self, attr):
-        """删除元素attribute属性
+        """删除元素一个attribute属性
         :param attr: 属性名
         :return: None
         """
         self.run_js(f'this.removeAttribute("{attr}");')
 
     def prop(self, prop):
-        """获取property属性值
+        """获取一个property属性值
         :param prop: 属性名
         :return: 属性值文本
         """
@@ -328,7 +327,7 @@ class ChromiumElement(DrissionElement):
                 return format_html(i['value']['value'])
 
     def run_js(self, script, *args, as_expr=False):
-        """运行javascript代码
+        """对本元素执行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -337,7 +336,7 @@ class ChromiumElement(DrissionElement):
         return run_js(self, script, as_expr, self.page.timeouts.script, args)
 
     def run_async_js(self, script, *args, as_expr=False):
-        """以异步方式执行js代码
+        """以异步方式对本元素执行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -363,7 +362,7 @@ class ChromiumElement(DrissionElement):
         return self._ele(loc_or_str, timeout=timeout, single=False)
 
     def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
+        """查找第一个符合条件的元素，以SessionElement形式返回
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
@@ -372,7 +371,7 @@ class ChromiumElement(DrissionElement):
         return make_session_ele(self, loc_or_str)
 
     def s_eles(self, loc_or_str=None):
-        """查找所有符合条件的元素以SessionElement列表形式返回
+        """查找所有符合条件的元素，以SessionElement列表形式返回
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
@@ -450,7 +449,7 @@ class ChromiumElement(DrissionElement):
             f.write(data)
 
     def get_screenshot(self, path=None, as_bytes=None):
-        """对当前元素截图
+        """对当前元素截图，可保存到文件，或以字节方式返回
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
@@ -475,7 +474,7 @@ class ChromiumElement(DrissionElement):
                                         left_top=left_top, right_bottom=right_bottom)
 
     def input(self, vals, clear=True):
-        """输入文本或组合键，也可用于输入文件路径到input元素（文件间用\n间隔）
+        """输入文本或组合键，也可用于输入文件路径到input元素（路径间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
         :return: None
@@ -509,7 +508,7 @@ class ChromiumElement(DrissionElement):
 
     def clear(self, by_js=False):
         """清空元素文本
-        :param by_js: 是否用js方式清空
+        :param by_js: 是否用js方式清空，为False则用全选+del模拟输入删除
         :return: None
         """
         if by_js:
@@ -541,7 +540,7 @@ class ChromiumElement(DrissionElement):
         self.drag_to((offset_x, offset_y), speed)
 
     def drag_to(self, ele_or_loc, speed=40):
-        """拖拽当前元素，目标为另一个元素或坐标元组
+        """拖拽当前元素，目标为另一个元素或坐标元组(x, y)
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
         :param speed: 拖动的速度，传入0即瞬间到达
         :return: None
@@ -575,7 +574,7 @@ class ChromiumElement(DrissionElement):
         actions.release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):
-        """根据传入node id获取js中的object id
+        """根据传入node id或backend id获取js中的object id
         :param node_id: cdp中的node id
         :param backend_id: backend id
         :return: js中的object id
@@ -586,7 +585,7 @@ class ChromiumElement(DrissionElement):
             return self.page.run_cdp('DOM.resolveNode', backendNodeId=backend_id)['object']['objectId']
 
     def _get_node_id(self, obj_id=None, backend_id=None):
-        """根据传入object id获取cdp中的node id
+        """根据传入object id或backend id获取cdp中的node id
         :param obj_id: js中的object id
         :param backend_id: backend id
         :return: cdp中的node id
@@ -604,7 +603,7 @@ class ChromiumElement(DrissionElement):
         return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
 
     def _get_ele_path(self, mode):
-        """返获取css路径或xpath路径"""
+        """返获取绝对的css路径或xpath路径"""
         if mode == 'xpath':
             txt1 = 'var tag = el.nodeName.toLowerCase();'
             txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
@@ -644,7 +643,7 @@ class ChromiumElement(DrissionElement):
         return f':root{t}' if mode == 'css' else t
 
     def _set_file_input(self, files):
-        """往上传控件写入路径
+        """对上传控件写入路径
         :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
         :return: None
         """
@@ -1997,7 +1996,7 @@ class ChromiumWaiter(object):
         self._driver = page_or_ele
 
     def ele_delete(self, loc_or_ele, timeout=None):
-        """
+        """等待元素从DOM中删除
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
@@ -2005,7 +2004,7 @@ class ChromiumWaiter(object):
         return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).delete()
 
     def ele_display(self, loc_or_ele, timeout=None):
-        """
+        """等待元素变成显示状态
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
@@ -2013,7 +2012,7 @@ class ChromiumWaiter(object):
         return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).display()
 
     def ele_hidden(self, loc_or_ele, timeout=None):
-        """
+        """等待元素变成隐藏状态
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功

@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import Union, Tuple, List
 
-from .common.constants import NoneElement
+from .commons.constants import NoneElement
 
 
 class BaseParser(object):

@@ -14,10 +14,10 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
     ChromiumElementWaiter
-from .common.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
-from .common.locator import get_loc
-from .common.tools import get_usable_path
-from .common.web import cookies_to_tuple
+from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
+from .commons.locator import get_loc
+from .commons.tools import get_usable_path
+from .commons.web import cookies_to_tuple
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError
 from .session_element import make_session_ele
@@ -312,7 +312,7 @@ class ChromiumBase(BasePage):
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumPageWaiter(self)
+            self._wait = ChromiumBaseWaiter(self)
         return self._wait
 
     @property
@@ -901,7 +901,7 @@ class ChromiumBaseSetter(object):
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
 
-class ChromiumPageWaiter(ChromiumWaiter):
+class ChromiumBaseWaiter(ChromiumWaiter):
     def __init__(self, page):
         """
         :param page: 所属页面对象

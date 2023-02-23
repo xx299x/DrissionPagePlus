@@ -8,8 +8,8 @@ from pathlib import Path
 from re import search
 from typing import Union
 
-from .common.constants import Settings
-from .common.tools import unzip
+from .commons.constants import Settings
+from .commons.tools import unzip
 from .configs.chromium_options import ChromiumOptions
 from .configs.options_manage import OptionsManager
 from .session_page import SessionPage

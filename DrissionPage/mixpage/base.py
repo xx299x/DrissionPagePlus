@@ -7,8 +7,8 @@ from abc import abstractmethod
 from re import sub
 from urllib.parse import quote
 
-from DrissionPage.common.web import format_html
-from DrissionPage.common.locator import get_loc
+from DrissionPage.commons.web import format_html
+from DrissionPage.commons.locator import get_loc
 
 
 class BaseParser(object):
