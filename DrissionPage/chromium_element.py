@@ -1285,6 +1285,7 @@ else{a.push(e.snapshotItem(i));}}"""
     else:
         return_txt = 'return e.singleNodeValue;'
 
+    xpath = xpath.replace(r"'", r"\'")
     js = f'function(){{var e=document.evaluate(\'{xpath}\',{node_txt},null,{type_txt},null);\n{for_txt}\n{return_txt}}}'
 
     return js
