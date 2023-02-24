@@ -12,8 +12,7 @@ from requests import Session
 
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
-from .chromium_element import ChromiumWaiter, ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, \
-    ChromiumElementWaiter
+from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, ChromiumElementWaiter
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path
@@ -259,7 +258,7 @@ class ChromiumBase(BasePage):
         try:
             return loads(self('t:pre', timeout=.5).text)
         except JSONDecodeError:
-            raise RuntimeError('非json格式或格式不正确。')
+            return None
 
     @property
     def tab_id(self):
@@ -733,15 +732,6 @@ class ChromiumBase(BasePage):
         warn("wait_loading()方法即将弃用，请用wait.load_start()方法代替。", DeprecationWarning)
         return self.wait.load_start(timeout)
 
-    def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待元素到达某个状态的等待器对象
-        :param loc_or_ele: 可以是元素、查询字符串、loc元组
-        :param timeout: 等待超时时间
-        :return: 用于等待的ElementWaiter对象
-        """
-        warn("wait_ele()方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
-        return ChromiumElementWaiter(self, loc_or_ele, timeout)
-
     def scroll_to_see(self, loc_or_ele):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
@@ -901,27 +891,36 @@ class ChromiumBaseSetter(object):
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
 
-class ChromiumBaseWaiter(ChromiumWaiter):
-    def __init__(self, page):
+class ChromiumBaseWaiter(object):
+    def __init__(self, page_or_ele):
         """
-        :param page: 所属页面对象
+        :param page_or_ele: 页面对象或元素对象
         """
-        super().__init__(page)
+        self._driver = page_or_ele
 
-    def _loading(self, timeout=None, start=True):
-        """等待页面开始加载或加载完成
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :param start: 等待开始还是结束
+    def ele_delete(self, loc_or_ele, timeout=None):
+        """等待元素从DOM中删除
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        if timeout != 0:
-            timeout = self._driver.timeout if timeout in (None, True) else timeout
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
-                if self._driver.is_loading == start:
-                    return True
-                sleep(.01)
-            return False
+        return ChromiumElementWaiter(self._driver, loc_or_ele).delete(timeout)
+
+    def ele_display(self, loc_or_ele, timeout=None):
+        """等待元素变成显示状态
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 是否等待成功
+        """
+        return ChromiumElementWaiter(self._driver, loc_or_ele).display(timeout)
+
+    def ele_hidden(self, loc_or_ele, timeout=None):
+        """等待元素变成隐藏状态
+        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 是否等待成功
+        """
+        return ChromiumElementWaiter(self._driver, loc_or_ele).hidden(timeout)
 
     def load_start(self, timeout=None):
         """等待页面开始加载
@@ -941,6 +940,21 @@ class ChromiumBaseWaiter(ChromiumWaiter):
         """等待自动填写上传文件路径"""
         while self._driver._upload_list:
             sleep(.01)
+
+    def _loading(self, timeout=None, start=True):
+        """等待页面开始加载或加载完成
+        :param timeout: 超时时间，为None时使用页面timeout属性
+        :param start: 等待开始还是结束
+        :return: 是否等待成功
+        """
+        if timeout != 0:
+            timeout = self._driver.timeout if timeout in (None, True) else timeout
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if self._driver.is_loading == start:
+                    return True
+                sleep(.01)
+            return False
 
 
 class ChromiumPageScroll(ChromiumScroll):

@@ -186,7 +186,7 @@ class ChromiumElement(DrissionElement):
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumWaiter(self)
+            self._wait = ChromiumElementWaiter(self.page, self)
         return self._wait
 
     @property
@@ -653,14 +653,6 @@ class ChromiumElement(DrissionElement):
         self.page.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=self._backend_id)
 
     # ---------------准备废弃-----------------
-    def wait_ele(self, loc_or_ele, timeout=None):
-        """返回用于等待子元素到达某个状态的等待器对象
-        :param loc_or_ele: 可以是元素、查询字符串、loc元组
-        :param timeout: 等待超时时间
-        :return: 用于等待的ElementWaiter对象
-        """
-        warn("wait_ele()方法即将弃用，请用wait.ele_xxxx()方法代替。", DeprecationWarning)
-        return ChromiumElementWaiter(self, loc_or_ele, timeout)
 
     def click_at(self, offset_x=None, offset_y=None, button='left'):
         """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
@@ -1687,22 +1679,6 @@ class Click(object):
         x, y = self._ele.locations.viewport_click_point
         self._click(x, y, 'middle')
 
-    def left_at(self, offset_x=None, offset_y=None):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :return: None
-        """
-        self.at(offset_x, offset_y, button='left')
-
-    def right_at(self, offset_x=None, offset_y=None):
-        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :return: None
-        """
-        self.at(offset_x, offset_y, button='right')
-
     def at(self, offset_x=None, offset_y=None, button='left'):
         """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素click_point
         :param offset_x: 相对元素左上角坐标的x轴偏移量
@@ -1989,94 +1965,73 @@ class ChromiumSelect(object):
         return success
 
 
-class ChromiumWaiter(object):
-    def __init__(self, page_or_ele):
-        """
-        :param page_or_ele: 页面对象或元素对象
-        """
-        self._driver = page_or_ele
-
-    def ele_delete(self, loc_or_ele, timeout=None):
-        """等待元素从DOM中删除
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).delete()
-
-    def ele_display(self, loc_or_ele, timeout=None):
-        """等待元素变成显示状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).display()
-
-    def ele_hidden(self, loc_or_ele, timeout=None):
-        """等待元素变成隐藏状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        return ChromiumElementWaiter(self._driver, loc_or_ele, timeout).hidden()
-
-
 class ChromiumElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
-    def __init__(self, page_or_ele, loc_or_ele, timeout=None):
+    def __init__(self, page_or_ele, loc_or_ele):
         """等待元素在dom中某种状态，如删除、显示、隐藏
         :param page_or_ele: 页面或父元素
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
         """
         if not isinstance(loc_or_ele, (str, tuple, ChromiumElement)):
             raise TypeError('loc_or_ele只能接收定位符或元素对象。')
 
-        self.driver = page_or_ele
-        self.loc_or_ele = loc_or_ele
-        if timeout is not None:
-            self.timeout = timeout
-        else:
-            self.timeout = page_or_ele.page.timeout if isinstance(page_or_ele, ChromiumElement) else page_or_ele.timeout
+        self._driver = page_or_ele
+        self._loc_or_ele = loc_or_ele
 
-    def delete(self):
-        """等待元素从dom删除"""
-        if isinstance(self.loc_or_ele, ChromiumElement):
-            end_time = perf_counter() + self.timeout
+    def delete(self, timeout=None):
+        """等待元素从dom删除
+        :param timeout: 超时时间
+        :return: 是否等待成功
+        """
+        if timeout is None:
+            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
+
+        if isinstance(self._loc_or_ele, ChromiumElement):
+            end_time = perf_counter() + timeout
             while perf_counter() < end_time:
-                if not self.loc_or_ele.states.is_alive:
+                if not self._loc_or_ele.states.is_alive:
                     return True
 
-        ele = self.driver._ele(self.loc_or_ele, timeout=.5, raise_err=False)
+        ele = self._driver._ele(self._loc_or_ele, timeout=.5, raise_err=False)
         if not ele:
             return True
 
-        end_time = perf_counter() + self.timeout
+        end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if not ele.states.is_alive:
                 return True
 
         return False
 
-    def display(self):
-        """等待元素从dom显示"""
-        return self._wait_ele('display')
-
-    def hidden(self):
-        """等待元素从dom隐藏"""
-        return self._wait_ele('hidden')
-
-    def _wait_ele(self, mode):
-        """执行等待
-        :param mode: 等待模式
+    def display(self, timeout=None):
+        """等待元素从dom显示
+        :param timeout: 超时时间
         :return: 是否等待成功
         """
-        target = self.driver._ele(self.loc_or_ele, raise_err=False)
+        return self._wait_ele('display', timeout)
+
+    def hidden(self, timeout=None):
+        """等待元素从dom隐藏
+        :param timeout: 超时时间
+        :return: 是否等待成功
+        """
+        return self._wait_ele('hidden', timeout)
+
+    def _wait_ele(self, mode, timeout=None):
+        """执行等待
+        :param mode: 等待模式
+        :param timeout: 超时时间
+        :return: 是否等待成功
+        """
+        if timeout is None:
+            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
+
+        target = self._driver._ele(self._loc_or_ele, raise_err=False)
         if not target:
             return None
 
-        end_time = perf_counter() + self.timeout
+        end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if mode == 'display' and target.states.is_displayed:
                 return True
