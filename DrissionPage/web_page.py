@@ -326,7 +326,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
             if self._session_url:
                 if copy_cookies:
-                    self.cookies_to_driver()
+                    self.cookies_to_browser()
 
                 if go:
                     self.get(self._session_url)
@@ -356,8 +356,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         self.set.cookies(self._get_driver_cookies(as_dict=True), set_session=True)
 
-    def cookies_to_driver(self):
-        """把session对象的cookies复制到driver对象"""
+    def cookies_to_browser(self):
+        """把session对象的cookies复制到浏览器"""
         ex_url = extract(self._session_url)
         domain = f'{ex_url.domain}.{ex_url.suffix}'
         cookies = []

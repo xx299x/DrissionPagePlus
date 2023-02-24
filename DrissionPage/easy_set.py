@@ -36,7 +36,7 @@ def configs_to_here(save_name=None):
     :return: None
     """
     om = OptionsManager('default')
-    save_name = str(save_name) if save_name is not None else 'dp_configs.ini'
+    save_name = f'{save_name}.ini' if save_name is not None else 'dp_configs.ini'
     om.save(save_name)
 
 

@@ -64,7 +64,10 @@ class ChromiumBase(BasePage):
         self._chromium_init()
         if not tab_id:
             json = self._control_session.get(f'http://{self.address}/json').json()
-            tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+            tab_id = [i['id'] for i in json if i['type'] == 'page']
+            if not tab_id:
+                raise ConnectionError('连接浏览器失败。')
+            tab_id = tab_id[0]
         self._driver_init(tab_id)
         self._get_document()
         self._first_run = False

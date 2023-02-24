@@ -81,7 +81,10 @@ class ChromiumPage(ChromiumBase):
             self.process = connect_browser(self._driver_options)[1]
             if not tab_id:
                 json = self._control_session.get(f'http://{self.address}/json').json()
-                tab_id = [i['id'] for i in json if i['type'] == 'page'][0]
+                tab_id = [i['id'] for i in json if i['type'] == 'page']
+                if not tab_id:
+                    raise ConnectionError('连接浏览器失败。')
+                tab_id = tab_id[0]
 
             self._driver_init(tab_id)
             self._get_document()
@@ -398,7 +401,7 @@ class ChromiumTabRect(object):
 
     @property
     def browser_location(self):
-        """返回浏览器在屏幕上的坐标"""
+        """返回浏览器在屏幕上的坐标，左上角为(0, 0)"""
         r = self._get_browser_rect()
         if r['windowState'] in ('maximized', 'fullscreen'):
             return 0, 0
