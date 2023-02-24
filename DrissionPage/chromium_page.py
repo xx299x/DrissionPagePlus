@@ -324,14 +324,6 @@ class ChromiumPage(ChromiumBase):
             self.driver.Page.handleJavaScriptDialog(accept=accept)
         return res_text
 
-    def hide_browser(self):
-        """隐藏浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self, hide=True)
-
-    def show_browser(self):
-        """显示浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self, hide=False)
-
     def quit(self):
         """关闭浏览器"""
         self._tab_obj.Browser.close()
@@ -379,6 +371,16 @@ class ChromiumPage(ChromiumBase):
         """
         warn("wait_download_begin()方法即将弃用，请用wait.download_begin()方法代替。", DeprecationWarning)
         return self.download_set.wait_download_begin(timeout)
+
+    def hide_browser(self):
+        """隐藏浏览器窗口，只在Windows系统可用"""
+        warn("hide_browser()方法即将弃用，请用set.hide()方法代替。", DeprecationWarning)
+        show_or_hide_browser(self, hide=True)
+
+    def show_browser(self):
+        """显示浏览器窗口，只在Windows系统可用"""
+        warn("show_browser()方法即将弃用，请用set.show()方法代替。", DeprecationWarning)
+        show_or_hide_browser(self, hide=False)
 
 
 class ChromiumPageWaiter(ChromiumBaseWaiter):
@@ -654,6 +656,14 @@ class WindowSetter(object):
             x = x if x is not None else info['left']
             y = y if y is not None else info['top']
             self._perform({'left': x - 8, 'top': y})
+
+    def hide(self):
+        """隐藏浏览器窗口，只在Windows系统可用"""
+        show_or_hide_browser(self._page, hide=True)
+
+    def show(self):
+        """显示浏览器窗口，只在Windows系统可用"""
+        show_or_hide_browser(self._page, hide=False)
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
