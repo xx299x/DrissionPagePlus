@@ -1457,6 +1457,20 @@ class ChromiumElementStates(object):
         x, y = self._ele.locations.click_point
         return location_in_viewport(self._ele.page, x, y) if x else False
 
+    @property
+    def is_covered(self):
+        """返回元素是否被覆盖，与是否在视口中无关"""
+        lx, ly = self._ele.locations.click_point
+        try:
+            r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
+        except CallMethodError:
+            return False
+
+        if r.get('backendNodeId') != self._ele.ids.backend_id:
+            return True
+
+        return False
+
 
 class ShadowRootStates(object):
     def __init__(self, ele):
@@ -1626,10 +1640,10 @@ class Click(object):
             """无遮挡返回True，有遮挡返回False，无元素返回None"""
             try:
                 r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
-            except Exception:
+            except CallMethodError:
                 return None
 
-            if retry and r.get('nodeId') != self._ele.ids.node_id:
+            if retry and r.get('backendNodeId') != self._ele.ids.backend_id:
                 return False
 
             self._click(cx, cy)
@@ -1981,7 +1995,7 @@ class ChromiumElementWaiter(object):
 
     def delete(self, timeout=None):
         """等待元素从dom删除
-        :param timeout: 超时时间
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
         if timeout is None:
@@ -2006,17 +2020,47 @@ class ChromiumElementWaiter(object):
 
     def display(self, timeout=None):
         """等待元素从dom显示
-        :param timeout: 超时时间
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
         return self._wait_ele('display', timeout)
 
     def hidden(self, timeout=None):
         """等待元素从dom隐藏
-        :param timeout: 超时时间
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
         return self._wait_ele('hidden', timeout)
+
+    def covered(self, timeout=None):
+        """等待当前元素被遮盖
+        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._covered(True, timeout)
+
+    def not_covered(self, timeout=None):
+        """等待当前元素被遮盖
+        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._covered(False, timeout)
+
+    def _covered(self, mode=False, timeout=None):
+        """等待当前元素被遮盖
+        :param mode: True表示被遮盖，False表示不被遮盖
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :return: 是否等待成功
+        """
+        if timeout is None:
+            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self._loc_or_ele.states.is_covered == mode:
+                return True
+            sleep(.05)
+
+        return False
 
     def _wait_ele(self, mode, timeout=None):
         """执行等待
@@ -2038,6 +2082,8 @@ class ChromiumElementWaiter(object):
 
             elif mode == 'hidden' and not target.states.is_displayed:
                 return True
+
+            sleep(.05)
 
         return False
 

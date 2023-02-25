@@ -21,3 +21,6 @@ class ChromiumTab(ChromiumBase):
         """重写设置浏览器运行参数方法"""
         self._timeouts = self.page.timeouts
         self._page_load_strategy = self.page.page_load_strategy
+
+# class WebPageTab(SessionPage, ChromiumTab, BasePage):
+#     pass
