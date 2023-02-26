@@ -196,10 +196,6 @@ class ChromiumPage(ChromiumBase):
         tab_id = tab_id or self.tab_id
         return ChromiumTab(self, tab_id)
 
-    def to_front(self):
-        """激活当前标签页使其处于最前面"""
-        self._control_session.get(f'http://{self.address}/json/activate/{self.tab_id}')
-
     def new_tab(self, url=None, switch_to=True):
         """新建一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
@@ -231,26 +227,31 @@ class ChromiumPage(ChromiumBase):
         """跳转到主标签页"""
         self.to_tab(self._main_tab)
 
-    def to_tab(self, tab_id=None, activate=True):
+    def to_tab(self, tab_or_id=None, activate=True):
         """跳转到标签页
-        :param tab_id: 标签页id字符串，默认跳转到main_tab
+        :param tab_or_id: 标签页对象或id，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
         :return: None
         """
-        self._to_tab(tab_id, activate)
+        self._to_tab(tab_or_id, activate)
 
-    def _to_tab(self, tab_id=None, activate=True, read_doc=True):
+    def _to_tab(self, tab_or_id=None, activate=True, read_doc=True):
         """跳转到标签页
-        :param tab_id: 标签页id字符串，默认跳转到main_tab
+        :param tab_or_id: 标签页对象或id，默认跳转到main_tab
         :param activate: 切换后是否变为活动状态
         :param read_doc: 切换后是否读取文档
         :return: None
         """
         tabs = self.tabs
-        if not tab_id:
+        if not tab_or_id:
             tab_id = self._main_tab
+        elif isinstance(tab_or_id, ChromiumTab):
+            tab_id = tab_or_id.tab_id
+        else:
+            tab_id = tab_or_id
+
         if tab_id not in tabs:
-            tab_id = tabs[0]
+            tab_id = self.latest_tab
 
         if activate:
             self._control_session.get(f'http://{self.address}/json/activate/{tab_id}')
@@ -263,19 +264,23 @@ class ChromiumPage(ChromiumBase):
         if read_doc and self.ready_state == 'complete':
             self._get_document()
 
-    def close_tabs(self, tab_ids=None, others=False):
+    def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
-        :param tab_ids: 要关闭的标签页id，可传入id组成的列表或元组，为None时关闭当前页
+        :param tabs_or_ids: 要关闭的标签页对象或id，可传入列表或元组，为None时关闭当前页
         :param others: 是否关闭指定标签页之外的
         :return: None
         """
         all_tabs = set(self.tabs)
-        if isinstance(tab_ids, str):
-            tabs = {tab_ids}
-        elif tab_ids is None:
+        if isinstance(tabs_or_ids, str):
+            tabs = {tabs_or_ids}
+        elif isinstance(tabs_or_ids, ChromiumTab):
+            tabs = {tabs_or_ids.tab_id}
+        elif tabs_or_ids is None:
             tabs = {self.tab_id}
+        elif isinstance(tabs_or_ids, (list, tuple)):
+            tabs = set(i.tab_id if isinstance(i, ChromiumTab) else i for i in tabs_or_ids)
         else:
-            tabs = set(tab_ids)
+            raise TypeError('tabs_or_ids参数只能传入标签页对象或id。')
 
         if others:
             tabs = all_tabs - tabs
@@ -298,12 +303,12 @@ class ChromiumPage(ChromiumBase):
 
         self.to_tab()
 
-    def close_other_tabs(self, tab_ids=None):
+    def close_other_tabs(self, tabs_or_ids=None):
         """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
-        :param tab_ids: 要保留的标签页id，可传入id组成的列表或元组，为None时保存当前页
+        :param tabs_or_ids: 要保留的标签页对象或id，可传入列表或元组，为None时保存当前页
         :return: None
         """
-        self.close_tabs(tab_ids, True)
+        self.close_tabs(tabs_or_ids, True)
 
     def handle_alert(self, accept=True, send=None, timeout=None):
         """处理提示框，可以自动等待提示框出现
@@ -384,6 +389,11 @@ class ChromiumPage(ChromiumBase):
         """显示浏览器窗口，只在Windows系统可用"""
         warn("show_browser()方法即将弃用，请用set.show()方法代替。", DeprecationWarning)
         show_or_hide_browser(self, hide=False)
+
+    def to_front(self):
+        """激活当前标签页使其处于最前面"""
+        warn("to_front()方法即将弃用，请用set.tab_to_front()方法代替。", DeprecationWarning)
+        self.set.tab_to_front()
 
 
 class ChromiumPageWaiter(ChromiumBaseWaiter):
@@ -692,6 +702,17 @@ class ChromiumPageSetter(ChromiumBaseSetter):
     def window(self):
         """返回用于设置浏览器窗口的对象"""
         return WindowSetter(self._page)
+
+    def tab_to_front(self, tab_or_id=None):
+        """激活标签页使其处于最前面
+        :param tab_or_id: 标签页对象或id，为None表示当前标签页
+        :return: None
+        """
+        if not tab_or_id:
+            tab_or_id = self._page.tab_id
+        elif isinstance(tab_or_id, ChromiumTab):
+            tab_or_id = tab_or_id.tab_id
+        self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
 
 
 def show_or_hide_browser(page, hide=True):

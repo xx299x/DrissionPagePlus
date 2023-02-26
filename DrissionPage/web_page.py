@@ -13,6 +13,7 @@ from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
+from .chromium_tab import WebPageTab
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
 from .errors import CallMethodError
@@ -380,6 +381,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return self._get_driver_cookies(as_dict)
 
+    def get_tab(self, tab_id=None):
+        """获取一个标签页对象
+        :param tab_id: 要获取的标签页id，为None时获取当前tab
+        :return: 标签页对象
+        """
+        tab_id = tab_id or self.tab_id
+        return WebPageTab(self, tab_id)
+
     def _get_driver_cookies(self, as_dict=False):
         """获取浏览器cookies
         :param as_dict: 以dict形式返回
@@ -424,7 +433,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super()._find_elements(loc_or_ele, single=single)
         elif self._mode == 'd':
-            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single, relative=relative)
+            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
+                                                           relative=relative)
 
     def quit(self):
         """关闭浏览器，关闭session"""
