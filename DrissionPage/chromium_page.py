@@ -73,8 +73,8 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._chromium_init()  # todo: 传递驱动器时是否须要
-        if self._tab_obj:
+        self._chromium_init()
+        if self._tab_obj:  # 传入driver的情况
             self.process = None
 
         else:
@@ -87,8 +87,9 @@ class ChromiumPage(ChromiumBase):
                 tab_id = tab_id[0]
 
             self._driver_init(tab_id)
-            self._get_document()
-            self._first_run = False
+
+        self._get_document()
+        self._first_run = False
 
     def _chromium_init(self):
         """添加ChromiumPage独有的运行配置"""
