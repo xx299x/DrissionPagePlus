@@ -403,7 +403,7 @@ class ChromiumElement(DrissionElement):
 
     def get_src(self):
         """返回元素src资源，base64的会转为bytes返回，其它返回str"""
-        src = self.attr('src')
+        src = self.prop('currentSrc')
         if not src:
             return None
 
@@ -441,7 +441,7 @@ class ChromiumElement(DrissionElement):
             raise TypeError('该元素无可保存的内容或保存失败。')
 
         path = path or '.'
-        rename = rename or basename(self.attr('src'))
+        rename = rename or basename(self.prop('currentSrc'))
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
         Path(path).mkdir(parents=True, exist_ok=True)
