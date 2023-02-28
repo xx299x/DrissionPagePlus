@@ -74,11 +74,9 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         self._chromium_init()
-        if self._tab_obj:  # 传入driver的情况
-            self.process = None
 
-        else:
-            self.process = connect_browser(self._driver_options)[1]
+        if not self._tab_obj:  # 不是传入driver的情况
+            connect_browser(self._driver_options)
             if not tab_id:
                 json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page']
@@ -88,31 +86,32 @@ class ChromiumPage(ChromiumBase):
 
             self._driver_init(tab_id)
 
+        self._page_init()
         self._get_document()
         self._first_run = False
 
-    def _chromium_init(self):
-        """添加ChromiumPage独有的运行配置"""
-        super()._chromium_init()
-        self._alert = Alert()
-        self._rect = None
-
-    def _driver_init(self, tab_id):
-        """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
-        :param tab_id: 要跳转到的标签页id
-        :return: None
-        """
-        super()._driver_init(tab_id)
+    def _page_init(self):
+        """页面相关设置"""
         ws = self._control_session.get(f'http://{self.address}/json/version').json()['webSocketDebuggerUrl']
         self._browser_driver = ChromiumDriver(ws.split('/')[-1], 'browser', self.address)
         self._browser_driver.start()
+
+        self._alert = Alert()
         self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
         self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
+
+        self._rect = None
         self._main_tab = self.tab_id
         try:
             self.download_set.by_browser()
-        except RuntimeError:
+        except CallMethodError:
             pass
+
+        self._process_id = None
+        for i in self.browser_driver.SystemInfo.getProcessInfo()['processInfo']:
+            if i['type'] == 'browser':
+                self._process_id = i['id']
+                break
 
     @property
     def browser_driver(self):
@@ -142,14 +141,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def process_id(self):
         """返回浏览器进程id"""
-        if self.process:
-            return self.process.pid
-
-        r = self.browser_driver.SystemInfo.getProcessInfo()['processInfo']
-        for i in r:
-            if i['type'] == 'browser':
-                return i['id']
-        return None
+        return self._process_id
 
     @property
     def set(self):
@@ -734,7 +726,7 @@ def show_or_hide_browser(page, hide=True):
     except ImportError:
         raise ImportError('请先安装：pip install pypiwin32')
 
-    pid = page.process_id or get_browser_progress_id(page.process, page.address)
+    pid = page.process_id
     if not pid:
         return None
     hds = get_chrome_hwnds_from_pid(pid, page.title)
