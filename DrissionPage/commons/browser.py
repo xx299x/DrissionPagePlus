@@ -77,7 +77,7 @@ def get_launch_args(opt):
     if not has_user_path:
         port = opt.debugger_address.split(':')[-1] if opt.debugger_address else '0'
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
-        path.mkdir(parents=False, exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
         result.add(f'--user-data-dir={path}')
 
     result = list(result)
