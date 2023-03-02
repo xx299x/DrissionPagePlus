@@ -7,6 +7,7 @@ from json import load, dump
 from pathlib import Path
 from platform import system
 from subprocess import Popen
+from tempfile import gettempdir
 from time import perf_counter, sleep
 
 from requests import get as requests_get
@@ -61,7 +62,23 @@ def get_launch_args(opt):
     :return: 启动参数列表
     """
     # ----------处理arguments-----------
-    result = set(i for i in opt.arguments if not i.startswith(('--load-extension=', '--remote-debugging-port=')))
+    result = set()
+    has_user_path = False
+    for i in opt.arguments:
+        if i.startswith(('--load-extension=', '--remote-debugging-port=')):
+            continue
+        elif i.startswith('--user-data-dir'):
+            p = Path(i[16:]).absolute()
+            result.add(f'--user-data-dir={p}')
+            has_user_path = True
+        result.add(i)
+
+    if not has_user_path:
+        port = opt.debugger_address.split(':')[-1] if opt.debugger_address else '0'
+        path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
+        path.mkdir(parents=False, exist_ok=True)
+        result.add(f'--user-data-dir={path}')
+
     result = list(result)
 
     # ----------处理插件extensions-------------
@@ -140,7 +157,7 @@ def _run_browser(port, path: str, args) -> Popen:
         except Exception:
             sleep(.2)
 
-    raise ConnectionError('无法连接浏览器。')
+    raise ConnectionError('连接浏览器失败。')
 
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:

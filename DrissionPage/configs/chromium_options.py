@@ -392,7 +392,7 @@ class PortFinder(object):
     used_port = []
 
     def __init__(self):
-        self.tmp_dir = Path(gettempdir()) / 'DrissionPageTempFolder'
+        self.tmp_dir = Path(gettempdir()) / 'DrissionPage' / 'TempFolder'
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
         if not PortFinder.used_port:
             clean_folder(self.tmp_dir)
