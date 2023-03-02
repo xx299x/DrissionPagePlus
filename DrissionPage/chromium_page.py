@@ -17,7 +17,7 @@ from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
 from .commons.web import set_session_cookies
 from .configs.chromium_options import ChromiumOptions
-from .errors import CallMethodError
+from .errors import CallMethodError, BrowserConnectError
 from .session_page import DownloadSetter
 
 
@@ -81,7 +81,7 @@ class ChromiumPage(ChromiumBase):
                 json = self._control_session.get(f'http://{self.address}/json').json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page']
                 if not tab_id:
-                    raise ConnectionError('连接浏览器失败。')
+                    raise BrowserConnectError('浏览器连接失败。')
                 tab_id = tab_id[0]
 
             self._driver_init(tab_id)

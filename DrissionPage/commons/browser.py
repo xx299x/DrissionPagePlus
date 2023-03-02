@@ -13,6 +13,7 @@ from time import perf_counter, sleep
 from requests import get as requests_get
 
 from DrissionPage.configs.chromium_options import ChromiumOptions
+from DrissionPage.errors import BrowserConnectError
 from .tools import port_is_using, get_exe_from_port
 
 
@@ -157,7 +158,7 @@ def _run_browser(port, path: str, args) -> Popen:
         except Exception:
             sleep(.2)
 
-    raise ConnectionError('连接浏览器失败。')
+    raise BrowserConnectError
 
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:

@@ -18,7 +18,7 @@ from .commons.locator import get_loc
 from .commons.tools import get_usable_path
 from .commons.web import cookies_to_tuple
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError
+    NoRectError, BrowserConnectError
 from .session_element import make_session_ele
 
 
@@ -66,7 +66,7 @@ class ChromiumBase(BasePage):
             json = self._control_session.get(f'http://{self.address}/json').json()
             tab_id = [i['id'] for i in json if i['type'] == 'page']
             if not tab_id:
-                raise ConnectionError('连接浏览器失败。')
+                raise BrowserConnectError('浏览器连接失败。')
             tab_id = tab_id[0]
         self._driver_init(tab_id)
         self._get_document()
