@@ -29,10 +29,12 @@ def connect_browser(option):
     debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
     ip, port = debugger_address.split(':')
     if ip not in ('127.0.0.1', 'localhost'):
+        test_connect(ip, port)
         return None, None
 
     if port_is_using(ip, port):
         chrome_path = get_exe_from_port(port) if chrome_path == 'chrome' and system_type == 'windows' else chrome_path
+        test_connect(ip, port)
         return chrome_path, None
 
     args = get_launch_args(option)
@@ -54,6 +56,7 @@ def connect_browser(option):
 
         debugger = _run_browser(port, chrome_path, args)
 
+    test_connect(ip, port)
     return chrome_path, debugger
 
 
@@ -137,6 +140,27 @@ def set_prefs(opt):
         dump(prefs_dict, f)
 
 
+def test_connect(ip, port):
+    """测试浏览器是否可用
+    :param ip: 浏览器ip
+    :param port: 浏览器端口
+    :return: None
+    """
+    end_time = perf_counter() + 10
+    while perf_counter() < end_time:
+        try:
+            tabs = requests_get(f'http://{ip}:{port}/json', timeout=3).json()
+            for tab in tabs:
+                if tab['type'] == 'page':
+                    return
+        except Exception:
+            sleep(.2)
+
+    if ip in ('127.0.0.1', 'localhost'):
+        raise BrowserConnectError(f'{port}端口不是Chromium内核浏览器或该浏览器未允许控制。')
+    raise BrowserConnectError(f'{ip}:{port}浏览器无法链接。')
+
+
 def _run_browser(port, path: str, args) -> Popen:
     """创建chrome进程
     :param port: 端口号
@@ -146,19 +170,19 @@ def _run_browser(port, path: str, args) -> Popen:
     """
     arguments = [path, f'--remote-debugging-port={port}']
     arguments.extend(args)
-    debugger = Popen(arguments, shell=False)
+    return Popen(arguments, shell=False)
 
-    end_time = perf_counter() + 10
-    while perf_counter() < end_time:
-        try:
-            tabs = requests_get(f'http://127.0.0.1:{port}/json').json()
-            for tab in tabs:
-                if tab['type'] == 'page':
-                    return debugger
-        except Exception:
-            sleep(.2)
-
-    raise BrowserConnectError
+    # end_time = perf_counter() + 10
+    # while perf_counter() < end_time:
+    #     try:
+    #         tabs = requests_get(f'http://127.0.0.1:{port}/json', timeout=2).json()
+    #         for tab in tabs:
+    #             if tab['type'] == 'page':
+    #                 return debugger
+    #     except Exception:
+    #         sleep(.2)
+    #
+    # raise BrowserConnectError
 
 
 def _make_leave_in_dict(target_dict: dict, src: list, num: int, end: int) -> None:
