@@ -828,13 +828,11 @@ class Screencast(object):
         self.set(save_path, quality)
         if self._path is None:
             raise ValueError('save_path必须设置。')
-        if not self._path.isascii():
-            raise TypeError('仅支持英文路径。')
         clean_folder(self._path)
         self._page.driver.Page.screencastFrame = self._onScreencastFrame
         self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=self._quality)
 
-    def stop(self, to_mp4=True, video_name=None):
+    def stop(self, to_mp4=False, video_name=None):
         """停止录屏
         :param to_mp4: 是否合并成MP4格式
         :param video_name: 视频文件名，为None时以当前时间名命
@@ -845,8 +843,8 @@ class Screencast(object):
         if not to_mp4:
             return str(Path(self._path).absolute())
 
-        if not str(video_name).isascii():
-            raise TypeError('仅支持英文文件名。')
+        if not str(video_name).isascii() or not str(self._path).isascii():
+            raise TypeError('转换成视频仅支持英文路径和文件名。')
 
         try:
             from cv2 import VideoWriter, imread
