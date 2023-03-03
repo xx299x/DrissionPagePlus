@@ -930,7 +930,7 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，为None时使用页面timeout属性
         :return: 是否等待成功
         """
-        return self._loading(timeout=timeout)
+        return self._loading(timeout=timeout, gap=.002)
 
     def load_complete(self, timeout=None):
         """等待页面开始加载
@@ -944,10 +944,11 @@ class ChromiumBaseWaiter(object):
         while self._driver._upload_list:
             sleep(.01)
 
-    def _loading(self, timeout=None, start=True):
+    def _loading(self, timeout=None, start=True, gap=.01):
         """等待页面开始加载或加载完成
         :param timeout: 超时时间，为None时使用页面timeout属性
         :param start: 等待开始还是结束
+        :param gap: 间隔秒数
         :return: 是否等待成功
         """
         if timeout != 0:
@@ -956,7 +957,7 @@ class ChromiumBaseWaiter(object):
             while perf_counter() < end_time:
                 if self._driver.is_loading == start:
                     return True
-                sleep(.01)
+                sleep(gap)
             return False
 
 
