@@ -3,9 +3,11 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from base64 import b64decode
 from json import loads, JSONDecodeError
+from os import sep
 from pathlib import Path
-from time import perf_counter, sleep
+from time import perf_counter, sleep, time
 from warnings import warn
 
 from requests import Session
@@ -15,7 +17,7 @@ from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, ChromiumElementWaiter
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
-from .commons.tools import get_usable_path
+from .commons.tools import get_usable_path, clean_folder
 from .commons.web import cookies_to_tuple
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError, BrowserConnectError
@@ -37,6 +39,7 @@ class ChromiumBase(BasePage):
         self._debug_recorder = None
         self._tab_obj = None
         self._set = None
+        self._screencast = None
 
         self._set_start_options(address, None)
         self._set_runtime_settings()
@@ -323,6 +326,13 @@ class ChromiumBase(BasePage):
         if self._set is None:
             self._set = ChromiumBaseSetter(self)
         return self._set
+
+    @property
+    def screencast(self):
+        """返回用于录屏的对象"""
+        if self._screencast is None:
+            self._screencast = Screencast(self)
+        return self._screencast
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -801,6 +811,89 @@ class ChromiumBase(BasePage):
         """返回用于设置页面加载策略的对象"""
         warn("set_page_load_strategy()方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
         return self.set.load_strategy
+
+
+class Screencast(object):
+    def __init__(self, page):
+        self._page = page
+        self._path = None
+        self._quality = 100
+
+    def start(self, save_path=None, quality=None):
+        """开始录屏
+        :param save_path: 录屏保存位置
+        :param quality: 录屏质量
+        :return: None
+        """
+        self.set(save_path, quality)
+        if self._path is None:
+            raise ValueError('save_path必须设置。')
+        if not self._path.isascii():
+            raise TypeError('仅支持英文路径。')
+        clean_folder(self._path)
+        self._page.driver.Page.screencastFrame = self._onScreencastFrame
+        self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=self._quality)
+
+    def stop(self, to_mp4=True, video_name=None):
+        """停止录屏
+        :param to_mp4: 是否合并成MP4格式
+        :param video_name: 视频文件名，为None时以当前时间名命
+        :return: 文件路径
+        """
+        self._page.driver.Page.screencastFrame = None
+        self._page.run_cdp('Page.stopScreencast')
+        if not to_mp4:
+            return str(Path(self._path).absolute())
+
+        if not str(video_name).isascii():
+            raise TypeError('仅支持英文文件名。')
+
+        try:
+            from cv2 import VideoWriter, imread
+            from numpy import fromfile, uint8
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
+
+        pic_list = Path(self._path).glob('*.jpg')
+        img = imread(str(next(pic_list)))
+        imgInfo = img.shape
+        size = (imgInfo[1], imgInfo[0])
+
+        if video_name and not video_name.endswith('mp4'):
+            video_name = f'{video_name}.mp4'
+        name = f'{time()}.mp4' if not video_name else video_name
+        fourcc = 14
+        videoWrite = VideoWriter(f'{self._path}{sep}{name}', fourcc, 8, size)
+
+        for i in pic_list:
+            img = imread(str(i))
+            videoWrite.write(img)
+
+        clean_folder(self._path, ignore=(name,))
+        return f'{self._path}{sep}{name}'
+
+    def set(self, save_path=None, quality=None):
+        """设置录屏参数
+        :param save_path: 保存路径
+        :param quality: 视频质量，可取值0-100
+        :return:
+        """
+        if save_path:
+            save_path = Path(save_path)
+            if save_path.exists() and save_path.is_file():
+                raise TypeError('save_path必须指定文件夹。')
+            save_path.mkdir(parents=True, exist_ok=True)
+            self._path = str(save_path)
+
+        if quality is not None:
+            if quality < 0 or quality > 100:
+                raise ValueError('quality必须在0-100之间。')
+            self._quality = quality
+
+    def _onScreencastFrame(self, **kwargs):
+        with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
+            f.write(b64decode(kwargs['data']))
+        self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
 
 
 class ChromiumBaseSetter(object):
