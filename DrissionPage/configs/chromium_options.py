@@ -34,6 +34,7 @@ class ChromiumOptions(object):
             self._debugger_address = options.get('debugger_address', None)
             self._page_load_strategy = options.get('page_load_strategy', 'normal')
             self._proxy = om.proxies.get('http', None)
+            self._system_user_path = options.get('system_user_path', False)
 
             user_path = user = False
             for arg in self._arguments:
@@ -69,6 +70,7 @@ class ChromiumOptions(object):
         self._page_load_strategy = 'normal'
         self._proxy = None
         self._auto_port = False
+        self._system_user_path = False
 
     @property
     def download_path(self):
@@ -129,6 +131,11 @@ class ChromiumOptions(object):
     def preferences(self):
         """返回用户首选项配置"""
         return self._prefs
+
+    @property
+    def system_user_path(self):
+        """返回是否使用系统安装的浏览器所使用的用户数据文件夹"""
+        return self._system_user_path
 
     def set_argument(self, arg, value=None):
         """设置浏览器配置的argument属性
@@ -320,6 +327,14 @@ class ChromiumOptions(object):
         if cache_path is not None:
             self.set_argument('--disk-cache-dir', str(cache_path))
 
+        return self
+
+    def use_system_user_path(self, on_off=True):
+        """设置是否使用系统安装的浏览器默认用户文件夹
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        self._system_user_path = on_off
         return self
 
     def auto_port(self, on_off=True):

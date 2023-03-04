@@ -71,13 +71,13 @@ def get_launch_args(opt):
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
             continue
-        elif i.startswith('--user-data-dir'):
+        elif i.startswith('--user-data-dir') and not opt.system_user_path:
             p = Path(i[16:]).absolute()
             result.add(f'--user-data-dir={p}')
             has_user_path = True
         result.add(i)
 
-    if not has_user_path:
+    if not has_user_path and not opt.system_user_path:
         port = opt.debugger_address.split(':')[-1] if opt.debugger_address else '0'
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
@@ -146,7 +146,7 @@ def test_connect(ip, port):
     :param port: 浏览器端口
     :return: None
     """
-    end_time = perf_counter() + 10
+    end_time = perf_counter() + 6
     while perf_counter() < end_time:
         try:
             tabs = requests_get(f'http://{ip}:{port}/json', timeout=3).json()
@@ -157,7 +157,8 @@ def test_connect(ip, port):
             sleep(.2)
 
     if ip in ('127.0.0.1', 'localhost'):
-        raise BrowserConnectError(f'{port}端口不是Chromium内核浏览器或该浏览器未允许控制。')
+        raise BrowserConnectError(f'\n连接浏览器失败，可能原因：\n1、{port}端口不是Chromium内核浏览器\n'
+                                  f'2、该浏览器未允许控制\n3、和已打开的浏览器冲突，请关闭')
     raise BrowserConnectError(f'{ip}:{port}浏览器无法链接。')
 
 

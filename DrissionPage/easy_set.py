@@ -119,6 +119,19 @@ def use_auto_port(on_off=True, ini_path=None):
     om.save()
 
 
+def use_system_user_path(on_off=True, ini_path=None):
+    """设置是否使用系统安装的浏览器默认用户文件夹
+    :param on_off: 开或关
+    :param ini_path: 要修改的ini文件路径
+    :return: 当前对象
+    """
+    if not isinstance(on_off, bool):
+        raise TypeError('on_off参数只能输入bool值。')
+    om = OptionsManager(ini_path)
+    om.set_item('chrome_options', 'system_user_path', on_off)
+    om.save()
+
+
 def set_argument(arg, value=None, ini_path=None):
     """设置浏览器配置argument属性
     :param arg: 属性名
