@@ -402,10 +402,12 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         return self.frame_ele.afters(filter_loc, timeout)
 
-    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
+    def get_screenshot(self, path=None, as_bytes=None, as_base64=None,
+                       full_page=False, left_top=None, right_bottom=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
+        :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
         :param left_top: 截取范围左上角坐标
         :param right_bottom: 截取范围右下角角坐标
@@ -414,7 +416,7 @@ class ChromiumFrame(ChromiumBase):
         if full_page:
             raise RuntimeError('暂未实现对iframe全页截图功能。')
         if left_top is None and right_bottom is None:
-            return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes)
+            return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64)
         else:
             raise RuntimeError('暂未实现对异域iframe内元素截图功能。')
 

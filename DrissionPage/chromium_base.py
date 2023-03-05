@@ -620,10 +620,12 @@ class ChromiumBase(BasePage):
         js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
         return self.run_js_loaded(js, as_expr=True)
 
-    def get_screenshot(self, path=None, as_bytes=None, full_page=False, left_top=None, right_bottom=None):
+    def get_screenshot(self, path=None, as_bytes=None, as_base64=None,
+                       full_page=False, left_top=None, right_bottom=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
+        :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
         :param left_top: 截取范围左上角坐标
         :param right_bottom: 截取范围右下角角坐标
@@ -636,6 +638,14 @@ class ChromiumBase(BasePage):
                 if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
                     raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
+
+        elif as_base64:
+            if as_base64 is True:
+                pic_type = 'png'
+            else:
+                if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
+                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
             if not path:
@@ -661,6 +671,9 @@ class ChromiumBase(BasePage):
                                           captureBeyondViewport=False, clip=vp)['data']
             else:
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
+
+        if as_base64:
+            return png
 
         from base64 import b64decode
         png = b64decode(png)

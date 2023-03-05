@@ -119,7 +119,7 @@ class ChromiumElement(DrissionElement):
     def size(self):
         """返回元素宽和高组成的元组"""
         model = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']
-        return model['height'], model['width']
+        return model['width'], model['height']
 
     @property
     def set(self):
@@ -462,10 +462,11 @@ class ChromiumElement(DrissionElement):
         with open(f'{path}{sep}{rename}', write_type) as f:
             f.write(data)
 
-    def get_screenshot(self, path=None, as_bytes=None):
+    def get_screenshot(self, path=None, as_bytes=None, as_base64=None):
         """对当前元素截图，可保存到文件，或以字节方式返回
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
-        :param as_bytes: 是否已字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
+        :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
         """
         if self.tag == 'img':  # 等待图片加载完成
@@ -479,12 +480,12 @@ class ChromiumElement(DrissionElement):
         self.page.scroll.to_see(self)
         sleep(1)
         left, top = self.location
-        height, width = self.size
+        width, height = self.size
         left_top = (left, top)
         right_bottom = (left + width, top + height)
         if not path:
             path = f'{self.tag}.jpg'
-        return self.page.get_screenshot(path, as_bytes=as_bytes, full_page=False,
+        return self.page.get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                         left_top=left_top, right_bottom=right_bottom)
 
     def input(self, vals, clear=True):

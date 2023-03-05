@@ -178,7 +178,7 @@ class ChromiumBase(BasePage):
     def get_local_storage(self, item: str = None) -> Union[str, dict, None]: ...
 
     def get_screenshot(self, path: [str, Path] = None,
-                       as_bytes: [bool, str] = None,
+                       as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
                        full_page: bool = False,
                        left_top: Tuple[int, int] = None,
                        right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
