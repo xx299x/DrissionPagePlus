@@ -7,6 +7,7 @@ from re import search
 from time import sleep, perf_counter
 from warnings import warn
 
+from .commons.tools import get_usable_path
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
 from .chromium_element import ChromiumElement
 
@@ -402,23 +403,73 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         return self.frame_ele.afters(filter_loc, timeout)
 
-    def get_screenshot(self, path=None, as_bytes=None, as_base64=None,
-                       full_page=False, left_top=None, right_bottom=None):
+    def get_screenshot(self, path=None, as_bytes=None, as_base64=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
+        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
+        :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :return: 图片完整路径或字节文本
+        """
+        return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64)
+
+    def _get_screenshot(self, path=None, as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
+                        full_page=False, left_top=None, right_bottom=None, ele=None):
+        """实现对元素截图
         :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
         :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
         :param left_top: 截取范围左上角坐标
         :param right_bottom: 截取范围右下角角坐标
+        :param ele: 为异域iframe内元素截图设置
         :return: 图片完整路径或字节文本
         """
-        if full_page:
-            raise RuntimeError('暂未实现对iframe全页截图功能。')
-        if left_top is None and right_bottom is None:
-            return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64)
+        if not self._is_diff_domain:
+            return super().get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+                                          full_page=full_page, left_top=left_top, right_bottom=right_bottom)
+
         else:
-            raise RuntimeError('暂未实现对异域iframe内元素截图功能。')
+            if as_bytes:
+                if as_bytes is True:
+                    pic_type = 'png'
+                else:
+                    if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
+                        raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
+
+            elif as_base64:
+                if as_base64 is True:
+                    pic_type = 'png'
+                else:
+                    if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
+                        raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
+
+            else:
+                if not path:
+                    path = f'{self.title}.jpg'
+                path = get_usable_path(path)
+                pic_type = path.suffix.lower()
+                if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
+                    raise TypeError(f'不支持的文件格式：{pic_type}。')
+                pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+
+            self.scroll.to_see(ele)
+            cx, cy = ele.locations.viewport_location
+            w, h = ele.size
+            img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
+            body = self.page('t:body')
+            first_child = body('c::first-child')
+            js = f'''
+            haskell = document.createElement('img');
+            haskell.src = "{img_data}";
+            arguments[0].insertBefore(haskell, this);
+            return haskell;'''
+            new_ele = first_child.run_js(js, body)
+            r = self.page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+                                         left_top=(cx, cy), right_bottom=(cx + w, cy + h))
+            self.page.remove_ele(new_ele)
+            return r
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """在frame内查找单个元素

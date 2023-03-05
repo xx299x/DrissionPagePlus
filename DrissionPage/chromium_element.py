@@ -485,8 +485,8 @@ class ChromiumElement(DrissionElement):
         right_bottom = (left + width, top + height)
         if not path:
             path = f'{self.tag}.jpg'
-        return self.page.get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
-                                        left_top=left_top, right_bottom=right_bottom)
+        return self.page._get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
+                                         left_top=left_top, right_bottom=right_bottom, ele=self)
 
     def input(self, vals, clear=True):
         """输入文本或组合键，也可用于输入文件路径到input元素（路径间用\n间隔）

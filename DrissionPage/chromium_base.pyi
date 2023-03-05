@@ -183,6 +183,13 @@ class ChromiumBase(BasePage):
                        left_top: Tuple[int, int] = None,
                        right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
 
+    def _get_screenshot(self, path: [str, Path] = None,
+                        as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
+                        full_page: bool = False,
+                        left_top: Tuple[int, int] = None,
+                        right_bottom: Tuple[int, int] = None,
+                        ele: ChromiumElement = None) -> Union[str, bytes]: ...
+
     def clear_cache(self,
                     session_storage: bool = True,
                     local_storage: bool = True,

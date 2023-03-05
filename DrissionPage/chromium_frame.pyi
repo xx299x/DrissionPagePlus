@@ -152,10 +152,15 @@ class ChromiumFrame(ChromiumBase):
                timeout: float = ...) -> List[Union[ChromiumElement, ChromiumFrame, str]]: ...
 
     def get_screenshot(self, path: [str, Path] = None,
-                       as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
-                       full_page: bool = False,
-                       left_top: Tuple[int, int] = None,
-                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
+                       as_bytes: [bool, str] = None,
+                       as_base64: [bool, str] = None) -> Union[str, bytes]: ...
+
+    def _get_screenshot(self, path: [str, Path] = None,
+                        as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
+                        full_page: bool = False,
+                        left_top: Tuple[int, int] = None,
+                        right_bottom: Tuple[int, int] = None,
+                        ele: ChromiumElement = None) -> Union[str, bytes]: ...
 
     def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
