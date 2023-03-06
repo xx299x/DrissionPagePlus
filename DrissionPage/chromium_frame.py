@@ -428,48 +428,55 @@ class ChromiumFrame(ChromiumBase):
             return super().get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
                                           full_page=full_page, left_top=left_top, right_bottom=right_bottom)
 
-        else:
-            if as_bytes:
-                if as_bytes is True:
-                    pic_type = 'png'
-                else:
-                    if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                        raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
-                    pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
-
-            elif as_base64:
-                if as_base64 is True:
-                    pic_type = 'png'
-                else:
-                    if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
-                        raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
-                    pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
-
+        if as_bytes:
+            if as_bytes is True:
+                pic_type = 'png'
             else:
-                if not path:
-                    path = f'{self.title}.jpg'
-                path = get_usable_path(path)
-                pic_type = path.suffix.lower()
-                if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
-                    raise TypeError(f'不支持的文件格式：{pic_type}。')
-                pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+                if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
+                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
 
-            self.scroll.to_see(ele)
-            cx, cy = ele.locations.viewport_location
-            w, h = ele.size
-            img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
-            body = self.page('t:body')
-            first_child = body('c::first-child')
-            js = f'''
-            haskell = document.createElement('img');
-            haskell.src = "{img_data}";
-            arguments[0].insertBefore(haskell, this);
-            return haskell;'''
-            new_ele = first_child.run_js(js, body)
-            r = self.page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
-                                         left_top=(cx, cy), right_bottom=(cx + w, cy + h))
-            self.page.remove_ele(new_ele)
-            return r
+        elif as_base64:
+            if as_base64 is True:
+                pic_type = 'png'
+            else:
+                if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
+                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
+
+        else:
+            if not path:
+                path = f'{self.title}.jpg'
+            path = get_usable_path(path)
+            pic_type = path.suffix.lower()
+            if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
+                raise TypeError(f'不支持的文件格式：{pic_type}。')
+            pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+
+        self.frame_ele.scroll.to_see(center=True)
+        self.scroll.to_see(ele, center=True)
+        cx, cy = ele.locations.viewport_location
+        w, h = ele.size
+        img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
+        body = self.page('t:body')
+        first_child = body('c::first-child')
+        if not isinstance(first_child, ChromiumElement):
+            first_child = first_child.frame_ele
+        js = f'''
+        img = document.createElement('img');
+        img.src = "{img_data}";
+        img.style.setProperty("z-index",9999999);
+        img.style.setProperty("position","fixed");
+        arguments[0].insertBefore(img, this);
+        return img;'''
+        new_ele = first_child.run_js(js, body)
+        new_ele.scroll.to_see(True)
+        top = int(self.frame_ele.style('border-top').split('px')[0])
+        left = int(self.frame_ele.style('border-left').split('px')[0])
+        r = self.page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+                                     left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
+        self.page.remove_ele(new_ele)
+        return r
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """在frame内查找单个元素
@@ -621,14 +628,16 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         """
         self._driver = frame.doc_ele
         self.t1 = self.t2 = 'this.documentElement'
+        self._wait_complete = False
 
-    def to_see(self, loc_or_ele):
+    def to_see(self, loc_or_ele, center=False):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param center: 是否尽量滚动到页面正中
         :return: None
         """
         ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver._ele(loc_or_ele)
-        ele.run_js('this.scrollIntoView({behavior: "auto", block: "center", inline: "center"});')
+        self._to_see(ele, center)
 
 
 class ChromiumFrameSetter(ChromiumBaseSetter):

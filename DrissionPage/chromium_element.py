@@ -172,7 +172,7 @@ class ChromiumElement(DrissionElement):
     def scroll(self):
         """用于滚动滚动条的对象"""
         if self._scroll is None:
-            self._scroll = ChromiumScroll(self)
+            self._scroll = ChromiumElementScroll(self)
         return self._scroll
 
     @property
@@ -429,6 +429,7 @@ class ChromiumElement(DrissionElement):
         while perf_counter() < end_time:
             try:
                 result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
+                break
             except CallMethodError:
                 pass
             sleep(.1)
@@ -477,7 +478,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        self.page.scroll.to_see(self)
+        self.scroll.to_see(center=True)
         sleep(1)
         left, top = self.location
         width, height = self.size
@@ -1648,7 +1649,7 @@ class Click(object):
         """
         if not by_js:
             try:
-                self._ele.page.scroll.to_see(self._ele)
+                self._ele.scroll.to_see()
                 if self._ele.states.is_in_viewport and not self._ele.states.is_covered:
                     client_x, client_y = self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
@@ -1711,10 +1712,12 @@ class ChromiumScroll(object):
         """
         self._driver = ele
         self.t1 = self.t2 = 'this'
+        self._wait_complete = False
 
     def _run_js(self, js):
         js = js.format(self.t1, self.t2, self.t2)
         self._driver.run_js(js)
+        self._wait_scrolled()
 
     def to_top(self):
         """滚动到顶端，水平位置不变"""
@@ -1773,6 +1776,36 @@ class ChromiumScroll(object):
         :return: None
         """
         self._run_js(f'{{}}.scrollBy({pixel}, 0);')
+
+    def _wait_scrolled(self):
+        if not self._wait_complete:
+            return
+
+        page = self._driver.page if isinstance(self._driver, ChromiumElement) else self._driver
+        r = page.run_cdp('Page.getLayoutMetrics')
+        x = r['layoutViewport']['pageX']
+        y = r['layoutViewport']['pageY']
+
+        while True:
+            sleep(.1)
+            r = page.run_cdp('Page.getLayoutMetrics')
+            x1 = r['layoutViewport']['pageX']
+            y1 = r['layoutViewport']['pageY']
+
+            if x == x1 and y == y1:
+                break
+
+            x = x1
+            y = y1
+
+
+class ChromiumElementScroll(ChromiumScroll):
+    def to_see(self, center=False):
+        """滚动页面直到元素可见
+        :param center: 是否尽量滚动到页面正中
+        :return: None
+        """
+        self._driver.page.scroll.to_see(self._driver, center=center)
 
 
 class ChromiumSelect(object):

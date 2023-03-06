@@ -931,6 +931,11 @@ class ChromiumBaseSetter(object):
         """返回用于设置页面加载策略的对象"""
         return PageLoadStrategy(self._page)
 
+    @property
+    def scroll(self):
+        """返回用于设置页面滚动设置的对象"""
+        return PageScrollSetter(self._page.scroll)
+
     def timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒
         :param implicit: 查找元素超时时间
@@ -1089,16 +1094,30 @@ class ChromiumPageScroll(ChromiumScroll):
         self.t1 = 'window'
         self.t2 = 'document.documentElement'
 
-    def to_see(self, loc_or_ele):
+    def to_see(self, loc_or_ele, center=False):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param center: 是否尽量滚动到页面正中
         :return: None
         """
         ele = self._driver._ele(loc_or_ele)
-        ele.run_js('this.scrollIntoView({behavior: "auto", block: "nearest", inline: "nearest"});')
+        self._to_see(ele, center)
 
+    def _to_see(self, ele, center):
+        """执行滚动页面直到元素可见
+        :param ele: 元素对象
+        :param center: 是否尽量滚动到页面正中
+        :return: None
+        """
+        if center:
+            ele.run_js('this.scrollIntoViewIfNeeded();')
+            self._wait_scrolled()
+            return
+
+        ele.run_js('this.scrollIntoViewIfNeeded(false);')
         if ele.states.is_covered:
-            ele.run_js('this.scrollIntoView({behavior: "auto", block: "center", inline: "center"});')
+            ele.run_js('this.scrollIntoViewIfNeeded();')
+        self._wait_scrolled()
 
 
 class Timeout(object):
@@ -1149,3 +1168,27 @@ class PageLoadStrategy(object):
     def none(self):
         """设置页面加载策略为none"""
         self._page._page_load_strategy = 'none'
+
+
+class PageScrollSetter(object):
+    def __init__(self, scroll):
+        self._scroll = scroll
+
+    def wait_complete(self, on_off=True):
+        """设置滚动命令后是否等待完成
+        :param on_off: 开或关
+        :return: None
+        """
+        if not isinstance(on_off, bool):
+            raise TypeError('on_off必须为bool。')
+        self._scroll._wait_complete = on_off
+
+    def smooth(self, on_off=True):
+        """设置页面滚动是否平滑滚动
+        :param on_off: 开或关
+        :return: None
+        """
+        if not isinstance(on_off, bool):
+            raise TypeError('on_off必须为bool。')
+        b = 'smooth' if on_off else 'auto'
+        self._scroll._driver.run_js(f'document.documentElement.style.setProperty("scroll-behavior","{b}");')
