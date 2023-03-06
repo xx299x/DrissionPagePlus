@@ -45,7 +45,7 @@ def get_pid_from_port(port):
 
         return process.split(' ')[-1] or None
 
-    except AttributeError:
+    except Exception:
         return None
 
 
