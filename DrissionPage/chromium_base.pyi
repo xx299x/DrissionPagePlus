@@ -81,6 +81,9 @@ class ChromiumBase(BasePage):
     def is_loading(self) -> bool: ...
 
     @property
+    def is_alive(self) -> bool: ...
+
+    @property
     def url(self) -> str: ...
 
     @property

@@ -245,6 +245,15 @@ class ChromiumBase(BasePage):
         return self._is_loading
 
     @property
+    def is_alive(self):
+        """返回页面对象是否仍然可用"""
+        try:
+            self.run_cdp('Page.getLayoutMetrics')
+            return True
+        except TabClosedError:
+            return False
+
+    @property
     def title(self):
         """返回当前页面title"""
         return self.run_cdp_loaded('Target.getTargetInfo', targetId=self.tab_id)['targetInfo']['title']

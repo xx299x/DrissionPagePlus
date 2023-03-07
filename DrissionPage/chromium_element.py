@@ -1833,8 +1833,7 @@ class ChromiumSelect(object):
     @property
     def is_multi(self):
         """返回是否多选表单"""
-        multi = self._ele.attr('multiple')
-        return multi and multi.lower() != "false"
+        return self._ele.attr('multiple') is not None
 
     @property
     def options(self):
@@ -1890,6 +1889,25 @@ class ChromiumSelect(object):
         """
         timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', False, timeout)
+
+    def by_loc(self, loc, timeout=None):
+        """用定位符选择要选择的项
+        :param loc: 定位符
+        :param timeout: 超时时间
+        :return: 是否选择成功
+        """
+        eles = self._ele.eles(loc, timeout)
+        if not eles:
+            return False
+
+        if self.is_multi:
+            for ele in eles:
+                ele.run_js(f'this.selected=true;')
+            return True
+
+        eles[0].run_js(f'this.selected=true;')
+        return True
+
 
     def cancel_by_text(self, text, timeout=None):
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple
