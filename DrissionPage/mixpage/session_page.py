@@ -211,8 +211,11 @@ class SessionPage(BasePage):
         else:
             if self.url:
                 netloc = urlparse(self.url).netloc
-                u = netloc.split('.')
-                domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+                if netloc.replace('.', '').isdigit():  # ip
+                    domain = netloc
+                else:  # 域名
+                    u = netloc.split('.')
+                    domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
                 cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
             else:
                 cookies = tuple(x for x in self.session.cookies)

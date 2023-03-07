@@ -558,7 +558,7 @@ class ChromiumDownloadSetter(DownloadSetter):
         """把driver对象的cookies复制到session对象"""
         ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
         self.session.headers.update({"User-Agent": ua})
-        set_session_cookies(self.session, self._page.get_cookies(as_dict=True))
+        set_session_cookies(self.session, self._page.get_cookies(as_dict=False, all_info=False))
 
     def _download_by_DownloadKit(self, **kwargs):
         """拦截浏览器下载并用downloadKit下载"""

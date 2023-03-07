@@ -268,8 +268,11 @@ class Drission(object):
 
                 if not cookie.get('domain', None):
                     if browser_domain:
-                        u = browser_domain.split('.')
-                        cookie_domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else browser_domain
+                        if browser_domain.replace('.', '').isdigit():  # ip
+                            cookie_domain = browser_domain
+                        else:  # 域名
+                            u = browser_domain.split('.')
+                            cookie_domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else browser_domain
                     else:
                         raise ValueError('cookie中没有域名或浏览器未访问过URL。')
 
@@ -329,8 +332,11 @@ class Drission(object):
         if ex_url not in browser_domain:
             self.driver.get(url)
 
-        u = ex_url.split('.')
-        domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else ex_url
+        if ex_url.replace('.', '').isdigit():  # ip
+            domain = ex_url
+        else:  # 域名
+            u = ex_url.split('.')
+            domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else ex_url
 
         cookies = []
         for cookie in self.session.cookies:

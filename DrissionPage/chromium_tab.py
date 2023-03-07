@@ -282,13 +282,16 @@ class WebPageTab(SessionPage, ChromiumTab):
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        self.set.cookies(self._get_driver_cookies(as_dict=True), set_session=True)
+        self.set.cookies(self._get_driver_cookies(as_dict=False, all_info=False), set_session=True)
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         netloc = urlparse(self.url).netloc
-        u = netloc.split('.')
-        domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+        if netloc.replace('.', '').isdigit():  # ip
+            domain = netloc
+        else:  # 域名
+            u = netloc.split('.')
+            domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
         cookies = []
         for cookie in super().get_cookies():
             if not cookie.get('domain', None):
@@ -298,27 +301,32 @@ class WebPageTab(SessionPage, ChromiumTab):
                 cookies.append(cookie)
         self.set.cookies(cookies, set_driver=True)
 
-    def get_cookies(self, as_dict=False, all_domains=False):
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
+        :param all_info: 是否返回所有信息，False则只返回name、value、domain
         :return: cookies信息
         """
         if self._mode == 's':
-            return super().get_cookies(as_dict, all_domains)
+            return super().get_cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return self._get_driver_cookies(as_dict)
+            return self._get_driver_cookies(as_dict, all_info)
 
-    def _get_driver_cookies(self, as_dict=False):
+    def _get_driver_cookies(self, as_dict=False, all_info=False):
         """获取浏览器cookies
-        :param as_dict: 以dict形式返回
+        :param as_dict: 是否以dict形式返回，为True时all_info无效
+        :param all_info: 是否返回所有信息，为False时只返回name、value、domain
         :return: cookies信息
         """
         cookies = self.run_cdp('Network.getCookies')['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
-        else:
+        elif all_info:
             return cookies
+        else:
+            return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
+                    for cookie in cookies]
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
@@ -385,5 +393,5 @@ class WebPageTabDownloadSetter(DownloadSetter):
         if self._page.mode == 'd':
             ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self._page.session.headers.update({"User-Agent": ua})
-            set_session_cookies(self._page.session, self._page.get_cookies(as_dict=True))
+            set_session_cookies(self._page.session, self._page.get_cookies(as_dict=False, all_domains=False))
         return self.DownloadKit

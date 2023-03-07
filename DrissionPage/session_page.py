@@ -179,10 +179,11 @@ class SessionPage(BasePage):
         """
         return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, single)
 
-    def get_cookies(self, as_dict=False, all_domains=False):
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
-        :param as_dict: 是否以字典方式返回
+        :param as_dict: 是否以字典方式返回，False则以list返回
         :param all_domains: 是否返回所有域的cookies
+        :param all_info: 是否返回所有信息，False则只返回name、value、domain
         :return: cookies信息
         """
         if all_domains:
@@ -190,16 +191,25 @@ class SessionPage(BasePage):
         else:
             if self.url:
                 netloc = urlparse(self.url).netloc
-                u = netloc.split('.')
-                domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+                if netloc.replace('.', '').isdigit():  # ip
+                    domain = netloc
+                else:  # 域名
+                    u = netloc.split('.')
+                    domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
                 cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
             else:
                 cookies = tuple(x for x in self.session.cookies)
 
         if as_dict:
             return {x.name: x.value for x in cookies}
-        else:
+        elif all_info:
             return [cookie_to_dict(cookie) for cookie in cookies]
+        else:
+            r = []
+            for c in cookies:
+                c = cookie_to_dict(c)
+                r.append({'name': c['name'], 'value': c['value'], 'domain': c['domain']})
+            return r
 
     def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
         """用post方式跳转到url

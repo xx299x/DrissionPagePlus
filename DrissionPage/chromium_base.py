@@ -429,16 +429,20 @@ class ChromiumBase(BasePage):
                                               timeout=timeout)
         return self._url_available
 
-    def get_cookies(self, as_dict=False):
+    def get_cookies(self, as_dict=False, all_info=False):
         """获取cookies信息
-        :param as_dict: 为True时返回由{name: value}键值对组成的dict
+        :param as_dict: 为True时返回由{name: value}键值对组成的dict，为True时返回list且all_info无效
+        :param all_info: 是否返回所有信息，为False时只返回name、value、domain
         :return: cookies信息
         """
         cookies = self.run_cdp_loaded('Network.getCookies')['cookies']
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
-        else:
+        elif all_info:
             return cookies
+        else:
+            return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
+                    for cookie in cookies]
 
     def ele(self, loc_or_ele, timeout=None):
         """获取第一个符合条件的元素对象
