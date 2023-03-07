@@ -403,6 +403,11 @@ class ChromiumTabRect(object):
         self._page = page
 
     @property
+    def window_state(self):
+        """返回窗口状态：normal、fullscreen、maximized、 minimized"""
+        return self._get_browser_rect()['windowState']
+
+    @property
     def browser_location(self):
         """返回浏览器在屏幕上的坐标，左上角为(0, 0)"""
         r = self._get_browser_rect()

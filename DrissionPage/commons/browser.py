@@ -99,7 +99,7 @@ def set_prefs(opt):
         prefs = opt.preferences
         del_list = opt._prefs_to_del
     else:
-        prefs = opt.experimental_options.get('prefs', None)
+        prefs = opt.experimental_options.get('prefs', [])
         del_list = []
 
     if not opt.user_data_path:

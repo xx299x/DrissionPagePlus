@@ -8,6 +8,7 @@ from json import loads, JSONDecodeError
 from os import sep
 from pathlib import Path
 from time import perf_counter, sleep, time
+from urllib.parse import urlparse
 from warnings import warn
 
 from requests import Session
@@ -990,11 +991,10 @@ class ChromiumBaseSetter(object):
         result_cookies = []
         for cookie in cookies:
             if not cookie.get('domain', None):
-                continue
-            c = {'value': '' if cookie['value'] is None else cookie['value'],
-                 'name': cookie['name'],
-                 'domain': cookie['domain']}
-            result_cookies.append(c)
+                cookie['domain'] = urlparse(self._page.url).netloc
+            result_cookies.append({'value': '' if cookie['value'] is None else cookie['value'],
+                                   'name': cookie['name'],
+                                   'domain': cookie['domain']})
         self._page.run_cdp_loaded('Network.setCookies', cookies=result_cookies)
 
     def upload_files(self, files):
@@ -1192,3 +1192,4 @@ class PageScrollSetter(object):
             raise TypeError('on_off必须为bool。')
         b = 'smooth' if on_off else 'auto'
         self._scroll._driver.run_js(f'document.documentElement.style.setProperty("scroll-behavior","{b}");')
+        self._scroll._wait_complete = on_off
