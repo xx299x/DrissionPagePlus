@@ -1,5 +1,4 @@
 requests
-tldextract
 lxml
 cssselect
 DownloadKit>=0.5.3

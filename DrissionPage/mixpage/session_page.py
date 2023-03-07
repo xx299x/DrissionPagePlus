@@ -11,7 +11,6 @@ from warnings import warn
 from DownloadKit import DownloadKit
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
-from tldextract import extract
 
 from .base import BasePage
 from DrissionPage.configs.session_options import SessionOptions
@@ -211,8 +210,9 @@ class SessionPage(BasePage):
             cookies = self.session.cookies
         else:
             if self.url:
-                url = extract(self.url)
-                domain = f'{url.domain}.{url.suffix}'
+                netloc = urlparse(self.url).netloc
+                u = netloc.split('.')
+                domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
                 cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
             else:
                 cookies = tuple(x for x in self.session.cookies)

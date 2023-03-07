@@ -4,8 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from copy import copy
-
-from tldextract import extract
+from urllib.parse import urlparse
 
 from .chromium_base import ChromiumBase, ChromiumBaseSetter
 from .commons.web import set_session_cookies
@@ -287,11 +286,12 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
-        ex_url = extract(self._session_url)
-        domain = f'{ex_url.domain}.{ex_url.suffix}'
+        netloc = urlparse(self.url).netloc
+        u = netloc.split('.')
+        domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
         cookies = []
         for cookie in super().get_cookies():
-            if cookie.get('domain', '') == '':
+            if not cookie.get('domain', None):
                 cookie['domain'] = domain
 
             if domain in cookie['domain']:
