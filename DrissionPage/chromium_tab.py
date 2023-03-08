@@ -291,7 +291,7 @@ class WebPageTab(SessionPage, ChromiumTab):
             domain = netloc
         else:  # 域名
             u = netloc.split('.')
-            domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+            domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
         cookies = []
         for cookie in super().get_cookies():
             if not cookie.get('domain', None):

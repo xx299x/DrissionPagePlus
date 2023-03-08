@@ -1004,7 +1004,12 @@ class ChromiumBaseSetter(object):
         result_cookies = []
         for cookie in cookies:
             if not cookie.get('domain', None):
-                cookie['domain'] = urlparse(self._page.url).netloc
+                netloc = urlparse(self._page.url).netloc
+                if netloc.replace('.', '').isdigit():  # ip
+                    cookie['domain'] = netloc
+                else:  # 域名
+                    u = netloc.split('.')
+                    cookie['domain'] = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
             result_cookies.append({'value': '' if cookie['value'] is None else cookie['value'],
                                    'name': cookie['name'],
                                    'domain': cookie['domain']})

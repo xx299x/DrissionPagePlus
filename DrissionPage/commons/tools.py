@@ -120,6 +120,7 @@ def port_is_using(ip, port):
     """
     from socket import socket, AF_INET, SOCK_STREAM
     s = socket(AF_INET, SOCK_STREAM)
+    s.settimeout(.1)
     result = s.connect_ex((ip, int(port)))
     s.close()
     return result == 0

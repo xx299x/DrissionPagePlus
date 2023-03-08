@@ -272,7 +272,7 @@ class Drission(object):
                             cookie_domain = browser_domain
                         else:  # 域名
                             u = browser_domain.split('.')
-                            cookie_domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else browser_domain
+                            cookie_domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else browser_domain
                     else:
                         raise ValueError('cookie中没有域名或浏览器未访问过URL。')
 
@@ -336,7 +336,7 @@ class Drission(object):
             domain = ex_url
         else:  # 域名
             u = ex_url.split('.')
-            domain = f'{u[-2]}.{u[-1]}' if len(u) > 1 else ex_url
+            domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else ex_url
 
         cookies = []
         for cookie in self.session.cookies:
