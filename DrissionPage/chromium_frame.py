@@ -121,7 +121,6 @@ class ChromiumFrame(ChromiumBase):
                     break
 
                 except Exception:
-                    raise
                     pass
 
             if self._debug:
