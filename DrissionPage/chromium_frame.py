@@ -129,9 +129,21 @@ class ChromiumFrame(ChromiumBase):
             self._is_loading = False
             self._is_reading = False
 
+    def _onFrameNavigated(self, **kwargs):
+        """页面跳转时触发"""
+        if kwargs['frame']['frameId'] == self.frame_id and self._first_run is False and self._is_loading:
+            self._is_loading = True
+
+            if self._debug:
+                print('navigated')
+                if self._debug_recorder:
+                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
+
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
         # 用于覆盖父类方法，不能删
+        self._get_new_document()
+
         if self._debug:
             print('loadEventFired')
             if self._debug_recorder:

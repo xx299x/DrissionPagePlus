@@ -266,7 +266,7 @@ class Drission(object):
                 except AttributeError:
                     browser_domain = ''
 
-                if not cookie.get('domain', None):
+                if cookie.get('domain', None) is None:
                     if browser_domain:
                         if browser_domain.replace('.', '').isdigit():  # ip
                             cookie_domain = browser_domain

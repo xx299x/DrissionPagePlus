@@ -177,10 +177,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     @property
     def cookies(self):
-        if self._mode == 's':
-            return super().get_cookies()
-        elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies()
+        """以dict方式返回cookies"""
+        return super().cookies
 
     @property
     def session(self):
@@ -356,7 +354,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        self.set.cookies(self._get_driver_cookies(as_dict=False, all_info=False), set_session=True)
+        self.set.cookies(self._get_driver_cookies(as_dict=True), set_session=True)
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
@@ -368,7 +366,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
         cookies = []
         for cookie in super().get_cookies():
-            if not cookie.get('domain', None):
+            if cookie.get('domain', None) is None:
                 cookie['domain'] = domain
 
             if domain in cookie['domain']:
@@ -460,7 +458,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_driver = None
 
     # ---------------准备废弃---------------
-    def set_cookies(self, cookies, set_session=False, set_driver=False):
+    def set_cookies(self, cookies, set_session=True, set_driver=True):
         """添加cookies信息到浏览器或session对象
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
         :param set_session: 是否设置到Session对象
