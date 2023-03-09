@@ -1838,7 +1838,7 @@ class ChromiumSelect(object):
     @property
     def options(self):
         """返回所有选项元素组成的列表"""
-        return self._ele.eles('tag:option')
+        return self._ele.eles('xpath://option')
 
     @property
     def selected_option(self):
@@ -1855,58 +1855,56 @@ class ChromiumSelect(object):
         """
         return [x for x in self.options if x.states.is_selected]
 
+    def all(self):
+        """全选"""
+        if not self.is_multi:
+            raise TypeError("只能在多选菜单执行此操作。")
+        return self._by_loc('tag:option', 1, False)
+
+    def invert(self):
+        """反选"""
+        if not self.is_multi:
+            raise TypeError("只能对多项选框执行反选。")
+        for i in self.options:
+            i.click(by_js=True)
+
     def clear(self):
         """清除所有已选项"""
         if not self.is_multi:
-            raise NotImplementedError("只能在多选菜单执行此操作。")
-        for opt in self.options:
-            if opt.states.is_selected:
-                opt.click(by_js=True)
+            raise TypeError("只能在多选菜单执行此操作。")
+        return self._by_loc('tag:option', 1, True)
 
     def by_text(self, text, timeout=None):
         """此方法用于根据text值选择项。当元素是多选列表时，可以接收list或tuple
         :param text: text属性值，传入list或tuple可选择多项
-        :param timeout: 超时时间，不输入默认实用页面超时时间
+        :param timeout: 超时时间，为None默认使用页面超时时间
         :return: 是否选择成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', False, timeout)
 
     def by_value(self, value, timeout=None):
         """此方法用于根据value值选择项。当元素是多选列表时，可以接收list或tuple
         :param value: value属性值，传入list或tuple可选择多项
-        :param timeout: 超时时间，不输入默认实用页面超时时间
+        :param timeout: 超时时间，为None默认使用页面超时时间
         :return: 是否选择成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', False, timeout)
 
     def by_index(self, index, timeout=None):
         """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple
         :param index: 序号，0开始，传入list或tuple可选择多项
-        :param timeout: 超时时间，不输入默认实用页面超时时间
+        :param timeout: 超时时间，为None默认使用页面超时时间
         :return: 是否选择成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', False, timeout)
 
     def by_loc(self, loc, timeout=None):
-        """用定位符选择要选择的项
+        """用定位符选择指定的项
         :param loc: 定位符
         :param timeout: 超时时间
         :return: 是否选择成功
         """
-        eles = self._ele.eles(loc, timeout)
-        if not eles:
-            return False
-
-        if self.is_multi:
-            for ele in eles:
-                ele.run_js(f'this.selected=true;')
-            return True
-
-        eles[0].run_js(f'this.selected=true;')
-        return True
+        return self._by_loc(loc, timeout)
 
     def cancel_by_text(self, text, timeout=None):
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple
@@ -1914,7 +1912,6 @@ class ChromiumSelect(object):
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(text, 'text', True, timeout)
 
     def cancel_by_value(self, value, timeout=None):
@@ -1923,7 +1920,6 @@ class ChromiumSelect(object):
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(value, 'value', True, timeout)
 
     def cancel_by_index(self, index, timeout=None):
@@ -1932,85 +1928,105 @@ class ChromiumSelect(object):
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
         """
-        timeout = timeout if timeout is not None else self._ele.page.timeout
         return self._select(index, 'index', True, timeout)
 
-    def invert(self):
-        """反选"""
-        if not self.is_multi:
-            raise NotImplementedError("只能对多项选框执行反选。")
-
-        for i in self.options:
-            i.click(by_js=True)
-
-    def _select(self, text_value_index=None, para_type='text', deselect=False, timeout=None):
-        """选定或取消选定下拉列表中子元素
-        :param text_value_index: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
-        :param para_type: 参数类型，可选 'text'、'value'、'index'
-        :param deselect: 是否取消选择
+    def cancel_by_loc(self, loc, timeout=None):
+        """用定位符取消选择指定的项
+        :param loc: 定位符
+        :param timeout: 超时时间
         :return: 是否选择成功
         """
-        if not self.is_multi and isinstance(text_value_index, (list, tuple)):
-            raise TypeError('单选下拉列表不能传入list和tuple')
+        return self._by_loc(loc, timeout, True)
 
-        def do_select():
-            if para_type == 'text':
-                ele = self._ele._ele(f'tx={text_value_index}', timeout=0, raise_err=False)
-            elif para_type == 'value':
-                ele = self._ele._ele(f'@value={text_value_index}', timeout=0, raise_err=False)
-            elif para_type == 'index':
-                ele = self._ele._ele(f'x:.//option[{int(text_value_index)}]', timeout=0, raise_err=False)
-            else:
-                raise ValueError('para_type参数只能传入"text"、"value"或"index"。')
+    def _by_loc(self, loc, timeout=None, cancel=False):
+        """用定位符取消选择指定的项
+        :param loc: 定位符
+        :param timeout: 超时时间
+        :param cancel: 是否取消选择
+        :return: 是否选择成功
+        """
+        eles = self._ele.eles(loc, timeout)
+        if not eles:
+            return False
 
-            if not ele:
-                return False
-
-            js = 'false' if deselect else 'true'
-            ele.run_js(f'this.selected={js};')
-
+        mode = 'false' if cancel else 'true'
+        if self.is_multi:
+            for ele in eles:
+                ele.run_js(f'this.selected={mode};')
             return True
 
-        if isinstance(text_value_index, (str, int)):
-            ok = do_select()
-            end_time = perf_counter() + timeout
-            while not ok and perf_counter() < end_time:
-                sleep(.2)
-                ok = do_select()
-            return ok
+        eles[0].run_js(f'this.selected={mode};')
+        return True
 
-        elif isinstance(text_value_index, (list, tuple)):
-            return self._select_multi(text_value_index, para_type, deselect)
-
-        else:
-            raise TypeError('只能传入str、int、list和tuple类型。')
-
-    def _select_multi(self,
-                      text_value_index=None,
-                      para_type='text',
-                      deselect=False):
-        """选定或取消选定下拉列表中多个子元素
-        :param text_value_index: 根据文本、值选或序号择选多项
+    def _select(self, condition, para_type='text', cancel=False, timeout=None):
+        """选定或取消选定下拉列表中子元素
+        :param condition: 根据文本、值选或序号择选项，若允许多选，传入list或tuple可多选
         :param para_type: 参数类型，可选 'text'、'value'、'index'
-        :param deselect: 是否取消选择
+        :param cancel: 是否取消选择
         :return: 是否选择成功
         """
-        if para_type not in ('text', 'value', 'index'):
-            raise ValueError('para_type参数只能传入“text”、“value”或“index”')
+        if not self.is_multi and isinstance(condition, (list, tuple)):
+            raise TypeError('单选列表只能传入str格式。')
 
-        if not isinstance(text_value_index, (list, tuple)):
-            raise TypeError('只能传入list或tuple类型。')
+        mode = 'false' if cancel else 'true'
+        timeout = timeout if timeout is not None else self._ele.page.timeout
+        condition = {condition} if isinstance(condition, str) else set(condition)
 
-        success = True
-        for i in text_value_index:
-            if not isinstance(i, (int, str)):
-                raise TypeError('列表只能由str或int组成')
+        if para_type in ('text', 'value'):
+            return self._text_value(condition, para_type, mode, timeout)
+        elif para_type == 'index':
+            return self._index(condition, mode, timeout)
 
-            p = 'index' if isinstance(i, int) else para_type
-            if not self._select(i, p, deselect):
-                success = False
+    def _text_value(self, condition, para_type, mode, timeout):
+        """执行text和value搜索
+        :param condition: 条件set
+        :param para_type: 参数类型，可选 'text'、'value'
+        :param mode: 'true' 或 'false'
+        :param timeout: 超时时间
+        :return: 是否选择成功
+        """
+        ok = False
+        text_len = len(condition)
+        eles = []
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if para_type == 'text':
+                eles = [i for i in self.options if i.text in condition]
+            elif para_type == 'value':
+                eles = [i for i in self.options if i.attr('value') in condition]
 
-        return success
+            if len(eles) >= text_len:
+                ok = True
+                break
+
+        if ok:
+            for i in eles:
+                i.run_js(f'this.selected={mode};')
+
+        return False
+
+    def _index(self, condition, mode, timeout):
+        """执行index搜索
+        :param condition: 条件set
+        :param mode: 'true' 或 'false'
+        :param timeout: 超时时间
+        :return: 是否选择成功
+        """
+        ok = False
+        condition = [int(i) for i in condition]
+        text_len = max(condition)
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if len(self.options) >= text_len:
+                ok = True
+                break
+
+        if ok:
+            eles = self.options
+            for i in condition:
+                eles[i - 1].run_js(f'this.selected={mode};')
+
+        return False
 
 
 class ChromiumElementWaiter(object):
