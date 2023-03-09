@@ -278,9 +278,6 @@ class SessionPage(BasePage):
         if not check_headers(kwargs, self.session.headers, 'timeout'):
             kwargs['timeout'] = self.timeout
 
-        if 'allow_redirects' not in kwargs:
-            kwargs['allow_redirects'] = False
-
         r = err = None
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
