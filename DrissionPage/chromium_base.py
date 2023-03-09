@@ -855,87 +855,6 @@ class ChromiumBase(BasePage):
         return self.set.load_strategy
 
 
-class Screencast(object):
-    def __init__(self, page):
-        self._page = page
-        self._path = None
-        self._quality = 100
-
-    def start(self, save_path=None, quality=None):
-        """开始录屏
-        :param save_path: 录屏保存位置
-        :param quality: 录屏质量
-        :return: None
-        """
-        self.set(save_path, quality)
-        if self._path is None:
-            raise ValueError('save_path必须设置。')
-        clean_folder(self._path)
-        self._page.driver.Page.screencastFrame = self._onScreencastFrame
-        self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=self._quality)
-
-    def stop(self, to_mp4=False, video_name=None):
-        """停止录屏
-        :param to_mp4: 是否合并成MP4格式
-        :param video_name: 视频文件名，为None时以当前时间名命
-        :return: 文件路径
-        """
-        self._page.driver.Page.screencastFrame = None
-        self._page.run_cdp('Page.stopScreencast')
-        if not to_mp4:
-            return str(Path(self._path).absolute())
-
-        if not str(video_name).isascii() or not str(self._path).isascii():
-            raise TypeError('转换成视频仅支持英文路径和文件名。')
-
-        try:
-            from cv2 import VideoWriter, imread
-            from numpy import fromfile, uint8
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
-
-        pic_list = Path(self._path).glob('*.jpg')
-        img = imread(str(next(pic_list)))
-        imgInfo = img.shape
-        size = (imgInfo[1], imgInfo[0])
-
-        if video_name and not video_name.endswith('mp4'):
-            video_name = f'{video_name}.mp4'
-        name = f'{time()}.mp4' if not video_name else video_name
-        fourcc = 14
-        videoWrite = VideoWriter(f'{self._path}{sep}{name}', fourcc, 8, size)
-
-        for i in pic_list:
-            img = imread(str(i))
-            videoWrite.write(img)
-
-        clean_folder(self._path, ignore=(name,))
-        return f'{self._path}{sep}{name}'
-
-    def set(self, save_path=None, quality=None):
-        """设置录屏参数
-        :param save_path: 保存路径
-        :param quality: 视频质量，可取值0-100
-        :return:
-        """
-        if save_path:
-            save_path = Path(save_path)
-            if save_path.exists() and save_path.is_file():
-                raise TypeError('save_path必须指定文件夹。')
-            save_path.mkdir(parents=True, exist_ok=True)
-            self._path = str(save_path)
-
-        if quality is not None:
-            if quality < 0 or quality > 100:
-                raise ValueError('quality必须在0-100之间。')
-            self._quality = quality
-
-    def _onScreencastFrame(self, **kwargs):
-        with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
-            f.write(b64decode(kwargs['data']))
-        self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
-
-
 class ChromiumBaseSetter(object):
     def __init__(self, page):
         self._page = page
@@ -1049,7 +968,10 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        return ChromiumElementWaiter(self._driver, loc_or_ele).delete(timeout)
+        if isinstance(loc_or_ele, (str, tuple)):
+            ele = self._driver._ele(loc_or_ele, timeout=.3, raise_err=False)
+            return ele.wait.delete(timeout) if ele else True
+        return loc_or_ele.wait.delete(timeout)
 
     def ele_display(self, loc_or_ele, timeout=None):
         """等待元素变成显示状态
@@ -1057,7 +979,8 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        return ChromiumElementWaiter(self._driver, loc_or_ele).display(timeout)
+        ele = self._driver._ele(loc_or_ele, raise_err=False)
+        return ele.wait.display(timeout)
 
     def ele_hidden(self, loc_or_ele, timeout=None):
         """等待元素变成隐藏状态
@@ -1065,7 +988,8 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        return ChromiumElementWaiter(self._driver, loc_or_ele).hidden(timeout)
+        ele = self._driver._ele(loc_or_ele, raise_err=False)
+        return ele.wait.hidden(timeout)
 
     def load_start(self, timeout=None):
         """等待页面开始加载
@@ -1211,3 +1135,84 @@ class PageScrollSetter(object):
         b = 'smooth' if on_off else 'auto'
         self._scroll._driver.run_js(f'document.documentElement.style.setProperty("scroll-behavior","{b}");')
         self._scroll._wait_complete = on_off
+
+
+class Screencast(object):
+    def __init__(self, page):
+        self._page = page
+        self._path = None
+        self._quality = 100
+
+    def start(self, save_path=None, quality=None):
+        """开始录屏
+        :param save_path: 录屏保存位置
+        :param quality: 录屏质量
+        :return: None
+        """
+        self.set(save_path, quality)
+        if self._path is None:
+            raise ValueError('save_path必须设置。')
+        clean_folder(self._path)
+        self._page.driver.Page.screencastFrame = self._onScreencastFrame
+        self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=self._quality)
+
+    def stop(self, to_mp4=False, video_name=None):
+        """停止录屏
+        :param to_mp4: 是否合并成MP4格式
+        :param video_name: 视频文件名，为None时以当前时间名命
+        :return: 文件路径
+        """
+        self._page.driver.Page.screencastFrame = None
+        self._page.run_cdp('Page.stopScreencast')
+        if not to_mp4:
+            return str(Path(self._path).absolute())
+
+        if not str(video_name).isascii() or not str(self._path).isascii():
+            raise TypeError('转换成视频仅支持英文路径和文件名。')
+
+        try:
+            from cv2 import VideoWriter, imread
+            from numpy import fromfile, uint8
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
+
+        pic_list = Path(self._path).glob('*.jpg')
+        img = imread(str(next(pic_list)))
+        imgInfo = img.shape
+        size = (imgInfo[1], imgInfo[0])
+
+        if video_name and not video_name.endswith('mp4'):
+            video_name = f'{video_name}.mp4'
+        name = f'{time()}.mp4' if not video_name else video_name
+        fourcc = 14
+        videoWrite = VideoWriter(f'{self._path}{sep}{name}', fourcc, 8, size)
+
+        for i in pic_list:
+            img = imread(str(i))
+            videoWrite.write(img)
+
+        clean_folder(self._path, ignore=(name,))
+        return f'{self._path}{sep}{name}'
+
+    def set(self, save_path=None, quality=None):
+        """设置录屏参数
+        :param save_path: 保存路径
+        :param quality: 视频质量，可取值0-100
+        :return:
+        """
+        if save_path:
+            save_path = Path(save_path)
+            if save_path.exists() and save_path.is_file():
+                raise TypeError('save_path必须指定文件夹。')
+            save_path.mkdir(parents=True, exist_ok=True)
+            self._path = str(save_path)
+
+        if quality is not None:
+            if quality < 0 or quality > 100:
+                raise ValueError('quality必须在0-100之间。')
+            self._quality = quality
+
+    def _onScreencastFrame(self, **kwargs):
+        with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
+            f.write(b64decode(kwargs['data']))
+        self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])

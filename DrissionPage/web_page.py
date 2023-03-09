@@ -491,7 +491,7 @@ class WebPageSetter(ChromiumPageSetter):
         self._session_setter = SessionPageSetter(self._page)
         self._chromium_setter = ChromiumPageSetter(self._page)
 
-    def cookies(self, cookies, set_session=False, set_driver=False):
+    def cookies(self, cookies, set_session=True, set_driver=True):
         """添加cookies信息到浏览器或session对象
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
         :param set_session: 是否设置到Session对象

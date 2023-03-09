@@ -1908,7 +1908,6 @@ class ChromiumSelect(object):
         eles[0].run_js(f'this.selected=true;')
         return True
 
-
     def cancel_by_text(self, text, timeout=None):
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param text: 文本，传入list或tuple可取消多项
@@ -2017,107 +2016,91 @@ class ChromiumSelect(object):
 class ChromiumElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
-    def __init__(self, page_or_ele, loc_or_ele):
+    def __init__(self, page, ele):
         """等待元素在dom中某种状态，如删除、显示、隐藏
-        :param page_or_ele: 页面或父元素
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
+        :param page: 元素所在页面
+        :param ele: 要等待的元素
         """
-        if not isinstance(loc_or_ele, (str, tuple, ChromiumElement)):
-            raise TypeError('loc_or_ele只能接收定位符或元素对象。')
-
-        self._driver = page_or_ele
-        self._loc_or_ele = loc_or_ele
+        self._page = page
+        self._ele = ele
 
     def delete(self, timeout=None):
         """等待元素从dom删除
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
-        if timeout is None:
-            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
-
-        if isinstance(self._loc_or_ele, ChromiumElement):
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
-                if not self._loc_or_ele.states.is_alive:
-                    return True
-
-        ele = self._driver._ele(self._loc_or_ele, timeout=.5, raise_err=False)
-        if not ele:
-            return True
-
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if not ele.states.is_alive:
-                return True
-
-        return False
+        return self._wait_state('is_alive', False, timeout)
 
     def display(self, timeout=None):
         """等待元素从dom显示
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
-        return self._wait_ele('display', timeout)
+        return self._wait_state('is_displayed', True, timeout)
 
     def hidden(self, timeout=None):
         """等待元素从dom隐藏
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
-        return self._wait_ele('hidden', timeout)
+        return self._wait_state('is_displayed', False, timeout)
 
     def covered(self, timeout=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
-        return self._covered(True, timeout)
+        return self._wait_state('is_covered', True, timeout)
 
     def not_covered(self, timeout=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
-        return self._covered(False, timeout)
+        return self._wait_state('is_covered', False, timeout)
 
-    def _covered(self, mode=False, timeout=None):
-        """等待当前元素被遮盖
-        :param mode: True表示被遮盖，False表示不被遮盖
-        :param timeout: 超时时间，为None使用元素所在页面timeout属性
+    def enabled(self, timeout=None):
+        """等待当前元素变成可用
+        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._wait_state('is_enabled', True, timeout)
+
+    def disabled(self, timeout=None):
+        """等待当前元素变成可用
+        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :return: 是否等待成功
+        """
+        return self._wait_state('is_enabled', False, timeout)
+
+    def disabled_or_delete(self, timeout=None):
+        """等待当前元素变成不可用或从DOM移除
+        :param timeout:超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
         if timeout is None:
-            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
+            timeout = self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._loc_or_ele.states.is_covered == mode:
+            if not self._ele.states.is_enabled or not self._ele.states.is_alive:
                 return True
             sleep(.05)
 
         return False
 
-    def _wait_ele(self, mode, timeout=None):
-        """执行等待
-        :param mode: 等待模式
-        :param timeout: 超时时间
+    def _wait_state(self, attr, mode=False, timeout=None):
+        """等待元素某个bool状态到达指定状态
+        :param attr: 状态名称
+        :param mode: True或False
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :return: 是否等待成功
         """
         if timeout is None:
-            timeout = self._driver.page.timeout if isinstance(self._driver, ChromiumElement) else self._driver.timeout
-
-        target = self._driver._ele(self._loc_or_ele, raise_err=False)
-        if not target:
-            return None
-
+            timeout = self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if mode == 'display' and target.states.is_displayed:
+            if self._ele.states.__getattribute__(attr) == mode:
                 return True
-
-            elif mode == 'hidden' and not target.states.is_displayed:
-                return True
-
             sleep(.05)
 
         return False
