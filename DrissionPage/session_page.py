@@ -196,6 +196,7 @@ class SessionPage(BasePage):
                 else:  # 域名
                     u = netloc.split('.')
                     domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+
                 cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
             else:
                 cookies = tuple(x for x in self.session.cookies)

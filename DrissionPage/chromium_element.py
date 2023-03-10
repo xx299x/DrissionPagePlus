@@ -501,7 +501,9 @@ class ChromiumElement(DrissionElement):
         try:
             self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
         except Exception:
-            self.click(by_js=True)
+            pass
+        self.click(by_js=True)
+        self.click.at()
 
         if clear and vals != '\n':
             self.clear(by_js=False)

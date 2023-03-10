@@ -68,9 +68,14 @@ class WebPageTab(SessionPage, ChromiumTab):
     def url(self):
         """返回当前url"""
         if self._mode == 'd':
-            return super(SessionPage, self).url if self._tab_obj else None
+            return self._browser_url
         elif self._mode == 's':
             return self._session_url
+
+    @property
+    def _browser_url(self):
+        """返回浏览器当前url"""
+        return super(SessionPage, self).url if self._tab_obj else None
 
     @property
     def title(self):
@@ -276,11 +281,14 @@ class WebPageTab(SessionPage, ChromiumTab):
         :param copy_user_agent: 是否复制ua信息
         :return: None
         """
+        if not self._has_session:
+            return
+
         if copy_user_agent:
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        self.set.cookies(self._get_driver_cookies(as_dict=True, all_info=False), set_session=True)
+        set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
@@ -290,6 +298,7 @@ class WebPageTab(SessionPage, ChromiumTab):
         else:  # 域名
             u = netloc.split('.')
             domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+
         cookies = []
         for cookie in super().get_cookies():
             if cookie.get('domain', None) is None:
@@ -297,7 +306,8 @@ class WebPageTab(SessionPage, ChromiumTab):
 
             if domain in cookie['domain']:
                 cookies.append(cookie)
-        self.set.cookies(cookies, set_driver=True)
+
+        self.run_cdp_loaded('Network.setCookies', cookies=cookies)
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
@@ -348,16 +358,14 @@ class WebPageTabSetter(ChromiumBaseSetter):
         self._session_setter = SessionPageSetter(self._page)
         self._chromium_setter = ChromiumBaseSetter(self._page)
 
-    def cookies(self, cookies, set_session=False, set_driver=False):
+    def cookies(self, cookies):
         """添加cookies信息到浏览器或session对象
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
-        :param set_session: 是否设置到Session对象
-        :param set_driver: 是否设置到浏览器
         :return: None
         """
-        if set_driver and self._page._has_driver:
+        if self._page.mode == 'd' and self._page._has_driver:
             self._chromium_setter.cookies(cookies)
-        if set_session and self._page._has_session:
+        elif self._page.mode == 's' and self._page._has_session:
             self._session_setter.cookies(cookies)
 
     def headers(self, headers) -> None:

@@ -429,13 +429,16 @@ class ChromiumBase(BasePage):
                                               timeout=timeout)
         return self._url_available
 
-    def get_cookies(self, as_dict=False, all_info=False):
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """获取cookies信息
         :param as_dict: 为True时返回由{name: value}键值对组成的dict，为True时返回list且all_info无效
+        :param all_domains: 是否返回所有域的cookies
         :param all_info: 是否返回所有信息，为False时只返回name、value、domain
         :return: cookies信息
         """
-        cookies = self.run_cdp_loaded('Network.getCookies')['cookies']
+        txt = 'Storage' if all_domains else 'Network'
+        cookies = self.run_cdp_loaded(f'{txt}.getCookies')['cookies']
+
         if as_dict:
             return {cookie['name']: cookie['value'] for cookie in cookies}
         elif all_info:
@@ -933,6 +936,7 @@ class ChromiumBaseSetter(object):
             result_cookies.append({'value': '' if cookie['value'] is None else cookie['value'],
                                    'name': cookie['name'],
                                    'domain': cookie['domain']})
+
         self._page.run_cdp_loaded('Network.setCookies', cookies=result_cookies)
 
     def upload_files(self, files):
@@ -953,6 +957,7 @@ class ChromiumBaseSetter(object):
         :param headers: dict格式的headers数据
         :return: None
         """
+        self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
 
