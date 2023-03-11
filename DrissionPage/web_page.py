@@ -4,10 +4,10 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from urllib.parse import urlparse
 from warnings import warn
 
 from requests import Session
+from tldextract import extract
 
 from .commons.web import set_session_cookies
 from .base import BasePage
@@ -363,29 +363,30 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
+        set_session_cookies(self.session, self._get_driver_cookies(as_dict=False))  # 带域名list
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
 
-        netloc = urlparse(self._browser_url).netloc
-        if netloc.replace('.', '').isdigit():  # ip
-            domain = netloc
-        else:  # 域名
-            u = netloc.split('.')
-            domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+        ex_url = extract(self._session_url)
+        domain = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
 
         cookies = []
-        for cookie in super().get_cookies():
+        for cookie in super().get_cookies():  # 带域名list
             if not cookie.get('domain', None):
                 cookie['domain'] = domain
 
             if domain in cookie['domain']:
                 cookies.append(cookie)
 
-        self.run_cdp_loaded('Network.setCookies', cookies=cookies)
+        # self.run_cdp_loaded('Network.setCookies', cookies=cookies)
+        for c in cookies:
+            try:
+                self.run_cdp_loaded('Network.setCookie', name=c['name'], value=c['value'], domain=c['domain'])
+            except Exception as e:
+                print(e)
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies

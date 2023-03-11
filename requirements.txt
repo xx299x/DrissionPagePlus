@@ -5,3 +5,4 @@ DownloadKit>=0.5.3
 FlowViewer>=0.2.1
 websocket-client
 click
+tldextract

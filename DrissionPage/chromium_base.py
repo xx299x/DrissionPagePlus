@@ -12,10 +12,11 @@ from urllib.parse import urlparse
 from warnings import warn
 
 from requests import Session
+from tldextract import extract
 
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
-from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele, ChromiumElementWaiter
+from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
@@ -925,13 +926,20 @@ class ChromiumBaseSetter(object):
         cookies = cookies_to_tuple(cookies)
         result_cookies = []
         for cookie in cookies:
-            if cookie.get('domain', None) is None:
-                netloc = urlparse(self._page.url).netloc
-                if netloc.replace('.', '').isdigit():  # ip
-                    cookie['domain'] = netloc
-                else:  # 域名
-                    u = netloc.split('.')
-                    cookie['domain'] = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
+            # todo: 须要吗？
+            # if 'expiry' in cookie:
+            #     cookie['expiry'] = int(cookie['expiry'])
+
+            if not cookie.get('domain', None):
+                print(cookie)
+                ex_url = extract(self._page.url)
+                cookie['domain'] = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
+                # netloc = urlparse(self._page.url).netloc
+                # if netloc.replace('.', '').isdigit():  # ip
+                #     cookie['domain'] = netloc
+                # else:  # 域名
+                #     u = netloc.split('.')
+                #     cookie['domain'] = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
 
             result_cookies.append({'value': '' if cookie['value'] is None else cookie['value'],
                                    'name': cookie['name'],

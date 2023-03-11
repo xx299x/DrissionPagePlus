@@ -5,7 +5,6 @@
 """
 from platform import system
 from sys import exit
-from urllib.parse import urlparse
 
 from requests import Session
 from requests.structures import CaseInsensitiveDict
@@ -13,6 +12,7 @@ from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from tldextract import extract
 
 from DrissionPage.commons.tools import get_pid_from_port, get_exe_from_port
 from DrissionPage.commons.browser import connect_browser
@@ -262,17 +262,14 @@ class Drission(object):
                     cookie['expiry'] = int(cookie['expiry'])
 
                 try:
-                    browser_domain = urlparse(self.driver.current_url).netloc
+                    browser_domain = extract(self.driver.current_url).fqdn
                 except AttributeError:
                     browser_domain = ''
 
-                if cookie.get('domain', None) is None:
+                if not cookie.get('domain', None):
                     if browser_domain:
-                        if browser_domain.replace('.', '').isdigit():  # ip
-                            cookie_domain = browser_domain
-                        else:  # 域名
-                            u = browser_domain.split('.')
-                            cookie_domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else browser_domain
+                        url = extract(browser_domain)
+                        cookie_domain = f'{url.domain}.{url.suffix}'
                     else:
                         raise ValueError('cookie中没有域名或浏览器未访问过URL。')
 
@@ -282,7 +279,8 @@ class Drission(object):
                     cookie_domain = cookie['domain'] if cookie['domain'][0] != '.' else cookie['domain'][1:]
 
                 if cookie_domain not in browser_domain:
-                    self.driver.get(cookie_domain if cookie_domain.startswith('http://') else f'http://{cookie_domain}')
+                    self.driver.get(cookie_domain if cookie_domain.startswith('http://')
+                                    else f'http://{cookie_domain}')
 
                 # 避免selenium自动添加.后无法正确覆盖已有cookie
                 if cookie['domain'][0] != '.':
@@ -326,17 +324,13 @@ class Drission(object):
         :param url: 作用域
         :return: None
         """
-        browser_domain = urlparse(self.driver.current_url).netloc
-        ex_url = urlparse(url).netloc
+        browser_domain = extract(self.driver.current_url).fqdn
+        ex_url = extract(url)
 
-        if ex_url not in browser_domain:
+        if ex_url.fqdn not in browser_domain:
             self.driver.get(url)
 
-        if ex_url.replace('.', '').isdigit():  # ip
-            domain = ex_url
-        else:  # 域名
-            u = ex_url.split('.')
-            domain = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else ex_url
+        domain = f'{ex_url.domain}.{ex_url.suffix}'
 
         cookies = []
         for cookie in self.session.cookies:
