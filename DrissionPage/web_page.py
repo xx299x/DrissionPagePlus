@@ -7,14 +7,13 @@ from pathlib import Path
 from warnings import warn
 
 from requests import Session
-from tldextract import extract
 
-from .commons.web import set_session_cookies
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
 from .chromium_tab import WebPageTab
+from .commons.web import set_session_cookies, set_browser_cookies
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
 from .errors import CallMethodError
@@ -370,23 +369,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if not self._has_driver:
             return
 
-        ex_url = extract(self._session_url)
-        domain = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
-
-        cookies = []
-        for cookie in super().get_cookies():  # 带域名list
-            if not cookie.get('domain', None):
-                cookie['domain'] = domain
-
-            if domain in cookie['domain']:
-                cookies.append(cookie)
-
-        # self.run_cdp_loaded('Network.setCookies', cookies=cookies)
-        for c in cookies:
-            try:
-                self.run_cdp_loaded('Network.setCookie', name=c['name'], value=c['value'], domain=c['domain'])
-            except Exception as e:
-                print(e)
+        set_browser_cookies(self, super().get_cookies(all_domains=True))  # todo: cookies的选择
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies

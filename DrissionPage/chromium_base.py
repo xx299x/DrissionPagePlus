@@ -8,11 +8,9 @@ from json import loads, JSONDecodeError
 from os import sep
 from pathlib import Path
 from time import perf_counter, sleep, time
-from urllib.parse import urlparse
 from warnings import warn
 
 from requests import Session
-from tldextract import extract
 
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
@@ -20,7 +18,7 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import cookies_to_tuple
+from .commons.web import set_browser_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError, BrowserConnectError
 from .session_element import make_session_ele
@@ -263,6 +261,11 @@ class ChromiumBase(BasePage):
     def url(self):
         """返回当前页面url"""
         return self.run_cdp_loaded('Target.getTargetInfo', targetId=self.tab_id)['targetInfo']['url']
+
+    @property
+    def _browser_url(self):
+        """用于被WebPage覆盖"""
+        return self.url
 
     @property
     def html(self):
@@ -923,29 +926,7 @@ class ChromiumBaseSetter(object):
         :param cookies: cookies信息
         :return: None
         """
-        cookies = cookies_to_tuple(cookies)
-        result_cookies = []
-        for cookie in cookies:
-            # todo: 须要吗？
-            # if 'expiry' in cookie:
-            #     cookie['expiry'] = int(cookie['expiry'])
-
-            if not cookie.get('domain', None):
-                print(cookie)
-                ex_url = extract(self._page.url)
-                cookie['domain'] = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
-                # netloc = urlparse(self._page.url).netloc
-                # if netloc.replace('.', '').isdigit():  # ip
-                #     cookie['domain'] = netloc
-                # else:  # 域名
-                #     u = netloc.split('.')
-                #     cookie['domain'] = f'.{u[-2]}.{u[-1]}' if len(u) > 1 else netloc
-
-            result_cookies.append({'value': '' if cookie['value'] is None else cookie['value'],
-                                   'name': cookie['name'],
-                                   'domain': cookie['domain']})
-
-        self._page.run_cdp_loaded('Network.setCookies', cookies=result_cookies)
+        set_browser_cookies(self._page, cookies)
 
     def upload_files(self, files):
         """等待上传的文件路径

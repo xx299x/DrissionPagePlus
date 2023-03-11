@@ -5,10 +5,8 @@
 """
 from copy import copy
 
-from tldextract import extract
-
 from .chromium_base import ChromiumBase, ChromiumBaseSetter
-from .commons.web import set_session_cookies
+from .commons.web import set_session_cookies, set_browser_cookies
 from .session_page import SessionPage, SessionPageSetter, DownloadSetter
 
 
@@ -296,18 +294,7 @@ class WebPageTab(SessionPage, ChromiumTab):
         if not self._has_driver:
             return
 
-        ex_url = extract(self._session_url)
-        domain = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
-
-        cookies = []
-        for cookie in super().get_cookies():
-            if not cookie.get('domain', None):
-                cookie['domain'] = domain
-
-            if domain in cookie['domain']:
-                cookies.append(cookie)
-
-        self.run_cdp_loaded('Network.setCookies', cookies=cookies)
+        set_browser_cookies(self, super().get_cookies())  # todo: cookies的选择
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies

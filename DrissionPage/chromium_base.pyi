@@ -87,6 +87,9 @@ class ChromiumBase(BasePage):
     def url(self) -> str: ...
 
     @property
+    def _browser_url(self) -> str: ...
+
+    @property
     def html(self) -> str: ...
 
     @property
@@ -138,7 +141,8 @@ class ChromiumBase(BasePage):
             interval: float = None,
             timeout: float = None) -> Union[None, bool]: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool =False, all_info: bool = False) -> Union[list, dict]: ...
+    def get_cookies(self, as_dict: bool = False, all_domains: bool = False, all_info: bool = False) -> Union[
+        list, dict]: ...
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
