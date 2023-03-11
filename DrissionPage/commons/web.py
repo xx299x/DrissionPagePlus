@@ -263,5 +263,5 @@ def set_browser_cookies(page, cookies):
 
         try:
             page.run_cdp_loaded('Network.setCookie', **cookie)
-        except Exception as e:
+        except Exception:
             pass

@@ -288,13 +288,17 @@ class WebPageTab(SessionPage, ChromiumTab):
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
         set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
+        # set_session_cookies(self.session, self._get_driver_cookies(all_domains=True))
+        # set_session_cookies(self.session, self._get_driver_cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
 
-        set_browser_cookies(self, super().get_cookies())  # todo: cookies的选择
+        set_browser_cookies(self, super().get_cookies(as_dict=True))
+        # set_browser_cookies(self, super().get_cookies(all_domains=True))
+        # set_browser_cookies(self, super().get_cookies())
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
