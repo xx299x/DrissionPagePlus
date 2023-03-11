@@ -498,15 +498,10 @@ class ChromiumElement(DrissionElement):
         if self.tag == 'input' and self.attr('type') == 'file':
             return self._set_file_input(vals)
 
-        try:
-            self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
-        except Exception:
-            pass
-        self.click(by_js=True)
-        self.click.at()
-
         if clear and vals != '\n':
             self.clear(by_js=False)
+        else:
+            self._focus()
 
         # ------------处理字符-------------
         if not isinstance(vals, (tuple, list)):
@@ -533,7 +528,15 @@ class ChromiumElement(DrissionElement):
             self.run_js("this.value='';")
 
         else:
+            self._focus()
             self.input(('\ue009', 'a', '\ue017'), clear=False)
+
+    def _focus(self):
+        """使元素获取焦点"""
+        try:
+            self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
+        except Exception:
+            self.run_js('this.focus();')
 
     def hover(self, offset_x=None, offset_y=None):
         """鼠标悬停，可接受偏移量，偏移量相对于元素左上角坐标。不传入x或y值时悬停在元素中点
