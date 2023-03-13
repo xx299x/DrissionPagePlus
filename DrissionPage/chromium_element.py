@@ -1655,7 +1655,7 @@ class Click(object):
         if not by_js:
             try:
                 self._ele.scroll.to_see()
-                if self._ele.states.is_in_viewport and not self._ele.states.is_covered:
+                if (self._ele.states.is_in_viewport and not self._ele.states.is_covered) or by_js is False:
                     client_x, client_y = self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
                     self._ele.page.wait.load_start(wait_loading)
