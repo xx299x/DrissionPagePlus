@@ -171,7 +171,6 @@ def _run_browser(port, path: str, args) -> Popen:
     :param args: 启动参数
     :return: 进程对象
     """
-    print(port)
     arguments = [path, f'--remote-debugging-port={port}']
     arguments.extend(args)
     return Popen(arguments, shell=False)

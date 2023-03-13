@@ -683,7 +683,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         warn("click_at()方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
-        self.click.left_at(offset_x, offset_y)
+        self.click.at(offset_x, offset_y, 'left')
 
     def r_click(self):
         """右键单击"""
@@ -697,7 +697,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         warn("r_click_at()方法即将弃用，请用click.right_at()方法代替。", DeprecationWarning)
-        self.click.right_at(offset_x, offset_y)
+        self.click.at(offset_x, offset_y, 'right')
 
     def m_click(self):
         """中键单击"""
@@ -1069,7 +1069,9 @@ class ChromiumShadowRoot(BaseElement):
 
     def _get_backend_id(self, node_id):
         """返回元素object id"""
-        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
+        r = self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']
+        self._tag = r['localName'].lower()
+        return r['backendNodeId']
 
     # ------------准备废弃--------------
     @property
@@ -1656,7 +1658,8 @@ class Click(object):
             try:
                 self._ele.scroll.to_see()
                 if (self._ele.states.is_in_viewport and not self._ele.states.is_covered) or by_js is False:
-                    client_x, client_y = self._ele.locations.viewport_click_point
+                    client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
+                        else self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
                     self._ele.page.wait.load_start(wait_loading)
                     return True

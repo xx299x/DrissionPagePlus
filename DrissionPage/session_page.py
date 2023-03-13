@@ -340,6 +340,14 @@ class SessionPageSetter(object):
     def __init__(self, page):
         self._page = page
 
+    def retry_times(self, times):
+        """设置连接失败时重连次数"""
+        self._page.retry_times = times
+
+    def retry_interval(self, interval):
+        """设置连接失败时重连间隔"""
+        self._page.retry_interval = interval
+
     def timeout(self, second):
         """设置连接超时时间
         :param second: 秒数

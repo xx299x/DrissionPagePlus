@@ -876,6 +876,14 @@ class ChromiumBaseSetter(object):
         """返回用于设置页面滚动设置的对象"""
         return PageScrollSetter(self._page.scroll)
 
+    def retry_times(self, times):
+        """设置连接失败重连次数"""
+        self._page.retry_times = times
+
+    def retry_interval(self, interval):
+        """设置连接失败重连间隔"""
+        self._page.retry_interval = interval
+
     def timeouts(self, implicit=None, page_load=None, script=None):
         """设置超时时间，单位为秒
         :param implicit: 查找元素超时时间
