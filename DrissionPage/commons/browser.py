@@ -63,13 +63,17 @@ def get_launch_args(opt):
     # ----------处理arguments-----------
     result = set()
     has_user_path = False
+    remote_allow = False
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
             continue
         elif i.startswith('--user-data-dir') and not opt.system_user_path:
-            p = Path(i[16:]).absolute()
-            result.add(f'--user-data-dir={p}')
+            result.add(f'--user-data-dir={Path(i[16:]).absolute()}')
             has_user_path = True
+            continue
+        elif i.startswith('--remote-allow-origins='):
+            remote_allow = True
+
         result.add(i)
 
     if not has_user_path and not opt.system_user_path:
@@ -77,6 +81,9 @@ def get_launch_args(opt):
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
         result.add(f'--user-data-dir={path}')
+
+    if not remote_allow:
+        result.add('--remote-allow-origins=*')
 
     result = list(result)
 
@@ -164,6 +171,7 @@ def _run_browser(port, path: str, args) -> Popen:
     :param args: 启动参数
     :return: 进程对象
     """
+    print(port)
     arguments = [path, f'--remote-debugging-port={port}']
     arguments.extend(args)
     return Popen(arguments, shell=False)
