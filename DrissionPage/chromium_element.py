@@ -1638,26 +1638,37 @@ class Click(object):
         """
         self._ele = ele
 
-    def __call__(self, by_js=None, wait_loading=0):
+    def __call__(self, by_js=False, timeout=1, wait_loading=0):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
+        :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
         :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
         return self.left(by_js, wait_loading)
 
-    def left(self, by_js=None, wait_loading=0):
+    def left(self, by_js=False, timeout=1, wait_loading=0):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
+        :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
         :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
         if not by_js:
             try:
                 self._ele.scroll.to_see()
-                if (self._ele.states.is_in_viewport and not self._ele.states.is_covered) or by_js is False:
+                can_click = False
+
+                timeout = self._ele.page.timeout if timeout is None else timeout
+                end_time = perf_counter() + timeout
+                while perf_counter() < end_time:
+                    if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+                        can_click = True
+                        break
+
+                if by_js is False or (can_click and not self._ele.states.is_covered):
                     client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
                         else self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
@@ -1874,7 +1885,8 @@ class ChromiumSelect(object):
         if not self.is_multi:
             raise TypeError("只能对多项选框执行反选。")
         for i in self.options:
-            i.click(by_js=True)
+            mode = 'false' if i.states.is_selected else 'true'
+            i.run_js(f'this.selected={mode};')
 
     def clear(self):
         """清除所有已选项"""

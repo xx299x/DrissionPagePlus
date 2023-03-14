@@ -706,9 +706,7 @@ class ChromiumBase(BasePage):
                 sleep(interval)
                 while self.ready_state != 'complete':
                     sleep(.1)
-                if self._debug:
-                    print('重试')
-                if show_errmsg:
+                if self._debug or show_errmsg:
                     print(f'重试 {to_url}')
 
         if err:

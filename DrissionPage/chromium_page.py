@@ -310,7 +310,7 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
         :return: 提示框内容文本，未等到提示框则返回None
         """
-        timeout = timeout or self.timeout
+        timeout = self.timeout if timeout is None else timeout
         timeout = .1 if timeout <= 0 else timeout
         end_time = perf_counter() + timeout
         while not self._alert.activated and perf_counter() < end_time:
