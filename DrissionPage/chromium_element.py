@@ -1646,7 +1646,7 @@ class Click(object):
         :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
-        return self.left(by_js, wait_loading)
+        return self.left(by_js, timeout, wait_loading)
 
     def left(self, by_js=False, timeout=1, wait_loading=0):
         """点击元素
