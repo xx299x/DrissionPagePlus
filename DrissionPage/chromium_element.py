@@ -1662,11 +1662,15 @@ class Click(object):
                 can_click = False
 
                 timeout = self._ele.page.timeout if timeout is None else timeout
-                end_time = perf_counter() + timeout
-                while perf_counter() < end_time:
+                if timeout == 0:
                     if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
                         can_click = True
-                        break
+                else:
+                    end_time = perf_counter() + timeout
+                    while perf_counter() < end_time or timeout == 0:
+                        if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+                            can_click = True
+                            break
 
                 if not self._ele.states.is_in_viewport:
                     by_js = True
