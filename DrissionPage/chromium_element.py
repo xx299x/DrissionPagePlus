@@ -1668,7 +1668,10 @@ class Click(object):
                         can_click = True
                         break
 
-                if by_js is False or (can_click and not self._ele.states.is_covered):
+                if not self._ele.states.is_in_viewport:
+                    by_js = True
+
+                elif can_click and (by_js is False or not self._ele.states.is_covered):
                     client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
                         else self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
