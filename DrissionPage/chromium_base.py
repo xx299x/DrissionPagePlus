@@ -7,6 +7,7 @@ from base64 import b64decode
 from json import loads, JSONDecodeError
 from os import sep
 from pathlib import Path
+from threading import Thread
 from time import perf_counter, sleep, time
 from warnings import warn
 
@@ -1142,29 +1143,43 @@ class Screencast(object):
     def __init__(self, page):
         self._page = page
         self._path = None
-        self._quality = 100
+        self._frugal = False
+        self._running = False
+        self._enable = False
 
-    def start(self, save_path=None, quality=None):
+    def start(self, save_path=None, frugal=None):
         """开始录屏
         :param save_path: 录屏保存位置
-        :param quality: 录屏质量
+        :param frugal: 是否使用节俭模式，启用时只有浏览器画面有变化时才录制，默认不启用
         :return: None
         """
-        self.set(save_path, quality)
+        self.set_save_path(save_path)
+        self.set_frugal_mode(frugal)
         if self._path is None:
             raise ValueError('save_path必须设置。')
         clean_folder(self._path)
-        self._page.driver.Page.screencastFrame = self._onScreencastFrame
-        self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=self._quality)
+        if self._frugal:
+            self._page.driver.Page.screencastFrame = self._onScreencastFrame
+            self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
+        else:
+            self._running = True
+            self._enable = True
+            Thread(target=self._run).start()
 
-    def stop(self, to_mp4=False, video_name=None):
+    def stop(self, to_mp4=True, video_name=None):
         """停止录屏
         :param to_mp4: 是否合并成MP4格式
         :param video_name: 视频文件名，为None时以当前时间名命
         :return: 文件路径
         """
-        self._page.driver.Page.screencastFrame = None
-        self._page.run_cdp('Page.stopScreencast')
+        if self._frugal:
+            self._page.driver.Page.screencastFrame = None
+            self._page.run_cdp('Page.stopScreencast')
+        else:
+            self._enable = False
+            while self._running:
+                sleep(.1)
+
         if not to_mp4:
             return str(Path(self._path).absolute())
 
@@ -1185,8 +1200,7 @@ class Screencast(object):
         if video_name and not video_name.endswith('mp4'):
             video_name = f'{video_name}.mp4'
         name = f'{time()}.mp4' if not video_name else video_name
-        fourcc = 14
-        videoWrite = VideoWriter(f'{self._path}{sep}{name}', fourcc, 8, size)
+        videoWrite = VideoWriter(f'{self._path}{sep}{name}', 14, 5, size)
 
         for i in pic_list:
             img = imread(str(i))
@@ -1195,25 +1209,36 @@ class Screencast(object):
         clean_folder(self._path, ignore=(name,))
         return f'{self._path}{sep}{name}'
 
-    def set(self, save_path=None, quality=None):
-        """设置录屏参数
+    def set_save_path(self, save_path=None):
+        """设置保存路径
         :param save_path: 保存路径
-        :param quality: 视频质量，可取值0-100
-        :return:
+        :return: None
         """
         if save_path:
             save_path = Path(save_path)
             if save_path.exists() and save_path.is_file():
                 raise TypeError('save_path必须指定文件夹。')
             save_path.mkdir(parents=True, exist_ok=True)
-            self._path = str(save_path)
+            self._path = save_path
 
-        if quality is not None:
-            if quality < 0 or quality > 100:
-                raise ValueError('quality必须在0-100之间。')
-            self._quality = quality
+    def set_frugal_mode(self, on_off):
+        """设置是否使用节俭模式
+        :param on_off: 开或关
+        :return: None
+        """
+        self._frugal = on_off
+
+    def _run(self):
+        """非节俭模式运行方法"""
+        self._running = True
+        while self._enable:
+            p = self._path / f'{time()}.jpg'
+            self._page.get_screenshot(path=p)
+            sleep(.04)
+        self._running = False
 
     def _onScreencastFrame(self, **kwargs):
+        """节俭模式运行方法"""
         with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
             f.write(b64decode(kwargs['data']))
         self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
