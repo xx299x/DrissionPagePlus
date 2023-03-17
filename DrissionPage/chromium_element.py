@@ -548,22 +548,22 @@ class ChromiumElement(DrissionElement):
         x, y = offset_scroll(self, offset_x, offset_y)
         self.page.run_cdp('Input.dispatchMouseEvent', type='mouseMoved', x=x, y=y)
 
-    def drag(self, offset_x=0, offset_y=0, speed=40):
+    def drag(self, offset_x=0, offset_y=0, duration=.5):
         """拖拽当前元素到相对位置
         :param offset_x: x变化值
         :param offset_y: y变化值
-        :param speed: 拖动的速度，传入0即瞬间到达
+        :param duration: 拖动用时，传入0即瞬间到j达
         :return: None
         """
         curr_x, curr_y = self.locations.midpoint
         offset_x += curr_x
         offset_y += curr_y
-        self.drag_to((offset_x, offset_y), speed)
+        self.drag_to((offset_x, offset_y), duration)
 
-    def drag_to(self, ele_or_loc, speed=40):
+    def drag_to(self, ele_or_loc, duration=.5):
         """拖拽当前元素，目标为另一个元素或坐标元组(x, y)
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
-        :param speed: 拖动的速度，传入0即瞬间到达
+        :param duration: 拖动用时，传入0即瞬间到j达
         :return: None
         """
         # x, y：目标点坐标
@@ -577,7 +577,9 @@ class ChromiumElement(DrissionElement):
         current_x, current_y = self.locations.midpoint
         width = target_x - current_x
         height = target_y - current_y
-        num = 0 if not speed else int(((abs(width) ** 2 + abs(height) ** 2) ** .5) // speed)
+
+        duration = .02 if duration < .02 else duration
+        num = int(duration * 50)
 
         # 将要经过的点存入列表
         points = [(int(current_x + i * (width / num)), int(current_y + i * (height / num))) for i in range(1, num)]
@@ -589,9 +591,12 @@ class ChromiumElement(DrissionElement):
 
         # 逐个访问要经过的点
         for x, y in points:
+            t = perf_counter()
             actions.move(x - current_x, y - current_y)
             current_x, current_y = x, y
-            actions.wait(.05)
+            ss = .02 - perf_counter() + t
+            if ss > 0:
+                sleep(ss)
         actions.release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):
