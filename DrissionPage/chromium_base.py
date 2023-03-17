@@ -1143,36 +1143,74 @@ class Screencast(object):
     def __init__(self, page):
         self._page = page
         self._path = None
-        self._frugal = False
         self._running = False
         self._enable = False
+        self._mode = 'video'
+        self._cid = None
 
-    def start(self, save_path=None, frugal=None):
+    @property
+    def set_mode(self):
+        """返回用于设置录屏幕式的对象"""
+        return ScreencastMode(self)
+
+    def start(self, save_path=None):
         """开始录屏
         :param save_path: 录屏保存位置
-        :param frugal: 是否使用节俭模式，启用时只有浏览器画面有变化时才录制，默认不启用
         :return: None
         """
         self.set_save_path(save_path)
-        self.set_frugal_mode(frugal)
         if self._path is None:
             raise ValueError('save_path必须设置。')
         clean_folder(self._path)
-        if self._frugal:
+        if self._mode.startswith('frugal'):
             self._page.driver.Page.screencastFrame = self._onScreencastFrame
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
-        else:
+
+        elif not self._mode.startswith('js'):
             self._running = True
             self._enable = True
             Thread(target=self._run).start()
 
-    def stop(self, to_mp4=True, video_name=None):
+        else:
+            if self._cid is None:
+                self._cid = self._page.run_cdp('Page.createIsolatedWorld', frameId=self._page.tab_id)['executionContextId']
+            js = '''
+            async function () {
+                stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
+                mime = MediaRecorder.isTypeSupported("video/webm; codecs=vp9") 
+                               ? "video/webm; codecs=vp9" 
+                               : "video/webm"
+                mediaRecorder = new MediaRecorder(stream, {mimeType: mime})
+                chunks = []
+                mediaRecorder.addEventListener('dataavailable', function(e) {chunks.push(e.data)})
+                mediaRecorder.start()
+              }
+            '''
+            self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
+
+    def stop(self, video_name=None):
         """停止录屏
-        :param to_mp4: 是否合并成MP4格式
         :param video_name: 视频文件名，为None时以当前时间名命
         :return: 文件路径
         """
-        if self._frugal:
+        if video_name and not video_name.endswith('mp4'):
+            video_name = f'{video_name}.mp4'
+        name = f'{time()}.mp4' if not video_name else video_name
+        path = f'{self._path}{sep}{name}'
+
+        if self._mode.startswith('js'):
+            js = '''
+            mediaRecorder.stop()
+            return new Blob(chunks, {type: chunks[0].type})
+            '''
+            bid = self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
+            uuid = self._page.run_cdp('IO.resolveBlob', objectId=bid['objectId'])
+            data = self._page.run_cdp('IO.read', handle=f'blob://{uuid}')
+            with open(path, 'wb') as f:
+                f.write(b64decode(data))
+            return path
+
+        if self._mode.startswith('frugal'):
             self._page.driver.Page.screencastFrame = None
             self._page.run_cdp('Page.stopScreencast')
         else:
@@ -1180,7 +1218,7 @@ class Screencast(object):
             while self._running:
                 sleep(.1)
 
-        if not to_mp4:
+        if self._mode.endswith('imgs'):
             return str(Path(self._path).absolute())
 
         if not str(video_name).isascii() or not str(self._path).isascii():
@@ -1197,10 +1235,10 @@ class Screencast(object):
         imgInfo = img.shape
         size = (imgInfo[1], imgInfo[0])
 
-        if video_name and not video_name.endswith('mp4'):
-            video_name = f'{video_name}.mp4'
-        name = f'{time()}.mp4' if not video_name else video_name
-        videoWrite = VideoWriter(f'{self._path}{sep}{name}', 14, 5, size)
+        # if video_name and not video_name.endswith('mp4'):
+        #     video_name = f'{video_name}.mp4'
+        # name = f'{time()}.mp4' if not video_name else video_name
+        videoWrite = VideoWriter(path, 14, 5, size)
 
         for i in pic_list:
             img = imread(str(i))
@@ -1221,13 +1259,6 @@ class Screencast(object):
             save_path.mkdir(parents=True, exist_ok=True)
             self._path = save_path
 
-    def set_frugal_mode(self, on_off):
-        """设置是否使用节俭模式
-        :param on_off: 开或关
-        :return: None
-        """
-        self._frugal = on_off
-
     def _run(self):
         """非节俭模式运行方法"""
         self._running = True
@@ -1242,3 +1273,23 @@ class Screencast(object):
         with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
             f.write(b64decode(kwargs['data']))
         self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
+
+
+class ScreencastMode(object):
+    def __init__(self, screencast):
+        self._screencast = screencast
+
+    def video_mode(self):
+        self._screencast._mode = 'video'
+
+    def frugal_video_mode(self):
+        self._screencast._mode = 'frugal_video'
+
+    def js_video_mode(self):
+        self._screencast._mode = 'js_video'
+
+    def frugal_imgs_mode(self):
+        self._screencast._mode = 'frugal_imgs'
+
+    def imgs_mode(self):
+        self._screencast._mode = 'imgs'
