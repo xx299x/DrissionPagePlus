@@ -1369,7 +1369,7 @@ def parse_js_result(page, ele, result):
     the_type = result['type']
 
     if the_type == 'object':
-        sub_type = result['subtype']
+        sub_type = result.get('subtype', None)
         if sub_type == 'null':
             return None
 
@@ -1383,9 +1383,14 @@ def parse_js_result(page, ele, result):
                 return make_chromium_ele(page, obj_id=result['objectId'])
 
         elif sub_type == 'array':
-            r = page.run_cdp('Runtime.getProperties', objectId=result['result']['objectId'],
+            r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'],
                              ownProperties=True)['result']
-            return [parse_js_result(page, ele, result=i['value']) for i in r]
+            return [parse_js_result(page, ele, result=i['value']) for i in r[:-1]]
+
+        elif 'objectId' in result:  # dict
+            r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'],
+                             ownProperties=True)['result']
+            return {i['name']: parse_js_result(page, ele, result=i['value']) for i in r}
 
         else:
             return result['value']

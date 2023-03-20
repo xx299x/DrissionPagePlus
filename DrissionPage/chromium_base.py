@@ -631,16 +631,45 @@ class ChromiumBase(BasePage):
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
-        js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
-        return self.run_js_loaded(js, as_expr=True)
+        # js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
+        # return self.run_js_loaded(js, as_expr=True)
+
+        if item:
+            js = f'sessionStorage.getItem("{item}");'
+            return self.run_js_loaded(js, as_expr=True)
+        else:
+            js = '''
+            var dp_ls_len = sessionStorage.length;  // 获取长度
+            var dp_ls_arr = new Array(); // 定义数据集
+            for(var i = 0; i < dp_ls_len; i++) {
+                var getKey = sessionStorage.key(i);
+                var getVal = sessionStorage.getItem(getKey);
+                dp_ls_arr[i] = {'key': getKey, 'val': getVal}
+            }
+            return dp_ls_arr;
+            '''
+            return {i['key']: i['val'] for i in self.run_js_loaded(js)}
 
     def get_local_storage(self, item=None):
         """获取localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
-        js = f'localStorage.getItem("{item}");' if item else 'localStorage;'
-        return self.run_js_loaded(js, as_expr=True)
+        if item:
+            js = f'localStorage.getItem("{item}");'
+            return self.run_js_loaded(js, as_expr=True)
+        else:
+            js = '''
+            var dp_ls_len = localStorage.length;  // 获取长度
+            var dp_ls_arr = new Array(); // 定义数据集
+            for(var i = 0; i < dp_ls_len; i++) {
+                var getKey = localStorage.key(i);
+                var getVal = localStorage.getItem(getKey);
+                dp_ls_arr[i] = {'key': getKey, 'val': getVal}
+            }
+            return dp_ls_arr;
+            '''
+            return {i['key']: i['val'] for i in self.run_js_loaded(js)}
 
     def get_screenshot(self, path=None, as_bytes=None, as_base64=None,
                        full_page=False, left_top=None, right_bottom=None):
@@ -1173,10 +1202,11 @@ class Screencast(object):
 
         else:
             if self._cid is None:
-                self._cid = self._page.run_cdp('Page.createIsolatedWorld', frameId=self._page.tab_id)['executionContextId']
+                self._cid = self._page.run_cdp('Page.createIsolatedWorld', frameId=self._page.tab_id)[
+                    'executionContextId']
             js = '''
-            async function () {
-                stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
+            function () {
+                stream = navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
                 mime = MediaRecorder.isTypeSupported("video/webm; codecs=vp9") 
                                ? "video/webm; codecs=vp9" 
                                : "video/webm"
@@ -1186,7 +1216,9 @@ class Screencast(object):
                 mediaRecorder.start()
               }
             '''
-            self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
+            print('请手动选择要录制的目标。')
+            r = self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
+            print(r)
 
     def stop(self, video_name=None):
         """停止录屏
