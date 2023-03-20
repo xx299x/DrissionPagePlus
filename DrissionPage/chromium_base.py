@@ -631,16 +631,13 @@ class ChromiumBase(BasePage):
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
-        # js = f'sessionStorage.getItem("{item}");' if item else 'sessionStorage;'
-        # return self.run_js_loaded(js, as_expr=True)
-
         if item:
             js = f'sessionStorage.getItem("{item}");'
             return self.run_js_loaded(js, as_expr=True)
         else:
             js = '''
-            var dp_ls_len = sessionStorage.length;  // 获取长度
-            var dp_ls_arr = new Array(); // 定义数据集
+            var dp_ls_len = sessionStorage.length;
+            var dp_ls_arr = new Array();
             for(var i = 0; i < dp_ls_len; i++) {
                 var getKey = sessionStorage.key(i);
                 var getVal = sessionStorage.getItem(getKey);
@@ -660,8 +657,8 @@ class ChromiumBase(BasePage):
             return self.run_js_loaded(js, as_expr=True)
         else:
             js = '''
-            var dp_ls_len = localStorage.length;  // 获取长度
-            var dp_ls_arr = new Array(); // 定义数据集
+            var dp_ls_len = localStorage.length;
+            var dp_ls_arr = new Array();
             for(var i = 0; i < dp_ls_len; i++) {
                 var getKey = localStorage.key(i);
                 var getVal = localStorage.getItem(getKey);
@@ -1202,23 +1199,28 @@ class Screencast(object):
 
         else:
             if self._cid is None:
-                self._cid = self._page.run_cdp('Page.createIsolatedWorld', frameId=self._page.tab_id)[
-                    'executionContextId']
+                self._cid = self._page.run_cdp('Page.createIsolatedWorld',
+                                               frameId=self._page.tab_id)['executionContextId']
             js = '''
-            function () {
-                stream = navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
-                mime = MediaRecorder.isTypeSupported("video/webm; codecs=vp9") 
-                               ? "video/webm; codecs=vp9" 
+            async function () {
+                stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
+                mime = MediaRecorder.isTypeSupported("video/webm; codecs=vp9")
+                               ? "video/webm; codecs=vp9"
                                : "video/webm"
                 mediaRecorder = new MediaRecorder(stream, {mimeType: mime})
                 chunks = []
                 mediaRecorder.addEventListener('dataavailable', function(e) {chunks.push(e.data)})
                 mediaRecorder.start()
+                
+                mediaRecorder.addEventListener('stop', function(){
+                    blob = new Blob(chunks, {type: chunks[0].type});
+                    blob_ok=true;
+                })
               }
             '''
             print('请手动选择要录制的目标。')
-            r = self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
-            print(r)
+            self._page.run_js('var blob;var blob_ok=false;')
+            self._page.run_js(js)
 
     def stop(self, video_name=None):
         """停止录屏
@@ -1231,13 +1233,12 @@ class Screencast(object):
         path = f'{self._path}{sep}{name}'
 
         if self._mode.startswith('js'):
-            js = '''
-            mediaRecorder.stop()
-            return new Blob(chunks, {type: chunks[0].type})
-            '''
-            bid = self._page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, executionContextId=self._cid)
-            uuid = self._page.run_cdp('IO.resolveBlob', objectId=bid['objectId'])
-            data = self._page.run_cdp('IO.read', handle=f'blob://{uuid}')
+            self._page.run_js('mediaRecorder.stop();', as_expr=True)
+            while not self._page.run_js('return blob_ok'):
+                sleep(.1)
+            blob = self._page.run_js('return blob;')
+            uuid = self._page.run_cdp('IO.resolveBlob', objectId=blob['result']['objectId'])['uuid']
+            data = self._page.run_cdp('IO.read', handle=f'blob:{uuid}')['data']
             with open(path, 'wb') as f:
                 f.write(b64decode(data))
             return path

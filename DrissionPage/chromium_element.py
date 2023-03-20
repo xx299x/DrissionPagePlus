@@ -1387,7 +1387,7 @@ def parse_js_result(page, ele, result):
                              ownProperties=True)['result']
             return [parse_js_result(page, ele, result=i['value']) for i in r[:-1]]
 
-        elif 'objectId' in result:  # dict
+        elif 'objectId' in result and result['className'] == 'object':  # dict
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'],
                              ownProperties=True)['result']
             return {i['name']: parse_js_result(page, ele, result=i['value']) for i in r}
