@@ -1172,7 +1172,6 @@ class Screencast(object):
         self._running = False
         self._enable = False
         self._mode = 'video'
-        self._cid = None
 
     @property
     def set_mode(self):
@@ -1198,9 +1197,6 @@ class Screencast(object):
             Thread(target=self._run).start()
 
         else:
-            if self._cid is None:
-                self._cid = self._page.run_cdp('Page.createIsolatedWorld',
-                                               frameId=self._page.tab_id)['executionContextId']
             js = '''
             async function () {
                 stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
@@ -1208,18 +1204,23 @@ class Screencast(object):
                                ? "video/webm; codecs=vp9"
                                : "video/webm"
                 mediaRecorder = new MediaRecorder(stream, {mimeType: mime})
-                chunks = []
-                mediaRecorder.addEventListener('dataavailable', function(e) {chunks.push(e.data)})
+                DrissionPage_Screencast_chunks = []
+                mediaRecorder.addEventListener('dataavailable', function(e) {
+                    DrissionPage_Screencast_blob_ok = false;
+                    DrissionPage_Screencast_chunks.push(e.data);
+                    DrissionPage_Screencast_blob_ok = true;
+                })
                 mediaRecorder.start()
                 
                 mediaRecorder.addEventListener('stop', function(){
-                    blob = new Blob(chunks, {type: chunks[0].type});
-                    blob_ok=true;
+                    while(DrissionPage_Screencast_blob_ok==false){}
+                    DrissionPage_Screencast_blob = new Blob(DrissionPage_Screencast_chunks, 
+                                                            {type: DrissionPage_Screencast_chunks[0].type});
                 })
               }
             '''
             print('请手动选择要录制的目标。')
-            self._page.run_js('var blob;var blob_ok=false;')
+            self._page.run_js('var DrissionPage_Screencast_blob;var DrissionPage_Screencast_blob_ok=false;')
             self._page.run_js(js)
 
     def stop(self, video_name=None):
@@ -1234,9 +1235,9 @@ class Screencast(object):
 
         if self._mode.startswith('js'):
             self._page.run_js('mediaRecorder.stop();', as_expr=True)
-            while not self._page.run_js('return blob_ok'):
+            while not self._page.run_js('return DrissionPage_Screencast_blob_ok;'):
                 sleep(.1)
-            blob = self._page.run_js('return blob;')
+            blob = self._page.run_js('return DrissionPage_Screencast_blob;')
             uuid = self._page.run_cdp('IO.resolveBlob', objectId=blob['result']['objectId'])['uuid']
             data = self._page.run_cdp('IO.read', handle=f'blob:{uuid}')['data']
             with open(path, 'wb') as f:
