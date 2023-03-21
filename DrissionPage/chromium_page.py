@@ -193,12 +193,12 @@ class ChromiumPage(ChromiumBase):
         """新建一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
         :param switch_to: 新建标签页后是否把焦点移过去
-        :return: None
+        :return: 新标签页的id
         """
         if switch_to:
             begin_tabs = set(self.tabs)
             len_tabs = len(begin_tabs)
-            self.run_cdp('Target.createTarget', url='')
+            tid = self.run_cdp('Target.createTarget', url='')['targetId']
 
             tabs = self.tabs
             while len(tabs) == len_tabs:
@@ -211,10 +211,12 @@ class ChromiumPage(ChromiumBase):
                 self.get(url)
 
         elif url:
-            self.run_cdp('Target.createTarget', url=url)
+            tid = self.run_cdp('Target.createTarget', url=url)['targetId']
 
         else:
-            self.run_cdp('Target.createTarget', url='')
+            tid = self.run_cdp('Target.createTarget', url='')['targetId']
+
+        return tid
 
     def to_main_tab(self):
         """跳转到主标签页"""

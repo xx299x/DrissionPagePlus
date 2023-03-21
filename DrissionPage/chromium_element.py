@@ -406,12 +406,7 @@ class ChromiumElement(DrissionElement):
         :param timeout: 等待资源加载的超时时间
         :return: 资源内容
         """
-        src = self.prop('currentSrc')
-        if not src:
-            return None
-
         timeout = self.page.timeout if timeout is None else timeout
-
         if self.tag == 'img':  # 等待图片加载完成
             js = ('return this.complete && typeof this.naturalWidth != "undefined" '
                   '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
@@ -420,19 +415,22 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
-        frame = node.get('frameId', None)
-        frame = frame or self.page.tab_id
-
         result = None
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
+            src = self.prop('currentSrc')
+            if not src:
+                continue
+
+            node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
+            frame = node.get('frameId', None)
+            frame = frame or self.page.tab_id
+
             try:
                 result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
                 break
             except CallMethodError:
-                pass
-            sleep(.1)
+                sleep(.1)
 
         if not result:
             return None
