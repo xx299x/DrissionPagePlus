@@ -80,6 +80,15 @@ class DrissionElement(BaseElement):
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union[DrissionElement, None]: ...
 
+    def child(self,
+              index: int = 1,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = 0) -> Union[DrissionElement, str, NoneElement]: ...
+
+    def children(self,
+                 filter_loc: Union[tuple, str] = '',
+                 timeout: float = 0) -> List[Union[DrissionElement, str]]: ...
+
     def prev(self,
              index: int = 1,
              filter_loc: Union[tuple, str] = '',

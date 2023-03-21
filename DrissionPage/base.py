@@ -140,6 +140,28 @@ class DrissionElement(BaseElement):
 
         return self._ele(loc, timeout=0, relative=True, raise_err=False)
 
+    def child(self, index=1, filter_loc='', timeout=0):
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+        loc = loc[1].lstrip('./')
+
+        loc = f'xpath:./{loc}'
+        print(loc)
+
+    def children(self, filter_loc='', timeout=0):
+        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 兄弟元素或节点文本组成的列表
+        """
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+        loc = loc[1].lstrip('./')
+
+        loc = f'xpath:./{loc}'
+
     def prev(self, index=1, filter_loc='', timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param index: 前面第几个查询结果元素
