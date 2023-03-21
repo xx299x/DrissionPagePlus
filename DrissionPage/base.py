@@ -140,31 +140,49 @@ class DrissionElement(BaseElement):
 
         return self._ele(loc, timeout=0, relative=True, raise_err=False)
 
-    def child(self, index=1, filter_loc='', timeout=0):
-        loc = get_loc(filter_loc, True)
-        if loc[0] == 'css selector':
-            raise ValueError('此css selector语法不受支持，请换成xpath。')
-        loc = loc[1].lstrip('./')
-
-        loc = f'xpath:./{loc}'
-        print(loc)
-
-    def children(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
+    def child(self, index=1, filter_loc='', timeout=None):
+        """返回直接子元素元素或节点组成的列表，可用查询语法筛选
+        :param index: 第几个查询结果元素，1开始
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
-        :return: 兄弟元素或节点文本组成的列表
+        :return: 直接子元素或节点文本组成的列表
         """
-        loc = get_loc(filter_loc, True)
-        if loc[0] == 'css selector':
-            raise ValueError('此css selector语法不受支持，请换成xpath。')
-        loc = loc[1].lstrip('./')
+        nodes = self.children(filter_loc=filter_loc, timeout=timeout)
+        if not nodes:
+            if Settings.raise_ele_not_found:
+                raise ElementNotFoundError
+            else:
+                return NoneElement()
+
+        try:
+            return nodes[index - 1]
+        except IndexError:
+            if Settings.raise_ele_not_found:
+                raise ElementNotFoundError
+            else:
+                return NoneElement()
+
+    def children(self, filter_loc='', timeout=None):
+        """返回直接子元素元素或节点组成的列表，可用查询语法筛选
+        :param filter_loc: 用于筛选元素的查询语法
+        :param timeout: 查找元素的超时时间
+        :return: 直接子元素或节点文本组成的列表
+        """
+        if not filter_loc:
+            loc = '*'
+        else:
+            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+            loc = loc[1].lstrip('./')
 
         loc = f'xpath:./{loc}'
+        nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
+        return [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
     def prev(self, index=1, filter_loc='', timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 前面第几个查询结果元素
+        :param index: 前面第几个查询结果元素，1开始
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
@@ -179,7 +197,7 @@ class DrissionElement(BaseElement):
 
     def next(self, index=1, filter_loc='', timeout=0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 后面第几个查询结果元素
+        :param index: 后面第几个查询结果元素，1开始
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 兄弟元素
@@ -194,7 +212,7 @@ class DrissionElement(BaseElement):
 
     def before(self, index=1, filter_loc='', timeout=None):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 前面第几个查询结果元素
+        :param index: 前面第几个查询结果元素，1开始
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素前面的某个元素或节点
@@ -209,7 +227,7 @@ class DrissionElement(BaseElement):
 
     def after(self, index=1, filter_loc='', timeout=None):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 后面第几个查询结果元素
+        :param index: 后面第几个查询结果元素，1开始
         :param filter_loc: 用于筛选元素的查询语法
         :param timeout: 查找元素的超时时间
         :return: 本元素后面的某个元素或节点
