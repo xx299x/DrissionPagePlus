@@ -238,7 +238,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = None if on_off else False
+        on_off = 'new' if on_off else False
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off=True):

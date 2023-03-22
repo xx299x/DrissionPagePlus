@@ -150,7 +150,7 @@ def set_headless(on_off=True, ini_path=None):
     :param ini_path: 要修改的ini文件路径
     :return: None
     """
-    on_off = None if on_off else False
+    on_off = 'new' if on_off else False
     set_argument('--headless', on_off, ini_path)
 
 
