@@ -42,8 +42,8 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
 
-        if isinstance(address, int) or address.isdigit():
-            address = f'localhost:{address}'
+        if address and (isinstance(address, int) or address.isdigit()):
+            address = f'127.0.0.1:{address}'
 
         self._set_start_options(address, None)
         self._set_runtime_settings()

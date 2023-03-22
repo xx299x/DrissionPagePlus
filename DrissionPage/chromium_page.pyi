@@ -111,6 +111,8 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
 
     def download_begin(self, timeout: float = None) -> bool: ...
 
+    def new_tab(self, timeout: float = None) -> bool: ...
+
 
 class ChromiumTabRect(object):
     def __init__(self, page: ChromiumPage):

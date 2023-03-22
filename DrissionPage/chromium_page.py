@@ -399,6 +399,16 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
         """
         return self._driver.download_set.wait_download_begin(timeout)
 
+    def new_tab(self, timeout=None):
+        """等待新标签页出现
+        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
+        :return: 是否等到下载开始
+        """
+        timeout = timeout if timeout is not None else self._driver.timeout
+        end_time = perf_counter() + timeout
+        while self._driver.tab_id == self._driver.latest_tab and perf_counter() < end_time:
+            sleep(.01)
+
 
 class ChromiumTabRect(object):
     def __init__(self, page):
@@ -721,7 +731,7 @@ def show_or_hide_browser(page, hide=True):
     :param hide: 是否隐藏
     :return: None
     """
-    if not page.address.startswith(('localhost', '127.0.0.1')):
+    if not page.address.startswith(('127.0.0.1', 'localhost')):
         return
 
     if system().lower() != 'windows':

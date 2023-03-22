@@ -183,7 +183,7 @@ def cookie_to_dict(cookie):
         cookie_dict = {}
 
         for key, attr in enumerate(cookie):
-            attr_val = attr.lstrip().split('=')
+            attr_val = attr.lstrip().split('=', 1)
 
             if key == 0:
                 cookie_dict['name'] = attr_val[0]
