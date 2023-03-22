@@ -42,6 +42,9 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
 
+        if isinstance(address, int) or address.isdigit():
+            address = f'localhost:{address}'
+
         self._set_start_options(address, None)
         self._set_runtime_settings()
         self._connect_browser(tab_id)

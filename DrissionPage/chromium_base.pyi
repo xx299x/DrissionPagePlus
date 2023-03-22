@@ -21,7 +21,7 @@ from .session_element import SessionElement
 class ChromiumBase(BasePage):
 
     def __init__(self,
-                 address: str,
+                 address: Union[str, int],
                  tab_id: str = None,
                  timeout: float = None):
         self._control_session: Session = ...

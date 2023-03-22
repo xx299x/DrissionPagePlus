@@ -22,7 +22,7 @@ from .session_page import DownloadSetter
 class ChromiumPage(ChromiumBase):
 
     def __init__(self,
-                 addr_driver_opts: Union[str, ChromiumOptions, ChromiumDriver, DriverOptions] = None,
+                 addr_driver_opts: Union[str, int, ChromiumOptions, ChromiumDriver, DriverOptions] = None,
                  tab_id: str = None,
                  timeout: float = None):
         self._driver_options: [ChromiumDriver, DriverOptions] = ...
