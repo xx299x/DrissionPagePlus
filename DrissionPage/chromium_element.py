@@ -1231,15 +1231,16 @@ def find_by_css(ele, selector, single, timeout):
     r = ele.page.run_cdp('Runtime.callFunctionOn',
                          functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                          userGesture=True)
-    if 'exceptionDetails' in r:
-        raise SyntaxError(f'查询语句错误：\n{r}')
 
     end_time = perf_counter() + timeout
-    while (r['result']['subtype'] == 'null'
+    while ('exceptionDetails' in r or r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
         r = ele.page.run_cdp('Runtime.callFunctionOn',
                              functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
                              userGesture=True)
+
+    if 'exceptionDetails' in r:
+        raise SyntaxError(f'查询语句错误：\n{r}')
 
     if single:
         return NoneElement() if r['result']['subtype'] == 'null' \
