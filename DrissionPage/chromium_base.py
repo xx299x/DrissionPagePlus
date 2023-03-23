@@ -609,25 +609,50 @@ class ChromiumBase(BasePage):
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele.ids.node_id)
 
-    def get_frame(self, loc_ind_ele):
+    def get_frame(self, loc_ind_ele, timeout=None):
         """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从1开始
         :param loc_ind_ele: 定位符、iframe序号、ChromiumFrame对象
+        :param timeout: 查找元素超时时间
         :return: ChromiumFrame对象
         """
-        if isinstance(loc_ind_ele, (str, tuple)):
-            ele = self._ele(loc_ind_ele)
+        if isinstance(loc_ind_ele, str):
+            if not loc_ind_ele.startswith(('.', '#', '@', 't:', 't=', 'tag:', 'tag=', 'tx:', 'tx=', 'tx^', 'tx$',
+                                           'text:', 'text=', 'text^', 'text$', 'xpath:', 'xpath=', 'x:', 'x=', 'css:',
+                                           'css=', 'c:', 'c=')):
+                loc_ind_ele = f'xpath://*[(name()="iframe" or name()="frame") and ' \
+                              f'(@name="{loc_ind_ele}" or @id="{loc_ind_ele}")]'
+            ele = self._ele(loc_ind_ele, timeout=timeout)
             if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
-                raise RuntimeError('该定位符不是指向frame元素。')
+                raise TypeError('该定位符不是指向frame元素。')
             return ele
+
+        elif isinstance(loc_ind_ele, tuple):
+            ele = self._ele(loc_ind_ele, timeout=timeout)
+            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+                raise TypeError('该定位符不是指向frame元素。')
+            return ele
+
         elif isinstance(loc_ind_ele, int):
             if loc_ind_ele < 1:
                 raise ValueError('序号必须大于0。')
-            xpath = f'x:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
-            return self._ele(xpath)
+            xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
+            return self._ele(xpath, timeout=timeout)
+
         elif str(type(loc_ind_ele)).endswith(".ChromiumFrame'>"):
             return loc_ind_ele
+
         else:
-            raise TypeError('必须传入定位符、iframe序号、ChromiumFrame对象其中之一。')
+            raise TypeError('必须传入定位符、iframe序号、id、name、ChromiumFrame对象其中之一。')
+
+    def get_frames(self, loc=None, timeout=None):
+        """获取所有符号条件的frame对象
+        :param loc: 定位符，为None时返回所有
+        :param timeout: 查找超时时间
+        :return: ChromiumFrame对象组成的列表
+        """
+        loc = loc or 'xpath://*[name()="iframe" or name()="frame"]'
+        frames = self._ele(loc, timeout=timeout, single=False, raise_err=False)
+        return [i for i in frames if str(type(i)).endswith(".ChromiumFrame'>")]
 
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部
