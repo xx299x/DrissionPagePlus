@@ -339,7 +339,10 @@ def get_chrome_path(ini_path=None,
 
     # -----------从系统变量中获取--------------
     if from_system_path:
-        paths = popen('set path').read().encode('gbk').decode('utf-8').lower()
+        try:
+            paths = popen('set path').read().lower()
+        except:
+            return None
         r = search(r'[^;]*chrome[^;]*', paths)
 
         if r:

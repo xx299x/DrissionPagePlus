@@ -338,81 +338,93 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         return self.frame_ele.parent(level_or_loc)
 
-    def prev(self, filter_loc='', index=1, timeout=0):
-        """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 前面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+    def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
+        """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        :param filter_loc: 用于筛选的查询语法
+        :param index: 前面第几个查询结果，1开始
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
+        :return: 同级元素或节点
         """
         self._check_ok()
-        return self.frame_ele.prev(filter_loc, index, timeout)
+        return self.frame_ele.prev(filter_loc, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=0):
-        """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 后面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素
+    def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
+        """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        :param filter_loc: 用于筛选的查询语法
+        :param index: 后面第几个查询结果，1开始
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
+        :return: 同级元素或节点
         """
         self._check_ok()
-        return self.frame_ele.next(filter_loc, index, timeout)
+        return self.frame_ele.next(filter_loc, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素前面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 前面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
+    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+        """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        查找范围不限同级元素，而是整个DOM文档
+        :param filter_loc: 用于筛选的查询语法
+        :param index: 前面第几个查询结果，1开始
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
         self._check_ok()
-        return self.frame_ele.before(filter_loc, index, timeout)
+        return self.frame_ele.before(filter_loc, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None):
-        """返回当前元素后面的一个元素，可指定筛选条件和第几个。查找范围不限兄弟元素，而是整个DOM文档
-        :param filter_loc: 用于筛选元素的查询语法
-        :param index: 后面第几个查询结果元素
-        :param timeout: 查找元素的超时时间
+    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+        """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        查找范围不限同级元素，而是整个DOM文档
+        :param filter_loc: 用于筛选的查询语法
+        :param index: 后面第几个查询结果，1开始
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
         self._check_ok()
-        return self.frame_ele.after(filter_loc, index, timeout)
+        return self.frame_ele.after(filter_loc, index, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=0):
-        """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素或节点文本组成的列表
+    def prevs(self, filter_loc='', timeout=0, ele_only=True):
+        """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
+        :param filter_loc: 用于筛选的查询语法
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
+        :return: 同级元素或节点文本组成的列表
         """
         self._check_ok()
-        return self.frame_ele.prevs(filter_loc, timeout)
+        return self.frame_ele.prevs(filter_loc, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=0):
-        """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
-        :return: 兄弟元素或节点文本组成的列表
+    def nexts(self, filter_loc='', timeout=0, ele_only=True):
+        """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
+        :param filter_loc: 用于筛选的查询语法
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
+        :return: 同级元素或节点文本组成的列表
         """
         self._check_ok()
-        return self.frame_ele.nexts(filter_loc, timeout)
+        return self.frame_ele.nexts(filter_loc, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
+    def befores(self, filter_loc='', timeout=None, ele_only=True):
+        """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
+        查找范围不限同级元素，而是整个DOM文档
+        :param filter_loc: 用于筛选的查询语法
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
         self._check_ok()
-        return self.frame_ele.befores(filter_loc, timeout)
+        return self.frame_ele.befores(filter_loc, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None):
-        """返回当前元素后面符合条件的全部兄弟元素或节点组成的列表，可用查询语法筛选。查找范围不限兄弟元素，而是整个DOM文档
-        :param filter_loc: 用于筛选元素的查询语法
-        :param timeout: 查找元素的超时时间
+    def afters(self, filter_loc='', timeout=None, ele_only=True):
+        """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
+        查找范围不限同级元素，而是整个DOM文档
+        :param filter_loc: 用于筛选的查询语法
+        :param timeout: 查找节点的超时时间
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
         self._check_ok()
-        return self.frame_ele.afters(filter_loc, timeout)
+        return self.frame_ele.afters(filter_loc, timeout, ele_only=ele_only)
 
     def get_screenshot(self, path=None, as_bytes=None, as_base64=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
