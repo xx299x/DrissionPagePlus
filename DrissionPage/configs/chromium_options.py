@@ -115,6 +115,7 @@ class ChromiumOptions(object):
     @debugger_address.setter
     def debugger_address(self, address):
         """设置浏览器地址，格式ip:port"""
+        address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
         self._debugger_address = address
 
     @property
@@ -313,7 +314,7 @@ class ChromiumOptions(object):
             self._auto_port = False
 
         if debugger_address is not None:
-            self._debugger_address = debugger_address
+            self.debugger_address = debugger_address
 
         if download_path is not None:
             self._download_path = str(download_path)

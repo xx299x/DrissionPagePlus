@@ -89,7 +89,8 @@ def set_paths(driver_path=None,
         om.set_item('chrome_options', 'debugger_address', f'127.0.0.1:{local_port}')
 
     if debugger_address is not None:
-        om.set_item('chrome_options', 'debugger_address', debugger_address)
+        address = debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
+        om.set_item('chrome_options', 'debugger_address', address)
 
     if download_path is not None:
         om.set_item('paths', 'download_path', format_path(download_path))

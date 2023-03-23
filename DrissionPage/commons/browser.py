@@ -21,12 +21,11 @@ def connect_browser(option):
     :param option: DriverOptions对象
     :return: chrome 路径和进程对象组成的元组
     """
-    debugger_address = option.debugger_address
+    debugger_address = option.debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
     chrome_path = option.browser_path
 
-    debugger_address = debugger_address[7:] if debugger_address.startswith('http://') else debugger_address
     ip, port = debugger_address.split(':')
-    if ip not in ('127.0.0.1', 'localhost'):
+    if ip != '127.0.0.1':
         test_connect(ip, port)
         return None, None
 

@@ -57,7 +57,8 @@ class ChromiumPage(ChromiumBase):
         else:
             raise TypeError('只能接收ChromiumDriver或ChromiumOptions类型参数。')
 
-        self.address = self._driver_options.debugger_address
+        self.address = self._driver_options.debugger_address.replace('localhost',
+                                                                     '127.0.0.1').lstrip('http://').lstrip('https://')
 
     def _set_runtime_settings(self):
         """设置运行时用到的属性"""

@@ -83,7 +83,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             else:
                 raise TypeError('driver_or_options参数只能接收ChromiumDriver, ChromiumOptions、None或False。')
 
-        self.address = self._driver_options.debugger_address
+        self.address = self._driver_options.debugger_address.replace('localhost',
+                                                                     '127.0.0.1').lstrip('http://').lstrip('https://')
 
         # Session配置
         if isinstance(se_opt, Session):

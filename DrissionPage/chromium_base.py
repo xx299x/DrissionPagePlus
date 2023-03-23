@@ -57,7 +57,7 @@ class ChromiumBase(BasePage):
         :param none: 用于后代继承
         :return: None
         """
-        self.address = address
+        self.address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
 
     def _set_runtime_settings(self):
         self._timeouts = Timeout(self)
