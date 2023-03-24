@@ -527,7 +527,7 @@ class ChromiumElement(DrissionElement):
         if self.tag == 'input' and self.attr('type') == 'file':
             return self._set_file_input(vals)
 
-        if clear and vals != '\n':
+        if clear and vals not in ('\n', '\ue007'):
             self.clear(by_js=False)
         else:
             self._focus()
@@ -542,7 +542,7 @@ class ChromiumElement(DrissionElement):
                 send_key(self, modifier, key)
             return
 
-        if vals.endswith('\n'):
+        if vals.endswith(('\n', '\ue007')):
             self.page.run_cdp('Input.insertText', text=vals[:-1])
             send_key(self, modifier, '\n')
         else:
