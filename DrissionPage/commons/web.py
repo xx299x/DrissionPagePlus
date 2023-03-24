@@ -268,14 +268,14 @@ def set_browser_cookies(page, cookies):
         d_list = ex_url.subdomain.split('.')
         d_list.append(f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain)
 
-        for i in range(len(d_list)):
-            d = f'.{".".join(d_list[i:])}'
-            cookie['domain'] = d
-            page.run_cdp_loaded('Network.setCookie', **cookie)
-            if is_cookie_in_driver(page, cookie):
-                break
+        tmp = [d_list[0]]
+        if len(d_list) > 1:
+            for i in d_list[1:]:
+                tmp.append('.')
+                tmp.append(i)
 
-            d = f'{".".join(d_list[i:])}'
+        for i in range(len(tmp)):
+            d = ''.join(tmp[i:])
             cookie['domain'] = d
             page.run_cdp_loaded('Network.setCookie', **cookie)
             if is_cookie_in_driver(page, cookie):

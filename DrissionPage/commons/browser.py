@@ -158,8 +158,9 @@ def test_connect(ip, port):
             sleep(.2)
 
     if ip in ('127.0.0.1', 'localhost'):
-        raise BrowserConnectError(f'\n连接浏览器失败，可能原因：\n1、{port}端口不是Chromium内核浏览器\n'
-                                  f'2、该浏览器未允许控制\n3、和已打开的浏览器冲突，请关闭')
+        raise BrowserConnectError(f'\n连接浏览器失败，可能原因：\n1、浏览器未启动\n2、{port}端口不是Chromium内核浏览器\n'
+                                  f'3、该浏览器未允许控制\n4、和已打开的浏览器冲突\n'
+                                  f'请尝试用ChromiumOptions指定别的端口和指定浏览器路径')
     raise BrowserConnectError(f'{ip}:{port}浏览器无法链接。')
 
 
