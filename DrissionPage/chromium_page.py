@@ -109,7 +109,10 @@ class ChromiumPage(ChromiumBase):
             pass
 
         self._process_id = None
-        for i in self.browser_driver.SystemInfo.getProcessInfo()['processInfo']:
+        r = self.browser_driver.SystemInfo.getProcessInfo()
+        if 'processInfo' not in r:
+            return None
+        for i in r['processInfo']:
             if i['type'] == 'browser':
                 self._process_id = i['id']
                 break
