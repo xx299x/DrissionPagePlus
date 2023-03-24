@@ -273,13 +273,13 @@ def set_browser_cookies(page, cookies):
             cookie['domain'] = d
             page.run_cdp_loaded('Network.setCookie', **cookie)
             if is_cookie_in_driver(page, cookie):
-                continue
+                break
 
             d = f'{".".join(d_list[i:])}'
             cookie['domain'] = d
             page.run_cdp_loaded('Network.setCookie', **cookie)
             if is_cookie_in_driver(page, cookie):
-                continue
+                break
 
 
 def is_cookie_in_driver(page, cookie):
