@@ -259,7 +259,8 @@ def set_browser_cookies(page, cookies):
         if cookie.get('domain', None):
             try:
                 page.run_cdp_loaded('Network.setCookie', **cookie)
-                continue
+                if is_cookie_in_driver(page, cookie):
+                    continue
             except Exception:
                 pass
 
