@@ -8,8 +8,8 @@ from time import sleep, perf_counter
 from warnings import warn
 
 from .commons.tools import get_usable_path
-from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
-from .chromium_element import ChromiumElement
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
+from .chromium_element import ChromiumElement, ChromiumElementWaiter
 
 
 class ChromiumFrame(ChromiumBase):
@@ -292,9 +292,14 @@ class ChromiumFrame(ChromiumBase):
     @property
     def states(self):
         """返回用于获取状态信息的对象"""
-        if self._states is None:
-            self._states = ChromiumFrameStates(self)
-        return self._states
+        return self.frame_ele.states
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = FrameWaiter(self)
+        return self._wait
 
     def refresh(self):
         """刷新frame页面"""
@@ -634,16 +639,6 @@ class ChromiumFrameIds(object):
         return self._frame.frame_ele.ids.node_id
 
 
-class ChromiumFrameStates(object):
-    def __init__(self, frame):
-        self._frame = frame
-
-    def is_displayed(self):
-        """返回frame元素是否显示"""
-        self._frame._check_ok()
-        return self._frame.frame_ele.states.is_displayed
-
-
 class ChromiumFrameScroll(ChromiumPageScroll):
     def __init__(self, frame):
         """
@@ -672,3 +667,12 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
         """
         self._page._check_ok()
         self._page.frame_ele.set.attr(attr, value)
+
+
+class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
+    def __init__(self, frame):
+        """
+        :param frame: ChromiumFrame对象
+        """
+        super().__init__(frame)
+        super(ChromiumBaseWaiter, self).__init__(frame, frame.frame_ele)

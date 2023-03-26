@@ -11,6 +11,7 @@ from warnings import warn
 
 from requests import Session
 
+from .commons.tools import port_is_using
 from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
@@ -335,6 +336,9 @@ class ChromiumPage(ChromiumBase):
         """关闭浏览器"""
         self._tab_obj.Browser.close()
         self._tab_obj.stop()
+        ip, port = self.address.split(':')
+        while port_is_using(ip, port):
+            sleep(.1)
 
     def _on_alert_close(self, **kwargs):
         """alert关闭时触发的方法"""

@@ -55,6 +55,9 @@ class SessionPage(BasePage):
     def url(self) -> str: ...
 
     @property
+    def _session_url(self) -> str: ...
+
+    @property
     def html(self) -> str: ...
 
     @property

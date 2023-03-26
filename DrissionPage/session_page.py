@@ -82,6 +82,11 @@ class SessionPage(BasePage):
         return self._url
 
     @property
+    def _session_url(self):
+        """返回当前访问url"""
+        return self._url
+
+    @property
     def html(self):
         """返回页面的html文本"""
         return self.response.text if self.response else ''
@@ -191,7 +196,7 @@ class SessionPage(BasePage):
             cookies = self.session.cookies
         else:
             if self.url:
-                ex_url = extract(self.url)
+                ex_url = extract(self._session_url)
                 domain = f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain
 
                 cookies = tuple(x for x in self.session.cookies if domain in x.domain or x.domain == '')
