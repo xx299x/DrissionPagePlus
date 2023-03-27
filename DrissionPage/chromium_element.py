@@ -1535,6 +1535,11 @@ class ChromiumElementStates(object):
         return self._ele.run_js('return this.selected;')
 
     @property
+    def is_checked(self):
+        """返回元素是否被选择"""
+        return self._ele.run_js('return this.checked;')
+
+    @property
     def is_displayed(self):
         """返回元素是否显示"""
         return not (self._ele.style('visibility') == 'hidden'

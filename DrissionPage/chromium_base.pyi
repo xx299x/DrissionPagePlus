@@ -7,14 +7,15 @@ from pathlib import Path
 from typing import Union, Tuple, List, Any
 
 from DataRecorder import Recorder
+from FlowViewer.listener import ResponseData
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
-from .commons.constants import NoneElement
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement, ChromiumScroll
 from .chromium_frame import ChromiumFrame
+from .commons.constants import NoneElement
 from .session_element import SessionElement
 
 
@@ -228,6 +229,8 @@ class ChromiumBaseWaiter(object):
     def load_start(self, timeout: float = None) -> bool: ...
 
     def load_complete(self, timeout: float = None) -> bool: ...
+
+    def data_package(self, target, timeout: float = None) -> Union[ResponseData, None]: ...
 
     def upload_paths_inputted(self) -> None: ...
 

@@ -369,7 +369,7 @@ class ChromiumBase(BasePage):
         if error == 'Cannot find context with specified id':
             raise ContextLossError
         elif error in ('Could not find node with given id', 'Could not find object with given id',
-                       'No node with given id found'):
+                       'No node with given id found', 'Node with given id does not belong to the document'):
             raise ElementLossError
         elif error == 'tab closed':
             raise TabClosedError
@@ -1060,6 +1060,14 @@ class ChromiumBaseWaiter(object):
         :return: 是否等待成功
         """
         return self._loading(timeout=timeout, start=False)
+
+    def data_package(self, target, timeout=None):
+        """
+        :param target:
+        :param timeout:
+        :return:
+        """
+        pass
 
     def upload_paths_inputted(self):
         """等待自动填写上传文件路径"""

@@ -214,6 +214,9 @@ class ChromiumElementStates(object):
     def is_selected(self) -> bool: ...
 
     @property
+    def is_checked(self) -> bool: ...
+
+    @property
     def is_displayed(self) -> bool: ...
 
     @property
