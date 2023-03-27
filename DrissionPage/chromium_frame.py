@@ -121,7 +121,7 @@ class ChromiumFrame(ChromiumBase):
                     break
 
                 except Exception:
-                    pass
+                    sleep(.1)
 
             if self._debug:
                 print('---获取document结束')
@@ -275,7 +275,7 @@ class ChromiumFrame(ChromiumBase):
                 try:
                     return self.doc_ele.run_js('return this.readyState;')
                 except:
-                    pass
+                    sleep(.1)
 
     @property
     def scroll(self):

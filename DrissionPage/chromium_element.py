@@ -355,7 +355,8 @@ class ChromiumElement(DrissionElement):
                 if 'value' not in i or 'value' not in i['value']:
                     return None
 
-                return format_html(i['value']['value'])
+                value = i['value']['value']
+                return format_html(value) if isinstance(value, str) else value
 
     def run_js(self, script, *args, as_expr=False):
         """对本元素执行javascript代码
@@ -1724,22 +1725,20 @@ class Click(object):
         """
         self._ele = ele
 
-    def __call__(self, by_js=False, timeout=1, wait_loading=0):
+    def __call__(self, by_js=False, timeout=1):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
         :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
-        :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
-        return self.left(by_js, timeout, wait_loading)
+        return self.left(by_js, timeout)
 
-    def left(self, by_js=False, timeout=1, wait_loading=0):
+    def left(self, by_js=False, timeout=1):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
         :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
-        :param wait_loading: 等待页面进入加载状态超时时间
         :return: 是否点击成功
         """
         if not by_js:
@@ -1765,7 +1764,6 @@ class Click(object):
                     client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
                         else self._ele.locations.viewport_click_point
                     self._click(client_x, client_y)
-                    self._ele.page.wait.load_start(wait_loading)
                     return True
 
             except NoRectError:
@@ -1773,7 +1771,6 @@ class Click(object):
 
         if by_js is not False:
             self._ele.run_js('this.click();')
-            self._ele.page.wait.load_start(wait_loading)
             return True
 
         return False

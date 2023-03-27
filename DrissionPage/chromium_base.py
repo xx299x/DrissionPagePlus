@@ -1061,13 +1061,28 @@ class ChromiumBaseWaiter(object):
         """
         return self._loading(timeout=timeout, start=False)
 
-    def data_package(self, target, timeout=None):
+    def new_frame(self, timeout=None):
+        """等待新frame加载到dom
+        :param timeout: 超时时间
+        :return: 是否等待成功
         """
-        :param target:
-        :param timeout:
-        :return:
-        """
-        pass
+        timeout = timeout if timeout is not None else self._driver.timeout
+        self._new_frame = False
+        self._driver.driver.Page.frameAttached = self._on_frame_attached
+        result = False
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self._new_frame:
+                result = True
+                break
+            sleep(.1)
+
+        self._driver.driver.Page.frameAttached = None
+        self._new_frame = False
+        return result
+
+    def _on_frame_attached(self):
+        self._new_frame = True
 
     def upload_paths_inputted(self):
         """等待自动填写上传文件路径"""
@@ -1089,6 +1104,53 @@ class ChromiumBaseWaiter(object):
                     return True
                 sleep(gap)
             return False
+
+    # def data_package(self, target, timeout=None):
+    #     """
+    #     :param target:
+    #     :param timeout:
+    #     :return:
+    #     """
+    #     self._target = target
+    #     self._request_id = None
+    #     timeout = timeout if timeout is not None else self._driver.timeout
+    #     end_time = perf_counter() + timeout
+    #     while perf_counter() < end_time:
+    #         pass
+    #
+    # def _response_received(self, **kwargs):
+    #     """接收到返回信息时处理方法"""
+    #     if self._target in kwargs['response']['url']:
+    #
+    #
+    #     if self.targets is True:
+    #         self._request_ids[kwargs['requestId']] = {'target': True, 'response': kwargs['response']}
+    #
+    #     else:
+    #         for target in self.targets:
+    #             if target in kwargs['response']['url']:
+    #                 self._request_ids[kwargs['requestId']] = {'target': target, 'response': kwargs['response']}
+    #
+    # def _loading_finished(self, **kwargs):
+    #     """请求完成时处理方法"""
+    #     if not self._is_continue():
+    #         return
+    #
+    #     request_id = kwargs['requestId']
+    #     target = self._request_ids.pop(request_id, None)
+    #     if target is None:
+    #         return
+    #
+    #     target, response = target.values()
+    #     response = ResponseData(request_id, response, self._get_response_body(request_id), self.tab_id, target)
+    #     response.postData = self._get_post_data(request_id)
+    #
+    #     self._caught_count += 1
+    #     self._tmp.put(response)
+    #     self.results.append(response)
+    #
+    #     if not self._is_continue():
+    #         self.stop()
 
 
 class ChromiumPageScroll(ChromiumScroll):
