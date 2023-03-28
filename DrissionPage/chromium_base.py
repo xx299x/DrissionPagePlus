@@ -11,6 +11,7 @@ from threading import Thread
 from time import perf_counter, sleep, time
 from warnings import warn
 
+from FlowViewer.listener import ResponseData
 from requests import Session
 
 from .base import BasePage
@@ -507,8 +508,12 @@ class ChromiumBase(BasePage):
         timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
 
-        search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
-        count = search_result['resultCount']
+        try:
+            search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+            count = search_result['resultCount']
+        except ContextLossError:
+            search_result = None
+            count = 0
 
         while True:
             if count > 0:
@@ -520,7 +525,7 @@ class ChromiumBase(BasePage):
                         ok = True
 
                 except Exception:
-                    sleep(.01)
+                    pass
 
             if ok:
                 try:
@@ -532,11 +537,16 @@ class ChromiumBase(BasePage):
                 except ElementLossError:
                     ok = False
 
-            search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
-            count = search_result['resultCount']
+            try:
+                search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+                count = search_result['resultCount']
+            except ContextLossError:
+                pass
 
             if perf_counter() >= end_time:
                 return NoneElement() if single else []
+
+            sleep(.1)
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
@@ -1082,52 +1092,51 @@ class ChromiumBaseWaiter(object):
                 sleep(gap)
             return False
 
-    # def data_package(self, target, timeout=None):
-    #     """
-    #     :param target:
-    #     :param timeout:
-    #     :return:
-    #     """
-    #     self._target = target
-    #     self._request_id = None
-    #     timeout = timeout if timeout is not None else self._driver.timeout
-    #     end_time = perf_counter() + timeout
-    #     while perf_counter() < end_time:
-    #         pass
-    #
-    # def _response_received(self, **kwargs):
-    #     """接收到返回信息时处理方法"""
-    #     if self._target in kwargs['response']['url']:
-    #
-    #
-    #     if self.targets is True:
-    #         self._request_ids[kwargs['requestId']] = {'target': True, 'response': kwargs['response']}
-    #
-    #     else:
-    #         for target in self.targets:
-    #             if target in kwargs['response']['url']:
-    #                 self._request_ids[kwargs['requestId']] = {'target': target, 'response': kwargs['response']}
-    #
-    # def _loading_finished(self, **kwargs):
-    #     """请求完成时处理方法"""
-    #     if not self._is_continue():
-    #         return
-    #
-    #     request_id = kwargs['requestId']
-    #     target = self._request_ids.pop(request_id, None)
-    #     if target is None:
-    #         return
-    #
-    #     target, response = target.values()
-    #     response = ResponseData(request_id, response, self._get_response_body(request_id), self.tab_id, target)
-    #     response.postData = self._get_post_data(request_id)
-    #
-    #     self._caught_count += 1
-    #     self._tmp.put(response)
-    #     self.results.append(response)
-    #
-    #     if not self._is_continue():
-    #         self.stop()
+    def set_target(self, target):
+        """指定要等待的数据包
+        :param target:
+        :return: None
+        """
+        self._target = target
+        self._driver.run_cdp('Network.enable')
+        self._driver.driver.Network.responseReceived = self._response_received
+        self._driver.driver.Network.loadingFinished = self._loading_finished
+
+    def data_packet(self, target=None, timeout=None):
+        """等待指定数据包加载完成
+        :param target: 指定的数据包url片段
+        :param timeout: 超时时间，为None则使用页面对象timeout
+        :return: ResponseData对象
+        """
+        if target:
+            self._target = target
+        self._request_id = None
+        self._response_data = None
+
+        timeout = timeout if timeout is not None else self._driver.timeout
+        end_time = perf_counter() + timeout
+        while not self._response_data and perf_counter() < end_time:
+            sleep(.1)
+
+        self._request_id = None
+
+        return self._response_data or False
+
+    def _response_received(self, **kwargs):
+        """接收到返回信息时处理方法"""
+        if self._target in kwargs['response']['url']:
+            self._request_id = kwargs['requestId']
+            self._response = kwargs['response']
+
+    def _loading_finished(self, **kwargs):
+        """请求完成时处理方法"""
+        if kwargs['requestId'] == self._request_id:
+            try:
+                body = self._driver.run_cdp('Network.getResponseBody', requestId=self._request_id)['body']
+            except:
+                body = ''
+            self._response_data = ResponseData(self._request_id, self._response, body,
+                                               self._driver.tab_id, self._target)
 
 
 class ChromiumPageScroll(ChromiumScroll):

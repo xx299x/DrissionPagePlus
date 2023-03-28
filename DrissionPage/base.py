@@ -5,13 +5,12 @@
 """
 from abc import abstractmethod
 from re import sub
-from time import sleep
 from urllib.parse import quote
 
 from .commons.constants import Settings, NoneElement
 from .commons.locator import get_loc
 from .commons.web import format_html
-from .errors import ElementNotFoundError, ContextLossError
+from .errors import ElementNotFoundError
 
 
 class BaseParser(object):
@@ -72,13 +71,7 @@ class BaseElement(BaseParser):
         pass
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
-        while True:
-            try:
-                r = self._find_elements(loc_or_str, timeout=timeout, single=single,
-                                        relative=relative, raise_err=raise_err)
-                break
-            except ContextLossError:
-                sleep(.1)
+        r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
         if not single or raise_err is False:
             return r
         if not r and (Settings.raise_ele_not_found or raise_err is True):
@@ -420,12 +413,7 @@ class BasePage(BaseParser):
         if not loc_or_ele:
             raise ElementNotFoundError
 
-        while True:
-            try:
-                r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
-                break
-            except ContextLossError:
-                sleep(.1)
+        r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
 
         if not single or raise_err is False:
             return r

@@ -1252,19 +1252,16 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     type_txt = '9' if single else '7'
     node_txt = 'this.contentDocument' if ele.tag in FRAME_ELEMENT and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
-    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn',
-                         functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
-                         userGesture=True)
+    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+                                returnByValue=False, awaitPromise=True, userGesture=True)
     if r['result']['type'] == 'string':
         return r['result']['value']
 
     if 'exceptionDetails' in r:
         if 'The result is not a node set' in r['result']['description']:
             js = make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
-            r = ele.page.run_cdp_loaded('Runtime.callFunctionOn',
-                                 functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False,
-                                 awaitPromise=True,
-                                 userGesture=True)
+            r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+                                        returnByValue=False, awaitPromise=True, userGesture=True)
             return r['result']['value']
         else:
             raise SyntaxError(f'查询语句错误：\n{r}')
@@ -1272,9 +1269,8 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     end_time = perf_counter() + timeout
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
-        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn',
-                             functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
-                             userGesture=True)
+        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+                                    returnByValue=False, awaitPromise=True, userGesture=True)
 
     if single:
         return NoneElement() if r['result']['subtype'] == 'null' \
@@ -1283,7 +1279,8 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     if r['result']['description'] == 'NodeList(0)':
         return []
     else:
-        r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'], ownProperties=True)['result']
+        r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'],
+                                    ownProperties=True)['result']
         return [make_chromium_ele(ele.page, obj_id=i['value']['objectId'])
                 if i['value']['type'] == 'object' else i['value']['value']
                 for i in r[:-1]]
@@ -1301,16 +1298,14 @@ def find_by_css(ele, selector, single, timeout):
     find_all = '' if single else 'All'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
-    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn',
-                         functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
-                         userGesture=True)
+    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+                                returnByValue=False, awaitPromise=True, userGesture=True)
 
     end_time = perf_counter() + timeout
-    while ('exceptionDetails' in r or r['result']['subtype'] == 'null'
-           or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
-        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn',
-                             functionDeclaration=js, objectId=ele.ids.obj_id, returnByValue=False, awaitPromise=True,
-                             userGesture=True)
+    while ('exceptionDetails' in r or r['result']['subtype'] == 'null' or
+           r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
+        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+                                    returnByValue=False, awaitPromise=True, userGesture=True)
 
     if 'exceptionDetails' in r:
         raise SyntaxError(f'查询语句错误：\n{r}')
@@ -1322,7 +1317,8 @@ def find_by_css(ele, selector, single, timeout):
     if r['result']['description'] == 'NodeList(0)':
         return []
     else:
-        r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'], ownProperties=True)['result']
+        r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'],
+                                    ownProperties=True)['result']
         return [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) for i in r]
 
 
