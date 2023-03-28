@@ -5,12 +5,13 @@
 """
 from abc import abstractmethod
 from re import sub
+from time import sleep
 from urllib.parse import quote
 
 from .commons.constants import Settings, NoneElement
 from .commons.locator import get_loc
 from .commons.web import format_html
-from .errors import ElementNotFoundError
+from .errors import ElementNotFoundError, ContextLossError
 
 
 class BaseParser(object):
@@ -71,7 +72,13 @@ class BaseElement(BaseParser):
         pass
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
-        r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
+        while True:
+            try:
+                r = self._find_elements(loc_or_str, timeout=timeout, single=single,
+                                        relative=relative, raise_err=raise_err)
+                break
+            except ContextLossError:
+                sleep(.1)
         if not single or raise_err is False:
             return r
         if not r and (Settings.raise_ele_not_found or raise_err is True):
@@ -412,7 +419,14 @@ class BasePage(BaseParser):
     def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
         if not loc_or_ele:
             raise ElementNotFoundError
-        r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
+
+        while True:
+            try:
+                r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
+                break
+            except ContextLossError:
+                sleep(.1)
+
         if not single or raise_err is False:
             return r
         if not r and (Settings().raise_ele_not_found is True or raise_err is True):

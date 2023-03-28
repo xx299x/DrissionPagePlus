@@ -1061,29 +1061,6 @@ class ChromiumBaseWaiter(object):
         """
         return self._loading(timeout=timeout, start=False)
 
-    def new_frame(self, timeout=None):
-        """等待新frame加载到dom
-        :param timeout: 超时时间
-        :return: 是否等待成功
-        """
-        timeout = timeout if timeout is not None else self._driver.timeout
-        self._new_frame = False
-        self._driver.driver.Page.frameAttached = self._on_frame_attached
-        result = False
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._new_frame:
-                result = True
-                break
-            sleep(.1)
-
-        self._driver.driver.Page.frameAttached = None
-        self._new_frame = False
-        return result
-
-    def _on_frame_attached(self):
-        self._new_frame = True
-
     def upload_paths_inputted(self):
         """等待自动填写上传文件路径"""
         while self._driver._upload_list:

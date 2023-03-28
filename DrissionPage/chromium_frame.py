@@ -7,6 +7,7 @@ from re import search
 from time import sleep, perf_counter
 from warnings import warn
 
+from errors import ContextLossError
 from .commons.tools import get_usable_path
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_element import ChromiumElement, ChromiumElementWaiter
@@ -131,7 +132,7 @@ class ChromiumFrame(ChromiumBase):
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
-        if kwargs['frame']['frameId'] == self.frame_id and self._first_run is False and self._is_loading:
+        if kwargs['frame']['id'] == self.frame_id and self._first_run is False and self._is_loading:
             self._is_loading = True
 
             if self._debug:
@@ -274,8 +275,10 @@ class ChromiumFrame(ChromiumBase):
             while True:
                 try:
                     return self.doc_ele.run_js('return this.readyState;')
-                except:
-                    sleep(.1)
+                except ContextLossError:
+                    node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
+                    doc = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+                    return doc.run_js('return this.readyState;')
 
     @property
     def scroll(self):
