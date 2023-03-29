@@ -1027,6 +1027,8 @@ class ChromiumBaseWaiter(object):
         :param page_or_ele: 页面对象或元素对象
         """
         self._driver = page_or_ele
+        self._response = None
+        self._request_id = None
 
     def ele_delete(self, loc_or_ele, timeout=None):
         """等待元素从DOM中删除
@@ -1092,51 +1094,99 @@ class ChromiumBaseWaiter(object):
                 sleep(gap)
             return False
 
-    def set_target(self, target):
+    def set_targets(self, targets):
         """指定要等待的数据包
-        :param target:
+        :param targets: 指定的数据包url片段，可传入多个
         :return: None
         """
-        self._target = target
+        if not isinstance(targets, (str, list, tuple, set)):
+            raise TypeError('targets只能是str、list、tuple、set。')
+        self._targets = targets if isinstance(targets, str) else set(targets)
         self._driver.run_cdp('Network.enable')
-        self._driver.driver.Network.responseReceived = self._response_received
-        self._driver.driver.Network.loadingFinished = self._loading_finished
+        if targets:
+            self._driver.driver.Network.responseReceived = self._response_received
+            self._driver.driver.Network.loadingFinished = self._loading_finished
+        else:
+            self.stop_listening()
 
-    def data_packet(self, target=None, timeout=None):
+    def stop_listening(self):
+        """停止监听数据包"""
+        self._driver.driver.Network.responseReceived = None
+        self._driver.driver.Network.loadingFinished = None
+
+    def data_packets(self, targets=None, timeout=None, any_target=False):
         """等待指定数据包加载完成
-        :param target: 指定的数据包url片段
+        :param targets: 指定的数据包url片段，可传入多个
         :param timeout: 超时时间，为None则使用页面对象timeout
+        :param any_target: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
         :return: ResponseData对象
         """
-        if target:
-            self._target = target
+        if targets and not isinstance(targets, (str, list, tuple, set)):
+            raise TypeError('targets只能是str、list、tuple、set。')
+        if targets:
+            self._targets = targets if isinstance(targets, str) else set(targets)
         self._request_id = None
-        self._response_data = None
+        self._response_result = None
 
         timeout = timeout if timeout is not None else self._driver.timeout
         end_time = perf_counter() + timeout
-        while not self._response_data and perf_counter() < end_time:
-            sleep(.1)
+        if isinstance(self._targets, str):
+            while not self._response_result and perf_counter() < end_time:
+                sleep(.1)
+
+        else:
+            while perf_counter() < end_time:
+                if self._response_result and (any_target or set(self._response_result) == self._targets):
+                    break
+                sleep(.1)
 
         self._request_id = None
-
-        return self._response_data or False
+        return self._response_result or False
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        if self._target in kwargs['response']['url']:
-            self._request_id = kwargs['requestId']
-            self._response = kwargs['response']
+        if isinstance(self._targets, str):
+            if self._targets in kwargs['response']['url']:
+                self._request_id = kwargs['requestId']
+                self._response = kwargs['response']
+
+        else:
+            if not self._response:
+                self._response = {}
+            if not self._request_id:
+                self._request_id = {}
+
+            for target in self._targets:
+                if target in kwargs['response']['url']:
+                    self._response[target] = kwargs['response']
+                    self._request_id[kwargs['requestId']] = target
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
-        if kwargs['requestId'] == self._request_id:
-            try:
-                body = self._driver.run_cdp('Network.getResponseBody', requestId=self._request_id)['body']
-            except:
-                body = ''
-            self._response_data = ResponseData(self._request_id, self._response, body,
-                                               self._driver.tab_id, self._target)
+        if isinstance(self._targets, str):
+            if kwargs['requestId'] == self._request_id:
+                try:
+                    body = self._driver.run_cdp('Network.getResponseBody', requestId=self._request_id)['body']
+                except:
+                    body = ''
+                self._response_result = ResponseData(self._request_id, self._response, body,
+                                                     self._driver.tab_id, self._targets)
+
+        else:
+            if self._request_id and kwargs['requestId'] in self._request_id:
+                if not self._response_result:
+                    self._response_result = {}
+
+                try:
+                    body = self._driver.run_cdp('Network.getResponseBody', requestId=self._request_id)['body']
+                except:
+                    body = ''
+
+                target = self._request_id[kwargs['requestId']]
+                self._response_result[self._request_id[kwargs['requestId']]] = ResponseData(kwargs['requestId'],
+                                                                                            self._response[target],
+                                                                                            body, self._driver.tab_id,
+                                                                                            target)
 
 
 class ChromiumPageScroll(ChromiumScroll):
