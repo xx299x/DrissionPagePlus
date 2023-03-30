@@ -11,11 +11,11 @@ from warnings import warn
 
 from requests import Session
 
-from .commons.tools import port_is_using
 from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
+from .commons.tools import port_is_using
 from .commons.web import set_session_cookies
 from .configs.chromium_options import ChromiumOptions
 from .errors import CallMethodError, BrowserConnectError

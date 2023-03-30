@@ -7,10 +7,10 @@ from re import search
 from time import sleep, perf_counter
 from warnings import warn
 
-from errors import ContextLossError
-from .commons.tools import get_usable_path
 from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_element import ChromiumElement, ChromiumElementWaiter
+from .commons.tools import get_usable_path
+from .errors import ContextLossError
 
 
 class ChromiumFrame(ChromiumBase):
