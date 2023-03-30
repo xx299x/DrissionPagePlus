@@ -172,7 +172,7 @@ def _run_browser(port, path: str, args) -> Popen:
     :return: 进程对象
     """
     p = Path(path)
-    p = str(p / 'chrome.exe') if p.is_dir() else str(path)
+    p = str(p / 'chrome') if p.is_dir() else str(path)
     arguments = [p, f'--remote-debugging-port={port}']
     arguments.extend(args)
     return Popen(arguments, shell=False)

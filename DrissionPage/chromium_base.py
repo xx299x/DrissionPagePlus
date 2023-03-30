@@ -1031,6 +1031,7 @@ class ChromiumBaseWaiter(object):
         self._response = None
         self._request_id = None
         self._targets = None
+        self._is_regex = False
 
     def ele_delete(self, loc_or_ele, timeout=None):
         """等待元素从DOM中删除
@@ -1096,16 +1097,18 @@ class ChromiumBaseWaiter(object):
                 sleep(gap)
             return False
 
-    def set_targets(self, regexes):
+    def set_targets(self, targets, is_regex=False):
         """指定要等待的数据包
-        :param regexes: 要匹配的数据包url特征，正则字符串，可用list等传入多个
+        :param targets: 要匹配的数据包url特征，可用list等传入多个
+        :param is_regex: 设置的target是否正则表达式
         :return: None
         """
-        if not isinstance(regexes, (str, list, tuple, set)):
+        if not isinstance(targets, (str, list, tuple, set)):
             raise TypeError('targets只能是str、list、tuple、set。')
-        self._targets = regexes if isinstance(regexes, str) else set(regexes)
+        self._is_regex = is_regex
+        self._targets = targets if isinstance(targets, str) else set(targets)
         self._driver.run_cdp('Network.enable')
-        if regexes is not None:
+        if targets is not None:
             self._driver.driver.Network.responseReceived = self._response_received
             self._driver.driver.Network.loadingFinished = self._loading_finished
         else:
@@ -1118,7 +1121,7 @@ class ChromiumBaseWaiter(object):
 
     def data_packets(self, targets=None, timeout=None, any_one=False):
         """等待指定数据包加载完成
-        :param targets: 要匹配的数据包url特征，为正则字符串，可用list等传入多个
+        :param targets: 要匹配的数据包url特征，可用list等传入多个
         :param timeout: 超时时间，为None则使用页面对象timeout
         :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
         :return: ResponseData对象或监听结果字典
@@ -1126,7 +1129,7 @@ class ChromiumBaseWaiter(object):
         if self._targets is None and targets is None:
             targets = ''
         if targets is not None:
-            self.set_targets(targets)
+            self.set_targets(targets, is_regex=self._is_regex)
         self._request_id = None
         self._response_result = None
 
@@ -1148,7 +1151,8 @@ class ChromiumBaseWaiter(object):
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
         if isinstance(self._targets, str):
-            if search(self._targets, kwargs['response']['url']):
+            if (self._is_regex and search(self._targets, kwargs['response']['url'])) or (
+                    not self._is_regex and self._targets in kwargs['response']['url']):
                 self._request_id = kwargs['requestId']
                 self._response = kwargs['response']
 
@@ -1159,7 +1163,8 @@ class ChromiumBaseWaiter(object):
                 self._request_id = {}
 
             for target in self._targets:
-                if search(target, kwargs['response']['url']):
+                if (self._is_regex and search(target, kwargs['response']['url'])) or (
+                        not self._is_regex and target in kwargs['response']['url']):
                     self._response[target] = kwargs['response']
                     self._request_id[kwargs['requestId']] = target
 
