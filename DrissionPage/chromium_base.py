@@ -124,7 +124,8 @@ class ChromiumBase(BasePage):
             except TabClosedError:
                 return
 
-            while True:
+            end_time = perf_counter() + 10
+            while perf_counter() < end_time:
                 try:
                     b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
                     self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
@@ -133,8 +134,15 @@ class ChromiumBase(BasePage):
                     break
 
                 except Exception:
-                    if self._debug_recorder:
-                        self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
+                    if self._debug:
+                        print('重试获取document')
+                        if self._debug_recorder:
+                            self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
+
+                    sleep(.1)
+
+            else:
+                raise RuntimeError('获取document失败。')
 
             if self._debug:
                 print('获取document结束')
@@ -606,7 +614,7 @@ class ChromiumBase(BasePage):
                 self._debug_recorder.add_data((perf_counter(), '操作', '停止页面加载'))
 
         self.run_cdp('Page.stopLoading')
-        while self.ready_state != 'complete':
+        while self.ready_state not in ('complete', None):
             sleep(.1)
 
     def remove_ele(self, loc_or_ele):
@@ -770,7 +778,7 @@ class ChromiumBase(BasePage):
 
             if t < times:
                 sleep(interval)
-                while self.ready_state != 'complete':
+                while self.ready_state not in ('complete', None):
                     sleep(.1)
                 if self._debug or show_errmsg:
                     print(f'重试 {to_url}')

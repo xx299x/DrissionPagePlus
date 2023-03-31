@@ -109,7 +109,8 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print('---获取document')
 
-            while True:
+            end_time = perf_counter() + 10
+            while perf_counter() < end_time:
                 try:
                     if self._is_diff_domain is False:
                         node = self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
@@ -123,6 +124,9 @@ class ChromiumFrame(ChromiumBase):
 
                 except Exception:
                     sleep(.1)
+
+            else:
+                raise RuntimeError('获取document失败。')
 
             if self._debug:
                 print('---获取document结束')
@@ -272,13 +276,21 @@ class ChromiumFrame(ChromiumBase):
                 return 'complete'
 
         else:
-            while True:
+            end_time = perf_counter() + 10
+            while perf_counter() < end_time:
                 try:
                     return self.doc_ele.run_js('return this.readyState;')
                 except ContextLossError:
-                    node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
-                    doc = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
-                    return doc.run_js('return this.readyState;')
+                    try:
+                        node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
+                        doc = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+                        return doc.run_js('return this.readyState;')
+                    except:
+                        pass
+
+                sleep(.1)
+
+            raise RuntimeError('获取document失败。')
 
     @property
     def scroll(self):
@@ -558,7 +570,7 @@ class ChromiumFrame(ChromiumBase):
 
             if t < times:
                 sleep(interval)
-                while self.ready_state != 'complete':
+                while self.ready_state not in ('complete', None):
                     sleep(.1)
                 if self._debug:
                     print('重试')

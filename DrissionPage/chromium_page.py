@@ -261,7 +261,7 @@ class ChromiumPage(ChromiumBase):
 
         self.driver.stop()
         self._driver_init(tab_id)
-        if read_doc and self.ready_state == 'complete':
+        if read_doc and self.ready_state in ('complete', None):
             self._get_document()
 
     def close_tabs(self, tabs_or_ids=None, others=False):
@@ -315,7 +315,7 @@ class ChromiumPage(ChromiumBase):
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
-        :return: 提示框内容文本，未等到提示框则返回None
+        :return: 提示框内容文本，未等到提示框则返回False
         """
         timeout = self.timeout if timeout is None else timeout
         timeout = .1 if timeout <= 0 else timeout
@@ -323,7 +323,7 @@ class ChromiumPage(ChromiumBase):
         while not self._alert.activated and perf_counter() < end_time:
             sleep(.1)
         if not self._alert.activated:
-            return None
+            return False
 
         res_text = self._alert.text
         if self._alert.type == 'prompt':
