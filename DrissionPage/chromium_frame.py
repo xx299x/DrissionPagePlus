@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from re import search
+from threading import Thread
 from time import sleep, perf_counter
 from warnings import warn
 
@@ -37,6 +38,7 @@ class ChromiumFrame(ChromiumBase):
         end_time = perf_counter() + 2
         while perf_counter() < end_time and self.url == 'about:blank':
             sleep(.1)
+        Thread(target=self._check_alive).start()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -109,8 +111,8 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print('---获取document')
 
-            end_time = perf_counter() + 10
-            while perf_counter() < end_time:
+            end_time = perf_counter() + 3
+            while self.is_alive and perf_counter() < end_time:
                 try:
                     if self._is_diff_domain is False:
                         node = self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
@@ -125,8 +127,8 @@ class ChromiumFrame(ChromiumBase):
                 except Exception:
                     sleep(.1)
 
-            else:
-                raise RuntimeError('获取document失败。')
+            # else:
+            #     raise RuntimeError('获取document失败。')
 
             if self._debug:
                 print('---获取document结束')
@@ -276,8 +278,8 @@ class ChromiumFrame(ChromiumBase):
                 return 'complete'
 
         else:
-            end_time = perf_counter() + 10
-            while perf_counter() < end_time:
+            end_time = perf_counter() + 3
+            while self.is_alive and perf_counter() < end_time:
                 try:
                     return self.doc_ele.run_js('return this.readyState;')
                 except ContextLossError:
@@ -290,7 +292,12 @@ class ChromiumFrame(ChromiumBase):
 
                 sleep(.1)
 
-            raise RuntimeError('获取document失败。')
+            # raise RuntimeError('获取document失败。')
+
+    @property
+    def is_alive(self):
+        """返回是否仍可用"""
+        return self.states.is_alive
 
     @property
     def scroll(self):
@@ -587,6 +594,12 @@ class ChromiumFrame(ChromiumBase):
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
         return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
+
+    def _check_alive(self):
+        """检测iframe是否有效线程方法"""
+        while self.is_alive:
+            sleep(1)
+        self.driver.stop()
 
     # -------------准备废弃------------
     def set_attr(self, attr, value):

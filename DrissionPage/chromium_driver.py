@@ -121,8 +121,7 @@ class ChromiumDriver(object):
             except WebSocketTimeoutException:
                 continue
             except (WebSocketException, OSError, WebSocketConnectionClosedException):
-                if not self._stopped.is_set():
-                    self.stop()
+                self.stop()
                 return
 
             if self.debug:
@@ -150,8 +149,7 @@ class ChromiumDriver(object):
                 try:
                     self.event_handlers[event['method']](**event['params'])
                 except Exception as e:
-                    # pass
-                    raise RuntimeError(f"\n回调函数 {self.event_handlers[event['method']].__name__} 错误：\n{e}")
+                    raise RuntimeError(f"\n回调函数错误：\n{e}")
 
             self.event_queue.task_done()
 
