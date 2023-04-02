@@ -15,7 +15,7 @@ from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinition
 from .commons.locator import get_loc
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CallMethodError, NoResourceError
+    CallMethodError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
 
 
@@ -531,7 +531,7 @@ class ChromiumElement(DrissionElement):
         if clear and vals not in ('\n', '\ue007'):
             self.clear(by_js=False)
         else:
-            self._focus()
+            self._input_focus()
 
         # ------------处理字符-------------
         if not isinstance(vals, (tuple, list)):
@@ -558,10 +558,17 @@ class ChromiumElement(DrissionElement):
             self.run_js("this.value='';")
 
         else:
-            self._focus()
+            self._input_focus()
             self.input(('\ue009', 'a', '\ue017'), clear=False)
 
-    def _focus(self):
+    def _input_focus(self):
+        """输入前使元素获取焦点"""
+        try:
+            self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
+        except Exception:
+            self.click(by_js=None)
+
+    def focus(self):
         """使元素获取焦点"""
         try:
             self.page.run_cdp('DOM.focus', backendNodeId=self._backend_id)
@@ -1769,6 +1776,8 @@ class Click(object):
             self._ele.run_js('this.click();')
             return True
 
+        if Settings.raise_click_failed:
+            raise CanNotClickError
         return False
 
     def right(self):

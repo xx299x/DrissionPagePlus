@@ -194,6 +194,20 @@ class ChromiumPage(ChromiumBase):
         tab_id = tab_id or self.tab_id
         return ChromiumTab(self, tab_id)
 
+    def find_tabs(self, text, by_title=True, by_url=None):
+        """查找符合条件的tab，返回它们的id组成的列表
+        :param text: 查询条件
+        :param by_title: 是否匹配title
+        :param by_url: 是否匹配url
+        :return: tab id组成的列表
+        """
+        if not (by_title or by_url):
+            return self.tabs
+
+        tabs = self._control_session.get(f'http://{self.address}/json').json()  # 不要改用cdp
+        return [i['id'] for i in tabs if i['type'] == 'page' and ((by_url and text in i['url']) or
+                                                                  (by_title and text in i['title']))]
+
     def new_tab(self, url=None, switch_to=True):
         """新建一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
