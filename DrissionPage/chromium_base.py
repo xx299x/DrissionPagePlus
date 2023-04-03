@@ -1197,14 +1197,12 @@ class NetworkListener(object):
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
         if kwargs['requestId'] in self._requests:
-            print(f"{kwargs['requestId']} _response_received")
             self._requests[kwargs['requestId']]['response'] = kwargs['response']
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
         request_id = kwargs['requestId']
         if request_id in self._requests:
-            print(f'{request_id} _loading_finished')
             try:
                 body = self._page.run_cdp('Network.getResponseBody', requestId=request_id)['body']
             except:
@@ -1223,7 +1221,6 @@ class NetworkListener(object):
         for target in self._targets:
             if (self._is_regex and search(target, kwargs['request']['url'])) or (
                     not self._is_regex and target in kwargs['request']['url']):
-                print(f"{kwargs['requestId']} _requestWillBeSent")
                 self._requests[kwargs['requestId']] = {'target': target,
                                                        'post_data': kwargs['request'].get('postData', None),
                                                        'request_headers': kwargs['request']['headers']}
