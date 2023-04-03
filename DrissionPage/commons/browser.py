@@ -150,7 +150,7 @@ def test_connect(ip, port):
     end_time = perf_counter() + 6
     while perf_counter() < end_time:
         try:
-            tabs = requests_get(f'http://{ip}:{port}/json', timeout=3).json()
+            tabs = requests_get(f'http://{ip}:{port}/json', timeout=10).json()
             for tab in tabs:
                 if tab['type'] == 'page':
                     return

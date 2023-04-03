@@ -38,7 +38,10 @@ class ChromiumFrame(ChromiumBase):
         end_time = perf_counter() + 2
         while perf_counter() < end_time and self.url == 'about:blank':
             sleep(.1)
-        Thread(target=self._check_alive).start()
+
+        t = Thread(target=self._check_alive)
+        t.daemon = True
+        t.start()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
