@@ -23,7 +23,7 @@ setup(
         'requests',
         'cssselect',
         'DownloadKit>=0.5.3',
-        'FlowViewer>=0.2.10',
+        'FlowViewer>=0.3.0',
         'websocket-client',
         'click~=8.1.3',
         'tldextract'

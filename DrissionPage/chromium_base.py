@@ -1204,16 +1204,20 @@ class NetworkListener(object):
         request_id = kwargs['requestId']
         if request_id in self._requests:
             try:
-                body = self._page.run_cdp('Network.getResponseBody', requestId=request_id)['body']
-            except:
-                body = None
+                r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
+                body = r['body']
+                is_base64 = r['base64Encoded']
+            except CallMethodError:
+                body = ''
+                is_base64 = False
 
             request = self._requests[request_id]
             target = request['target']
             rd = ResponseData(request_id, request['response'],
                               body, self._page.tab_id, target)
             rd.postData = request['post_data']
-            rd._requestHeaders = request['request_headers']
+            rd._base64_body = is_base64
+            rd.requestHeaders = request['request_headers']
             self._results[target] = rd
 
     def _requestWillBeSent(self, **kwargs):
