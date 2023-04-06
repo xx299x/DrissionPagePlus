@@ -1792,26 +1792,36 @@ class Click(object):
         x, y = self._ele.locations.viewport_click_point
         self._click(x, y, 'middle')
 
-    def at(self, offset_x=None, offset_y=None, button='left'):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素click_point
+    def at(self, offset_x=None, offset_y=None, button='left', count=1):
+        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中间点
         :param offset_x: 相对元素左上角坐标的x轴偏移量
         :param offset_y: 相对元素左上角坐标的y轴偏移量
         :param button: 点击哪个键，可选 left, middle, right, back, forward
+        :param count: 点击次数
         :return: None
         """
         self._ele.page.scroll.to_see(self._ele)
+        if offset_x is None and offset_y is None:
+            w, h = self._ele.size
+            offset_x = w // 2
+            offset_y = h // 2
         x, y = offset_scroll(self._ele, offset_x, offset_y)
-        self._click(x, y, button)
+        self._click(x, y, button, count)
 
-    def _click(self, client_x, client_y, button='left'):
+    def twice(self):
+        """双击元素"""
+        self.at(count=2)
+
+    def _click(self, client_x, client_y, button='left', count=1):
         """实施点击
         :param client_x: 视口中的x坐标
         :param client_y: 视口中的y坐标
-        :param button: 'left' 或 'right'
+        :param button: 'left' 'right' 'middle'  'back' 'forward'
+        :param count: 点击次数
         :return: None
         """
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
-                               x=client_x, y=client_y, button=button, clickCount=1)
+                               x=client_x, y=client_y, button=button, clickCount=count)
         sleep(.05)
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
                                x=client_x, y=client_y, button=button)

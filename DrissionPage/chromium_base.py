@@ -1213,8 +1213,7 @@ class NetworkListener(object):
 
             request = self._requests[request_id]
             target = request['target']
-            rd = ResponseData(request_id, request['response'],
-                              body, self._page.tab_id, target)
+            rd = ResponseData(request_id, request['response'], body, self._page.tab_id, target)
             rd.postData = request['post_data']
             rd._base64_body = is_base64
             rd.requestHeaders = request['request_headers']
