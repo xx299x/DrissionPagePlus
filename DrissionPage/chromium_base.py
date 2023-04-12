@@ -10,7 +10,6 @@ from pathlib import Path
 from re import search
 from threading import Thread
 from time import perf_counter, sleep, time
-from warnings import warn
 
 from FlowViewer.listener import ResponseData
 from requests import Session
@@ -856,82 +855,6 @@ class ChromiumBase(BasePage):
         with open(path, 'wb') as f:
             f.write(png)
         return str(path.absolute())
-
-    # ------------------准备废弃----------------------
-    def wait_loading(self, timeout=None):
-        """阻塞程序，等待页面进入加载状态
-        :param timeout: 超时时间
-        :return: 等待结束时是否进入加载状态
-        """
-        warn("wait_loading()方法即将弃用，请用wait.load_start()方法代替。", DeprecationWarning)
-        return self.wait.load_start(timeout)
-
-    def scroll_to_see(self, loc_or_ele):
-        """滚动页面直到元素可见
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串（详见ele函数注释）
-        :return: None
-        """
-        warn("scroll_to_see()方法即将弃用，请用scroll.to_see()方法代替。", DeprecationWarning)
-        self.scroll.to_see(loc_or_ele)
-
-    def set_timeouts(self, implicit=None, page_load=None, script=None):
-        """设置超时时间，单位为秒
-        :param implicit: 查找元素超时时间
-        :param page_load: 页面加载超时时间
-        :param script: 脚本运行超时时间
-        :return: None
-        """
-        warn("set_timeouts()方法即将弃用，请用set.timeouts()方法代替。", DeprecationWarning)
-        self.set.timeouts(implicit, page_load, script)
-
-    def set_session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        warn("set_session_storage()方法即将弃用，请用set.session_storage()方法代替。", DeprecationWarning)
-        return self.set.session_storage(item, value)
-
-    def set_local_storage(self, item, value):
-        """设置或删除某项localStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        warn("set_local_storage()方法即将弃用，请用set.local_storage()方法代替。", DeprecationWarning)
-        return self.set.local_storage(item, value)
-
-    def set_user_agent(self, ua, platform=None):
-        """为当前tab设置user agent，只在当前tab有效
-        :param ua: user agent字符串
-        :param platform: platform字符串
-        :return: None
-        """
-        warn("set_user_agent()方法即将弃用，请用set.user_agent()方法代替。", DeprecationWarning)
-        self.set.user_agent(ua, platform)
-
-    def set_cookies(self, cookies):
-        """设置cookies值
-        :param cookies: cookies信息
-        :return: None
-        """
-        warn("set_cookies()方法即将弃用，请用set.cookies()方法代替。", DeprecationWarning)
-        self.set.cookies(cookies)
-
-    def set_headers(self, headers: dict) -> None:
-        """设置固定发送的headers
-        :param headers: dict格式的headers数据
-        :return: None
-        """
-        warn("set_headers()方法即将弃用，请用set.headers()方法代替。", DeprecationWarning)
-        self.set.headers(headers)
-
-    @property
-    def set_page_load_strategy(self):
-        """返回用于设置页面加载策略的对象"""
-        warn("set_page_load_strategy()方法即将弃用，请用set.load_strategy.xxxx()方法代替。", DeprecationWarning)
-        return self.set.load_strategy
 
 
 class ChromiumBaseSetter(object):

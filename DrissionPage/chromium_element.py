@@ -7,7 +7,6 @@ from os import sep
 from os.path import basename
 from pathlib import Path
 from time import perf_counter, sleep
-from warnings import warn
 
 from .base import DrissionElement, BaseElement
 from .commons.constants import FRAME_ELEMENT, NoneElement, Settings
@@ -715,147 +714,6 @@ class ChromiumElement(DrissionElement):
         files = [str(Path(i).absolute()) for i in files]
         self.page.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=self._backend_id)
 
-    # ---------------准备废弃-----------------
-
-    def click_at(self, offset_x=None, offset_y=None, button='left'):
-        """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素左上角可接受点击的点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :param button: 左键还是右键
-        :return: None
-        """
-        warn("click_at()方法即将弃用，请用click.left_at()方法代替。", DeprecationWarning)
-        self.click.at(offset_x, offset_y, 'left')
-
-    def r_click(self):
-        """右键单击"""
-        warn("r_click()方法即将弃用，请用click.right()方法代替。", DeprecationWarning)
-        self.click.right()
-
-    def r_click_at(self, offset_x=None, offset_y=None):
-        """带偏移量右键单击本元素，相对于左上角坐标。不传入x或y值时点击元素中点
-        :param offset_x: 相对元素左上角坐标的x轴偏移量
-        :param offset_y: 相对元素左上角坐标的y轴偏移量
-        :return: None
-        """
-        warn("r_click_at()方法即将弃用，请用click.right_at()方法代替。", DeprecationWarning)
-        self.click.at(offset_x, offset_y, 'right')
-
-    def m_click(self):
-        """中键单击"""
-        warn("m_click()方法即将弃用，请用click.middle()方法代替。", DeprecationWarning)
-        self.click.middle()
-
-    @property
-    def client_location(self):
-        """返回元素左上角在视口中的坐标"""
-        warn("client_location属性即将弃用，请用locations.viewport_location代替。", DeprecationWarning)
-        return self.locations.viewport_location
-
-    @property
-    def client_midpoint(self):
-        """返回元素中间点在视口中的坐标"""
-        warn("client_midpoint属性即将弃用，请用locations.client_midpoint代替。", DeprecationWarning)
-        return self.locations.viewport_midpoint
-
-    @property
-    def midpoint(self):
-        """返回元素中间点的绝对坐标"""
-        warn("midpoint属性即将弃用，请用locations.midpoint代替。", DeprecationWarning)
-        return self.locations.midpoint
-
-    def set_attr(self, attr, value):
-        """设置元素attribute属性
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        warn("set_attr()方法即将弃用，请用set.attr()方法代替。", DeprecationWarning)
-        self.set.attr(attr, value)
-
-    def set_prop(self, prop, value):
-        """设置元素property属性
-        :param prop: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        warn("set_prop()方法即将弃用，请用set.prop()方法代替。", DeprecationWarning)
-        self.set.prop(prop, value)
-
-    def set_innerHTML(self, html):
-        """设置元素innerHTML
-        :param html: html文本
-        :return: None
-        """
-        warn("set_innerHTML()方法即将弃用，请用set.innerHTML()方法代替。", DeprecationWarning)
-        self.set.innerHTML(html)
-
-    @property
-    def is_selected(self):
-        """返回元素是否被选择"""
-        warn("is_selected属性即将弃用，请用states.is_selected属性代替。", DeprecationWarning)
-        return self.states.is_selected
-
-    @property
-    def is_displayed(self):
-        """返回元素是否显示"""
-        warn("is_displayed属性即将弃用，请用states.is_displayed属性代替。", DeprecationWarning)
-        return self.states.is_displayed
-
-    @property
-    def is_enabled(self):
-        """返回元素是否可用"""
-        warn("is_enabled属性即将弃用，请用states.is_enabled属性代替。", DeprecationWarning)
-        return self.states.is_enabled
-
-    @property
-    def is_alive(self):
-        """返回元素是否仍在DOM中"""
-        warn("is_alive属性即将弃用，请用states.is_alive属性代替。", DeprecationWarning)
-        return self.states.is_alive
-
-    @property
-    def is_in_viewport(self):
-        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
-        warn("is_in_viewport属性即将弃用，请用states.is_in_viewport属性代替。", DeprecationWarning)
-        return self.states.is_in_viewport
-
-    @property
-    def pseudo_before(self):
-        """返回当前元素的::before伪元素内容"""
-        warn("pseudo_before属性即将弃用，请用pseudo.before属性代替。", DeprecationWarning)
-        return self.pseudo.before
-
-    @property
-    def pseudo_after(self):
-        """返回当前元素的::after伪元素内容"""
-        warn("pseudo_after属性即将弃用，请用pseudo.after属性代替。", DeprecationWarning)
-        return self.pseudo.after
-
-    @property
-    def obj_id(self):
-        """返回js中的object id"""
-        warn("obj_id属性即将弃用，请用ids.obj_id属性代替。", DeprecationWarning)
-        return self._obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        warn("node_id属性即将弃用，请用ids.node_id属性代替。", DeprecationWarning)
-        return self._node_id
-
-    @property
-    def backend_id(self):
-        """返回backend id"""
-        warn("backend_id属性即将弃用，请用ids.backend_id属性代替。", DeprecationWarning)
-        return self._backend_id
-
-    @property
-    def doc_id(self):
-        """返回所在document的object id"""
-        warn("doc_id属性即将弃用，请用ids.doc_id属性代替。", DeprecationWarning)
-        return self._doc_id
-
 
 class ChromiumShadowRoot(BaseElement):
     """ChromiumShadowRoot是用于处理ShadowRoot的类，使用方法和ChromiumElement基本一致"""
@@ -1155,37 +1013,6 @@ class ChromiumShadowRoot(BaseElement):
         r = self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']
         self._tag = r['localName'].lower()
         return r['backendNodeId']
-
-    # ------------准备废弃--------------
-    @property
-    def obj_id(self):
-        """返回js中的object id"""
-        warn("obj_id属性即将弃用，请用ids.obj_id属性代替。", DeprecationWarning)
-        return self._obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        warn("node_id属性即将弃用，请用ids.node_id属性代替。", DeprecationWarning)
-        return self._node_id
-
-    @property
-    def backend_id(self):
-        """返回backend id"""
-        warn("backend_id属性即将弃用，请用ids.backend_id属性代替。", DeprecationWarning)
-        return self._backend_id
-
-    @property
-    def is_enabled(self):
-        """返回元素是否可用"""
-        warn("is_enabled属性即将弃用，请用states.is_enabled属性代替。", DeprecationWarning)
-        return self.states.is_enabled
-
-    @property
-    def is_alive(self):
-        """返回元素是否仍在DOM中"""
-        warn("is_alive属性即将弃用，请用states.is_alive属性代替。", DeprecationWarning)
-        return self.states.is_alive
 
 
 class Ids(object):
@@ -2095,7 +1922,7 @@ class ChromiumSelect(object):
 
         mode = 'false' if cancel else 'true'
         timeout = timeout if timeout is not None else self._ele.page.timeout
-        condition = {condition} if isinstance(condition, str) else set(condition)
+        condition = {condition} if isinstance(condition, (str, int)) else set(condition)
 
         if para_type in ('text', 'value'):
             return self._text_value(condition, para_type, mode, timeout)
