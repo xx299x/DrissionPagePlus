@@ -1289,7 +1289,7 @@ def parse_js_result(page, ele, result):
                              ownProperties=True)['result']
             return [parse_js_result(page, ele, result=i['value']) for i in r[:-1]]
 
-        elif 'objectId' in result and result['className'] == 'object':  # dict
+        elif 'objectId' in result and result['className'].lower() == 'object':  # dict
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'],
                              ownProperties=True)['result']
             return {i['name']: parse_js_result(page, ele, result=i['value']) for i in r}
@@ -1565,8 +1565,7 @@ class Click(object):
         return self.left(by_js, timeout)
 
     def left(self, by_js=False, timeout=1):
-        """点击元素
-        如果遇到遮挡，可选择是否用js点击
+        """点击元素，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
         :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
         :return: 是否点击成功
