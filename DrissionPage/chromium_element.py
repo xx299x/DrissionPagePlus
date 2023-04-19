@@ -1581,7 +1581,7 @@ class Click(object):
                         can_click = True
                 else:
                     end_time = perf_counter() + timeout
-                    while perf_counter() < end_time or timeout == 0:
+                    while perf_counter() < end_time:
                         if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
                             can_click = True
                             break
@@ -1648,7 +1648,7 @@ class Click(object):
         """
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
                                x=client_x, y=client_y, button=button, clickCount=count)
-        sleep(.05)
+        # sleep(.05)
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
                                x=client_x, y=client_y, button=button)
 
@@ -1815,9 +1815,13 @@ class ChromiumSelect(object):
         """反选"""
         if not self.is_multi:
             raise TypeError("只能对多项选框执行反选。")
+        change = False
         for i in self.options:
+            change = True
             mode = 'false' if i.states.is_selected else 'true'
             i.run_js(f'this.selected={mode};')
+        if change:
+            self._dispatch_change()
 
     def clear(self):
         """清除所有已选项"""
@@ -1904,9 +1908,11 @@ class ChromiumSelect(object):
         if self.is_multi:
             for ele in eles:
                 ele.run_js(f'this.selected={mode};')
+            self._dispatch_change()
             return True
 
         eles[0].run_js(f'this.selected={mode};')
+        self._dispatch_change()
         return True
 
     def _select(self, condition, para_type='text', cancel=False, timeout=None):
@@ -1954,6 +1960,9 @@ class ChromiumSelect(object):
             for i in eles:
                 i.run_js(f'this.selected={mode};')
 
+            self._dispatch_change()
+            return True
+
         return False
 
     def _index(self, condition, mode, timeout):
@@ -1977,7 +1986,14 @@ class ChromiumSelect(object):
             for i in condition:
                 eles[i - 1].run_js(f'this.selected={mode};')
 
+            self._dispatch_change()
+            return True
+
         return False
+
+    def _dispatch_change(self):
+        """触发修改动作"""
+        self._ele.run_js('this.dispatchEvent(new UIEvent("change"));')
 
 
 class ChromiumElementWaiter(object):

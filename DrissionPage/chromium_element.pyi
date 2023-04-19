@@ -551,6 +551,8 @@ class ChromiumSelect(object):
 
     def _index(self, condition: set, mode: str, timeout: float) -> bool: ...
 
+    def _dispatch_change(self) -> None: ...
+
 
 class ChromiumElementWaiter(object):
     def __init__(self,
