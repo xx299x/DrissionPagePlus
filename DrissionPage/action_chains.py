@@ -252,13 +252,14 @@ class ActionChains:
 
     def type(self, text):
         """输入文本
-        :param text: 要输入的文本
+        :param text: 要输入的文本，特殊字符和多个文本可用list或tuple传入
         :return: self
         """
         for i in text:
-            self.key_down(i)
-            sleep(.05)
-            self.key_up(i)
+            for character in i:
+                self.key_down(character)
+                sleep(.05)
+                self.key_up(character)
         return self
 
     def wait(self, second):
