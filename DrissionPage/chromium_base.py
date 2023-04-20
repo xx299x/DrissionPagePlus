@@ -1035,16 +1035,15 @@ class ChromiumBaseWaiter(object):
             self._listener = NetworkListener(self._driver)
         self._listener.set_targets(targets, is_regex)
 
-    def data_packets(self, targets=None, timeout=None, any_one=False):
+    def data_packets(self, timeout=None, any_one=False):
         """等待指定数据包加载完成
-        :param targets: 要匹配的数据包url特征，可用list等传入多个
         :param timeout: 超时时间，为None则使用页面对象timeout
         :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
         :return: ResponseData对象或监听结果字典
         """
         if not self._listener:
             self._listener = NetworkListener(self._driver)
-        return self._listener.listen(targets, timeout, any_one)
+        return self._listener.listen(timeout, any_one)
 
     def stop_listening(self):
         """停止监听数据包"""
@@ -1083,7 +1082,7 @@ class NetworkListener(object):
             self._page.driver.Network.responseReceived = self._response_received
             self._page.driver.Network.loadingFinished = self._loading_finished
         else:
-            self.stop_listening()
+            self.stop()
 
     def stop(self):
         """停止监听数据包"""
@@ -1092,19 +1091,14 @@ class NetworkListener(object):
         self._page.driver.Network.responseReceived = None
         self._page.driver.Network.loadingFinished = None
 
-    def listen(self, targets=None, timeout=None, any_one=False):
+    def listen(self, timeout=None, any_one=False):
         """等待指定数据包加载完成
-        :param targets: 要匹配的数据包url特征，可用list等传入多个
         :param timeout: 超时时间，为None则使用页面对象timeout
         :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
         :return: ResponseData对象或监听结果字典
         """
-        if self._targets is None and targets is None:
-            targets = ''
-        if targets is not None:
-            self.set_targets(targets, is_regex=self._is_regex)
-        self._results = {}
-
+        if self._targets is None:
+            self.set_targets('', is_regex=self._is_regex)
         timeout = timeout if timeout is not None else self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
@@ -1112,10 +1106,13 @@ class NetworkListener(object):
                 break
             sleep(.1)
 
-        self._requests = {}
         if not self._results:
             return False
-        return list(self._results.values())[0] if self._single else self._results
+
+        r = list(self._results.values())[0] if self._single else self._results
+        self._results = {}
+        self._requests = {}
+        return r
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
@@ -1140,6 +1137,7 @@ class NetworkListener(object):
             rd.postData = request['post_data']
             rd._base64_body = is_base64
             rd.requestHeaders = request['request_headers']
+            rd.method = request['method']
             self._results[target] = rd
 
     def _requestWillBeSent(self, **kwargs):
@@ -1149,7 +1147,8 @@ class NetworkListener(object):
                     not self._is_regex and target in kwargs['request']['url']):
                 self._requests[kwargs['requestId']] = {'target': target,
                                                        'post_data': kwargs['request'].get('postData', None),
-                                                       'request_headers': kwargs['request']['headers']}
+                                                       'request_headers': kwargs['request']['headers'],
+                                                       'method': kwargs['request']['method']}
                 break
 
 

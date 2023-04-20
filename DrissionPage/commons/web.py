@@ -3,13 +3,102 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from base64 import b64decode
 from html import unescape
 from http.cookiejar import Cookie
+from json import JSONDecodeError, loads
 from re import sub
 from urllib.parse import urlparse, urljoin, urlunparse
 
 from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
 from tldextract import extract
+
+
+class DataPacket(object):
+    """返回的数据包管理类"""
+    __slots__ = ('requestId', 'request', 'response', 'rawBody', 'tab', 'target', '_requestHeaders', '_body',
+                 '_base64_body', '_rawPostData', '_postData',
+
+                 'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
+                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+
+
+                 'status', 'statusText',
+                 'securityDetails', 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId',
+                 'remoteIPAddress', 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache',
+                 'encodedDataLength', 'timing', 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName',
+                 'protocol', 'securityState',
+                 )
+
+    def __init__(self, request_id, request, response, body, tab, target):
+        """
+        :param request: request的数据
+        :param response: response的数据
+        :param body: response包含的内容
+        :param tab: 产生这个数据包的tab的id
+        :param target: 监听目标
+        """
+        self.requestId = request_id
+        self.response = CaseInsensitiveDict(response)
+        self.request = CaseInsensitiveDict(request)
+        self.rawBody = body
+        self.tab = tab
+        self.target = target
+        self._requestHeaders = None
+        self._postData = None
+        self._body = None
+        self._base64_body = False
+        self._rawPostData = None
+
+    def __getattr__(self, item):
+        return self.response.get(item, None)
+
+    def __repr__(self):
+        return f'<ResponseData target={self.target} request_id={self.requestId}>'
+
+    @property
+    def responseHeaders(self):
+        """以大小写不敏感字典返回headers数据"""
+        headers = self.response.get('headers', None)
+        return CaseInsensitiveDict(headers) if headers else None
+
+    @property
+    def requestHeaders(self):
+        """以大小写不敏感字典返回requestHeaders数据"""
+        if self._requestHeaders:
+            return self._requestHeaders
+        headers = self.response.get('requestHeaders', None)
+        return CaseInsensitiveDict(headers) if headers else None
+
+    @property
+    def postData(self):
+        """返回postData数据"""
+        if self._postData is None and self._rawPostData:
+            try:
+                self._postData = loads(self._rawPostData)
+            except JSONDecodeError:
+                self._postData = self._rawPostData
+        return self._postData
+
+    def set_postData(self, val):
+        """设置postData，当hasPostData为True但数据太长时使用"""
+        self._rawPostData = val
+
+    @property
+    def body(self):
+        """返回body内容，如果是json格式，自动进行转换，如果时图片格式，进行base64转换，其它格式直接返回文本"""
+        if self._body is None:
+            if self._base64_body:
+                self._body = b64decode(self.rawBody)
+
+            else:
+                try:
+                    self._body = loads(self.rawBody)
+                except JSONDecodeError:
+                    self._body = self.rawBody
+
+        return self._body
 
 
 def get_ele_txt(e):
