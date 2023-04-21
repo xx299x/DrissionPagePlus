@@ -14,6 +14,7 @@ from time import perf_counter, sleep, time
 from FlowViewer.listener import ResponseData
 from requests import Session
 
+from .commons.web import DataPacket
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
@@ -1061,14 +1062,19 @@ class NetworkListener(object):
         self._single = False
         self._requests = {}
 
-    def set_targets(self, targets, is_regex=False):
+        self._count = None
+        self._caught = 0  # 已获取到的数量
+
+    def set_targets(self, targets, is_regex=False, count=None):
         """指定要等待的数据包
         :param targets: 要匹配的数据包url特征，可用list等传入多个
         :param is_regex: 设置的target是否正则表达式
+        :param count: 设置总共等待多少个数据包，为None时每个目标等待1个
         :return: None
         """
         if not isinstance(targets, (str, list, tuple, set)):
             raise TypeError('targets只能是str、list、tuple、set。')
+
         self._is_regex = is_regex
         if isinstance(targets, str):
             self._targets = {targets}
@@ -1076,8 +1082,11 @@ class NetworkListener(object):
         else:
             self._targets = set(targets)
             self._single = False
-        self._page.run_cdp('Network.enable')
+        if count is None:
+            self._count = len(self._targets)
+
         if targets is not None:
+            self._page.run_cdp('Network.enable')
             self._page.driver.Network.requestWillBeSent = self._requestWillBeSent
             self._page.driver.Network.responseReceived = self._response_received
             self._page.driver.Network.loadingFinished = self._loading_finished
@@ -1098,20 +1107,24 @@ class NetworkListener(object):
         :return: ResponseData对象或监听结果字典
         """
         if self._targets is None:
-            self.set_targets('', is_regex=self._is_regex)
+            raise RuntimeError('必须先用set_targets()设置等待目标。')
+
         timeout = timeout if timeout is not None else self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._results and (any_one or set(self._results) == self._targets):
+            if self._caught >= self._count or (any_one and self._caught):
                 break
             sleep(.1)
 
         if not self._results:
-            return False
+            r = False
+        else:
+            # todo
+            r = list(self._results.values())[0] if self._single else self._results
 
-        r = list(self._results.values())[0] if self._single else self._results
         self._results = {}
         self._requests = {}
+        self._caught = 0
         return r
 
     def _response_received(self, **kwargs):
@@ -1140,15 +1153,21 @@ class NetworkListener(object):
             rd.method = request['method']
             self._results[target] = rd
 
+            self._caught += 1
+
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         for target in self._targets:
             if (self._is_regex and search(target, kwargs['request']['url'])) or (
                     not self._is_regex and target in kwargs['request']['url']):
-                self._requests[kwargs['requestId']] = {'target': target,
-                                                       'post_data': kwargs['request'].get('postData', None),
-                                                       'request_headers': kwargs['request']['headers'],
-                                                       'method': kwargs['request']['method']}
+                # self._requests[kwargs['requestId']] = {'target': target,
+                #                                        'post_data': kwargs['request'].get('postData', None),
+                #                                        'request_headers': kwargs['request']['headers'],
+                #                                        'method': kwargs['request']['method']}
+                self._requests[kwargs['requestId']] = DataPacket(kwargs['requestId'], self._page.tab_id, target, kwargs)
+                if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
+                    pd = self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+                    self._requests[kwargs['requestId']].
                 break
 
 

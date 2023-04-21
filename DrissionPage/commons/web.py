@@ -23,7 +23,6 @@ class DataPacket(object):
                  'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
                  'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
 
-
                  'status', 'statusText',
                  'securityDetails', 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId',
                  'remoteIPAddress', 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache',
@@ -31,18 +30,15 @@ class DataPacket(object):
                  'protocol', 'securityState',
                  )
 
-    def __init__(self, request_id, request, response, body, tab, target):
+    def __init__(self, request_id, tab, target, raw_request):
         """
-        :param request: request的数据
-        :param response: response的数据
-        :param body: response包含的内容
+        :param request_id: request id
         :param tab: 产生这个数据包的tab的id
         :param target: 监听目标
+        :param raw_request: 原始request数据
         """
         self.requestId = request_id
-        self.response = CaseInsensitiveDict(response)
-        self.request = CaseInsensitiveDict(request)
-        self.rawBody = body
+        self._raw_request = raw_request
         self.tab = tab
         self.target = target
         self._requestHeaders = None
