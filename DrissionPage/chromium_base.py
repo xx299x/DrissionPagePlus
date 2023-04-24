@@ -11,16 +11,15 @@ from re import search
 from threading import Thread
 from time import perf_counter, sleep, time
 
-from FlowViewer.listener import ResponseData
 from requests import Session
 
-from .commons.web import DataPacket
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
+from .commons.web import DataPacket
 from .commons.web import set_browser_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError, BrowserConnectError
@@ -1087,7 +1086,7 @@ class NetworkListener(object):
 
         if targets is not None:
             self._page.run_cdp('Network.enable')
-            self._page.driver.Network.requestWillBeSent = self._requestWillBeSent
+            self._page.driver.Network.requestWillBeSent = self._request_will_sent
             self._page.driver.Network.responseReceived = self._response_received
             self._page.driver.Network.loadingFinished = self._loading_finished
         else:
@@ -1127,7 +1126,7 @@ class NetworkListener(object):
         self._caught = 0
         return r
 
-    def _requestWillBeSent(self, **kwargs):
+    def _request_will_sent(self, **kwargs):
         """接收到请求时的回调函数"""
         for target in self._targets:
             if (self._is_regex and search(target, kwargs['request']['url'])) or (
