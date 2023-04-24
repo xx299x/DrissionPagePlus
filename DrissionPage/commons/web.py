@@ -18,7 +18,9 @@ from tldextract import extract
 class DataPacket(object):
     """返回的数据包管理类"""
     __slots__ = ('requestId', 'request', 'response', 'rawBody', 'tab', 'target', '_requestHeaders', '_body',
-                 '_base64_body', '_rawPostData', '_postData',
+                 '_postData',
+                 # cdp 原始数据
+                 '_raw_request', '_raw_response', '_raw_fail_info', '_rawPostData', '_rawBody', '_base64_body',
 
                  'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
                  'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
@@ -35,24 +37,40 @@ class DataPacket(object):
         :param request_id: request id
         :param tab: 产生这个数据包的tab的id
         :param target: 监听目标
-        :param raw_request: 原始request数据
+        :param raw_request: 原始request数据，从cdp获得
         """
         self.requestId = request_id
-        self._raw_request = raw_request
         self.tab = tab
         self.target = target
+
+        self._raw_request = raw_request
+        self._raw_response = None
+        self._raw_fail_info = None
+        self._rawPostData = None
+        self._rawBody = None
+        self._base64_body = False
+
         self._requestHeaders = None
         self._postData = None
         self._body = None
-        self._base64_body = False
-        self._rawPostData = None
-
-    def __getattr__(self, item):
-        return self.response.get(item, None)
 
     def __repr__(self):
-        return f'<ResponseData target={self.target} request_id={self.requestId}>'
+        return f'<DataPacket target={self.target} request_id={self.requestId}>'
 
+    @property
+    def reuqest(self):
+        pass
+
+    @property
+    def response(self):
+        pass
+
+    @property
+    def fail_info(self):
+        pass
+
+
+class RequestData(object):
     @property
     def responseHeaders(self):
         """以大小写不敏感字典返回headers数据"""
@@ -77,10 +95,6 @@ class DataPacket(object):
                 self._postData = self._rawPostData
         return self._postData
 
-    def set_postData(self, val):
-        """设置postData，当hasPostData为True但数据太长时使用"""
-        self._rawPostData = val
-
     @property
     def body(self):
         """返回body内容，如果是json格式，自动进行转换，如果时图片格式，进行base64转换，其它格式直接返回文本"""
@@ -95,6 +109,14 @@ class DataPacket(object):
                     self._body = self.rawBody
 
         return self._body
+
+
+class ResponseData(object):
+    pass
+
+
+class FailData(object):
+    pass
 
 
 def get_ele_txt(e):

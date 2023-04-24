@@ -1116,7 +1116,7 @@ class NetworkListener(object):
                 break
             sleep(.1)
 
-        if not self._results:
+        if self._caught == 0:
             r = False
         else:
             # todo
@@ -1127,10 +1127,23 @@ class NetworkListener(object):
         self._caught = 0
         return r
 
+    def _requestWillBeSent(self, **kwargs):
+        """接收到请求时的回调函数"""
+        for target in self._targets:
+            if (self._is_regex and search(target, kwargs['request']['url'])) or (
+                    not self._is_regex and target in kwargs['request']['url']):
+                self._requests[kwargs['requestId']] = DataPacket(kwargs['requestId'], self._page.tab_id, target, kwargs)
+
+                if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
+                    self._requests[kwargs['requestId']]._rawPostData \
+                        = self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+
+                break
+
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
         if kwargs['requestId'] in self._requests:
-            self._requests[kwargs['requestId']]['response'] = kwargs['response']
+            self._requests[kwargs['requestId']]._raw_response = kwargs
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
@@ -1144,31 +1157,29 @@ class NetworkListener(object):
                 body = ''
                 is_base64 = False
 
-            request = self._requests[request_id]
-            target = request['target']
-            rd = ResponseData(request_id, request['response'], body, self._page.tab_id, target)
-            rd.postData = request['post_data']
-            rd._base64_body = is_base64
-            rd.requestHeaders = request['request_headers']
-            rd.method = request['method']
-            self._results[target] = rd
+            data_packet = self._requests[request_id]
+            data_packet._rowBody = body
+            data_packet._base64_body = is_base64
+
+            if data_packet.target in self._results:
+                self._results[data_packet.target].append(data_packet)
+            else:
+                self._results[data_packet.target] = [data_packet]
 
             self._caught += 1
 
-    def _requestWillBeSent(self, **kwargs):
-        """接收到请求时的回调函数"""
-        for target in self._targets:
-            if (self._is_regex and search(target, kwargs['request']['url'])) or (
-                    not self._is_regex and target in kwargs['request']['url']):
-                # self._requests[kwargs['requestId']] = {'target': target,
-                #                                        'post_data': kwargs['request'].get('postData', None),
-                #                                        'request_headers': kwargs['request']['headers'],
-                #                                        'method': kwargs['request']['method']}
-                self._requests[kwargs['requestId']] = DataPacket(kwargs['requestId'], self._page.tab_id, target, kwargs)
-                if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                    pd = self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
-                    self._requests[kwargs['requestId']].
-                break
+    def _loading_failed(self, **kwargs):
+        """请求失败时的处理方法"""
+        if kwargs['requestId'] in self._requests:
+            data_packet = self._requests[kwargs['requestId']]
+            data_packet._raw_fail_info = kwargs
+
+            if data_packet.target in self._results:
+                self._results[data_packet.target].append(data_packet)
+            else:
+                self._results[data_packet.target] = [data_packet]
+
+            self._caught += 1
 
 
 class ChromiumPageScroll(ChromiumScroll):
