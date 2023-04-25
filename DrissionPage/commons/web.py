@@ -17,20 +17,20 @@ from tldextract import extract
 
 class DataPacket(object):
     """返回的数据包管理类"""
-    __slots__ = ('requestId', 'request', 'response', 'rawBody', 'tab', 'target', '_requestHeaders', '_body',
-                 '_postData', '_request_data', '_response_data', '_fail_info',
-                 # cdp 原始数据
-                 '_raw_request', '_raw_response', '_raw_fail_info', '_rawPostData', '_rawBody', '_base64_body',
-
-                 'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
-                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
-
-                 'status', 'statusText',
-                 'securityDetails', 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId',
-                 'remoteIPAddress', 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache',
-                 'encodedDataLength', 'timing', 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName',
-                 'protocol', 'securityState',
-                 )
+    # __slots__ = ('requestId', 'request', 'response', 'rawBody', 'tab', 'target', '_requestHeaders', '_body',
+    #              '_postData', '_request_data', '_response_data', '_fail_info',
+    #              # cdp 原始数据
+    #              '_raw_request', '_raw_response', '_raw_fail_info', '_rawPostData', '_rawBody', '_base64_body',
+    #
+    #              'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
+    #              'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+    #
+    #              'status', 'statusText',
+    #              'securityDetails', 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId',
+    #              'remoteIPAddress', 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache',
+    #              'encodedDataLength', 'timing', 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName',
+    #              'protocol', 'securityState',
+    #              )
 
     def __init__(self, request_id, tab, target, raw_request):
         """

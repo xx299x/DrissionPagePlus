@@ -979,7 +979,7 @@ class ChromiumBaseWaiter(object):
         :return: 是否等待成功
         """
         ele = self._driver._ele(loc_or_ele, raise_err=False)
-        return ele.wait.display(timeout)
+        return ele.wait.display(timeout) if ele else False
 
     def ele_hidden(self, loc_or_ele, timeout=None):
         """等待元素变成隐藏状态
