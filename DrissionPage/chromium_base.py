@@ -1063,6 +1063,7 @@ class NetworkListener(object):
 
         self._count = None
         self._caught = 0  # 已获取到的数量
+        self._all_tabs = False  # 是否监听所有tab
 
     def set_targets(self, targets, is_regex=False, count=None):
         """指定要等待的数据包
@@ -1092,12 +1093,23 @@ class NetworkListener(object):
         else:
             self.stop()
 
+    def start(self):
+        driver = self._page.browser_driver if self._all_tabs else self._page.driver
+        driver.set_listener('Fetch.requestPaused', self._request_paused)
+        patterns = []
+        for i in self._targets:
+            patterns.append({'requestStage': 'Request', 'urlPattern': i})
+            patterns.append({'requestStage': 'Response', 'urlPattern': i})
+        if patterns:
+            driver.call_method('Fetch.enable', patterns=patterns)
+        else:
+            driver.call_method('Fetch.enable')
+
     def stop(self):
         """停止监听数据包"""
-        self._page.run_cdp('Network.disable')
-        self._page.driver.Network.requestWillBeSent = None
-        self._page.driver.Network.responseReceived = None
-        self._page.driver.Network.loadingFinished = None
+        driver = self._page.browser_driver if self._all_tabs else self._page.driver
+        driver.set_listener('Fetch.requestPaused', None)
+        driver.call_method('Fetch.disable')
 
     def listen(self, timeout=None, any_one=False):
         """等待指定数据包加载完成
@@ -1125,6 +1137,9 @@ class NetworkListener(object):
         self._requests = {}
         self._caught = 0
         return r
+
+    def _request_paused(self, **kwargs):
+        pass
 
     def _request_will_sent(self, **kwargs):
         """接收到请求时的回调函数"""
