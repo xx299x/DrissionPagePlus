@@ -17,81 +17,74 @@ from tldextract import extract
 
 class DataPacket(object):
     """返回的数据包管理类"""
-    # __slots__ = ('requestId', 'request', 'response', 'rawBody', 'tab', 'target', '_requestHeaders', '_body',
-    #              '_postData', '_request_data', '_response_data', '_fail_info',
-    #              # cdp 原始数据
-    #              '_raw_request', '_raw_response', '_raw_fail_info', '_rawPostData', '_rawBody', '_base64_body',
-    #
-    #              'url', 'urlFragment', 'method', 'postDataEntries', 'mixedContentType', 'initialPriority',
-    #              'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
-    #
-    #              'status', 'statusText',
-    #              'securityDetails', 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId',
-    #              'remoteIPAddress', 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache',
-    #              'encodedDataLength', 'timing', 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName',
-    #              'protocol', 'securityState',
-    #              )
 
-    def __init__(self, request_id, tab, target, raw_request):
+    def __init__(self, tab, target, raw_info):
         """
         :param request_id: request id
         :param tab: 产生这个数据包的tab的id
         :param target: 监听目标
         :param raw_request: 原始request数据，从cdp获得
         """
-        self.requestId = request_id
         self.tab = tab
         self.target = target
 
-        self._raw_request = raw_request
-        self._rawPostData = None
+        self._raw_info = raw_info
+        self._raw_post_data = None
 
-        self._raw_response = None
-        self._rawBody = None
+        self._raw_body = None
         self._base64_body = False
 
-        self._raw_fail_info = None
-
-        self._request_data = None
-        self._response_data = None
-        self._fail_info = None
+        self._request = None
+        self._response = None
 
     def __repr__(self):
         return f'<DataPacket target={self.target} request_id={self.requestId}>'
 
     @property
+    def requestId(self):
+        return self._raw_info['requestId']
+
+    @property
     def url(self):
-        pass
+        return self.request.url
 
     @property
     def method(self):
-        pass
+        return self.request.method
+
+    @property
+    def frameId(self):
+        return self._raw_info['frameId']
+
+    @property
+    def resourceType(self):
+        return self._raw_info['resourceType']
 
     @property
     def request(self):
-        if self._request_data is None:
-            self._request_data = RequestData(self._raw_request, self._rawPostData)
-        return self._request_data
+        if self._request is None:
+            self._request = Request(self._raw_info['request'], self._raw_post_data)
+        return self._request
 
     @property
     def response(self):
-        if self._response_data is None:
-            self._response_data = False if self._raw_fail_info else ResponseData(self._raw_response, self._rawBody,
-                                                                                 self._base64_body)
-        return self._response_data
-
-    @property
-    def fail_info(self):
-        if self._raw_fail_info and self._fail_info is None:
-            self._fail_info = FailInfo(self._raw_fail_info)
-        return self._fail_info
+        if self._response is None:
+            self._response = Response(self._raw_info, self._raw_body, self._base64_body)
+        return self._response
 
 
-class RequestData(object):
+class Request(object):
+    __slots__ = ('url', 'urlFragment', 'postDataEntries', 'mixedContentType', 'initialPriority',
+                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+                 '_request', '_raw_post_data', '_postData')
+
     def __init__(self, raw_request, post_data):
         self._request = raw_request
         self._raw_post_data = post_data
         self._postData = None
+
+    def __getattr__(self, item):
+        return self._request.get(item, None)
 
     @property
     def headers(self):
@@ -101,20 +94,43 @@ class RequestData(object):
     @property
     def postData(self):
         """返回postData数据"""
-        if self._postData is None and self._rawPostData:
+        if self._postData is None:
+            if self._raw_post_data:
+                postData = self._raw_post_data
+            elif self._request.get('postData', None):
+                postData = self._request['postData']
+            else:
+                postData = False
             try:
-                self._postData = loads(self._rawPostData)
+                self._postData = loads(postData)
             except JSONDecodeError:
-                self._postData = self._rawPostData
+                self._postData = postData
         return self._postData
 
 
-class ResponseData(object):
+class Response(object):
+    __slots__ = ('responseErrorReason', 'responseStatusCode', 'responseStatusText',
+                 '_response', '_raw_body', '_is_base64_body', '_body', '_headers')
+
     def __init__(self, raw_response, raw_body, base64_body):
         self._response = raw_response
         self._raw_body = raw_body
         self._is_base64_body = base64_body
         self._body = None
+        self._headers = None
+
+    def __getattr__(self, item):
+        return self._response.get(item, None)
+
+    @property
+    def headers(self):
+        if self._headers is None:
+            if 'responseHeaders' in self._response:
+                headers = {i['name']: i['value'] for i in self._response['responseHeaders']}
+                self._headers = CaseInsensitiveDict(headers)
+            else:
+                self._headers = False
+        return self._headers
 
     @property
     def body(self):
@@ -130,11 +146,6 @@ class ResponseData(object):
                     self._body = self._raw_body
 
         return self._body
-
-
-class FailInfo(object):
-    def __init__(self, raw_fail_info):
-        pass
 
 
 def get_ele_txt(e):
