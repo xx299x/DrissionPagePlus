@@ -39,7 +39,11 @@ class ChromiumElement(DrissionElement):
         self._tag = None
         self._wait = None
 
-        if node_id:
+        if node_id and obj_id and backend_id:
+            self._node_id = node_id
+            self._obj_id = obj_id
+            self._backend_id = backend_id
+        elif node_id:
             self._node_id = node_id
             self._obj_id = self._get_obj_id(node_id)
             self._backend_id = self._get_backend_id(self._node_id)
@@ -1163,7 +1167,24 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
     :param obj_id: 元素的object id
     :return: ChromiumElement对象或ChromiumFrame对象
     """
-    ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id)
+    if node_id:
+        node = page.run_cdp('DOM.describeNode', nodeId=node_id)
+        if node['node']['nodeName'] in ('#text', '#comment'):
+            return node['node']['nodeValue']
+        backend_id = node['node']['backendNodeId']
+        obj_id = page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
+
+    elif obj_id:
+        node = page.run_cdp('DOM.describeNode', objectId=obj_id)
+        if node['node']['nodeName'] in ('#text', '#comment'):
+            return node['node']['nodeValue']
+        backend_id = node['node']['backendNodeId']
+        node_id = node['node']['nodeId']
+
+    else:
+        raise ElementLossError
+
+    ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=backend_id)
     if ele.tag in FRAME_ELEMENT:
         from .chromium_frame import ChromiumFrame
         ele = ChromiumFrame(page, ele)
