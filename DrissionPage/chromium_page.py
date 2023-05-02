@@ -5,14 +5,13 @@
 """
 from pathlib import Path
 from platform import system
-from re import search
 from threading import Thread
 from time import perf_counter, sleep
 from warnings import warn
 
 from requests import Session
 
-from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter, NetworkListener
+from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
@@ -400,32 +399,6 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
         end_time = perf_counter() + timeout
         while self._driver.tab_id == self._driver.latest_tab and perf_counter() < end_time:
             sleep(.01)
-
-    def set_targets(self, targets, is_regex=False):
-        """指定要等待的数据包
-        :param targets: 要匹配的数据包url特征，可用list等传入多个
-        :param is_regex: 设置的target是否正则表达式
-        :return: None
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.set_targets(targets, is_regex)
-
-    def data_packets(self, timeout=None, any_one=False):
-        """等待指定数据包加载完成
-        :param timeout: 超时时间，为None则使用页面对象timeout
-        :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
-        :return: ResponseData对象或监听结果字典
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        return self._listener.listen(timeout, any_one)
-
-    def stop_listening(self):
-        """停止监听数据包"""
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.stop()
 
 
 class ChromiumTabRect(object):
