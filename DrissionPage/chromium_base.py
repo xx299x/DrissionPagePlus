@@ -11,7 +11,6 @@ from re import search
 from threading import Thread
 from time import perf_counter, sleep, time
 
-from FlowViewer.listener import ResponseData
 from requests import Session
 
 from .base import BasePage
@@ -20,7 +19,7 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies
+from .commons.web import set_browser_cookies, DataPacket
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError, BrowserConnectError
 from .session_element import make_session_ele
@@ -1061,14 +1060,20 @@ class NetworkListener(object):
         self._single = False
         self._requests = {}
 
-    def set_targets(self, targets, is_regex=False):
+        self._count = None
+        self._caught = 0  # 已获取到的数量
+        self._driver = self._page.driver
+
+    def set_targets(self, targets, is_regex=False, count=None):
         """指定要等待的数据包
         :param targets: 要匹配的数据包url特征，可用list等传入多个
         :param is_regex: 设置的target是否正则表达式
+        :param count: 设置总共等待多少个数据包，为None时每个目标等待1个
         :return: None
         """
         if not isinstance(targets, (str, list, tuple, set)):
             raise TypeError('targets只能是str、list、tuple、set。')
+
         self._is_regex = is_regex
         if isinstance(targets, str):
             self._targets = {targets}
@@ -1076,20 +1081,25 @@ class NetworkListener(object):
         else:
             self._targets = set(targets)
             self._single = False
-        self._page.run_cdp('Network.enable')
-        if targets is not None:
-            self._page.driver.Network.requestWillBeSent = self._requestWillBeSent
-            self._page.driver.Network.responseReceived = self._response_received
-            self._page.driver.Network.loadingFinished = self._loading_finished
-        else:
-            self.stop()
+        if count is None:
+            self._count = len(self._targets)
+
+    def start(self):
+        self._driver.set_listener('Fetch.requestPaused', self._request_paused)
+        self._driver.set_listener('Network.requestWillBeSent', self._requestWillBeSent)
+        self._driver.set_listener('Network.responseReceived', self._response_received)
+        self._driver.set_listener('Network.loadingFinished', self._loading_finished)
+        self._driver.call_method('Network.enable')
+        self._driver.call_method('Fetch.enable', patterns=[{'requestStage': 'Request'}, {'requestStage': 'Response'}])
 
     def stop(self):
         """停止监听数据包"""
-        self._page.run_cdp('Network.disable')
-        self._page.driver.Network.requestWillBeSent = None
-        self._page.driver.Network.responseReceived = None
-        self._page.driver.Network.loadingFinished = None
+        self._driver.set_listener('Fetch.requestPaused', None)
+        self._driver.set_listener('Network.requestWillBeSent', None)
+        self._driver.set_listener('Network.responseReceived', None)
+        self._driver.set_listener('Network.loadingFinished', None)
+        self._driver.call_method('Fetch.disable')
+        self._driver.call_method('Network.disable')
 
     def listen(self, timeout=None, any_one=False):
         """等待指定数据包加载完成
@@ -1148,6 +1158,34 @@ class NetworkListener(object):
                                                        'post_data': kwargs['request'].get('postData', None),
                                                        'request_headers': kwargs['request']['headers']}
                 break
+
+    def _request_paused(self, **kwargs):
+        i = kwargs['requestId']
+        if 'networkId' not in kwargs:
+            pass
+            # for target in self._targets:
+            #     if (self._is_regex and search(target, kwargs['request']['url'])) or (
+            #             not self._is_regex and target in kwargs['request']['url']):
+            #         dp = DataPacket(self._page.tab_id, target, kwargs)
+            #         body = self._driver.call_method('Fetch.getResponseBody', requestId=i)
+            #         dp._raw_body = body['body']
+            #         dp._base64_body = body['base64Encoded']
+            #         if 'networkId' in kwargs and kwargs['request'].get('hasPostData', None) \
+            #                 and not kwargs['request'].get('postData', None):
+            #             pd = self._driver.call_method('Network.getRequestPostData', requestId=kwargs['networkId'])
+            #             if 'postData' in pd:
+            #                 dp._raw_post_data = pd['postData']
+            #
+            #         if target in self._results:
+            #             self._results[target].append(dp)
+            #         else:
+            #             self._results[target] = [dp]
+            #
+            #         self._caught += 1
+            #         break
+
+        method = 'Request' if 'responseStatusCode' not in kwargs else 'Response'
+        self._driver.call_method(f'Fetch.continue{method}', requestId=i)
 
 
 class ChromiumPageScroll(ChromiumScroll):

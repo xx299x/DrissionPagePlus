@@ -3,13 +3,148 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from base64 import b64decode
 from html import unescape
 from http.cookiejar import Cookie
+from json import JSONDecodeError, loads
 from re import sub
 from urllib.parse import urlparse, urljoin, urlunparse
 
 from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
 from tldextract import extract
+
+
+class DataPacket(object):
+    """返回的数据包管理类"""
+
+    def __init__(self, tab, target, raw_info):
+        """
+        :param tab: 产生这个数据包的tab的id
+        :param target: 监听目标
+        :param raw_info: 原始request数据，从cdp获得
+        """
+        self.tab = tab
+        self.target = target
+
+        self._raw_info = raw_info
+        self._raw_post_data = None
+
+        self._raw_body = None
+        self._base64_body = False
+
+        self._request = None
+        self._response = None
+
+    def __repr__(self):
+        return f'<DataPacket target={self.target} request_id={self.requestId}>'
+
+    @property
+    def requestId(self):
+        return self._raw_info['requestId']
+
+    @property
+    def url(self):
+        return self.request.url
+
+    @property
+    def method(self):
+        return self.request.method
+
+    @property
+    def frameId(self):
+        return self._raw_info['frameId']
+
+    @property
+    def resourceType(self):
+        return self._raw_info['resourceType']
+
+    @property
+    def request(self):
+        if self._request is None:
+            self._request = Request(self._raw_info['request'], self._raw_post_data)
+        return self._request
+
+    @property
+    def response(self):
+        if self._response is None:
+            self._response = Response(self._raw_info, self._raw_body, self._base64_body)
+        return self._response
+
+
+class Request(object):
+    __slots__ = ('url', 'urlFragment', 'postDataEntries', 'mixedContentType', 'initialPriority',
+                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+                 '_request', '_raw_post_data', '_postData')
+
+    def __init__(self, raw_request, post_data):
+        self._request = raw_request
+        self._raw_post_data = post_data
+        self._postData = None
+
+    def __getattr__(self, item):
+        return self._request.get(item, None)
+
+    @property
+    def headers(self):
+        """以大小写不敏感字典返回headers数据"""
+        return CaseInsensitiveDict(self._request['request']['headers'])
+
+    @property
+    def postData(self):
+        """返回postData数据"""
+        if self._postData is None:
+            if self._raw_post_data:
+                postData = self._raw_post_data
+            elif self._request.get('postData', None):
+                postData = self._request['postData']
+            else:
+                postData = False
+            try:
+                self._postData = loads(postData)
+            except JSONDecodeError:
+                self._postData = postData
+        return self._postData
+
+
+class Response(object):
+    __slots__ = ('responseErrorReason', 'responseStatusCode', 'responseStatusText',
+                 '_response', '_raw_body', '_is_base64_body', '_body', '_headers')
+
+    def __init__(self, raw_response, raw_body, base64_body):
+        self._response = raw_response
+        self._raw_body = raw_body
+        self._is_base64_body = base64_body
+        self._body = None
+        self._headers = None
+
+    def __getattr__(self, item):
+        return self._response.get(item, None)
+
+    @property
+    def headers(self):
+        if self._headers is None:
+            if 'responseHeaders' in self._response:
+                headers = {i['name']: i['value'] for i in self._response['responseHeaders']}
+                self._headers = CaseInsensitiveDict(headers)
+            else:
+                self._headers = False
+        return self._headers
+
+    @property
+    def body(self):
+        """返回body内容，如果是json格式，自动进行转换，如果时图片格式，进行base64转换，其它格式直接返回文本"""
+        if self._body is None:
+            if self._is_base64_body:
+                self._body = b64decode(self._raw_body)
+
+            else:
+                try:
+                    self._body = loads(self._raw_body)
+                except JSONDecodeError:
+                    self._body = self._raw_body
+
+        return self._body
 
 
 def get_ele_txt(e):
