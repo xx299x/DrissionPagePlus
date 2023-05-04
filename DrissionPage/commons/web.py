@@ -18,30 +18,31 @@ from tldextract import extract
 class DataPacket(object):
     """返回的数据包管理类"""
 
-    def __init__(self, tab, target, raw_info):
+    def __init__(self, tab, target, raw_request):
         """
         :param tab: 产生这个数据包的tab的id
         :param target: 监听目标
-        :param raw_info: 原始request数据，从cdp获得
+        :param raw_request: 原始request数据，从cdp获得
         """
         self.tab = tab
         self.target = target
 
-        self._raw_info = raw_info
-        self._raw_post_data = None
+        self._raw_request = raw_request
+        self._raw_response = None
 
+        self._raw_post_data = None
         self._raw_body = None
         self._base64_body = False
 
         self._request = None
         self._response = None
 
-    def __repr__(self):
-        return f'<DataPacket target={self.target} request_id={self.requestId}>'
-
-    @property
-    def requestId(self):
-        return self._raw_info['requestId']
+    # def __repr__(self):
+    #     return f'<DataPacket target={self.target} request_id={self.requestId}>'
+    #
+    # @property
+    # def requestId(self):
+    #     return self._raw_info['requestId']
 
     @property
     def url(self):
@@ -53,28 +54,28 @@ class DataPacket(object):
 
     @property
     def frameId(self):
-        return self._raw_info['frameId']
+        return self._raw_request['frameId']
 
-    @property
-    def resourceType(self):
-        return self._raw_info['resourceType']
+    # @property
+    # def resourceType(self):
+    #     return self._raw_request['resourceType']
 
     @property
     def request(self):
         if self._request is None:
-            self._request = Request(self._raw_info['request'], self._raw_post_data)
+            self._request = Request(self._raw_request['request'], self._raw_post_data)
         return self._request
 
-    @property
-    def response(self):
-        if self._response is None:
-            self._response = Response(self._raw_info, self._raw_body, self._base64_body)
-        return self._response
+    # @property
+    # def response(self):
+    #     if self._response is None:
+    #         self._response = Response(self._raw_info, self._raw_body, self._base64_body)
+    #     return self._response
 
 
 class Request(object):
     __slots__ = ('url', 'urlFragment', 'postDataEntries', 'mixedContentType', 'initialPriority',
-                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite', 'method',
                  '_request', '_raw_post_data', '_postData')
 
     def __init__(self, raw_request, post_data):

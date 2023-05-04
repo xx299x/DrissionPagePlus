@@ -118,13 +118,6 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
 
     def new_tab(self, timeout: float = None) -> bool: ...
 
-    def set_targets(self, targets: Union[str, list, tuple, set], is_regex: bool = False) -> None: ...
-
-    def stop_listening(self) -> None: ...
-
-    def data_packets(self, timeout: float = None,
-                     any_one: bool = False) -> Union[DataPacket, Dict[str, List[DataPacket]], False]: ...
-
 
 class ChromiumTabRect(object):
     def __init__(self, page: ChromiumPage):
