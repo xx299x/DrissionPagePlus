@@ -6,7 +6,7 @@
 from os import popen
 from pathlib import Path
 from threading import Thread
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List
 
 from DownloadKit import DownloadKit
 from requests import Session
@@ -14,7 +14,6 @@ from requests import Session
 from .chromium_base import ChromiumBase, ChromiumBaseSetter, ChromiumBaseWaiter, NetworkListener
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
-from .commons.web import DataPacket
 from .configs.chromium_options import ChromiumOptions
 from .configs.driver_options import DriverOptions
 from .session_page import DownloadSetter
