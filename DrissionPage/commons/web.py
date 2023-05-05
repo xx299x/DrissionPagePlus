@@ -6,7 +6,7 @@
 from base64 import b64decode
 from html import unescape
 from http.cookiejar import Cookie
-from json import loads, JSONDecodeError
+from json import JSONDecodeError, loads
 from re import sub
 from urllib.parse import urlparse, urljoin, urlunparse
 
@@ -15,87 +15,123 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 
-class ResponseData(object):
+class DataPacket(object):
     """返回的数据包管理类"""
-    __slots__ = ('requestId', 'response', 'rawBody', 'tab', 'target', 'url', 'status', 'statusText', 'securityDetails',
-                 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId', 'remoteIPAddress',
-                 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache', 'encodedDataLength', 'timing',
-                 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName', 'protocol', 'securityState',
-                 '_requestHeaders', '_body', '_base64_body', '_rawPostData', '_postData', 'method')
 
-    def __init__(self, request_id, response, body, tab, target):
+    def __init__(self, tab, target, raw_request):
         """
-        :param response: response的数据
-        :param body: response包含的内容
         :param tab: 产生这个数据包的tab的id
         :param target: 监听目标
+        :param raw_request: 原始request数据，从cdp获得
         """
-        self.requestId = request_id
-        self.response = CaseInsensitiveDict(response)
-        self.rawBody = body
         self.tab = tab
         self.target = target
-        self._requestHeaders = None
-        self._postData = None
-        self._body = None
+
+        self._raw_request = raw_request
+        self._raw_post_data = None
+
+        self._raw_response = None
+        self._raw_body = None
         self._base64_body = False
-        self._rawPostData = None
+
+        self._request = None
+        self._response = None
+        self.errorText = None
+        self._resource_type = None
+
+    @property
+    def url(self):
+        return self.request.url
+
+    @property
+    def method(self):
+        return self.request.method
+
+    @property
+    def frameId(self):
+        return self._raw_request.get('frameId')
+
+    @property
+    def resourceType(self):
+        return self._resource_type
+
+    @property
+    def request(self):
+        if self._request is None:
+            self._request = Request(self._raw_request['request'], self._raw_post_data)
+        return self._request
+
+    @property
+    def response(self):
+        if self._response is None:
+            self._response = Response(self._raw_response, self._raw_body, self._base64_body)
+        return self._response
+
+
+class Request(object):
+    def __init__(self, raw_request, post_data):
+        self._request = raw_request
+        self._raw_post_data = post_data
+        self._postData = None
+        self._headers = None
 
     def __getattr__(self, item):
-        return self.response.get(item, None)
-
-    def __getitem__(self, item):
-        return self.response.get(item, None)
-
-    def __repr__(self):
-        return f'<ResponseData target={self.target} request_id={self.requestId}>'
+        return self._request.get(item, None)
 
     @property
     def headers(self):
         """以大小写不敏感字典返回headers数据"""
-        headers = self.response.get('headers', None)
-        return CaseInsensitiveDict(headers) if headers else None
-
-    @property
-    def requestHeaders(self):
-        """以大小写不敏感字典返回requestHeaders数据"""
-        if self._requestHeaders:
-            return self._requestHeaders
-        headers = self.response.get('requestHeaders', None)
-        return CaseInsensitiveDict(headers) if headers else None
-
-    @requestHeaders.setter
-    def requestHeaders(self, val):
-        """设置requestHeaders"""
-        self._requestHeaders = val
+        if self._headers is None:
+            self._headers = CaseInsensitiveDict(self._request['headers'])
+        return self._headers
 
     @property
     def postData(self):
         """返回postData数据"""
-        if self._postData is None and self._rawPostData:
+        if self._postData is None:
+            if self._raw_post_data:
+                postData = self._raw_post_data
+            elif self._request.get('postData', None):
+                postData = self._request['postData']
+            else:
+                postData = False
             try:
-                self._postData = loads(self._rawPostData)
+                self._postData = loads(postData)
             except (JSONDecodeError, TypeError):
-                self._postData = self._rawPostData
+                self._postData = postData
         return self._postData
 
-    @postData.setter
-    def postData(self, val):
-        """设置postData"""
-        self._rawPostData = val
+
+class Response(object):
+    def __init__(self, raw_response, raw_body, base64_body):
+        self._response = raw_response
+        self._raw_body = raw_body
+        self._is_base64_body = base64_body
+        self._body = None
+        self._headers = None
+
+    def __getattr__(self, item):
+        return self._response.get(item, None)
+
+    @property
+    def headers(self):
+        """以大小写不敏感字典返回headers数据"""
+        if self._headers is None:
+            self._headers = CaseInsensitiveDict(self._response['headers'])
+        return self._headers
 
     @property
     def body(self):
         """返回body内容，如果是json格式，自动进行转换，如果时图片格式，进行base64转换，其它格式直接返回文本"""
         if self._body is None:
-            if self._base64_body:
-                self._body = b64decode(self.rawBody)
+            if self._is_base64_body:
+                self._body = b64decode(self._raw_body)
 
             else:
                 try:
-                    self._body = loads(self.rawBody)
+                    self._body = loads(self._raw_body)
                 except (JSONDecodeError, TypeError):
-                    self._body = self.rawBody
+                    self._body = self._raw_body
 
         return self._body
 
