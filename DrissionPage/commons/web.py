@@ -28,21 +28,16 @@ class DataPacket(object):
         self.target = target
 
         self._raw_request = raw_request
-        self._raw_response = None
-
         self._raw_post_data = None
+
+        self._raw_response = None
         self._raw_body = None
         self._base64_body = False
 
         self._request = None
         self._response = None
-
-    # def __repr__(self):
-    #     return f'<DataPacket target={self.target} request_id={self.requestId}>'
-    #
-    # @property
-    # def requestId(self):
-    #     return self._raw_info['requestId']
+        self.errorText = None
+        self._resource_type = None
 
     @property
     def url(self):
@@ -54,11 +49,11 @@ class DataPacket(object):
 
     @property
     def frameId(self):
-        return self._raw_request['frameId']
+        return self._raw_request.get('frameId')
 
-    # @property
-    # def resourceType(self):
-    #     return self._raw_request['resourceType']
+    @property
+    def resourceType(self):
+        return self._resource_type
 
     @property
     def request(self):
@@ -66,22 +61,24 @@ class DataPacket(object):
             self._request = Request(self._raw_request['request'], self._raw_post_data)
         return self._request
 
-    # @property
-    # def response(self):
-    #     if self._response is None:
-    #         self._response = Response(self._raw_info, self._raw_body, self._base64_body)
-    #     return self._response
+    @property
+    def response(self):
+        if self._response is None:
+            self._response = Response(self._raw_response, self._raw_body, self._base64_body)
+        return self._response
 
 
 class Request(object):
-    __slots__ = ('url', 'urlFragment', 'postDataEntries', 'mixedContentType', 'initialPriority',
-                 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite', 'method',
-                 '_request', '_raw_post_data', '_postData')
+    __slots__ = ('url', 'method',
+                 # 'urlFragment', 'postDataEntries', 'mixedContentType', 'initialPriority',
+                 # 'referrerPolicy', 'isLinkPreload', 'trustTokenParams', 'isSameSite',
+                 '_request', '_raw_post_data', '_postData', '_headers')
 
     def __init__(self, raw_request, post_data):
         self._request = raw_request
         self._raw_post_data = post_data
         self._postData = None
+        self._headers = None
 
     def __getattr__(self, item):
         return self._request.get(item, None)
@@ -89,7 +86,9 @@ class Request(object):
     @property
     def headers(self):
         """以大小写不敏感字典返回headers数据"""
-        return CaseInsensitiveDict(self._request['request']['headers'])
+        if self._headers is None:
+            self._headers = CaseInsensitiveDict(self._request['headers'])
+        return self._headers
 
     @property
     def postData(self):
@@ -103,13 +102,13 @@ class Request(object):
                 postData = False
             try:
                 self._postData = loads(postData)
-            except JSONDecodeError:
+            except (JSONDecodeError, TypeError):
                 self._postData = postData
         return self._postData
 
 
 class Response(object):
-    __slots__ = ('responseErrorReason', 'responseStatusCode', 'responseStatusText',
+    __slots__ = ('status', 'statusText', 'mimeType',
                  '_response', '_raw_body', '_is_base64_body', '_body', '_headers')
 
     def __init__(self, raw_response, raw_body, base64_body):
@@ -124,12 +123,9 @@ class Response(object):
 
     @property
     def headers(self):
+        """以大小写不敏感字典返回headers数据"""
         if self._headers is None:
-            if 'responseHeaders' in self._response:
-                headers = {i['name']: i['value'] for i in self._response['responseHeaders']}
-                self._headers = CaseInsensitiveDict(headers)
-            else:
-                self._headers = False
+            self._headers = CaseInsensitiveDict(self._response['headers'])
         return self._headers
 
     @property

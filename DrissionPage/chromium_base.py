@@ -41,6 +41,7 @@ class ChromiumBase(BasePage):
         self._tab_obj = None
         self._set = None
         self._screencast = None
+        self._listener = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -359,6 +360,13 @@ class ChromiumBase(BasePage):
         if self._screencast is None:
             self._screencast = Screencast(self)
         return self._screencast
+
+    @property
+    def listener(self):
+        """返回用于聆听数据包的对象"""
+        if self._listener is None:
+            self._listener = NetworkListener(self)
+        return self._listener
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -1024,34 +1032,6 @@ class ChromiumBaseWaiter(object):
                 sleep(gap)
             return False
 
-    def set_targets(self, targets=None, is_regex=False, count=None):
-        """指定要等待的数据包
-        :param targets: 要匹配的数据包url特征，可用list等传入多个，为None时获取所有
-        :param is_regex: 设置的target是否正则表达式
-        :param count: 设置总共等待多少个数据包，为None时每个目标等待1个
-        :return: None
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.set_targets(targets, is_regex, count=count)
-        self._listener.start()
-
-    def data_packets(self, timeout=None, any_one=False):
-        """等待指定数据包加载完成
-        :param timeout: 超时时间，为None则使用页面对象timeout
-        :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
-        :return: ResponseData对象或监听结果字典
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        return self._listener.listen(timeout, any_one)
-
-    def stop_listening(self):
-        """停止监听数据包"""
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.stop()
-
 
 class NetworkListener(object):
     def __init__(self, page):
@@ -1060,17 +1040,19 @@ class NetworkListener(object):
         self._is_regex = False
         self._results = {}
         self._single = False
+        self._method = None
         self._requests = {}
 
         self._count = None
         self._caught = 0  # 已获取到的数量
         self._driver = self._page.driver
 
-    def set_targets(self, targets=None, is_regex=False, count=None):
+    def set_targets(self, targets=None, is_regex=False, count=None, method=None):
         """指定要等待的数据包
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为None时获取所有
         :param is_regex: 设置的target是否正则表达式
         :param count: 设置总共等待多少个数据包，为None时每个目标等待1个
+        :param method: 设置监听的请求类型，可用list等指定多个，为None时监听全部
         :return: None
         """
         if not isinstance(targets, (str, list, tuple, set)) and targets is not None:
@@ -1083,26 +1065,36 @@ class NetworkListener(object):
             self._targets = {targets}
         else:
             self._targets = set(targets)
-        if count is None:
-            self._count = len(self._targets)
+
+        self._count = len(self._targets) if not count else count
         self._single = self._count == 1
+        if method is not None:
+            if isinstance(method, str):
+                self._method = {method.upper()}
+            elif isinstance(method, (list, tuple, set)):
+                self._method = set(i.upper() for i in method)
+            else:
+                raise TypeError('method参数只能是str、list、tuple、set类型。')
+        self.start()
 
     def start(self):
-        self._driver.set_listener('Fetch.requestPaused', self._request_paused)
         self._driver.set_listener('Network.requestWillBeSent', self._requestWillBeSent)
         self._driver.set_listener('Network.responseReceived', self._response_received)
         self._driver.set_listener('Network.loadingFinished', self._loading_finished)
+        self._driver.set_listener('Network.loadingFailed', self._loading_failed)
         self._driver.call_method('Network.enable')
-        self._driver.call_method('Fetch.enable', patterns=[{'requestStage': 'Request'}, {'requestStage': 'Response'}])
+        # self._driver.set_listener('Fetch.requestPaused', self._request_paused)
+        # self._driver.call_method('Fetch.enable', patterns=[{'requestStage': 'Request'}, {'requestStage': 'Response'}])
 
     def stop(self):
         """停止监听数据包"""
-        self._driver.set_listener('Fetch.requestPaused', None)
+        self._driver.call_method('Network.disable')
         self._driver.set_listener('Network.requestWillBeSent', None)
         self._driver.set_listener('Network.responseReceived', None)
         self._driver.set_listener('Network.loadingFinished', None)
-        self._driver.call_method('Fetch.disable')
-        self._driver.call_method('Network.disable')
+        self._driver.set_listener('Network.loadingFailed', None)
+        # self._driver.call_method('Fetch.disable')
+        # self._driver.set_listener('Fetch.requestPaused', None)
 
     def listen(self, timeout=None, any_one=False):
         """等待指定数据包加载完成
@@ -1115,9 +1107,7 @@ class NetworkListener(object):
 
         timeout = timeout if timeout is not None else self._page.timeout
         end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._results and (any_one or set(self._results) == self._targets):
-                break
+        while perf_counter() < end_time and not ((any_one and self._caught) or self._caught >= self._count):
             sleep(.1)
 
         self._requests = {}
@@ -1130,8 +1120,9 @@ class NetworkListener(object):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         for target in self._targets:
-            if (self._is_regex and search(target, kwargs['request']['url'])) or (
-                    not self._is_regex and target in kwargs['request']['url']):
+            if ((self._is_regex and search(target, kwargs['request']['url'])) or
+                (not self._is_regex and target in kwargs['request']['url'])) and (
+                    not self._method or kwargs['request']['method'] in self._method):
                 self._requests[kwargs['requestId']] = DataPacket(self._page.tab_id, target, kwargs)
 
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
@@ -1142,8 +1133,10 @@ class NetworkListener(object):
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        if kwargs['requestId'] in self._requests:
-            self._requests[kwargs['requestId']]._raw_response = kwargs['response']
+        request_id = kwargs['requestId']
+        if request_id in self._requests:
+            self._requests[request_id]._raw_response = kwargs['response']
+            self._requests[request_id]._resource_type = kwargs['type']
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
@@ -1161,6 +1154,22 @@ class NetworkListener(object):
             target = dp.target
             dp._raw_body = body
             dp._base64_body = is_base64
+
+            if target in self._results:
+                self._results[target].append(dp)
+            else:
+                self._results[target] = [dp]
+
+            self._caught += 1
+
+    def _loading_failed(self, **kwargs):
+        """请求失败时的回调方法"""
+        request_id = kwargs['requestId']
+        if request_id in self._requests:
+            dp = self._requests[request_id]
+            target = dp.target
+            dp.errorText = kwargs['errorText']
+            dp._resource_type = kwargs['type']
 
             if target in self._results:
                 self._results[target].append(dp)
