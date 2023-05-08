@@ -147,7 +147,7 @@ def test_connect(ip, port):
     :param port: 浏览器端口
     :return: None
     """
-    end_time = perf_counter() + 6
+    end_time = perf_counter() + 30
     while perf_counter() < end_time:
         try:
             tabs = requests_get(f'http://{ip}:{port}/json', timeout=10).json()

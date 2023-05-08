@@ -385,7 +385,8 @@ class ChromiumBase(BasePage):
         if error == 'Cannot find context with specified id':
             raise ContextLossError
         elif error in ('Could not find node with given id', 'Could not find object with given id',
-                       'No node with given id found', 'Node with given id does not belong to the document'):
+                       'No node with given id found', 'Node with given id does not belong to the document',
+                       'No node found for given backend id'):
             raise ElementLossError
         elif error == 'tab closed':
             raise TabClosedError

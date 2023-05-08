@@ -65,13 +65,12 @@ class NetworkListener(object):
             else:
                 raise TypeError('method参数只能是str、list、tuple、set类型。')
 
-    def listen(self, targets=None, count=None, timeout=None, asyn=True):
+    def listen(self, targets=None, count=None, timeout=None):
         """拦截目标请求，直到超时或达到拦截个数，每次拦截前清空结果
         可监听多个目标，请求url包含这些字符串就会被记录
         :param targets: 要监听的目标字符串或其组成的列表，True监听所有，None则保留之前的目标不变
         :param count: 要记录的个数，到达个数停止监听
         :param timeout: 监听最长时间，到时间即使未达到记录个数也停止，None为无限长
-        :param asyn: 是否异步监听
         :return: None
         """
         if targets:
@@ -90,21 +89,21 @@ class NetworkListener(object):
 
         if asyn:
             self._total_count = count
-            Thread(target=self._wait_to_stop).start()
         else:
             self._total_count = len(self._targets) if not count else count
-            self._wait_to_stop()
+
+        Thread(target=self._wait_to_stop).start()
 
     def stop(self):
         """停止监听"""
         self._stop()
-        if self.listening:
-            self.listening = False
+        self.listening = False
 
     def wait(self):
-        """等等监听结束"""
+        """等待监听结束"""
         while self.listening:
-            sleep(.5)
+            sleep(.2)
+        return self._results
 
     def get_results(self, target=None):
         """获取结果列表
@@ -116,8 +115,7 @@ class NetworkListener(object):
     def _wait_to_stop(self):
         """当收到停止信号、到达须获取结果数、到时间就停止"""
         while self._is_continue():
-            sleep(.5)
-
+            sleep(.2)
         self.stop()
 
     def _is_continue(self):
@@ -153,7 +151,7 @@ class NetworkListener(object):
         self._driver.set_listener('Network.responseReceived', None)
         self._driver.set_listener('Network.loadingFinished', None)
         self._driver.set_listener('Network.loadingFailed', None)
-        self._driver.call_method('Network.disable')
+        # self._driver.call_method('Network.disable')
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
