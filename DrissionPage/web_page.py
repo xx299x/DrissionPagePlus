@@ -518,6 +518,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
         path = str(path)
+        self._save_path = path
         self._page._download_path = path
         self.DownloadKit.goal_path = path
 
@@ -537,14 +538,16 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
-            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_will_begin
+            self._page.browser_driver.Browser.downloadProgress = self._download_progress
 
         except CallMethodError:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
             self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
-            self._page.driver.Page.downloadWillBegin = self._download_by_browser
+            self._page.driver.Page.downloadWillBegin = self._download_will_begin
+            self._page.driver.Page.downloadProgress = self._download_progress
 
-        self._behavior = 'allow'
+        self._behavior = 'allowAndName'
 
     def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
@@ -552,6 +555,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             try:
                 self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
                 self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+                self._page.browser_driver.Browser.downloadProgress = None
             except CallMethodError:
                 raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
 

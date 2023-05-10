@@ -15,7 +15,7 @@ from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBa
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
-from .commons.tools import port_is_using
+from .commons.tools import port_is_using, get_usable_path
 from .commons.web import set_session_cookies
 from .configs.chromium_options import ChromiumOptions
 from .errors import CallMethodError, BrowserConnectError
@@ -480,11 +480,13 @@ class ChromiumDownloadSetter(DownloadSetter):
         :param page: ChromiumPage对象
         """
         super().__init__(page)
-        self._behavior = 'allow'
+        self._behavior = 'allowAndName'
         self._download_th = None
         self._session = None
+        self._save_path = ''
         self._waiting_download = False
         self._download_begin = False
+        self._browser_missions = {}
 
     @property
     def session(self):
@@ -508,6 +510,7 @@ class ChromiumDownloadSetter(DownloadSetter):
         path = Path(path).absolute()
         path.mkdir(parents=True, exist_ok=True)
         path = str(path)
+        self._save_path = path
         self._page._download_path = path
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', downloadPath=path,
@@ -523,20 +526,24 @@ class ChromiumDownloadSetter(DownloadSetter):
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
-            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_will_begin
+            self._page.browser_driver.Browser.downloadProgress = self._download_progress
         except CallMethodError:
             self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
-            self._page.driver.Page.downloadWillBegin = self._download_by_browser
+            self._page.driver.Page.downloadWillBegin = self._download_will_begin
+            self._page.driver.Page.downloadProgress = self._download_progress
 
-        self._behavior = 'allow'
+        self._behavior = 'allowAndName'
 
     def by_DownloadKit(self):
         """设置使用DownloadKit下载文件"""
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+            self._page.browser_driver.Browser.downloadProgress = None
         except CallMethodError:
             raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
+
         self._behavior = 'deny'
 
     def wait_download_begin(self, timeout=None):
@@ -583,14 +590,53 @@ class ChromiumDownloadSetter(DownloadSetter):
         if self._waiting_download:
             self._download_begin = True
 
-    def _download_by_browser(self, **kwargs):
-        """使用浏览器下载时调用"""
+    def _download_will_begin(self, **kwargs):
+        """浏览器下载即将开始时调用"""
+        m = BrowserDownloadMission(kwargs['guid'], kwargs['url'], kwargs['suggestedFilename'])
+        self._browser_missions[kwargs['guid']] = m
+        if self._file_exists == 'skip' and (Path(self._save_path) / kwargs["suggestedFilename"]).exists():
+            self._page.browser_driver.call_method('Browser.cancelDownload', guid=kwargs['guid'])
+            m.state = 'skipped'
+            p = Path(self._save_path) / kwargs["guid"]
+            if p.exists():
+                p.unlink()
+            return
+
         if self._waiting_download:
             self._download_begin = True
 
+    def _download_progress(self, **kwargs):
+        """下载状态产生变化时调用"""
+        guid = kwargs['guid']
+        m = self._browser_missions[guid]
+        m.size = kwargs['totalBytes']
+        m.received = kwargs['receivedBytes']
+        m.state = kwargs['state']
+
+        if m.state == 'completed':
+            path = Path(self._save_path) / m.name
+            from_path = Path(self._save_path) / guid
+            if path.exists():
+                if self._file_exists == 'rename':
+                    path = get_usable_path(path)
+                else:  # 'overwrite'
+                    path.unlink()
+            from_path.rename(path)
+
     def _wait_download_complete(self):
-        """等待下载完成"""
+        """等待DownloadKit下载完成"""
         self._page.download.wait()
+
+
+class BrowserDownloadMission(object):
+    def __init__(self, guid, url, name):
+        self.id = guid
+        self.url = url
+        self.name = name
+        self.save_path = None
+        self.state = None
+        self.size = None
+        self.received = None
 
 
 class Alert(object):
