@@ -301,10 +301,13 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'，有弹出框时返回None"""
-        try:
-            return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
-        except (AlertExistsError, TypeError):
-            return None
+        while True:
+            try:
+                return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
+            except (AlertExistsError, TypeError):
+                return None
+            except ContextLossError:
+                continue
 
     @property
     def size(self):
@@ -382,7 +385,7 @@ class ChromiumBase(BasePage):
             return r
 
         error = r[ERROR]
-        if error == 'Cannot find context with specified id':
+        if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
             raise ContextLossError
         elif error in ('Could not find node with given id', 'Could not find object with given id',
                        'No node with given id found', 'Node with given id does not belong to the document',

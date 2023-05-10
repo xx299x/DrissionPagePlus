@@ -79,7 +79,13 @@ class ChromiumDriver(object):
         message_json = dumps(message)
 
         if self.debug:
-            print(f"发> {message_json}")
+            if isinstance(self.debug, str) and message.get('method', '').startswith(self.debug):
+                print(f'发> {message_json}')
+            elif isinstance(self.debug, (list, tuple, set)):
+                for m in self.debug:
+                    if message.get('method', '').startswith(m):
+                        print(f'发> {message_json}')
+                        break
 
         if not isinstance(timeout, (int, float)) or timeout > 1:
             q_timeout = 1
@@ -117,7 +123,7 @@ class ChromiumDriver(object):
             try:
                 self._ws.settimeout(1)
                 message_json = self._ws.recv()
-                message = loads(message_json)
+                mes = loads(message_json)
             except WebSocketTimeoutException:
                 continue
             except (WebSocketException, OSError, WebSocketConnectionClosedException):
@@ -125,17 +131,23 @@ class ChromiumDriver(object):
                 return
 
             if self.debug:
-                print(f'<收 {message_json}')
+                if 'id' in mes or (isinstance(self.debug, str) and mes.get('method', '').startswith(self.debug)):
+                    print(f'<收 {message_json}')
+                elif isinstance(self.debug, (list, tuple, set)):
+                    for m in self.debug:
+                        if mes.get('method', '').startswith(m):
+                            print(f'<收 {message_json}')
+                            break
 
-            if "method" in message:
-                self.event_queue.put(message)
+            if "method" in mes:
+                self.event_queue.put(mes)
 
-            elif "id" in message:
-                if message["id"] in self.method_results:
-                    self.method_results[message['id']].put(message)
+            elif "id" in mes:
+                if mes["id"] in self.method_results:
+                    self.method_results[mes['id']].put(mes)
 
             elif self.debug:
-                print(f'未知信息：{message}')
+                print(f'未知信息：{mes}')
 
     def _handle_event_loop(self):
         """当接收到浏览器信息，执行已绑定的方法"""

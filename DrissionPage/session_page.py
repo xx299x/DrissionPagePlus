@@ -446,6 +446,7 @@ class DownloadSetter(object):
     def __init__(self, page):
         self._page = page
         self._DownloadKit = None
+        self._file_exists = 'rename'
 
     @property
     def DownloadKit(self):
@@ -488,18 +489,22 @@ class FileExists(object):
         if mode not in ('skip', 'rename', 'overwrite'):
             raise ValueError("mode参数只能是'skip', 'rename', 'overwrite'")
         self._setter.DownloadKit.file_exists = mode
+        self._setter._file_exists = mode
 
     def skip(self):
         """设为跳过"""
         self._setter.DownloadKit.file_exists = 'skip'
+        self._setter._file_exists = 'skip'
 
     def rename(self):
         """设为重命名，文件名后加序号"""
         self._setter.DownloadKit._file_exists = 'rename'
+        self._setter._file_exists = 'rename'
 
     def overwrite(self):
         """设为覆盖"""
         self._setter.DownloadKit._file_exists = 'overwrite'
+        self._setter._file_exists = 'overwrite'
 
 
 def check_headers(kwargs, headers, arg) -> bool:

@@ -535,13 +535,13 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             raise RuntimeError('浏览器未连接。')
 
         try:
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
 
         except CallMethodError:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-            self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+            self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
             self._page.driver.Page.downloadWillBegin = self._download_by_browser
 
         self._behavior = 'allow'

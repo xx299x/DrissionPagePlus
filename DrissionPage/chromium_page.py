@@ -510,22 +510,22 @@ class ChromiumDownloadSetter(DownloadSetter):
         path = str(path)
         self._page._download_path = path
         try:
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', downloadPath=path,
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', downloadPath=path,
                                                                   eventsEnabled=True)
         except CallMethodError:
             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-            self._page.run_cdp('Page.setDownloadBehavior', behavior='allow', downloadPath=path)
+            self._page.run_cdp('Page.setDownloadBehavior', behavior='allowAndName', downloadPath=path)
 
         self.DownloadKit.goal_path = path
 
     def by_browser(self):
         """设置使用浏览器下载文件"""
         try:
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
         except CallMethodError:
-            self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+            self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
             self._page.driver.Page.downloadWillBegin = self._download_by_browser
 
         self._behavior = 'allow'
@@ -567,7 +567,7 @@ class ChromiumDownloadSetter(DownloadSetter):
         """拦截浏览器下载并用downloadKit下载"""
         url = kwargs['url']
         if url.startswith('blob:'):
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
                                                                   downloadPath=self._page.download_path)
             sleep(2)
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
