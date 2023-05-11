@@ -555,7 +555,7 @@ class WebPageDownloadSetter(ChromiumDownloadSetter):
             try:
                 self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
                 self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-                self._page.browser_driver.Browser.downloadProgress = None
+                # self._page.browser_driver.Browser.downloadProgress = None
             except CallMethodError:
                 raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
 

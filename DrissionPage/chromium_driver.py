@@ -79,7 +79,7 @@ class ChromiumDriver(object):
         message_json = dumps(message)
 
         if self.debug:
-            if isinstance(self.debug, str) and message.get('method', '').startswith(self.debug):
+            if self.debug is True or (isinstance(self.debug, str) and message.get('method', '').startswith(self.debug)):
                 print(f'发> {message_json}')
             elif isinstance(self.debug, (list, tuple, set)):
                 for m in self.debug:
@@ -131,7 +131,8 @@ class ChromiumDriver(object):
                 return
 
             if self.debug:
-                if 'id' in mes or (isinstance(self.debug, str) and mes.get('method', '').startswith(self.debug)):
+                if self.debug is True or 'id' in mes or (isinstance(self.debug, str)
+                                                         and mes.get('method', '').startswith(self.debug)):
                     print(f'<收 {message_json}')
                 elif isinstance(self.debug, (list, tuple, set)):
                     for m in self.debug:
