@@ -283,7 +283,8 @@ class ChromiumBase(BasePage):
     @property
     def html(self):
         """返回当前页面html文本"""
-        return self.run_cdp_loaded('DOM.getOuterHTML', objectId=self._root_id)['outerHTML']
+        self.wait.load_complete()
+        return self.run_cdp('DOM.getOuterHTML', objectId=self._root_id)['outerHTML']
 
     @property
     def json(self):
