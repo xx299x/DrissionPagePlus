@@ -14,7 +14,7 @@ from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinition
 from .commons.locator import get_loc
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CallMethodError, NoResourceError, CanNotClickError
+    CDPError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
 
 
@@ -99,7 +99,7 @@ class ChromiumElement(DrissionElement):
         try:
             attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
             return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
-        except CallMethodError:  # 文档根元素不能调用此方法
+        except CDPError:  # 文档根元素不能调用此方法
             return {}
 
     @property
@@ -464,7 +464,7 @@ class ChromiumElement(DrissionElement):
             try:
                 result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
                 break
-            except CallMethodError:
+            except CDPError:
                 sleep(.1)
 
         if not result:
@@ -1424,7 +1424,7 @@ class ChromiumElementStates(object):
         lx, ly = self._ele.locations.click_point
         try:
             r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
-        except CallMethodError:
+        except CDPError:
             return False
 
         if r.get('backendNodeId') != self._ele.ids.backend_id:

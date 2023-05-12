@@ -8,7 +8,7 @@ from time import perf_counter, sleep
 
 from requests.structures import CaseInsensitiveDict
 
-from .errors import CallMethodError
+from .errors import CDPError
 
 
 class NetworkListener(object):
@@ -182,7 +182,7 @@ class NetworkListener(object):
                 r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
                 body = r['body']
                 is_base64 = r['base64Encoded']
-            except CallMethodError:
+            except CDPError:
                 body = ''
                 is_base64 = False
 

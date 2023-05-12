@@ -19,8 +19,8 @@ from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
 from .commons.web import set_browser_cookies
-from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError, BrowserConnectError
+from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
+    NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
 
@@ -132,7 +132,8 @@ class ChromiumBase(BasePage):
                         self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
                     break
 
-                except Exception:
+                except CDPError as e:
+                    err = e
                     if self._debug:
                         print('重试获取document')
                         if self._debug_recorder:
@@ -141,7 +142,9 @@ class ChromiumBase(BasePage):
                     sleep(.1)
 
             else:
-                raise RuntimeError('获取document失败。')
+                txt = f'请检查是否创建了过多页面对象同时操作浏览器。\n如无法解决，请把以下信息报告作者。\n{err._info}\n' \
+                      f'报告网址：https://gitee.com/g1879/DrissionPage/issues'
+                raise GetDocumentError(txt)
 
             if self._debug:
                 print('获取document结束')
@@ -399,7 +402,7 @@ class ChromiumBase(BasePage):
         elif error in ('Node does not have a layout object', 'Could not compute box model.'):
             raise NoRectError
         elif r['type'] == 'call_method_error':
-            raise CallMethodError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
+            raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
         else:
             raise RuntimeError(r)
 
