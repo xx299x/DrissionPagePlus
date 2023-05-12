@@ -28,6 +28,10 @@ class ChromiumTab(ChromiumBase):
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy
 
+    def close(self):
+        """关闭当前标签页"""
+        self.page.close_tabs(self.tab_id)
+
     @property
     def rect(self):
         """返回获取窗口坐标和大小的对象"""
