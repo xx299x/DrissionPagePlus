@@ -38,7 +38,7 @@ class SessionElement(DrissionElement):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
         return self.ele(loc_or_str)
@@ -217,7 +217,7 @@ class SessionElement(DrissionElement):
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str)
@@ -225,7 +225,7 @@ class SessionElement(DrissionElement):
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
@@ -321,8 +321,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
         loc = loc[0], loc_str
 
-    # ChromiumElement, DriverElement
-    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):
+    elif the_type.endswith(".ChromiumElement'>"):
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'

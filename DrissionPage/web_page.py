@@ -27,7 +27,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param driver_or_options: ChromiumDriver对象或DriverOptions对象，只使用s模式时应传入False
+        :param driver_or_options: ChromiumDriver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
         self._mode = mode.lower()
@@ -59,7 +59,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def _set_start_options(self, dr_opt, se_opt):
         """处理两种模式的设置
-        :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
+        :param dr_opt: ChromiumDriver或ChromiumOptions对象，为None则从ini读取，为False用默认信息创建
         :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
         :return: None
         """
@@ -77,7 +77,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             elif dr_opt is False:
                 self._driver_options = ChromiumOptions(read_file=False)
 
-            elif str(type(dr_opt)).endswith(("ChromiumOptions'>", "DriverOptions'>")):
+            elif isinstance(dr_opt, ChromiumOptions):
                 self._driver_options = dr_opt
 
             else:

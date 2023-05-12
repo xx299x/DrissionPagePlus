@@ -37,11 +37,11 @@ class ChromiumPage(ChromiumBase):
 
     def _set_start_options(self, addr_driver_opts, none):
         """设置浏览器启动属性
-        :param addr_driver_opts: 'ip:port'、ChromiumDriver、ChromiumOptions
+        :param addr_driver_opts: 'ip:port'、ChromiumOptions
         :param none: 用于后代继承
         :return: None
         """
-        if not addr_driver_opts or str(type(addr_driver_opts)).endswith(("ChromiumOptions'>", "DriverOptions'>")):
+        if not addr_driver_opts or isinstance(addr_driver_opts, ChromiumOptions):
             self._driver_options = addr_driver_opts or ChromiumOptions(addr_driver_opts)
 
         # 接收浏览器地址和端口

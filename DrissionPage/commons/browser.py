@@ -11,14 +11,13 @@ from time import perf_counter, sleep
 
 from requests import get as requests_get
 
-from DrissionPage.configs.chromium_options import ChromiumOptions
 from DrissionPage.errors import BrowserConnectError
 from .tools import port_is_using
 
 
 def connect_browser(option):
     """连接或启动浏览器
-    :param option: DriverOptions对象
+    :param option: ChromiumOptions对象
     :return: chrome 路径和进程对象组成的元组
     """
     debugger_address = option.debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
@@ -55,8 +54,8 @@ def connect_browser(option):
 
 
 def get_launch_args(opt):
-    """从DriverOptions获取命令行启动参数
-    :param opt: DriverOptions或ChromiumOptions
+    """从ChromiumOptions获取命令行启动参数
+    :param opt: ChromiumOptions
     :return: 启动参数列表
     """
     # ----------处理arguments-----------
@@ -87,7 +86,7 @@ def get_launch_args(opt):
     result = list(result)
 
     # ----------处理插件extensions-------------
-    ext = opt.extensions if isinstance(opt, ChromiumOptions) else opt._extension_files
+    ext = opt.extensions
     if ext:
         ext = ','.join(set(ext))
         ext = f'--load-extension={ext}'
@@ -98,15 +97,11 @@ def get_launch_args(opt):
 
 def set_prefs(opt):
     """处理启动配置中的prefs项，目前只能对已存在文件夹配置
-    :param opt: DriverOptions或ChromiumOptions
+    :param opt: ChromiumOptions
     :return: None
     """
-    if isinstance(opt, ChromiumOptions):
-        prefs = opt.preferences
-        del_list = opt._prefs_to_del
-    else:
-        prefs = opt.experimental_options.get('prefs', [])
-        del_list = []
+    prefs = opt.preferences
+    del_list = opt._prefs_to_del
 
     if not opt.user_data_path:
         return

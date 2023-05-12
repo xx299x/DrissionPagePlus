@@ -12,8 +12,6 @@ from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .commons.constants import NoneElement
-from mixpage.driver_element import DriverElement
-from mixpage.driver_page import DriverPage
 from .session_page import SessionPage
 
 
@@ -124,8 +122,8 @@ class SessionElement(DrissionElement):
     def _get_ele_path(self, mode: str) -> str: ...
 
 
-def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, DriverElement, BaseElement,
-ChromiumFrame, ChromiumBase, DriverPage],
+def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, BaseElement, ChromiumFrame,
+ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
                      single: bool = True) -> Union[
     SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...

@@ -84,7 +84,7 @@ class BaseElement(BaseParser):
 
 
 class DrissionElement(BaseElement):
-    """DriverElement、ChromiumElement 和 SessionElement的基类
+    """ChromiumElement 和 SessionElement的基类
     但不是ShadowRootElement的基类"""
 
     @property
@@ -292,7 +292,7 @@ class DrissionElement(BaseElement):
         :param direction: 'following' 或 'preceding'，查找的方向
         :param brother: 查找范围，在同级查找还是整个dom前后查找
         :param timeout: 查找等待时间
-        :return: DriverElement对象或字符串
+        :return: 元素对象或字符串
         """
         if index is not None and index < 1:
             raise ValueError('index必须大于等于1。')

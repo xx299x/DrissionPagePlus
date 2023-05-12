@@ -6,47 +6,6 @@
 from pathlib import Path
 from re import search, sub
 from shutil import rmtree
-from zipfile import ZipFile
-
-
-def get_exe_from_port(port):
-    """获取端口号第一条进程的可执行文件路径
-    :param port: 端口号
-    :return: 可执行文件的绝对路径
-    """
-    from os import popen
-
-    pid = get_pid_from_port(port)
-    if not pid:
-        return
-    else:
-        file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
-        return file_lst[2].strip() if len(file_lst) > 2 else None
-
-
-def get_pid_from_port(port):
-    """获取端口号第一条进程的pid
-    :param port: 端口号
-    :return: 进程id
-    """
-    from platform import system
-    if system().lower() != 'windows' or port is None:
-        return None
-
-    from os import popen
-    from time import perf_counter
-
-    try:  # 避免Anaconda中可能产生的报错
-        process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-
-        t = perf_counter()
-        while not process and perf_counter() - t < 5:
-            process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-
-        return process.split(' ')[-1] or None
-
-    except Exception:
-        return None
 
 
 def get_usable_path(path):
@@ -142,11 +101,41 @@ def clean_folder(folder_path, ignore=None):
             elif f.is_dir():
                 rmtree(f, True)
 
-
-def unzip(zip_path, to_path):
-    """解压下载的chromedriver.zip文件"""
-    if not zip_path:
-        return
-
-    with ZipFile(zip_path, 'r') as f:
-        return [f.extract(f.namelist()[0], path=to_path)]
+# def get_exe_from_port(port):
+#     """获取端口号第一条进程的可执行文件路径
+#     :param port: 端口号
+#     :return: 可执行文件的绝对路径
+#     """
+#     from os import popen
+#
+#     pid = get_pid_from_port(port)
+#     if not pid:
+#         return
+#     else:
+#         file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
+#         return file_lst[2].strip() if len(file_lst) > 2 else None
+#
+#
+# def get_pid_from_port(port):
+#     """获取端口号第一条进程的pid
+#     :param port: 端口号
+#     :return: 进程id
+#     """
+#     from platform import system
+#     if system().lower() != 'windows' or port is None:
+#         return None
+#
+#     from os import popen
+#     from time import perf_counter
+#
+#     try:  # 避免Anaconda中可能产生的报错
+#         process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+#
+#         t = perf_counter()
+#         while not process and perf_counter() - t < 5:
+#             process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+#
+#         return process.split(' ')[-1] or None
+#
+#     except Exception:
+#         return None

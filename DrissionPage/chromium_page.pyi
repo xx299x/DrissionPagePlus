@@ -12,21 +12,21 @@ from DownloadKit import DownloadKit
 from DownloadKit.mission import Mission
 from requests import Session
 
-from .chromium_base import ChromiumBase, ChromiumBaseSetter, ChromiumBaseWaiter, NetworkListener
+from .chromium_base import ChromiumBase, ChromiumBaseSetter, ChromiumBaseWaiter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
-from .configs.driver_options import DriverOptions
+from .network_listener import NetworkListener
 from .session_page import DownloadSetter
 
 
 class ChromiumPage(ChromiumBase):
 
     def __init__(self,
-                 addr_driver_opts: Union[str, int, ChromiumOptions, ChromiumDriver, DriverOptions] = None,
+                 addr_driver_opts: Union[str, int, ChromiumOptions, ChromiumDriver] = None,
                  tab_id: str = None,
                  timeout: float = None):
-        self._driver_options: [ChromiumDriver, DriverOptions] = ...
+        self._driver_options: ChromiumDriver = ...
         self._process_id: str = ...
         self._window_setter: WindowSetter = ...
         self._main_tab: str = ...
@@ -37,10 +37,10 @@ class ChromiumPage(ChromiumBase):
         self._rect: ChromiumTabRect = ...
 
     def _connect_browser(self,
-                         addr_driver_opts: Union[str, ChromiumDriver, DriverOptions] = None,
+                         addr_driver_opts: Union[str, ChromiumDriver] = None,
                          tab_id: str = None) -> None: ...
 
-    def _set_start_options(self, addr_driver_opts: Union[str, ChromiumDriver, DriverOptions], none) -> None: ...
+    def _set_start_options(self, addr_driver_opts: Union[str, ChromiumDriver], none) -> None: ...
 
     def _page_init(self) -> None: ...
 

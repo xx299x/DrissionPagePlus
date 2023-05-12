@@ -749,7 +749,7 @@ class ChromiumShadowRoot(BaseElement):
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
-        :return: DriverElement对象或属性、文本
+        :return: 元素对象或属性、文本
         """
         return self.ele(loc_or_str, timeout)
 
