@@ -491,13 +491,14 @@ class ChromiumDownloadSetter(DownloadSetter):
         """
         super().__init__(page)
         self._behavior = 'allowAndName'
-        self._download_th = None
         self._session = None
         self._save_path = ''
+        self._rename = None
         self._waiting_download = False
         self._download_begin = False
         self._browser_missions = {}
         self._browser_downloading_count = 0
+        self._show_msg = True
 
     @property
     def session(self):
@@ -542,6 +543,13 @@ class ChromiumDownloadSetter(DownloadSetter):
 
         self.DownloadKit.goal_path = path
 
+    def rename(self, name):
+        """设置浏览器下一个下载任务的文件名
+        :param name: 文件名，不带后缀时自动使用原后缀
+        :return: None
+        """
+        self._rename = name
+
     def by_browser(self):
         """设置使用浏览器下载文件"""
         try:
@@ -561,7 +569,6 @@ class ChromiumDownloadSetter(DownloadSetter):
         try:
             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-            # self._page.browser_driver.Browser.downloadProgress = None
         except CDPError:
             raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
 
@@ -598,6 +605,13 @@ class ChromiumDownloadSetter(DownloadSetter):
             sleep(.5)
         return False
 
+    def show_msg(self, on_off=True):
+        """是否显示下载信息
+        :param on_off: bool表示开或关
+        :return: None
+        """
+        self._show_msg = on_off
+
     def _cookies_to_session(self):
         """把driver对象的cookies复制到session对象"""
         ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
@@ -608,38 +622,52 @@ class ChromiumDownloadSetter(DownloadSetter):
         """拦截浏览器下载并用downloadKit下载"""
         url = kwargs['url']
         if url.startswith('blob:'):
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
-                                                                  downloadPath=self._page.download_path)
-            sleep(2)
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+            raise TypeError('bolb:开头的链接无法使用DownloadKit下载，请用浏览器下载功能。')
 
+        self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
+
+        if self._rename:
+            rename = get_rename(kwargs['suggestedFilename'], self._rename)
+            self._rename = None
         else:
-            self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
-            self._page.download.add(file_url=url, goal_path=self._page.download_path,
-                                    rename=kwargs['suggestedFilename'])
-            if self._download_th is None or not self._download_th.is_alive():
-                self._download_th = Thread(target=self._wait_download_complete, daemon=False)
-                self._download_th.start()
+            rename = kwargs['suggestedFilename']
+
+        mission = self._page.download.add(file_url=url, goal_path=self._page.download_path, rename=rename)
+        Thread(target=self._wait_download_complete, args=(mission,), daemon=False).start()
 
         if self._waiting_download:
             self._download_begin = True
+
         self._browser_downloading_count += 1
+
+        if self._show_msg:
+            print(f'(DownloadKit)开始下载：{Path(self._save_path) / rename}')
 
     def _download_will_begin(self, **kwargs):
         """浏览器下载即将开始时调用"""
-        m = BrowserDownloadMission(kwargs['guid'], kwargs['url'], kwargs['suggestedFilename'])
+        if self._rename:
+            rename = get_rename(kwargs['suggestedFilename'], self._rename)
+            self._rename = None
+        else:
+            rename = kwargs['suggestedFilename']
+
+        m = BrowserDownloadMission(kwargs['guid'], kwargs['url'], rename)
         self._browser_missions[kwargs['guid']] = m
-        if self._file_exists == 'skip' and (Path(self._save_path) / kwargs["suggestedFilename"]).exists():
-            self._page.browser_driver.call_method('Browser.cancelDownload', guid=kwargs['guid'])
+        aid_path = Path(self._save_path) / rename
+
+        if self._show_msg:
+            print(f'(Browser)开始下载：{rename}')
+        self._browser_downloading_count += 1
+
+        if self._file_exists == 'skip' and aid_path.exists():
             m.state = 'skipped'
-            p = Path(self._save_path) / kwargs["guid"]
-            if p.exists():
-                p.unlink()
+            m.save_path = aid_path.absolute()
+            self._page.browser_driver.call_method('Browser.cancelDownload', guid=kwargs['guid'])
+            (Path(self._save_path) / kwargs["guid"]).unlink(missing_ok=True)
             return
 
         if self._waiting_download:
             self._download_begin = True
-        self._browser_downloading_count += 1
 
     def _download_progress(self, **kwargs):
         """下载状态产生变化时调用"""
@@ -662,11 +690,25 @@ class ChromiumDownloadSetter(DownloadSetter):
                 m.save_path = path.absolute()
 
         if kwargs['state'] != 'inProgress':
+            if self._show_msg and m:
+                if kwargs['state'] == 'completed':
+                    print(f'(Browser)下载完成：{m.save_path}')
+                elif m.state != 'skipped':
+                    print(f'(Browser)下载失败：{m.save_path}')
+                else:
+                    print(f'(Browser)已跳过：{m.save_path}')
             self._browser_downloading_count -= 1
 
-    def _wait_download_complete(self):
+    def _wait_download_complete(self, mission):
         """等待DownloadKit下载完成"""
-        self._page.download.wait()
+        mission.wait(show=False)
+        if self._show_msg:
+            if mission.result == 'skip':
+                print(f'(DownloadKit)已跳过：{mission.path}')
+            elif not mission.result:
+                print(f'(DownloadKit)下载失败：{mission.path}')
+            else:
+                print(f'(DownloadKit)下载完成：{mission.path}')
 
 
 class BrowserDownloadMission(object):
@@ -878,3 +920,11 @@ def get_chrome_hwnds_from_pid(pid, title):
     hwnds = []
     EnumWindows(callback, hwnds)
     return hwnds
+
+
+def get_rename(original, rename):
+    if '.' in rename:
+        return rename
+    else:
+        suffix = original[original.rfind('.'):] if '.' in original else ''
+        return f'{rename}{suffix}'
