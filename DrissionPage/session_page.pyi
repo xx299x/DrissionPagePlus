@@ -13,12 +13,11 @@ from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from .commons.constants import NoneElement
 from .base import BasePage
-from .chromium_page import ChromiumPage
+from .chromium_base import ChromiumBase
+from .commons.constants import NoneElement
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement
-from .web_page import WebPage
 
 
 class SessionPage(BasePage):
@@ -202,7 +201,7 @@ class SessionPageSetter(object):
 
 
 class DownloadSetter(object):
-    def __init__(self, page: Union[SessionPage, WebPage, ChromiumPage]):
+    def __init__(self, page: Union[SessionPage, ChromiumBase]):
         self._page: SessionPage = ...
         self._DownloadKit: DownloadKit = ...
         self._file_exists: str = ...

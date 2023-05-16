@@ -10,6 +10,7 @@ from pathlib import Path
 from threading import Thread
 from time import perf_counter, sleep, time
 
+from DownloadKit import DownloadKit
 from requests import Session
 
 from .base import BasePage
@@ -18,11 +19,12 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies
+from .commons.web import set_browser_cookies, set_session_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
     NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
+from .session_page import DownloadSetter
 
 
 class ChromiumBase(BasePage):
@@ -42,6 +44,8 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._listener = None
+        self._download_set = None
+        self._download_path = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -374,6 +378,24 @@ class ChromiumBase(BasePage):
         if self._listener is None:
             self._listener = NetworkListener(self)
         return self._listener
+
+    @property
+    def download_path(self):
+        """返回默认下载路径"""
+        p = self._download_path or ''
+        return str(Path(p).absolute())
+
+    @property
+    def download_set(self):
+        """返回用于设置下载参数的对象"""
+        if self._download_set is None:
+            self._download_set = BaseDownloadSetter(self)
+        return self._download_set
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set.DownloadKit
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -872,6 +894,45 @@ class ChromiumBase(BasePage):
         return str(path.absolute())
 
 
+class BaseDownloadSetter(DownloadSetter):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        """
+        :param page: ChromiumPage对象
+        """
+        super().__init__(page)
+        self._session = None
+        self._show_msg = True
+
+    @property
+    def session(self):
+        """返回用于DownloadKit的Session对象"""
+        if self._session is None:
+            self._session = Session()
+            ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self._session.headers.update({"User-Agent": ua})
+        self._cookies_to_session()
+        return self._session
+
+    @property
+    def DownloadKit(self):
+        if self._DownloadKit is None:
+            self._DownloadKit = DownloadKit(session=self._page, goal_path=self._page.download_path)
+        return self._DownloadKit
+
+    def show_msg(self, on_off=True):
+        """是否显示下载信息
+        :param on_off: bool表示开或关
+        :return: None
+        """
+        self._show_msg = on_off
+
+    def _cookies_to_session(self):
+        """把driver对象的cookies复制到session对象"""
+        set_session_cookies(self._session, self._page.get_cookies(as_dict=False, all_info=False))
+
+
 class ChromiumBaseSetter(object):
     def __init__(self, page):
         self._page = page
@@ -981,10 +1042,8 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        if isinstance(loc_or_ele, (str, tuple)):
-            ele = self._driver._ele(loc_or_ele, timeout=.3, raise_err=False)
-            return ele.wait.delete(timeout) if ele else True
-        return loc_or_ele.wait.delete(timeout)
+        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
+        return ele.wait.delete(timeout) if ele else True
 
     def ele_display(self, loc_or_ele, timeout=None):
         """等待元素变成显示状态
@@ -992,8 +1051,8 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        ele = self._driver._ele(loc_or_ele, raise_err=False)
-        return ele.wait.display(timeout) if ele else False
+        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
+        return ele.wait.display(timeout)
 
     def ele_hidden(self, loc_or_ele, timeout=None):
         """等待元素变成隐藏状态
@@ -1001,8 +1060,17 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，默认读取页面超时时间
         :return: 是否等待成功
         """
-        ele = self._driver._ele(loc_or_ele, raise_err=False)
+        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
         return ele.wait.hidden(timeout)
+
+    def ele_load(self, loc, timeout=None):
+        """等待元素加载到DOM
+        :param loc: 要等待的元素，输入定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :return: 成功返回元素对象，失败返回False
+        """
+        ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
+        return ele if ele else False
 
     def load_start(self, timeout=None):
         """等待页面开始加载

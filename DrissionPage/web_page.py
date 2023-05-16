@@ -3,20 +3,17 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from pathlib import Path
-from warnings import warn
 
 from requests import Session
 
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
-from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
+from .chromium_page import ChromiumPage, ChromiumPageSetter
 from .chromium_tab import WebPageTab
 from .commons.web import set_session_cookies, set_browser_cookies
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
-from .errors import CDPError
 from .session_page import SessionPage, SessionPageSetter
 
 
@@ -45,7 +42,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._driver_options = None
         self._session_options = None
         self._response = None
-        self._download_set = None
+        # self._download_set = None
         self._set = None
         self._screencast = None
 
@@ -211,22 +208,22 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         self.set.timeouts(implicit=second)
 
-    @property
-    def download_path(self):
-        """返回默认下载路径"""
-        return super(SessionPage, self).download_path
-
-    @property
-    def download_set(self):
-        """返回下载设置对象"""
-        if self._download_set is None:
-            self._download_set = WebPageDownloadSetter(self)
-        return self._download_set
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        return self.download_set._switched_DownloadKit
+    # @property
+    # def download_path(self):
+    #     """返回默认下载路径"""
+    #     return super(SessionPage, self).download_path
+    #
+    # @property
+    # def download_set(self):
+    #     """返回下载设置对象"""
+    #     if self._download_set is None:
+    #         self._download_set = WebPageDownloadSetter(self)
+    #     return self._download_set
+    #
+    # @property
+    # def download(self):
+    #     """返回下载器对象"""
+    #     return self.download_set._switched_DownloadKit
 
     @property
     def set(self):
@@ -494,69 +491,68 @@ class WebPageSetter(ChromiumPageSetter):
         else:
             self._chromium_setter.user_agent(ua, platform)
 
-
-class WebPageDownloadSetter(ChromiumDownloadSetter):
-    """用于设置下载参数的类"""
-
-    def __init__(self, page):
-        super().__init__(page)
-        self._session = page.session
-
-    @property
-    def _switched_DownloadKit(self):
-        """返回从浏览器同步cookies后的Session对象"""
-        if self._page.mode == 'd':
-            self._cookies_to_session()
-        return self.DownloadKit
-
-    def save_path(self, path):
-        """设置下载路径
-        :param path: 下载路径
-        :return: None
-        """
-        path = path or ''
-        path = Path(path).absolute()
-        path.mkdir(parents=True, exist_ok=True)
-        path = str(path)
-        self._save_path = path
-        self._page._download_path = path
-        self.DownloadKit.goal_path = path
-
-        if self._page._has_driver:
-            try:
-                self._page.browser_driver.Browser.setDownloadBehavior(behavior=self._behavior, downloadPath=path,
-                                                                      eventsEnabled=True)
-            except CDPError:
-                warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-                self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path)
-
-    def by_browser(self):
-        """设置使用浏览器下载文件"""
-        if not self._page._has_driver:
-            raise RuntimeError('浏览器未连接。')
-
-        try:
-            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
-                                                                  downloadPath=self._page.download_path)
-            self._page.browser_driver.Browser.downloadWillBegin = self._download_will_begin
-            self._page.browser_driver.Browser.downloadProgress = self._download_progress
-
-        except CDPError:
-            warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-            self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
-            self._page.driver.Page.downloadWillBegin = self._download_will_begin
-            self._page.driver.Page.downloadProgress = self._download_progress
-
-        self._behavior = 'allowAndName'
-
-    def by_DownloadKit(self):
-        """设置使用DownloadKit下载文件"""
-        if self._page._has_driver:
-            try:
-                self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
-                self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-                # self._page.browser_driver.Browser.downloadProgress = None
-            except CDPError:
-                raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
-
-        self._behavior = 'deny'
+# class WebPageDownloadSetter(BaseDownloadSetter):
+#     """用于设置下载参数的类"""
+#
+#     def __init__(self, page):
+#         super().__init__(page)
+#         self._session = page.session
+#
+#     @property
+#     def _switched_DownloadKit(self):
+#         """返回从浏览器同步cookies后的Session对象"""
+#         if self._page.mode == 'd':
+#             self._cookies_to_session()
+#         return self.DownloadKit
+#
+#     def save_path(self, path):
+#         """设置下载路径
+#         :param path: 下载路径
+#         :return: None
+#         """
+#         path = path or ''
+#         path = Path(path).absolute()
+#         path.mkdir(parents=True, exist_ok=True)
+#         path = str(path)
+#         self._save_path = path
+#         self._page._download_path = path
+#         self.DownloadKit.goal_path = path
+#
+#         if self._page._has_driver:
+#             try:
+#                 self._page.browser_driver.Browser.setDownloadBehavior(behavior=self._behavior, downloadPath=path,
+#                                                                       eventsEnabled=True)
+#             except CDPError:
+#                 warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
+#                 self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path)
+#
+#     def by_browser(self):
+#         """设置使用浏览器下载文件"""
+#         if not self._page._has_driver:
+#             raise RuntimeError('浏览器未连接。')
+#
+#         try:
+#             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
+#                                                                   downloadPath=self._page.download_path)
+#             self._page.browser_driver.Browser.downloadWillBegin = self._download_will_begin
+#             self._page.browser_driver.Browser.downloadProgress = self._download_progress
+#
+#         except CDPError:
+#             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
+#             self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
+#             self._page.driver.Page.downloadWillBegin = self._download_will_begin
+#             self._page.driver.Page.downloadProgress = self._download_progress
+#
+#         self._behavior = 'allowAndName'
+#
+#     def by_DownloadKit(self):
+#         """设置使用DownloadKit下载文件"""
+#         if self._page._has_driver:
+#             try:
+#                 self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+#                 self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+#                 # self._page.browser_driver.Browser.downloadProgress = None
+#             except CDPError:
+#                 raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
+#
+#         self._behavior = 'deny'
