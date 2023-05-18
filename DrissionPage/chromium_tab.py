@@ -7,7 +7,7 @@ from copy import copy
 
 from .chromium_base import ChromiumBase, ChromiumBaseSetter
 from .commons.web import set_session_cookies, set_browser_cookies
-from .session_page import SessionPage, SessionPageSetter, DownloadSetter
+from .session_page import SessionPage, SessionPageSetter
 
 
 class ChromiumTab(ChromiumBase):
@@ -155,13 +155,6 @@ class WebPageTab(SessionPage, ChromiumTab):
         if self._set is None:
             self._set = WebPageTabSetter(self)
         return self._set
-
-    @property
-    def download_set(self):
-        """返回下载设置对象"""
-        if self._download_set is None:
-            self._download_set = WebPageTabDownloadSetter(self)
-        return self._download_set
 
     @property
     def download(self):
@@ -386,18 +379,3 @@ class WebPageTabSetter(ChromiumBaseSetter):
             self._chromium_setter.user_agent(ua, platform)
 
 
-class WebPageTabDownloadSetter(DownloadSetter):
-    """用于设置下载参数的类"""
-
-    def __init__(self, page):
-        super().__init__(page)
-        self._session = page.session
-
-    @property
-    def _switched_DownloadKit(self):
-        """返回从浏览器同步cookies后的Session对象"""
-        if self._page.mode == 'd':
-            ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self._page.session.headers.update({"User-Agent": ua})
-            set_session_cookies(self._page.session, self._page.get_cookies(as_dict=False, all_domains=False))
-        return self.DownloadKit

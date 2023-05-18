@@ -24,7 +24,6 @@ from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPErr
     NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
-from .session_page import DownloadSetter
 
 
 class ChromiumBase(BasePage):
@@ -44,8 +43,9 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._listener = None
-        self._download_set = None
+        self._DownloadKit = None
         self._download_path = None
+        self._session = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -386,16 +386,22 @@ class ChromiumBase(BasePage):
         return str(Path(p).absolute())
 
     @property
-    def download_set(self):
-        """返回用于设置下载参数的对象"""
-        if self._download_set is None:
-            self._download_set = BaseDownloadSetter(self)
-        return self._download_set
-
-    @property
     def download(self):
         """返回下载器对象"""
-        return self.download_set.DownloadKit
+        if self._DownloadKit is None:
+            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
+        return self._DownloadKit
+
+    @property
+    def session(self):
+        """返回用于DownloadKit的Session对象"""
+        if self._session is None:
+            self._session = Session()
+            ua = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self._session.headers.update({"User-Agent": ua})
+
+        set_session_cookies(self._session, self.get_cookies(as_dict=False, all_info=False))
+        return self._session
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -892,45 +898,6 @@ class ChromiumBase(BasePage):
         with open(path, 'wb') as f:
             f.write(png)
         return str(path.absolute())
-
-
-class BaseDownloadSetter(DownloadSetter):
-    """用于设置下载参数的类"""
-
-    def __init__(self, page):
-        """
-        :param page: ChromiumPage对象
-        """
-        super().__init__(page)
-        self._session = None
-        self._show_msg = True
-
-    @property
-    def session(self):
-        """返回用于DownloadKit的Session对象"""
-        if self._session is None:
-            self._session = Session()
-            ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self._session.headers.update({"User-Agent": ua})
-        self._cookies_to_session()
-        return self._session
-
-    @property
-    def DownloadKit(self):
-        if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self._page, goal_path=self._page.download_path)
-        return self._DownloadKit
-
-    def show_msg(self, on_off=True):
-        """是否显示下载信息
-        :param on_off: bool表示开或关
-        :return: None
-        """
-        self._show_msg = on_off
-
-    def _cookies_to_session(self):
-        """把driver对象的cookies复制到session对象"""
-        set_session_cookies(self._session, self._page.get_cookies(as_dict=False, all_info=False))
 
 
 class ChromiumBaseSetter(object):
