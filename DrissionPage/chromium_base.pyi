@@ -116,6 +116,9 @@ class ChromiumBase(BasePage):
     def page_load_strategy(self) -> str: ...
 
     @property
+    def user_agent(self) -> str: ...
+
+    @property
     def scroll(self) -> ChromiumPageScroll: ...
 
     @property

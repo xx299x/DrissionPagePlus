@@ -336,6 +336,11 @@ class ChromiumBase(BasePage):
         return self._page_load_strategy
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        return self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+
+    @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
         self.wait.load_complete()
