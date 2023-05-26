@@ -73,7 +73,9 @@ class ChromiumPage(ChromiumBase):
         if not self._tab_obj:  # 不是传入driver的情况
             connect_browser(self._driver_options)
             if not tab_id:
-                json = self._control_session.get(f'http://{self.address}/json').json()
+                u = f'http://{self.address}/json'
+                json = self._control_session.get(u).json()
+                self._control_session.get(u, headers={'Connection': 'close'})
                 tab_id = [i['id'] for i in json if i['type'] == 'page']
                 if not tab_id:
                     raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -87,7 +89,9 @@ class ChromiumPage(ChromiumBase):
 
     def _page_init(self):
         """页面相关设置"""
-        ws = self._control_session.get(f'http://{self.address}/json/version').json()['webSocketDebuggerUrl']
+        u = f'http://{self.address}/json/version'
+        ws = self._control_session.get(u).json()['webSocketDebuggerUrl']
+        self._control_session.get(u, headers={'Connection': 'close'})
         self._browser_driver = ChromiumDriver(ws.split('/')[-1], 'browser', self.address)
         self._browser_driver.start()
 
@@ -124,7 +128,9 @@ class ChromiumPage(ChromiumBase):
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        j = self._control_session.get(f'http://{self.address}/json').json()  # 不要改用cdp
+        u = f'http://{self.address}/json'
+        j = self._control_session.get(u).json()  # 不要改用cdp
+        self._control_session.get(u, headers={'Connection': 'close'})
         return [i['id'] for i in j if i['type'] == 'page']
 
     @property
@@ -195,7 +201,9 @@ class ChromiumPage(ChromiumBase):
         :param single: 是否返回首个结果的id，为False返回所有信息
         :return: tab id或tab dict
         """
-        tabs = self._control_session.get(f'http://{self.address}/json').json()  # 不要改用cdp
+        u = f'http://{self.address}/json'
+        tabs = self._control_session.get(u).json()  # 不要改用cdp
+        self._control_session.get(u, headers={'Connection': 'close'})
         if isinstance(tab_type, str):
             tab_type = {tab_type}
         elif isinstance(tab_type, (list, tuple, set)):

@@ -19,7 +19,7 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies, set_session_cookies
+from .commons.web import set_browser_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
     NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
@@ -45,7 +45,6 @@ class ChromiumBase(BasePage):
         self._listener = None
         self._DownloadKit = None
         self._download_path = None
-        self._session = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -75,7 +74,9 @@ class ChromiumBase(BasePage):
         """
         self._chromium_init()
         if not tab_id:
-            json = self._control_session.get(f'http://{self.address}/json').json()
+            u = f'http://{self.address}/json'
+            json = self._control_session.get(u).json()
+            self._control_session.get(u, headers={'Connection': 'close'})
             tab_id = [i['id'] for i in json if i['type'] == 'page']
             if not tab_id:
                 raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -88,6 +89,7 @@ class ChromiumBase(BasePage):
         """浏览器初始设置"""
         self._control_session = Session()
         self._control_session.keep_alive = False
+        self._control_session.proxies = {'http': None, 'https': None}
         self._first_run = True
         self._is_reading = False
         self._upload_list = None
@@ -391,17 +393,6 @@ class ChromiumBase(BasePage):
         if self._DownloadKit is None:
             self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
         return self._DownloadKit
-
-    @property
-    def session(self):
-        """返回用于DownloadKit的Session对象"""
-        if self._session is None:
-            self._session = Session()
-            ua = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self._session.headers.update({"User-Agent": ua})
-
-        set_session_cookies(self._session, self.get_cookies(as_dict=False, all_info=False))
-        return self._session
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句

@@ -69,7 +69,9 @@ class ChromiumFrame(ChromiumBase):
         try:
             super()._driver_init(tab_id)
         except:
-            self._control_session.get(f'http://{self.address}/json')
+            u = f'http://{self.address}/json'
+            self._control_session.get(u)
+            self._control_session.get(u, headers={'Connection': 'close'})
             super()._driver_init(tab_id)
 
     def _reload(self):
