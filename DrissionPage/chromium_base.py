@@ -1080,10 +1080,10 @@ class ChromiumPageScroll(ChromiumScroll):
         self.t1 = 'window'
         self.t2 = 'document.documentElement'
 
-    def to_see(self, loc_or_ele, center=False):
+    def to_see(self, loc_or_ele, center=None):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
         ele = self._driver._ele(loc_or_ele)
@@ -1092,17 +1092,22 @@ class ChromiumPageScroll(ChromiumScroll):
     def _to_see(self, ele, center):
         """执行滚动页面直到元素可见
         :param ele: 元素对象
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
-        if center:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
-            self._wait_scrolled()
-            return
-
-        ele.run_js('this.scrollIntoViewIfNeeded(false);')
-        if ele.states.is_covered:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
+        txt = 'true' if center else 'false'
+        ele.run_js(f'this.scrollIntoViewIfNeeded({txt});')
+        if center or (center is not False and ele.states.is_covered):
+            ele.run_js('''function getWindowScrollTop() {var scroll_top = 0;
+                    if (document.documentElement && document.documentElement.scrollTop) {
+                      scroll_top = document.documentElement.scrollTop;
+                    } else if (document.body) {scroll_top = document.body.scrollTop;}
+                    return scroll_top;}
+            const { top, height } = this.getBoundingClientRect();
+                    const elCenter = top + height / 2;
+                    const center = window.innerHeight / 2;
+                    window.scrollTo({top: getWindowScrollTop() - (center - elCenter),
+                    behavior: 'instant'});''')
         self._wait_scrolled()
 
 

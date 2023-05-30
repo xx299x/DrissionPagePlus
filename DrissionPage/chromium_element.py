@@ -1771,9 +1771,9 @@ class ChromiumScroll(object):
 
 
 class ChromiumElementScroll(ChromiumScroll):
-    def to_see(self, center=False):
+    def to_see(self, center=None):
         """滚动页面直到元素可见
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
         self._driver.page.scroll.to_see(self._driver, center=center)
