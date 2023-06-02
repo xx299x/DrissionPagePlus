@@ -125,6 +125,14 @@ class WebPageTab(SessionPage, ChromiumTab):
         return super().cookies
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        if self._mode == 's':
+            return super().user_agent
+        elif self._mode == 'd':
+            return super(SessionPage, self).user_agent
+
+    @property
     def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:

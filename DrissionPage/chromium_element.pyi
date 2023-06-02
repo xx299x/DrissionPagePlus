@@ -496,7 +496,7 @@ class ChromiumScroll(object):
 
 class ChromiumElementScroll(ChromiumScroll):
 
-    def to_see(self, center: bool = False) -> None: ...
+    def to_see(self, center: Union[bool, None] = None) -> None: ...
 
 
 class ChromiumSelect(object):
