@@ -288,7 +288,13 @@ def is_cookie_in_driver(page, cookie):
     :param cookie: dict格式cookie
     :return: bool
     """
-    for c in page.get_cookies():
-        if cookie['name'] == c['name'] and cookie['value'] == c['value']:
-            return True
+    if 'domain' in cookie:
+        for c in page.get_cookies(all_domains=True):
+            if cookie['name'] == c['name'] and cookie['value'] == c['value'] and cookie['domain'] == c.get('domain',
+                                                                                                           None):
+                return True
+    else:
+        for c in page.get_cookies(all_domains=True):
+            if cookie['name'] == c['name'] and cookie['value'] == c['value']:
+                return True
     return False
