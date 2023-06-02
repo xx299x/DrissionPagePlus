@@ -110,14 +110,23 @@ class SessionOptions(object):
             self._proxies = {}
         return self._proxies
 
-    def set_proxies(self, http, https=None):
+    def set_proxies(self, http=None, https=None):
         """设置proxies参数
         :param http: http代理地址
         :param https: https代理地址
         :return: 返回当前对象
         """
-        proxies = None if http == https is None else {'http': http, 'https': https or http}
-        self._sets('proxies', proxies)
+        if isinstance(http, str):
+            if http.startswith('http://'):
+                http = http[7:]
+            elif http.startswith('https://'):
+                http = http[8:]
+        if isinstance(https, str):
+            if https.startswith('http://'):
+                https = https[7:]
+            elif http.startswith('https://'):
+                https = https[8:]
+        self._sets('proxies', {'http': http, 'https': https})
         return self
 
     # ===========须独立处理的项结束============

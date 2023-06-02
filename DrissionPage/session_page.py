@@ -366,14 +366,23 @@ class SessionPageSetter(object):
         """
         self._page.session.headers['user-agent'] = ua
 
-    def proxies(self, http, https=None):
+    def proxies(self, http=None, https=None):
         """设置proxies参数
         :param http: http代理地址
         :param https: https代理地址
         :return: None
         """
-        proxies = None if http == https is None else {'http': http, 'https': https or http}
-        self._page.session.proxies = proxies
+        if isinstance(http, str):
+            if http.startswith('http://'):
+                http = http[7:]
+            elif http.startswith('https://'):
+                http = http[8:]
+        if isinstance(https, str):
+            if https.startswith('http://'):
+                https = https[7:]
+            elif https.startswith('https://'):
+                https = https[8:]
+        self._page.session.proxies = {'http': http, 'https': https}
 
     def auth(self, auth):
         """设置认证元组或对象
