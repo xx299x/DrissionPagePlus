@@ -116,16 +116,6 @@ class SessionOptions(object):
         :param https: https代理地址
         :return: 返回当前对象
         """
-        if isinstance(http, str):
-            if http.startswith('http://'):
-                http = http[7:]
-            elif http.startswith('https://'):
-                http = http[8:]
-        if isinstance(https, str):
-            if https.startswith('http://'):
-                https = https[7:]
-            elif http.startswith('https://'):
-                https = https[8:]
         self._sets('proxies', {'http': http, 'https': https})
         return self
 

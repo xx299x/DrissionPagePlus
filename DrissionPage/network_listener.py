@@ -87,10 +87,7 @@ class NetworkListener(object):
 
         self._set_callback_func()
 
-        if asyn:
-            self._total_count = count
-        else:
-            self._total_count = len(self._targets) if not count else count
+        self._total_count = len(self._targets) if not count else count
 
         Thread(target=self._wait_to_stop).start()
 
