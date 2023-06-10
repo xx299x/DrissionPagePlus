@@ -819,7 +819,7 @@ class ChromiumBase(BasePage):
                 while self.ready_state not in ('complete', None):
                     sleep(.1)
                 if self._debug or show_errmsg:
-                    print(f'重试 {to_url}')
+                    print(f'重试{t + 1} {to_url}')
 
         if err:
             if show_errmsg:

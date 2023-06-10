@@ -522,14 +522,23 @@ class ChromiumElement(DrissionElement):
         return self.page._get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                          left_top=left_top, right_bottom=right_bottom, ele=self)
 
-    def input(self, vals, clear=True):
+    def input(self, vals, clear=True, by_js=False):
         """输入文本或组合键，也可用于输入文件路径到input元素（路径间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
+        :param by_js: 是否用js方式输入，不能输入组合键
         :return: None
         """
         if self.tag == 'input' and self.attr('type') == 'file':
             return self._set_file_input(vals)
+
+        if by_js:
+            if clear:
+                self.clear(True)
+            if isinstance(vals, (list, tuple)):
+                vals = ''.join([str(i) for i in vals])
+            self.set.prop('value', str(vals))
+            return
 
         if clear and vals not in ('\n', '\ue007'):
             self.clear(by_js=False)
