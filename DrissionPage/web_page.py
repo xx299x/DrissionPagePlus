@@ -3,7 +3,6 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-
 from requests import Session
 
 from .base import BasePage
@@ -44,6 +43,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
         self._set = None
         self._screencast = None
+        self._DownloadKit = None
 
         self._set_start_options(driver_or_options, session_or_options)
         self._set_runtime_settings()

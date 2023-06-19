@@ -577,9 +577,12 @@ class ChromiumBase(BasePage):
             if ok:
                 try:
                     if single:
-                        return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        r = make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        break
+
                     else:
-                        return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        break
 
                 except ElementLossError:
                     ok = False
@@ -594,6 +597,12 @@ class ChromiumBase(BasePage):
                 return NoneElement() if single else []
 
             sleep(.1)
+
+        try:
+            self.run_cdp('DOM.discardSearchResults', searchId=search_result['searchId'])
+        except:
+            pass
+        return r
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
@@ -1062,7 +1071,8 @@ class ChromiumBaseWaiter(object):
         :return: 是否等待成功
         """
         if timeout != 0:
-            timeout = self._driver.timeout if timeout in (None, True) else timeout
+            if timeout is None or timeout is True:
+                timeout = self._driver.timeout
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
                 if self._driver.is_loading == start:
