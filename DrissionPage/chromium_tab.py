@@ -360,7 +360,7 @@ class WebPageTabSetter(ChromiumBaseSetter):
         self._chromium_setter = ChromiumBaseSetter(self._page)
 
     def cookies(self, cookies):
-        """添加cookies信息到浏览器或session对象
+        """添加多个cookies信息到浏览器或session对象，注意不要传入单个
         :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
         :return: None
         """

@@ -337,8 +337,18 @@ class SessionPageSetter(object):
         """
         self._page.timeout = second
 
+    def cookie(self, cookie):
+        """为Session对象设置单个cookie
+        :param cookie: cookie信息
+        :return: None
+        """
+        if isinstance(cookie, str):
+            self.cookies(cookie)
+        else:
+            self.cookies([cookie])
+
     def cookies(self, cookies):
-        """为Session对象设置cookies
+        """为Session对象设置多个cookie，注意不要传入单个
         :param cookies: cookies信息
         :return: None
         """

@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from http.cookiejar import Cookie
 from typing import Any, Union, Tuple, List
 
 from DownloadKit import DownloadKit
@@ -168,6 +169,8 @@ class SessionPageSetter(object):
     def retry_interval(self, interval: float) -> None: ...
 
     def timeout(self, second: float) -> None: ...
+
+    def cookie(self, cookie: Union[Cookie, str, dict]) -> None: ...
 
     def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
 

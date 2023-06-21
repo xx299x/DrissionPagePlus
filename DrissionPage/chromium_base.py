@@ -972,8 +972,18 @@ class ChromiumBaseSetter(object):
         js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
         return self._page.run_js_loaded(js, as_expr=True)
 
+    def cookie(self, cookie):
+        """设置单个cookie
+        :param cookie: cookie信息
+        :return: None
+        """
+        if isinstance(cookie, str):
+            self.cookies(cookie)
+        else:
+            self.cookies([cookie])
+
     def cookies(self, cookies):
-        """设置cookies值
+        """设置多个cookie，注意不要传入单个
         :param cookies: cookies信息
         :return: None
         """
