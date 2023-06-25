@@ -24,7 +24,7 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 python 版本：3.6 及以上
 
-支持浏览器：Chromium 内核浏览器（如 Chrome 和 Edge）
+支持浏览器：Chromium 内核浏览器(如 Chrome 和 Edge)，electron 应用
 
 ---
 
@@ -34,11 +34,9 @@ python 版本：3.6 及以上
 
 ---
 
-# 🔥 新版介绍
+# 🔥 新版预告
 
-3.2 版已经发布。对底层逻辑进行了梳理，修复了许多问题，提高了稳定性，也对用户 api 进行了调整。
-
-详情查看：[新版介绍](https://g1879.gitee.io/drissionpagedocs/new/)
+查看下一步开发计划：[新版预告](http://g1879.gitee.io/drissionpagedocs/whatsnew/3_3/)
 
 ---
 
@@ -68,7 +66,7 @@ python 版本：3.6 及以上
 
 本库采用全自研的内核，内置了 N 多实用功能，对常用功能作了整合和优化，对比 selenium，有以下优点：
 
-- 无 webdriver 特征，不会被网站识别
+- 无 webdriver 特征
 
 - 无需为不同版本的浏览器下载不同的驱动
 
@@ -110,13 +108,7 @@ python 版本：3.6 及以上
 
 - 还有很多细节，这里不一一列举，欢迎实际使用中体验：）
 
---- 
-
-# 🌟 特性演示
-
-[点击查看](http://g1879.gitee.io/drissionpagedocs/2_features/2_features_demos/2_compare_with_selenium/)
-
---- 
+---
 
 # 🛠 使用文档
 
@@ -126,7 +118,7 @@ python 版本：3.6 及以上
 
 # 🔖 版本历史
 
-[点击查看版本历史](http://g1879.gitee.io/drissionpagedocs/10_history/)
+[点击查看版本历史](http://g1879.gitee.io/drissionpagedocs/history/3.x/)
 
 --- 
 
