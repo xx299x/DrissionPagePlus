@@ -62,10 +62,10 @@ class BaseElement(BaseParser):
         pass
 
     def prev(self, index=1):
-        return None  # ShadowRootElement直接继承
+        return None  # ChromiumShadowRoot直接继承
 
     def prevs(self) -> None:
-        return None  # ShadowRootElement直接继承
+        return None  # ChromiumShadowRoot直接继承
 
     def next(self, index=1):
         pass

@@ -255,14 +255,21 @@ def set_browser_cookies(page, cookies):
             cookie['expires'] = int(cookie['expires'])
         if cookie['value'] is None:
             cookie['value'] = ''
+        if cookie['name'].startswith('__Secure-'):
+            cookie['secure'] = True
 
-        if cookie.get('domain', None):
-            try:
-                page.run_cdp_loaded('Network.setCookie', **cookie)
-                if is_cookie_in_driver(page, cookie):
-                    continue
-            except Exception:
-                pass
+        if cookie['name'].startswith('__Host-'):
+            cookie['path'] = '/'
+            cookie['secure'] = True
+
+        else:
+            if cookie.get('domain', None):
+                try:
+                    page.run_cdp_loaded('Network.setCookie', **cookie)
+                    if is_cookie_in_driver(page, cookie):
+                        continue
+                except Exception:
+                    pass
 
         ex_url = extract(page._browser_url)
         d_list = ex_url.subdomain.split('.')
