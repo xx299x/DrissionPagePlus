@@ -203,12 +203,13 @@ class ChromiumElement(DrissionElement):
 
         return self._select
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        return super().parent(level_or_loc)
+        return super().parent(level_or_loc, index)
 
     def child(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -808,9 +809,10 @@ class ChromiumShadowRoot(BaseElement):
         from threading import Thread
         Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: ChromiumElement对象
         """
         if isinstance(level_or_loc, int):
@@ -822,7 +824,7 @@ class ChromiumShadowRoot(BaseElement):
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
 
-            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}'
+            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}[{index}]'
 
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')

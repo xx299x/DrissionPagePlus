@@ -122,9 +122,10 @@ class DrissionElement(BaseElement):
 
         return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
         if isinstance(level_or_loc, int):
@@ -136,7 +137,7 @@ class DrissionElement(BaseElement):
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
 
-            loc = f'xpath:./ancestor::{loc[1].lstrip(". / ")}'
+            loc = f'xpath:./ancestor::{loc[1].lstrip(". / ")}[{index}]'
 
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
