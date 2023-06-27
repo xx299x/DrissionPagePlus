@@ -24,8 +24,6 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        # self._download_set = None
-        # self._download_path = None
         super().__init__(addr_driver_opts, tab_id, timeout)
 
     def _set_start_options(self, addr_driver_opts, none):

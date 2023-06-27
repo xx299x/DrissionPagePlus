@@ -7,7 +7,6 @@ from re import search
 from time import sleep
 from urllib.parse import urlparse
 
-from DownloadKit import DownloadKit
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
@@ -27,7 +26,6 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
-        self._DownloadKit = None
         self._session = None
         self._set = None
         self._set_start_options(session_or_options, None)
@@ -102,18 +100,6 @@ class SessionPage(BasePage):
     def user_agent(self):
         """返回user agent"""
         return self.session.headers.get('user-agent', '')
-
-    @property
-    def download_path(self):
-        """返回下载路径"""
-        return self._download_path
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
-        return self._DownloadKit
 
     @property
     def session(self):

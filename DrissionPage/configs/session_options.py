@@ -21,7 +21,7 @@ class SessionOptions(object):
         :param ini_path: ini文件路径
         """
         self.ini_path = None
-        self._download_path = None
+        self._download_path = ''
         self._headers = None
         self._cookies = None
         self._auth = None
@@ -73,7 +73,7 @@ class SessionOptions(object):
 
             self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
             self._timeout = om.timeouts.get('implicit', 10)
-            self._download_path = om.paths.get('download_path', None)
+            self._download_path = om.paths.get('download_path', '')
 
     # ===========须独立处理的项开始============
     @property

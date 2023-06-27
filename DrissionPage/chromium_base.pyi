@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Union, Tuple, List, Any
 
 from DataRecorder import Recorder
-from DownloadKit import DownloadKit
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
@@ -21,7 +20,6 @@ from .session_element import SessionElement
 
 
 class ChromiumBase(BasePage):
-
     def __init__(self,
                  address: Union[str, int],
                  tab_id: str = None,
@@ -44,8 +42,6 @@ class ChromiumBase(BasePage):
         self._set: ChromiumBaseSetter = ...
         self._screencast: Screencast = ...
         self._listener: NetworkListener = ...
-        self._download_path: str = ...
-        self._DownloadKit: DownloadKit = ...
 
     def _connect_browser(self, tab_id: str = None) -> None: ...
 
@@ -138,12 +134,6 @@ class ChromiumBase(BasePage):
 
     @property
     def listener(self) -> NetworkListener: ...
-
-    @property
-    def download_path(self) -> str: ...
-
-    @property
-    def download(self) -> DownloadKit: ...
 
     def run_js(self, script: str, *args: Any, as_expr: bool = False) -> Any: ...
 

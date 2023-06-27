@@ -4,8 +4,11 @@
 @Contact :   g1879@qq.com
 """
 from abc import abstractmethod
+from pathlib import Path
 from re import sub
 from urllib.parse import quote
+
+from DownloadKit import DownloadKit
 
 from .commons.constants import Settings, NoneElement
 from .commons.locator import get_loc
@@ -353,6 +356,8 @@ class BasePage(BaseParser):
         self.retry_times = 3
         self.retry_interval = 2
         self._url_available = None
+        self._download_path = ''
+        self._DownloadKit = None
 
     @property
     def title(self):
@@ -379,6 +384,18 @@ class BasePage(BaseParser):
     def url_available(self):
         """返回当前访问的url有效性"""
         return self._url_available
+
+    @property
+    def download_path(self):
+        """返回默认下载路径"""
+        return str(Path(self._download_path).absolute())
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        if self._DownloadKit is None:
+            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
+        return self._DownloadKit
 
     def _before_connect(self, url, retry, interval):
         """连接前的准备

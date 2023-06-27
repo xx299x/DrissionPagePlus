@@ -10,7 +10,6 @@ from pathlib import Path
 from threading import Thread
 from time import perf_counter, sleep, time
 
-from DownloadKit import DownloadKit
 from requests import Session
 
 from .base import BasePage
@@ -43,8 +42,6 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._listener = None
-        self._DownloadKit = None
-        self._download_path = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -385,19 +382,6 @@ class ChromiumBase(BasePage):
         if self._listener is None:
             self._listener = NetworkListener(self)
         return self._listener
-
-    @property
-    def download_path(self):
-        """返回默认下载路径"""
-        p = self._download_path or ''
-        return str(Path(p).absolute())
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
-        return self._DownloadKit
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
