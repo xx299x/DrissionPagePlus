@@ -11,11 +11,3 @@ from .web_page import WebPage
 # 启动配置类
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
-
-# 旧版页面类和启动配置类
-try:
-    from .mixpage.mix_page import MixPage
-    from .mixpage.drission import Drission
-    from .configs.driver_options import DriverOptions
-except ModuleNotFoundError:
-    pass

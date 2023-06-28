@@ -14,7 +14,7 @@ from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinition
 from .commons.locator import get_loc
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CallMethodError, NoResourceError, CanNotClickError
+    CDPError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
 
 
@@ -99,7 +99,7 @@ class ChromiumElement(DrissionElement):
         try:
             attrs = self.page.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
             return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
-        except CallMethodError:  # 文档根元素不能调用此方法
+        except CDPError:  # 文档根元素不能调用此方法
             return {}
 
     @property
@@ -203,12 +203,13 @@ class ChromiumElement(DrissionElement):
 
         return self._select
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        return super().parent(level_or_loc)
+        return super().parent(level_or_loc, index)
 
     def child(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -218,7 +219,7 @@ class ChromiumElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本
         """
-        return super().child(index, filter_loc, timeout, ele_only=ele_only)
+        return super().child(filter_loc, index, timeout, ele_only=ele_only)
 
     def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -228,7 +229,7 @@ class ChromiumElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本
         """
-        return super().prev(index, filter_loc, timeout, ele_only=ele_only)
+        return super().prev(filter_loc, index, timeout, ele_only=ele_only)
 
     def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -238,7 +239,7 @@ class ChromiumElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本
         """
-        return super().next(index, filter_loc, timeout, ele_only=ele_only)
+        return super().next(filter_loc, index, timeout, ele_only=ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -249,7 +250,7 @@ class ChromiumElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return super().before(index, filter_loc, timeout, ele_only=ele_only)
+        return super().before(filter_loc, index, timeout, ele_only=ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -260,7 +261,7 @@ class ChromiumElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return super().after(index, filter_loc, timeout, ele_only=ele_only)
+        return super().after(filter_loc, index, timeout, ele_only=ele_only)
 
     def children(self, filter_loc='', timeout=0, ele_only=True):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
@@ -464,7 +465,7 @@ class ChromiumElement(DrissionElement):
             try:
                 result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
                 break
-            except CallMethodError:
+            except CDPError:
                 sleep(.1)
 
         if not result:
@@ -522,14 +523,23 @@ class ChromiumElement(DrissionElement):
         return self.page._get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                          left_top=left_top, right_bottom=right_bottom, ele=self)
 
-    def input(self, vals, clear=True):
+    def input(self, vals, clear=True, by_js=False):
         """输入文本或组合键，也可用于输入文件路径到input元素（路径间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
+        :param by_js: 是否用js方式输入，不能输入组合键
         :return: None
         """
         if self.tag == 'input' and self.attr('type') == 'file':
             return self._set_file_input(vals)
+
+        if by_js:
+            if clear:
+                self.clear(True)
+            if isinstance(vals, (list, tuple)):
+                vals = ''.join([str(i) for i in vals])
+            self.set.prop('value', str(vals))
+            return
 
         if clear and vals not in ('\n', '\ue007'):
             self.clear(by_js=False)
@@ -749,7 +759,7 @@ class ChromiumShadowRoot(BaseElement):
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间
-        :return: DriverElement对象或属性、文本
+        :return: 元素对象或属性、文本
         """
         return self.ele(loc_or_str, timeout)
 
@@ -799,9 +809,10 @@ class ChromiumShadowRoot(BaseElement):
         from threading import Thread
         Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: ChromiumElement对象
         """
         if isinstance(level_or_loc, int):
@@ -813,7 +824,7 @@ class ChromiumShadowRoot(BaseElement):
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
 
-            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}'
+            loc = f'xpath:./ancestor-or-self::{loc[1].lstrip(". / ")}[{index}]'
 
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
@@ -1424,7 +1435,7 @@ class ChromiumElementStates(object):
         lx, ly = self._ele.locations.click_point
         try:
             r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
-        except CallMethodError:
+        except CDPError:
             return False
 
         if r.get('backendNodeId') != self._ele.ids.backend_id:
@@ -1771,9 +1782,9 @@ class ChromiumScroll(object):
 
 
 class ChromiumElementScroll(ChromiumScroll):
-    def to_see(self, center=False):
+    def to_see(self, center=None):
         """滚动页面直到元素可见
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
         self._driver.page.scroll.to_see(self._driver, center=center)

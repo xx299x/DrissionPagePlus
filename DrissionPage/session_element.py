@@ -38,7 +38,7 @@ class SessionElement(DrissionElement):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
         return self.ele(loc_or_str)
@@ -75,12 +75,13 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        return super().parent(level_or_loc)
+        return super().parent(level_or_loc, index)
 
     def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -90,7 +91,7 @@ class SessionElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本
         """
-        return super().child(index, filter_loc, timeout, ele_only=ele_only)
+        return super().child(filter_loc, index, timeout, ele_only=ele_only)
 
     def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -100,7 +101,7 @@ class SessionElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().prev(index, filter_loc, timeout, ele_only=ele_only)
+        return super().prev(filter_loc, index, timeout, ele_only=ele_only)
 
     def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -110,7 +111,7 @@ class SessionElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().next(index, filter_loc, timeout, ele_only=ele_only)
+        return super().next(filter_loc, index, timeout, ele_only=ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -121,7 +122,7 @@ class SessionElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return super().before(index, filter_loc, timeout, ele_only=ele_only)
+        return super().before(filter_loc, index, timeout, ele_only=ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -132,7 +133,7 @@ class SessionElement(DrissionElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return super().after(index, filter_loc, timeout, ele_only=ele_only)
+        return super().after(filter_loc, index, timeout, ele_only=ele_only)
 
     def children(self, filter_loc='', timeout=0, ele_only=True):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
@@ -217,7 +218,7 @@ class SessionElement(DrissionElement):
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str)
@@ -225,7 +226,7 @@ class SessionElement(DrissionElement):
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
@@ -321,8 +322,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
         loc = loc[0], loc_str
 
-    # ChromiumElement, DriverElement
-    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):
+    elif the_type.endswith(".ChromiumElement'>"):
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'

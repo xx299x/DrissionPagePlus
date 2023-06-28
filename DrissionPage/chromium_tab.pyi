@@ -5,7 +5,6 @@
 """
 from typing import Union, Tuple, Any, List
 
-from DownloadKit import DownloadKit
 from requests import Session, Response
 
 from .chromium_base import ChromiumBase, ChromiumBaseSetter
@@ -13,7 +12,7 @@ from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage, ChromiumTabRect
 from .session_element import SessionElement
-from .session_page import SessionPage, SessionPageSetter, DownloadSetter
+from .session_page import SessionPage, SessionPageSetter
 from .web_page import WebPage
 
 
@@ -23,6 +22,8 @@ class ChromiumTab(ChromiumBase):
         self.page: ChromiumPage = ...
 
     def _set_runtime_settings(self) -> None: ...
+
+    def close(self) -> None: ...
 
     @property
     def rect(self) -> ChromiumTabRect: ...
@@ -34,8 +35,6 @@ class WebPageTab(SessionPage, ChromiumTab):
         self._mode: str = ...
         self._has_driver = ...
         self._has_session = ...
-        self._download_set = ...
-        self._download_path = ...
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
@@ -64,6 +63,9 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     @property
     def cookies(self) -> dict: ...
+
+    @property
+    def user_agent(self) -> str: ...
 
     @property
     def session(self) -> Session: ...
@@ -119,8 +121,6 @@ class WebPageTab(SessionPage, ChromiumTab):
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...
 
-    def _get_driver_cookies(self, as_dict: bool = False, all_info: bool = False) -> dict: ...
-
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
@@ -145,12 +145,6 @@ class WebPageTab(SessionPage, ChromiumTab):
     @property
     def set(self) -> WebPageTabSetter: ...
 
-    @property
-    def download(self) -> DownloadKit: ...
-
-    @property
-    def download_set(self) -> WebPageTabDownloadSetter: ...
-
     def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
                        timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
@@ -167,13 +161,3 @@ class WebPageTabSetter(ChromiumBaseSetter):
     def headers(self, headers: dict) -> None: ...
 
     def cookies(self, cookies) -> None: ...
-
-
-class WebPageTabDownloadSetter(DownloadSetter):
-    """用于设置下载参数的类"""
-
-    def __init__(self, page: WebPageTab):
-        self._page: WebPageTab = ...
-
-    @property
-    def _switched_DownloadKit(self) -> DownloadKit: ...

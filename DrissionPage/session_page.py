@@ -7,7 +7,6 @@ from re import search
 from time import sleep
 from urllib.parse import urlparse
 
-from DownloadKit import DownloadKit
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
@@ -27,7 +26,6 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
-        self._download_set = None
         self._session = None
         self._set = None
         self._set_start_options(session_or_options, None)
@@ -99,21 +97,9 @@ class SessionPage(BasePage):
             return None
 
     @property
-    def download_path(self):
-        """返回下载路径"""
-        return self._download_path
-
-    @property
-    def download_set(self):
-        """返回用于设置下载参数的对象"""
-        if self._download_set is None:
-            self._download_set = DownloadSetter(self)
-        return self._download_set
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        return self.download_set.DownloadKit
+    def user_agent(self):
+        """返回user agent"""
+        return self.session.headers.get('user-agent', '')
 
     @property
     def session(self):
@@ -337,8 +323,18 @@ class SessionPageSetter(object):
         """
         self._page.timeout = second
 
+    def cookie(self, cookie):
+        """为Session对象设置单个cookie
+        :param cookie: cookie信息
+        :return: None
+        """
+        if isinstance(cookie, str):
+            self.cookies(cookie)
+        else:
+            self.cookies([cookie])
+
     def cookies(self, cookies):
-        """为Session对象设置cookies
+        """为Session对象设置多个cookie，注意不要传入单个
         :param cookies: cookies信息
         :return: None
         """
@@ -366,14 +362,13 @@ class SessionPageSetter(object):
         """
         self._page.session.headers['user-agent'] = ua
 
-    def proxies(self, http, https=None):
+    def proxies(self, http=None, https=None):
         """设置proxies参数
         :param http: http代理地址
         :param https: https代理地址
         :return: None
         """
-        proxies = None if http == https is None else {'http': http, 'https': https or http}
-        self._page.session.proxies = proxies
+        self._page.session.proxies = {'http': http, 'https': https}
 
     def auth(self, auth):
         """设置认证元组或对象
@@ -438,68 +433,6 @@ class SessionPageSetter(object):
         :return: None
         """
         self._page.session.mount(url, adapter)
-
-
-class DownloadSetter(object):
-    """用于设置下载参数的类"""
-
-    def __init__(self, page):
-        self._page = page
-        self._DownloadKit = None
-
-    @property
-    def DownloadKit(self):
-        if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self._page, goal_path=self._page.download_path)
-        return self._DownloadKit
-
-    @property
-    def if_file_exists(self):
-        """返回用于设置存在同名文件时处理方法的对象"""
-        return FileExists(self)
-
-    def split(self, on_off):
-        """设置是否允许拆分大文件用多线程下载
-        :param on_off: 是否启用多线程下载大文件
-        :return: None
-        """
-        self.DownloadKit.split = on_off
-
-    def save_path(self, path):
-        """设置下载保存路径
-        :param path: 下载保存路径
-        :return: None
-        """
-        path = path if path is None else str(path)
-        self._page._download_path = path
-        self.DownloadKit.goal_path = path
-
-
-class FileExists(object):
-    """用于设置存在同名文件时处理方法"""
-
-    def __init__(self, setter):
-        """
-        :param setter: DownloadSetter对象
-        """
-        self._setter = setter
-
-    def __call__(self, mode):
-        if mode not in ('skip', 'rename', 'overwrite'):
-            raise ValueError("mode参数只能是'skip', 'rename', 'overwrite'")
-        self._setter.DownloadKit.file_exists = mode
-
-    def skip(self):
-        """设为跳过"""
-        self._setter.DownloadKit.file_exists = 'skip'
-
-    def rename(self):
-        """设为重命名，文件名后加序号"""
-        self._setter.DownloadKit._file_exists = 'rename'
-
-    def overwrite(self):
-        """设为覆盖"""
-        self._setter.DownloadKit._file_exists = 'overwrite'
 
 
 def check_headers(kwargs, headers, arg) -> bool:

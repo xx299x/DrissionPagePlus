@@ -94,29 +94,29 @@ class ChromiumElement(DrissionElement):
     @property
     def click(self) -> Click: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union[ChromiumElement, None]: ...
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[ChromiumElement, None]: ...
 
-    def child(self, filter_loc: Union[tuple, str] = '',
+    def child(self, filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = 0,
               ele_only: bool = True) -> Union[ChromiumElement, str, None]: ...
 
-    def prev(self, filter_loc: Union[tuple, str] = '',
+    def prev(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[ChromiumElement, str, None]: ...
 
-    def next(self, filter_loc: Union[tuple, str] = '',
+    def next(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[ChromiumElement, str, None]: ...
 
-    def before(self, filter_loc: Union[tuple, str] = '',
+    def before(self, filter_loc: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[ChromiumElement, str, None]: ...
 
-    def after(self, filter_loc: Union[tuple, str] = '',
+    def after(self, filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[ChromiumElement, str, None]: ...
@@ -183,7 +183,7 @@ class ChromiumElement(DrissionElement):
     def get_screenshot(self, path: [str, Path] = None, as_bytes: [bool, str] = None,
                        as_base64: [bool, str] = None) -> Union[str, bytes]: ...
 
-    def input(self, vals: Any, clear: bool = True) -> None: ...
+    def input(self, vals: Any, clear: bool = True, by_js: bool = False) -> None: ...
 
     def _set_file_input(self, files: Union[str, list, tuple]) -> None: ...
 
@@ -273,7 +273,7 @@ class ChromiumShadowRoot(BaseElement):
 
     def run_async_js(self, script: str, *args: Any, as_expr: bool = False) -> None: ...
 
-    def parent(self, level_or_loc: Union[str, int] = 1) -> ChromiumElement: ...
+    def parent(self, level_or_loc: Union[str, int] = 1, index: int = 1) -> ChromiumElement: ...
 
     def child(self, filter_loc: Union[tuple, str] = '',
               index: int = 1) -> Union[ChromiumElement, str, None]: ...
@@ -496,7 +496,7 @@ class ChromiumScroll(object):
 
 class ChromiumElementScroll(ChromiumScroll):
 
-    def to_see(self, center: bool = False) -> None: ...
+    def to_see(self, center: Union[bool, None] = None) -> None: ...
 
 
 class ChromiumSelect(object):

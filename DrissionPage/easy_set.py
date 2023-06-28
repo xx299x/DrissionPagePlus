@@ -6,20 +6,10 @@
 from os import popen
 from pathlib import Path
 from re import search
-from typing import Union
 
 from .commons.constants import Settings
-from .commons.tools import unzip
 from .configs.chromium_options import ChromiumOptions
 from .configs.options_manage import OptionsManager
-from .session_page import SessionPage
-
-try:
-    from selenium import webdriver
-    from DrissionPage.mixpage.drission import Drission
-    from .configs.driver_options import DriverOptions
-except ModuleNotFoundError:
-    pass
 
 
 def raise_when_ele_not_found(on_off=True):
@@ -48,19 +38,14 @@ def show_settings(ini_path=None):
     OptionsManager(ini_path).show()
 
 
-def set_paths(driver_path=None,
-              chrome_path=None,
-              browser_path=None,
+def set_paths(browser_path=None,
               local_port=None,
               debugger_address=None,
               download_path=None,
               user_data_path=None,
               cache_path=None,
-              ini_path=None,
-              check_version=False):
+              ini_path=None):
     """快捷的路径设置函数
-    :param driver_path: chromedriver.exe路径
-    :param chrome_path: 浏览器可执行文件路径
     :param browser_path: 浏览器可执行文件路径
     :param local_port: 本地端口号
     :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
@@ -68,19 +53,12 @@ def set_paths(driver_path=None,
     :param user_data_path: 用户数据路径
     :param cache_path: 缓存路径
     :param ini_path: 要修改的ini文件路径
-    :param check_version: 是否检查chromedriver和chrome是否匹配
     :return: None
     """
     om = OptionsManager(ini_path)
 
     def format_path(path: str) -> str:
         return str(path) if path else ''
-
-    if driver_path is not None:
-        om.set_item('paths', 'chromedriver_path', format_path(driver_path))
-
-    if chrome_path is not None:
-        om.set_item('chrome_options', 'binary_location', format_path(chrome_path))
 
     if browser_path is not None:
         om.set_item('chrome_options', 'binary_location', format_path(browser_path))
@@ -102,9 +80,6 @@ def set_paths(driver_path=None,
 
     if cache_path is not None:
         set_argument('--disk-cache-dir', format_path(cache_path), ini_path)
-
-    if check_version:
-        check_driver_version(format_path(driver_path), format_path(browser_path))
 
 
 def use_auto_port(on_off=True, ini_path=None):
@@ -203,89 +178,6 @@ def set_proxy(proxy, ini_path=None):
     set_argument('--proxy-server', proxy, ini_path)
 
 
-def check_driver_version(driver_path=None, chrome_path=None):
-    """检查传入的chrome和chromedriver是否匹配
-    :param driver_path: chromedriver.exe路径
-    :param chrome_path: chrome.exe路径
-    :return: 是否匹配
-    """
-    print('正在检测可用性...')
-    om = OptionsManager()
-    driver_path = driver_path or om.get_value('paths', 'chromedriver_path') or 'chromedriver'
-    chrome_path = str(chrome_path or om.get_value('chrome_options', 'binary_location'))
-    do = DriverOptions(read_file=False)
-    do.add_argument('--headless')
-
-    if chrome_path:
-        do.binary_location = chrome_path
-
-    try:
-        driver = webdriver.Chrome(driver_path, options=do)
-        driver.quit()
-        print('版本匹配，可正常使用。')
-
-        return True
-
-    except Exception as e:
-        print(f'出现异常：\n{e}\n可执行easy_set.get_match_driver()自动下载匹配的版本。\n'
-              f'或自行从以下网址下载：http://npm.taobao.org/mirrors/chromedriver/')
-
-        return False
-
-
-# -------------------------自动识别chrome版本号并下载对应driver------------------------
-def get_match_driver(ini_path='default',
-                     save_path=None,
-                     chrome_path=None,
-                     show_msg=True,
-                     check_version=True):
-    """自动识别chrome版本并下载匹配的driver
-    :param ini_path: 要读取和修改的ini文件路径
-    :param save_path: chromedriver保存路径
-    :param chrome_path: 指定chrome.exe位置
-    :param show_msg: 是否打印信息
-    :param check_version: 是否检查版本匹配
-    :return: None
-    """
-    save_path = save_path or str(Path(__file__).parent)
-
-    chrome_path = chrome_path or get_chrome_path(ini_path, show_msg)
-    chrome_path = Path(chrome_path).absolute() if chrome_path else None
-    if show_msg:
-        print('chrome.exe路径', chrome_path)
-
-    ver = _get_chrome_version(str(chrome_path))
-    if show_msg:
-        print('version', ver)
-
-    zip_path = _download_driver(ver, save_path, show_msg=show_msg)
-
-    if not zip_path and show_msg:
-        print('没有找到对应版本的driver。')
-
-    try:
-        driver_path = unzip(zip_path, save_path)[0]
-    except TypeError:
-        driver_path = None
-
-    if show_msg:
-        print('解压路径', driver_path)
-
-    if driver_path:
-        Path(zip_path).unlink()
-        if ini_path:
-            set_paths(driver_path=driver_path, chrome_path=str(chrome_path), ini_path=ini_path, check_version=False)
-
-        if check_version:
-            if not check_driver_version(driver_path, chrome_path) and show_msg:
-                print('获取失败，请手动配置。')
-    else:
-        if show_msg:
-            print('获取失败，请手动配置。')
-
-    return driver_path
-
-
 def get_chrome_path(ini_path=None,
                     show_msg=True,
                     from_ini=True,
@@ -365,54 +257,3 @@ def get_chrome_path(ini_path=None,
                     return str(path)
             except OSError:
                 pass
-
-
-def _get_chrome_version(path: str) -> Union[str, None]:
-    """根据文件路径获取版本号
-    :param path: chrome.exe文件路径
-    :return: 版本号
-    """
-    if not path:
-        return
-
-    path = str(path).replace('\\', '\\\\')
-
-    try:
-        return (popen(f'wmic datafile where "name=\'{path}\'" get version').read()
-                .lower().split('\n')[2].replace(' ', ''))
-    except Exception:
-        return None
-
-
-def _download_driver(version: str, save_path: str = None, show_msg: bool = True) -> Union[str, None]:
-    """根据传入的版本号到镜像网站查找，下载最相近的
-    :param version: 本地版本号
-    :return: 保存地址
-    """
-    if not version:
-        return
-
-    main_ver = version.split('.')[0]
-    remote_ver = None
-
-    page = SessionPage(Drission().session)
-    page.get('https://registry.npmmirror.com/-/binary/chromedriver/')
-
-    for version in page.json:
-        # 遍历所有版本，跳过大版本不一致的，如果有完全匹配的，获取url，如果没有，获取最后一个版本的url
-        if not version['name'].startswith(f'{main_ver}.'):
-            continue
-
-        remote_ver = version['name']
-        if version['name'] == f'{version}/':
-            break
-
-    if remote_ver:
-        url = f'https://cdn.npmmirror.com/binaries/chromedriver/{remote_ver}chromedriver_win32.zip'
-        save_path = save_path or str(Path(__file__).parent)
-        result = page.download(url, save_path, file_exists='overwrite', show_msg=show_msg)
-
-        if result[0]:
-            return result[1]
-
-    return None
