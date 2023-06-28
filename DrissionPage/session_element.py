@@ -38,7 +38,7 @@ class SessionElement(DrissionElement):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self.ele(loc_or_str)
@@ -75,13 +75,12 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
-    def parent(self, level_or_loc=1, index=1):
+    def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        return super().parent(level_or_loc, index)
+        return super().parent(level_or_loc)
 
     def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -218,7 +217,7 @@ class SessionElement(DrissionElement):
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str)
@@ -226,7 +225,7 @@ class SessionElement(DrissionElement):
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用
+        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
         """
         return self._ele(loc_or_str, single=False)
@@ -322,7 +321,8 @@ def make_session_ele(html_or_ele, loc=None, single=True):
 
         loc = loc[0], loc_str
 
-    elif the_type.endswith(".ChromiumElement'>"):
+    # ChromiumElement, DriverElement
+    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'

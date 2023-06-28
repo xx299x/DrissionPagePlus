@@ -4,11 +4,8 @@
 @Contact :   g1879@qq.com
 """
 from abc import abstractmethod
-from pathlib import Path
 from re import sub
 from urllib.parse import quote
-
-from DownloadKit import DownloadKit
 
 from .commons.constants import Settings, NoneElement
 from .commons.locator import get_loc
@@ -62,10 +59,10 @@ class BaseElement(BaseParser):
         pass
 
     def prev(self, index=1):
-        return None  # ChromiumShadowRoot直接继承
+        return None  # ShadowRootElement直接继承
 
     def prevs(self) -> None:
-        return None  # ChromiumShadowRoot直接继承
+        return None  # ShadowRootElement直接继承
 
     def next(self, index=1):
         pass
@@ -87,7 +84,7 @@ class BaseElement(BaseParser):
 
 
 class DrissionElement(BaseElement):
-    """ChromiumElement 和 SessionElement的基类
+    """DriverElement、ChromiumElement 和 SessionElement的基类
     但不是ShadowRootElement的基类"""
 
     @property
@@ -122,10 +119,9 @@ class DrissionElement(BaseElement):
 
         return [format_html(x.strip(' ').rstrip('\n')) for x in texts if x and sub('[\r\n\t ]', '', x) != '']
 
-    def parent(self, level_or_loc=1, index=1):
+    def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
         if isinstance(level_or_loc, int):
@@ -137,7 +133,7 @@ class DrissionElement(BaseElement):
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
 
-            loc = f'xpath:./ancestor::{loc[1].lstrip(". / ")}[{index}]'
+            loc = f'xpath:./ancestor::{loc[1].lstrip(". / ")}'
 
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
@@ -296,7 +292,7 @@ class DrissionElement(BaseElement):
         :param direction: 'following' 或 'preceding'，查找的方向
         :param brother: 查找范围，在同级查找还是整个dom前后查找
         :param timeout: 查找等待时间
-        :return: 元素对象或字符串
+        :return: DriverElement对象或字符串
         """
         if index is not None and index < 1:
             raise ValueError('index必须大于等于1。')
@@ -357,8 +353,6 @@ class BasePage(BaseParser):
         self.retry_times = 3
         self.retry_interval = 2
         self._url_available = None
-        self._download_path = ''
-        self._DownloadKit = None
 
     @property
     def title(self):
@@ -386,18 +380,6 @@ class BasePage(BaseParser):
         """返回当前访问的url有效性"""
         return self._url_available
 
-    @property
-    def download_path(self):
-        """返回默认下载路径"""
-        return str(Path(self._download_path).absolute())
-
-    @property
-    def download(self):
-        """返回下载器对象"""
-        if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
-        return self._DownloadKit
-
     def _before_connect(self, url, retry, interval):
         """连接前的准备
         :param url: 要访问的url
@@ -405,7 +387,7 @@ class BasePage(BaseParser):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        self._url = quote(url, safe='/:&?=%;#@+![]')
+        self._url = quote(url, safe='/:&?=%;#@+!')
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval

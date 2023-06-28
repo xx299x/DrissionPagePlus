@@ -26,7 +26,7 @@ class ChromiumOptions(object):
             self.ini_path = om.ini_path
             options = om.chrome_options
 
-            self._download_path = om.paths.get('download_path', '')
+            self._download_path = om.paths.get('download_path', None)
             self._arguments = options.get('arguments', [])
             self._binary_location = options.get('binary_location', '')
             self._extensions = options.get('extensions', [])
@@ -62,7 +62,7 @@ class ChromiumOptions(object):
         self.ini_path = None
         self._binary_location = "chrome"
         self._arguments = []
-        self._download_path = ''
+        self._download_path = None
         self._extensions = []
         self._prefs = {}
         self._timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}

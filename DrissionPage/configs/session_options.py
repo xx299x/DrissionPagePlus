@@ -21,7 +21,7 @@ class SessionOptions(object):
         :param ini_path: ini文件路径
         """
         self.ini_path = None
-        self._download_path = ''
+        self._download_path = None
         self._headers = None
         self._cookies = None
         self._auth = None
@@ -73,7 +73,7 @@ class SessionOptions(object):
 
             self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
             self._timeout = om.timeouts.get('implicit', 10)
-            self._download_path = om.paths.get('download_path', '')
+            self._download_path = om.paths.get('download_path', None)
 
     # ===========须独立处理的项开始============
     @property
@@ -110,13 +110,14 @@ class SessionOptions(object):
             self._proxies = {}
         return self._proxies
 
-    def set_proxies(self, http=None, https=None):
+    def set_proxies(self, http, https=None):
         """设置proxies参数
         :param http: http代理地址
         :param https: https代理地址
         :return: 返回当前对象
         """
-        self._sets('proxies', {'http': http, 'https': https})
+        proxies = None if http == https is None else {'http': http, 'https': https or http}
+        self._sets('proxies', proxies)
         return self
 
     # ===========须独立处理的项结束============
