@@ -6,8 +6,9 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
-from .chromium_element import ChromiumElement, Locations, ChromiumElementStates, ChromiumElementWaiter
+from .waiter import FrameWaiter
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
+from .chromium_element import ChromiumElement, Locations, ChromiumElementStates
 
 
 class ChromiumFrame(ChromiumBase):
@@ -210,7 +211,3 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
     _page: ChromiumFrame = ...
 
     def attr(self, attr: str, value: str) -> None: ...
-
-
-class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
-    def __init__(self, frame: ChromiumFrame): ...

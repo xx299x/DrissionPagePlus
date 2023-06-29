@@ -10,6 +10,7 @@ from DataRecorder import Recorder
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
+from .waiter import ChromiumBaseWaiter
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement, ChromiumScroll
@@ -211,31 +212,6 @@ class ChromiumBase(BasePage):
                    interval: float = 1,
                    show_errmsg: bool = False,
                    timeout: float = None) -> Union[bool, None]: ...
-
-
-class ChromiumBaseWaiter(object):
-    def __init__(self, page: ChromiumBase):
-        self._driver: ChromiumBase = ...
-
-    def ele_delete(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
-                   raise_err: bool = None) -> bool: ...
-
-    def ele_display(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
-                    raise_err: bool = None) -> bool: ...
-
-    def ele_hidden(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
-                   raise_err: bool = None) -> bool: ...
-
-    def ele_load(self, loc: Union[str, tuple], timeout: float = None,
-                 raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
-
-    def _loading(self, timeout: float = None, start: bool = True, gap: float = .01, raise_err: bool = None) -> bool: ...
-
-    def load_start(self, timeout: float = None, raise_err: bool = None) -> bool: ...
-
-    def load_complete(self, timeout: float = None, raise_err: bool = None) -> bool: ...
-
-    def upload_paths_inputted(self) -> None: ...
 
 
 class ChromiumPageScroll(ChromiumScroll):

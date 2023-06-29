@@ -14,8 +14,9 @@ from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinition
 from .commons.locator import get_loc
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CDPError, NoResourceError, CanNotClickError, WaitTimeoutError
+    CDPError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
+from .waiter import ChromiumElementWaiter
 
 
 class ChromiumElement(DrissionElement):
@@ -2026,114 +2027,6 @@ class ChromiumSelect(object):
     def _dispatch_change(self):
         """触发修改动作"""
         self._ele.run_js('this.dispatchEvent(new UIEvent("change"));')
-
-
-class ChromiumElementWaiter(object):
-    """等待元素在dom中某种状态，如删除、显示、隐藏"""
-
-    def __init__(self, page, ele):
-        """等待元素在dom中某种状态，如删除、显示、隐藏
-        :param page: 元素所在页面
-        :param ele: 要等待的元素
-        """
-        self._page = page
-        self._ele = ele
-
-    def delete(self, timeout=None, raise_err=None):
-        """等待元素从dom删除
-        :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_alive', False, timeout, raise_err)
-
-    def display(self, timeout=None, raise_err=None):
-        """等待元素从dom显示
-        :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_displayed', True, timeout, raise_err)
-
-    def hidden(self, timeout=None, raise_err=None):
-        """等待元素从dom隐藏
-        :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_displayed', False, timeout, raise_err)
-
-    def covered(self, timeout=None, raise_err=None):
-        """等待当前元素被遮盖
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_covered', True, timeout, raise_err)
-
-    def not_covered(self, timeout=None, raise_err=None):
-        """等待当前元素被遮盖
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_covered', False, timeout, raise_err)
-
-    def enabled(self, timeout=None, raise_err=None):
-        """等待当前元素变成可用
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_enabled', True, timeout, raise_err)
-
-    def disabled(self, timeout=None, raise_err=None):
-        """等待当前元素变成可用
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._wait_state('is_enabled', False, timeout, raise_err)
-
-    def disabled_or_delete(self, timeout=None, raise_err=None):
-        """等待当前元素变成不可用或从DOM移除
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        if timeout is None:
-            timeout = self._page.timeout
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if not self._ele.states.is_enabled or not self._ele.states.is_alive:
-                return True
-            sleep(.05)
-
-        if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素隐藏或删除失败。')
-        else:
-            return False
-
-    def _wait_state(self, attr, mode=False, timeout=None, raise_err=None):
-        """等待元素某个bool状态到达指定状态
-        :param attr: 状态名称
-        :param mode: True或False
-        :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        if timeout is None:
-            timeout = self._page.timeout
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._ele.states.__getattribute__(attr) == mode:
-                return True
-            sleep(.05)
-
-        if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素状态改变失败。')
-        else:
-            return False
 
 
 class Pseudo(object):

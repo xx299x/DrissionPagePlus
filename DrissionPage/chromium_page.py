@@ -6,14 +6,14 @@
 from platform import system
 from time import perf_counter, sleep
 
-from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBaseWaiter
+from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
-from .commons.constants import Settings
 from .commons.tools import port_is_using
 from .configs.chromium_options import ChromiumOptions
-from .errors import BrowserConnectError, WaitTimeoutError
+from .errors import BrowserConnectError
+from .waiter import ChromiumPageWaiter
 
 
 class ChromiumPage(ChromiumBase):
@@ -361,30 +361,6 @@ class ChromiumPage(ChromiumBase):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._tab_obj.has_alert = True
-
-
-class ChromiumPageWaiter(ChromiumBaseWaiter):
-    def __init__(self, page: ChromiumBase):
-        super().__init__(page)
-        self._listener = None
-
-    def new_tab(self, timeout=None, raise_err=None):
-        """等待新标签页出现
-        :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等到新标签页出现
-        """
-        timeout = timeout if timeout is not None else self._driver.timeout
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._driver.tab_id != self._driver.latest_tab:
-                return True
-            sleep(.01)
-
-        if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待新标签页失败。')
-        else:
-            return False
 
 
 class ChromiumTabRect(object):

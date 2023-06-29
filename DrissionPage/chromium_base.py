@@ -15,14 +15,15 @@ from requests import Session
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
-from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement, Settings
+from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
 from .commons.web import set_browser_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
-    NoRectError, BrowserConnectError, GetDocumentError, WaitTimeoutError
+    NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
+from .waiter import ChromiumBaseWaiter
 
 
 class ChromiumBase(BasePage):
@@ -993,102 +994,6 @@ class ChromiumBaseSetter(object):
         """
         self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
-
-
-class ChromiumBaseWaiter(object):
-    def __init__(self, page_or_ele):
-        """
-        :param page_or_ele: 页面对象或元素对象
-        """
-        self._driver = page_or_ele
-
-    def ele_delete(self, loc_or_ele, timeout=None, raise_err=None):
-        """等待元素从DOM中删除
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
-        return ele.wait.delete(timeout, raise_err=raise_err) if ele else True
-
-    def ele_display(self, loc_or_ele, timeout=None, raise_err=None):
-        """等待元素变成显示状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
-        return ele.wait.display(timeout, raise_err=raise_err)
-
-    def ele_hidden(self, loc_or_ele, timeout=None, raise_err=None):
-        """等待元素变成隐藏状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
-        return ele.wait.hidden(timeout, raise_err=raise_err)
-
-    def ele_load(self, loc, timeout=None, raise_err=None):
-        """等待元素加载到DOM
-        :param loc: 要等待的元素，输入定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 成功返回元素对象，失败返回False
-        """
-        ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
-        if ele:
-            return True
-        if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素加载失败。')
-        else:
-            return False
-
-    def load_start(self, timeout=None, raise_err=None):
-        """等待页面开始加载
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._loading(timeout=timeout, gap=.002, raise_err=raise_err)
-
-    def load_complete(self, timeout=None, raise_err=None):
-        """等待页面开始加载
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        return self._loading(timeout=timeout, start=False, raise_err=raise_err)
-
-    def upload_paths_inputted(self):
-        """等待自动填写上传文件路径"""
-        while self._driver._upload_list:
-            sleep(.01)
-
-    def _loading(self, timeout=None, start=True, gap=.01, raise_err=None):
-        """等待页面开始加载或加载完成
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :param start: 等待开始还是结束
-        :param gap: 间隔秒数
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
-        :return: 是否等待成功
-        """
-        if timeout != 0:
-            if timeout is None or timeout is True:
-                timeout = self._driver.timeout
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
-                if self._driver.is_loading == start:
-                    return True
-                sleep(gap)
-
-            if raise_err is True or Settings.raise_when_wait_failed is True:
-                raise WaitTimeoutError('等待页面加载失败。')
-            else:
-                return False
 
 
 class ChromiumPageScroll(ChromiumScroll):

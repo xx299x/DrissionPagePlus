@@ -7,10 +7,11 @@ from re import search
 from threading import Thread
 from time import sleep, perf_counter
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
-from .chromium_element import ChromiumElement, ChromiumElementWaiter
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
+from .chromium_element import ChromiumElement
 from .commons.tools import get_usable_path
 from .errors import ContextLossError
+from .waiter import FrameWaiter
 
 
 class ChromiumFrame(ChromiumBase):
@@ -660,12 +661,3 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
         """
         self._page._check_ok()
         self._page.frame_ele.set.attr(attr, value)
-
-
-class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
-    def __init__(self, frame):
-        """
-        :param frame: ChromiumFrame对象
-        """
-        super().__init__(frame)
-        super(ChromiumBaseWaiter, self).__init__(frame, frame.frame_ele)
