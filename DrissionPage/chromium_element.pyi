@@ -12,6 +12,7 @@ from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage
 from .commons.constants import NoneElement
 from .session_element import SessionElement
+from .setter import ChromiumElementSetter
 from .waiter import ChromiumElementWaiter
 from .web_page import WebPage
 
@@ -381,17 +382,6 @@ def send_enter(ele: ChromiumElement) -> None: ...
 
 
 def send_key(ele: ChromiumElement, modifier: int, key: str) -> None: ...
-
-
-class ChromiumElementSetter(object):
-    def __init__(self, ele: ChromiumElement):
-        self._ele: ChromiumElement = ...
-
-    def attr(self, attr: str, value: str) -> None: ...
-
-    def prop(self, prop: str, value: str) -> None: ...
-
-    def innerHTML(self, html: str) -> None: ...
 
 
 class ShadowRootStates(object):

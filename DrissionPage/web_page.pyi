@@ -12,12 +12,13 @@ from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
-from .chromium_page import ChromiumPage, ChromiumPageSetter
+from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement
-from .session_page import SessionPage, SessionPageSetter
+from .session_page import SessionPage
+from .setter import WebPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -166,13 +167,3 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def _on_download_begin(self, **kwargs): ...
 
 
-class WebPageSetter(ChromiumPageSetter):
-    _page: WebPage = ...
-    _session_setter: SessionPageSetter = ...
-    _chromium_setter: ChromiumPageSetter = ...
-
-    def user_agent(self, ua: str, platform: str = None) -> None: ...
-
-    def headers(self, headers: dict) -> None: ...
-
-    def cookies(self, cookies) -> None: ...

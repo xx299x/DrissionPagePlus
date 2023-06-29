@@ -3,16 +3,16 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from platform import system
 from time import perf_counter, sleep
 
-from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter
+from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
 from .commons.tools import port_is_using
 from .configs.chromium_options import ChromiumOptions
 from .errors import BrowserConnectError
+from .setter import ChromiumPageSetter
 from .waiter import ChromiumPageWaiter
 
 
@@ -687,191 +687,6 @@ class Alert(object):
         self.defaultPrompt = None
         self.response_accept = None
         self.response_text = None
-
-
-class WindowSetter(object):
-    """用于设置窗口大小的类"""
-
-    def __init__(self, page):
-        """
-        :param page: 页面对象
-        """
-        self._page = page
-        self._window_id = self._get_info()['windowId']
-
-    def maximized(self):
-        """窗口最大化"""
-        s = self._get_info()['bounds']['windowState']
-        if s in ('fullscreen', 'minimized'):
-            self._perform({'windowState': 'normal'})
-        self._perform({'windowState': 'maximized'})
-
-    def minimized(self):
-        """窗口最小化"""
-        s = self._get_info()['bounds']['windowState']
-        if s == 'fullscreen':
-            self._perform({'windowState': 'normal'})
-        self._perform({'windowState': 'minimized'})
-
-    def fullscreen(self):
-        """设置窗口为全屏"""
-        s = self._get_info()['bounds']['windowState']
-        if s == 'minimized':
-            self._perform({'windowState': 'normal'})
-        self._perform({'windowState': 'fullscreen'})
-
-    def normal(self):
-        """设置窗口为常规模式"""
-        s = self._get_info()['bounds']['windowState']
-        if s == 'fullscreen':
-            self._perform({'windowState': 'normal'})
-        self._perform({'windowState': 'normal'})
-
-    def size(self, width=None, height=None):
-        """设置窗口大小
-        :param width: 窗口宽度
-        :param height: 窗口高度
-        :return: None
-        """
-        if width or height:
-            s = self._get_info()['bounds']['windowState']
-            if s != 'normal':
-                self._perform({'windowState': 'normal'})
-            info = self._get_info()['bounds']
-            width = width - 16 if width else info['width']
-            height = height + 7 if height else info['height']
-            self._perform({'width': width, 'height': height})
-
-    def location(self, x=None, y=None):
-        """设置窗口在屏幕中的位置，相对左上角坐标
-        :param x: 距离顶部距离
-        :param y: 距离左边距离
-        :return: None
-        """
-        if x is not None or y is not None:
-            self.normal()
-            info = self._get_info()['bounds']
-            x = x if x is not None else info['left']
-            y = y if y is not None else info['top']
-            self._perform({'left': x - 8, 'top': y})
-
-    def hide(self):
-        """隐藏浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=True)
-
-    def show(self):
-        """显示浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=False)
-
-    def _get_info(self):
-        """获取窗口位置及大小信息"""
-        return self._page.run_cdp('Browser.getWindowForTarget')
-
-    def _perform(self, bounds):
-        """执行改变窗口大小操作
-        :param bounds: 控制数据
-        :return: None
-        """
-        self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
-
-
-class ChromiumPageSetter(ChromiumBaseSetter):
-    def main_tab(self, tab_id=None):
-        """设置主tab
-        :param tab_id: 标签页id，不传入则设置当前tab
-        :return: None
-        """
-        self._page._main_tab = tab_id or self._page.tab_id
-
-    @property
-    def window(self):
-        """返回用于设置浏览器窗口的对象"""
-        return WindowSetter(self._page)
-
-    def tab_to_front(self, tab_or_id=None):
-        """激活标签页使其处于最前面
-        :param tab_or_id: 标签页对象或id，为None表示当前标签页
-        :return: None
-        """
-        if not tab_or_id:
-            tab_or_id = self._page.tab_id
-        elif isinstance(tab_or_id, ChromiumTab):
-            tab_or_id = tab_or_id.tab_id
-        self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
-
-
-def show_or_hide_browser(page, hide=True):
-    """执行显示或隐藏浏览器窗口
-    :param page: ChromePage对象
-    :param hide: 是否隐藏
-    :return: None
-    """
-    if not page.address.startswith(('127.0.0.1', 'localhost')):
-        return
-
-    if system().lower() != 'windows':
-        raise OSError('该方法只能在Windows系统使用。')
-
-    try:
-        from win32gui import ShowWindow
-        from win32con import SW_HIDE, SW_SHOW
-    except ImportError:
-        raise ImportError('请先安装：pip install pypiwin32')
-
-    pid = page.process_id
-    if not pid:
-        return None
-    hds = get_chrome_hwnds_from_pid(pid, page.title)
-    sw = SW_HIDE if hide else SW_SHOW
-    for hd in hds:
-        ShowWindow(hd, sw)
-
-
-def get_browser_progress_id(progress, address):
-    """获取浏览器进程id
-    :param progress: 已知的进程对象，没有时传入None
-    :param address: 浏览器管理地址，含端口
-    :return: 进程id或None
-    """
-    if progress:
-        return progress.pid
-
-    from os import popen
-    port = address.split(':')[-1]
-    txt = ''
-    progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
-    for progress in progresses:
-        if 'LISTENING' in progress:
-            txt = progress
-            break
-    if not txt:
-        return None
-
-    return txt.split(' ')[-1]
-
-
-def get_chrome_hwnds_from_pid(pid, title):
-    """通过PID查询句柄ID
-    :param pid: 进程id
-    :param title: 窗口标题
-    :return: 进程句柄组成的列表
-    """
-    try:
-        from win32gui import IsWindow, GetWindowText, EnumWindows
-        from win32process import GetWindowThreadProcessId
-    except ImportError:
-        raise ImportError('请先安装win32gui，pip install pypiwin32')
-
-    def callback(hwnd, hds):
-        if IsWindow(hwnd) and title in GetWindowText(hwnd):
-            _, found_pid = GetWindowThreadProcessId(hwnd)
-            if str(found_pid) == str(pid):
-                hds.append(hwnd)
-            return True
-
-    hwnds = []
-    EnumWindows(callback, hwnds)
-    return hwnds
 
 
 def get_rename(original, rename):

@@ -16,6 +16,7 @@ from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_fun
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
     CDPError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
+from .setter import ChromiumElementSetter
 from .waiter import ChromiumElementWaiter
 
 
@@ -1465,38 +1466,6 @@ class ShadowRootStates(object):
             return True
         except Exception:
             return False
-
-
-class ChromiumElementSetter(object):
-    def __init__(self, ele):
-        """
-        :param ele: ChromiumElement
-        """
-        self._ele = ele
-
-    def attr(self, attr, value):
-        """设置元素attribute属性
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele.ids.node_id, name=attr, value=str(value))
-
-    def prop(self, prop, value):
-        """设置元素property属性
-        :param prop: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        value = value.replace('"', r'\"')
-        self._ele.run_js(f'this.{prop}="{value}";')
-
-    def innerHTML(self, html):
-        """设置元素innerHTML
-        :param html: html文本
-        :return: None
-        """
-        self.prop('innerHTML', html)
 
 
 class Locations(object):

@@ -7,12 +7,13 @@ from typing import Union, Tuple, Any, List
 
 from requests import Session, Response
 
-from .chromium_base import ChromiumBase, ChromiumBaseSetter
+from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage, ChromiumTabRect
 from .session_element import SessionElement
-from .session_page import SessionPage, SessionPageSetter
+from .session_page import SessionPage
+from .setter import WebPageTabSetter
 from .web_page import WebPage
 
 
@@ -149,15 +150,3 @@ class WebPageTab(SessionPage, ChromiumTab):
                        timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...
-
-
-class WebPageTabSetter(ChromiumBaseSetter):
-    _page: WebPage = ...
-    _session_setter: SessionPageSetter = ...
-    _chromium_setter: ChromiumBaseSetter = ...
-
-    def user_agent(self, ua: str, platform: str = None) -> None: ...
-
-    def headers(self, headers: dict) -> None: ...
-
-    def cookies(self, cookies) -> None: ...

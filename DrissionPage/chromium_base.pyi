@@ -8,9 +8,7 @@ from typing import Union, Tuple, List, Any
 
 from DataRecorder import Recorder
 from requests import Session
-from requests.cookies import RequestsCookieJar
 
-from .waiter import ChromiumBaseWaiter
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumElement, ChromiumScroll
@@ -18,6 +16,8 @@ from .chromium_frame import ChromiumFrame
 from .commons.constants import NoneElement
 from .network_listener import NetworkListener
 from .session_element import SessionElement
+from .setter import ChromiumBaseSetter
+from .waiter import ChromiumBaseWaiter
 
 
 class ChromiumBase(BasePage):
@@ -222,37 +222,6 @@ class ChromiumPageScroll(ChromiumScroll):
     def _to_see(self, ele: ChromiumElement, center: Union[bool, None]) -> None: ...
 
 
-class ChromiumBaseSetter(object):
-    def __init__(self, page):
-        self._page: ChromiumBase = ...
-
-    @property
-    def load_strategy(self) -> PageLoadStrategy: ...
-
-    @property
-    def scroll(self) -> PageScrollSetter: ...
-
-    def retry_times(self, times: int) -> None: ...
-
-    def retry_interval(self, interval: float) -> None: ...
-
-    def timeouts(self, implicit: float = None, page_load: float = None, script: float = None) -> None: ...
-
-    def user_agent(self, ua: str, platform: str = None) -> None: ...
-
-    def session_storage(self, item: str, value: Union[str, bool]) -> None: ...
-
-    def local_storage(self, item: str, value: Union[str, bool]) -> None: ...
-
-    def cookie(self, cookies: Union[RequestsCookieJar, str, dict]) -> None: ...
-
-    def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
-
-    def headers(self, headers: dict) -> None: ...
-
-    def upload_files(self, files: Union[str, list, tuple]) -> None: ...
-
-
 class Timeout(object):
 
     def __init__(self, page: ChromiumBase, implicit=None, page_load=None, script=None):
@@ -260,28 +229,6 @@ class Timeout(object):
         self.implicit: float = ...
         self.page_load: float = ...
         self.script: float = ...
-
-
-class PageLoadStrategy(object):
-    def __init__(self, page: ChromiumBase):
-        self._page: ChromiumBase = ...
-
-    def __call__(self, value: str) -> None: ...
-
-    def normal(self) -> None: ...
-
-    def eager(self) -> None: ...
-
-    def none(self) -> None: ...
-
-
-class PageScrollSetter(object):
-    def __init__(self, scroll: ChromiumPageScroll):
-        self._scroll: ChromiumPageScroll = ...
-
-    def wait_complete(self, on_off: bool = True): ...
-
-    def smooth(self, on_off: bool = True): ...
 
 
 class Screencast(object):

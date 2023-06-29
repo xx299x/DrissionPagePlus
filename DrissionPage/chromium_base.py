@@ -18,11 +18,11 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
     NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
+from .setter import ChromiumBaseSetter
 from .waiter import ChromiumBaseWaiter
 
 
@@ -890,112 +890,6 @@ class ChromiumBase(BasePage):
         return str(path.absolute())
 
 
-class ChromiumBaseSetter(object):
-    def __init__(self, page):
-        self._page = page
-
-    @property
-    def load_strategy(self):
-        """返回用于设置页面加载策略的对象"""
-        return PageLoadStrategy(self._page)
-
-    @property
-    def scroll(self):
-        """返回用于设置页面滚动设置的对象"""
-        return PageScrollSetter(self._page.scroll)
-
-    def retry_times(self, times):
-        """设置连接失败重连次数"""
-        self._page.retry_times = times
-
-    def retry_interval(self, interval):
-        """设置连接失败重连间隔"""
-        self._page.retry_interval = interval
-
-    def timeouts(self, implicit=None, page_load=None, script=None):
-        """设置超时时间，单位为秒
-        :param implicit: 查找元素超时时间
-        :param page_load: 页面加载超时时间
-        :param script: 脚本运行超时时间
-        :return: None
-        """
-        if implicit is not None:
-            self._page.timeouts.implicit = implicit
-
-        if page_load is not None:
-            self._page.timeouts.page_load = page_load
-
-        if script is not None:
-            self._page.timeouts.script = script
-
-    def user_agent(self, ua, platform=None):
-        """为当前tab设置user agent，只在当前tab有效
-        :param ua: user agent字符串
-        :param platform: platform字符串
-        :return: None
-        """
-        keys = {'userAgent': ua}
-        if platform:
-            keys['platform'] = platform
-        self._page.run_cdp('Emulation.setUserAgentOverride', **keys)
-
-    def session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
-
-    def local_storage(self, item, value):
-        """设置或删除某项localStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
-
-    def cookie(self, cookie):
-        """设置单个cookie
-        :param cookie: cookie信息
-        :return: None
-        """
-        if isinstance(cookie, str):
-            self.cookies(cookie)
-        else:
-            self.cookies([cookie])
-
-    def cookies(self, cookies):
-        """设置多个cookie，注意不要传入单个
-        :param cookies: cookies信息
-        :return: None
-        """
-        set_browser_cookies(self._page, cookies)
-
-    def upload_files(self, files):
-        """等待上传的文件路径
-        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
-        :return: None
-        """
-        if not self._page._upload_list:
-            self._page.driver.Page.fileChooserOpened = self._page._onFileChooserOpened
-            self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
-
-        if isinstance(files, str):
-            files = files.split('\n')
-        self._page._upload_list = [str(Path(i).absolute()) for i in files]
-
-    def headers(self, headers: dict) -> None:
-        """设置固定发送的headers
-        :param headers: dict格式的headers数据
-        :return: None
-        """
-        self._page.run_cdp('Network.enable')
-        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
-
-
 class ChromiumPageScroll(ChromiumScroll):
     def __init__(self, page):
         """
@@ -1053,62 +947,6 @@ class Timeout(object):
 
     def __repr__(self):
         return str({'implicit': self.implicit, 'page_load': self.page_load, 'script': self.script})
-
-
-class PageLoadStrategy(object):
-    """用于设置页面加载策略的类"""
-
-    def __init__(self, page):
-        """
-        :param page: ChromiumBase对象
-        """
-        self._page = page
-
-    def __call__(self, value):
-        """设置加载策略
-        :param value: 可选 'normal', 'eager', 'none'
-        :return: None
-        """
-        if value.lower() not in ('normal', 'eager', 'none'):
-            raise ValueError("只能选择 'normal', 'eager', 'none'。")
-        self._page._page_load_strategy = value
-
-    def normal(self):
-        """设置页面加载策略为normal"""
-        self._page._page_load_strategy = 'normal'
-
-    def eager(self):
-        """设置页面加载策略为eager"""
-        self._page._page_load_strategy = 'eager'
-
-    def none(self):
-        """设置页面加载策略为none"""
-        self._page._page_load_strategy = 'none'
-
-
-class PageScrollSetter(object):
-    def __init__(self, scroll):
-        self._scroll = scroll
-
-    def wait_complete(self, on_off=True):
-        """设置滚动命令后是否等待完成
-        :param on_off: 开或关
-        :return: None
-        """
-        if not isinstance(on_off, bool):
-            raise TypeError('on_off必须为bool。')
-        self._scroll._wait_complete = on_off
-
-    def smooth(self, on_off=True):
-        """设置页面滚动是否平滑滚动
-        :param on_off: 开或关
-        :return: None
-        """
-        if not isinstance(on_off, bool):
-            raise TypeError('on_off必须为bool。')
-        b = 'smooth' if on_off else 'auto'
-        self._scroll._driver.run_js(f'document.documentElement.style.setProperty("scroll-behavior","{b}");')
-        self._scroll._wait_complete = on_off
 
 
 class Screencast(object):

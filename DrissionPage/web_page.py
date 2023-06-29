@@ -8,12 +8,13 @@ from requests import Session
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
-from .chromium_page import ChromiumPage, ChromiumPageSetter
+from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .commons.web import set_session_cookies, set_browser_cookies
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
-from .session_page import SessionPage, SessionPageSetter
+from .session_page import SessionPage
+from .setter import WebPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -426,35 +427,3 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_driver = None
 
 
-class WebPageSetter(ChromiumPageSetter):
-    def __init__(self, page):
-        super().__init__(page)
-        self._session_setter = SessionPageSetter(self._page)
-        self._chromium_setter = ChromiumPageSetter(self._page)
-
-    def cookies(self, cookies):
-        """添加cookies信息到浏览器或session对象
-        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
-        :return: None
-        """
-        if self._page.mode == 'd' and self._page._has_driver:
-            self._chromium_setter.cookies(cookies)
-        elif self._page.mode == 's' and self._page._has_session:
-            self._session_setter.cookies(cookies)
-
-    def headers(self, headers) -> None:
-        """设置固定发送的headers
-        :param headers: dict格式的headers数据
-        :return: None
-        """
-        if self._page.mode == 's':
-            self._session_setter.headers(headers)
-        else:
-            self._chromium_setter.headers(headers)
-
-    def user_agent(self, ua, platform=None):
-        """设置user agent，d模式下只有当前tab有效"""
-        if self._page.mode == 's':
-            self._session_setter.user_agent(ua)
-        else:
-            self._chromium_setter.user_agent(ua, platform)

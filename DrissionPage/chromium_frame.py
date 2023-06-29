@@ -7,10 +7,11 @@ from re import search
 from threading import Thread
 from time import sleep, perf_counter
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter
+from .chromium_base import ChromiumBase, ChromiumPageScroll
 from .chromium_element import ChromiumElement
 from .commons.tools import get_usable_path
 from .errors import ContextLossError
+from .setter import ChromiumFrameSetter
 from .waiter import FrameWaiter
 
 
@@ -650,14 +651,3 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         """
         ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver._ele(loc_or_ele)
         self._to_see(ele, center)
-
-
-class ChromiumFrameSetter(ChromiumBaseSetter):
-    def attr(self, attr, value):
-        """设置frame元素attribute属性
-        :param attr: 属性名
-        :param value: 属性值
-        :return: None
-        """
-        self._page._check_ok()
-        self._page.frame_ele.set.attr(attr, value)
