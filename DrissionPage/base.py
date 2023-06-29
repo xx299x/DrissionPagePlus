@@ -71,7 +71,7 @@ class BaseElement(BaseParser):
         r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
         if not single or raise_err is False:
             return r
-        if not r and (Settings.raise_ele_not_found or raise_err is True):
+        if not r and (Settings.raise_when_ele_not_found or raise_err is True):
             raise ElementNotFoundError
         return r
 
@@ -151,7 +151,7 @@ class DrissionElement(BaseElement):
             filter_loc = ''
         nodes = self.children(filter_loc=filter_loc, timeout=timeout, ele_only=ele_only)
         if not nodes:
-            if Settings.raise_ele_not_found:
+            if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError
             else:
                 return NoneElement()
@@ -159,7 +159,7 @@ class DrissionElement(BaseElement):
         try:
             return nodes[index - 1]
         except IndexError:
-            if Settings.raise_ele_not_found:
+            if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError
             else:
                 return NoneElement()
@@ -178,7 +178,7 @@ class DrissionElement(BaseElement):
         nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout, ele_only=ele_only)
         if nodes:
             return nodes[-1]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -197,7 +197,7 @@ class DrissionElement(BaseElement):
         nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout, ele_only=ele_only)
         if nodes:
             return nodes[0]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -216,7 +216,7 @@ class DrissionElement(BaseElement):
         nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout, ele_only=ele_only)
         if nodes:
             return nodes[-1]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -235,7 +235,7 @@ class DrissionElement(BaseElement):
         nodes = self._get_brothers(index, filter_loc, 'following', False, timeout, ele_only=ele_only)
         if nodes:
             return nodes[0]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -444,7 +444,7 @@ class BasePage(BaseParser):
 
         if not single or raise_err is False:
             return r
-        if not r and (Settings().raise_ele_not_found is True or raise_err is True):
+        if not r and (Settings.raise_when_ele_not_found is True or raise_err is True):
             raise ElementNotFoundError
         return r
 

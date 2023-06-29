@@ -14,7 +14,7 @@ from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinition
 from .commons.locator import get_loc
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
-    CDPError, NoResourceError, CanNotClickError
+    CDPError, NoResourceError, CanNotClickError, WaitTimeoutError
 from .session_element import make_session_ele
 
 
@@ -839,7 +839,7 @@ class ChromiumShadowRoot(BaseElement):
         """
         nodes = self.children(filter_loc=filter_loc)
         if not nodes:
-            if Settings.raise_ele_not_found:
+            if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError
             else:
                 return NoneElement()
@@ -847,7 +847,7 @@ class ChromiumShadowRoot(BaseElement):
         try:
             return nodes[index - 1]
         except IndexError:
-            if Settings.raise_ele_not_found:
+            if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError
             else:
                 return NoneElement()
@@ -861,7 +861,7 @@ class ChromiumShadowRoot(BaseElement):
         nodes = self.nexts(filter_loc=filter_loc)
         if nodes:
             return nodes[index - 1]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -876,7 +876,7 @@ class ChromiumShadowRoot(BaseElement):
         nodes = self.befores(filter_loc=filter_loc)
         if nodes:
             return nodes[index - 1]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -891,7 +891,7 @@ class ChromiumShadowRoot(BaseElement):
         nodes = self.afters(filter_loc=filter_loc)
         if nodes:
             return nodes[index - 1]
-        if Settings.raise_ele_not_found:
+        if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError
         else:
             return NoneElement()
@@ -1633,9 +1633,9 @@ class Click(object):
         if by_js is not False:
             self._ele.run_js('this.click();')
             return True
-
-        if Settings.raise_click_failed:
+        if Settings.raise_when_click_failed:
             raise CanNotClickError
+
         return False
 
     def right(self):
@@ -2039,58 +2039,66 @@ class ChromiumElementWaiter(object):
         self._page = page
         self._ele = ele
 
-    def delete(self, timeout=None):
+    def delete(self, timeout=None, raise_err=None):
         """等待元素从dom删除
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_alive', False, timeout)
+        return self._wait_state('is_alive', False, timeout, raise_err)
 
-    def display(self, timeout=None):
+    def display(self, timeout=None, raise_err=None):
         """等待元素从dom显示
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_displayed', True, timeout)
+        return self._wait_state('is_displayed', True, timeout, raise_err)
 
-    def hidden(self, timeout=None):
+    def hidden(self, timeout=None, raise_err=None):
         """等待元素从dom隐藏
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_displayed', False, timeout)
+        return self._wait_state('is_displayed', False, timeout, raise_err)
 
-    def covered(self, timeout=None):
+    def covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_covered', True, timeout)
+        return self._wait_state('is_covered', True, timeout, raise_err)
 
-    def not_covered(self, timeout=None):
+    def not_covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_covered', False, timeout)
+        return self._wait_state('is_covered', False, timeout, raise_err)
 
-    def enabled(self, timeout=None):
+    def enabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
         :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_enabled', True, timeout)
+        return self._wait_state('is_enabled', True, timeout, raise_err)
 
-    def disabled(self, timeout=None):
+    def disabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
         :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_enabled', False, timeout)
+        return self._wait_state('is_enabled', False, timeout, raise_err)
 
-    def disabled_or_delete(self, timeout=None):
+    def disabled_or_delete(self, timeout=None, raise_err=None):
         """等待当前元素变成不可用或从DOM移除
         :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         if timeout is None:
@@ -2101,13 +2109,17 @@ class ChromiumElementWaiter(object):
                 return True
             sleep(.05)
 
-        return False
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError('等待元素隐藏或删除失败。')
+        else:
+            return False
 
-    def _wait_state(self, attr, mode=False, timeout=None):
+    def _wait_state(self, attr, mode=False, timeout=None, raise_err=None):
         """等待元素某个bool状态到达指定状态
         :param attr: 状态名称
         :param mode: True或False
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         if timeout is None:
@@ -2118,7 +2130,10 @@ class ChromiumElementWaiter(object):
                 return True
             sleep(.05)
 
-        return False
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError('等待元素状态改变失败。')
+        else:
+            return False
 
 
 class Pseudo(object):

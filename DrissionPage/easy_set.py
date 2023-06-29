@@ -7,17 +7,8 @@ from os import popen
 from pathlib import Path
 from re import search
 
-from .commons.constants import Settings
 from .configs.chromium_options import ChromiumOptions
 from .configs.options_manage import OptionsManager
-
-
-def raise_when_ele_not_found(on_off=True):
-    """设置全局变量，找不到元素时是否抛出异常
-    :param on_off: True 或 False
-    :return: None
-    """
-    Settings.raise_ele_not_found = on_off
 
 
 def configs_to_here(save_name=None):

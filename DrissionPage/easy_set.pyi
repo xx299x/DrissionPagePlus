@@ -7,9 +7,6 @@ from pathlib import Path
 from typing import Union
 
 
-def raise_when_ele_not_found(on_off: bool = True) -> None: ...
-
-
 def configs_to_here(file_name: Union[Path, str] = None) -> None: ...
 
 

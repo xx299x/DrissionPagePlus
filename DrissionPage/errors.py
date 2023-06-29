@@ -58,3 +58,7 @@ class CanNotClickError(BaseError):
 
 class GetDocumentError(BaseError):
     _info = '获取文档失败。'
+
+
+class WaitTimeoutError(BaseError):
+    _info = '等待失败。'

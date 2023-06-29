@@ -10,9 +10,10 @@ from .chromium_base import ChromiumBase, Timeout, ChromiumBaseSetter, ChromiumBa
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
+from .commons.constants import Settings
 from .commons.tools import port_is_using
 from .configs.chromium_options import ChromiumOptions
-from .errors import BrowserConnectError
+from .errors import BrowserConnectError, WaitTimeoutError
 
 
 class ChromiumPage(ChromiumBase):
@@ -151,24 +152,6 @@ class ChromiumPage(ChromiumBase):
         if self._set is None:
             self._set = ChromiumPageSetter(self)
         return self._set
-
-    # @property
-    # def download_path(self):
-    #     """返回默认下载路径"""
-    #     p = self._download_path or ''
-    #     return str(Path(p).absolute())
-    #
-    # @property
-    # def download_set(self):
-    #     """返回用于设置下载参数的对象"""
-    #     if self._download_set is None:
-    #         self._download_set = BaseDownloadSetter(self)
-    #     return self._download_set
-    #
-    # @property
-    # def download(self):
-    #     """返回下载器对象"""
-    #     return self.download_set._switched_DownloadKit
 
     @property
     def rect(self):
@@ -385,29 +368,23 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
         super().__init__(page)
         self._listener = None
 
-    def new_tab(self, timeout=None):
+    def new_tab(self, timeout=None, raise_err=None):
         """等待新标签页出现
         :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-        :return: 是否等到下载开始
+        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :return: 是否等到新标签页出现
         """
         timeout = timeout if timeout is not None else self._driver.timeout
         end_time = perf_counter() + timeout
-        while self._driver.tab_id == self._driver.latest_tab and perf_counter() < end_time:
+        while perf_counter() < end_time:
+            if self._driver.tab_id != self._driver.latest_tab:
+                return True
             sleep(.01)
 
-    # def download_begin(self, timeout=1.5):
-    #     """等待浏览器下载开始
-    #     :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-    #     :return: 是否等到下载开始
-    #     """
-    #     return self._driver.download_set.wait_download_begin(timeout)
-    #
-    # def download_finish(self, timeout=None):
-    #     """等待下载结束
-    #     :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-    #     :return: 是否等到下载结束
-    #     """
-    #     return self._driver.download_set.wait_download_finish(timeout)
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError('等待新标签页失败。')
+        else:
+            return False
 
 
 class ChromiumTabRect(object):
