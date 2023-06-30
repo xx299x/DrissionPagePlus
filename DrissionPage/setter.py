@@ -137,7 +137,7 @@ class ChromiumPageSetter(ChromiumBaseSetter):
         """
         if not tab_or_id:
             tab_or_id = self._page.tab_id
-        elif 'ChromiumTab' in str(type(tab_or_id)):
+        elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
         self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
 

@@ -16,7 +16,7 @@ class ChromiumBaseWaiter(object):
         """等待元素从DOM中删除
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
@@ -26,7 +26,7 @@ class ChromiumBaseWaiter(object):
         """等待元素变成显示状态
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
@@ -36,7 +36,7 @@ class ChromiumBaseWaiter(object):
         """等待元素变成隐藏状态
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
@@ -46,7 +46,7 @@ class ChromiumBaseWaiter(object):
         """等待元素加载到DOM
         :param loc: 要等待的元素，输入定位符
         :param timeout: 超时时间，默认读取页面超时时间
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 成功返回元素对象，失败返回False
         """
         ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
@@ -60,7 +60,7 @@ class ChromiumBaseWaiter(object):
     def load_start(self, timeout=None, raise_err=None):
         """等待页面开始加载
         :param timeout: 超时时间，为None时使用页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._loading(timeout=timeout, gap=.002, raise_err=raise_err)
@@ -68,7 +68,7 @@ class ChromiumBaseWaiter(object):
     def load_complete(self, timeout=None, raise_err=None):
         """等待页面开始加载
         :param timeout: 超时时间，为None时使用页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._loading(timeout=timeout, start=False, raise_err=raise_err)
@@ -83,7 +83,7 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，为None时使用页面timeout属性
         :param start: 等待开始还是结束
         :param gap: 间隔秒数
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         if timeout != 0:
@@ -109,7 +109,7 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
     def new_tab(self, timeout=None, raise_err=None):
         """等待新标签页出现
         :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等到新标签页出现
         """
         timeout = timeout if timeout is not None else self._driver.timeout
@@ -139,7 +139,7 @@ class ChromiumElementWaiter(object):
     def delete(self, timeout=None, raise_err=None):
         """等待元素从dom删除
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_alive', False, timeout, raise_err)
@@ -147,7 +147,7 @@ class ChromiumElementWaiter(object):
     def display(self, timeout=None, raise_err=None):
         """等待元素从dom显示
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_displayed', True, timeout, raise_err)
@@ -155,7 +155,7 @@ class ChromiumElementWaiter(object):
     def hidden(self, timeout=None, raise_err=None):
         """等待元素从dom隐藏
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_displayed', False, timeout, raise_err)
@@ -163,7 +163,7 @@ class ChromiumElementWaiter(object):
     def covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_covered', True, timeout, raise_err)
@@ -171,7 +171,7 @@ class ChromiumElementWaiter(object):
     def not_covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
         :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_covered', False, timeout, raise_err)
@@ -179,7 +179,7 @@ class ChromiumElementWaiter(object):
     def enabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
         :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_enabled', True, timeout, raise_err)
@@ -187,7 +187,7 @@ class ChromiumElementWaiter(object):
     def disabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
         :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         return self._wait_state('is_enabled', False, timeout, raise_err)
@@ -195,7 +195,7 @@ class ChromiumElementWaiter(object):
     def disabled_or_delete(self, timeout=None, raise_err=None):
         """等待当前元素变成不可用或从DOM移除
         :param timeout:超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         if timeout is None:
@@ -216,7 +216,7 @@ class ChromiumElementWaiter(object):
         :param attr: 状态名称
         :param mode: True或False
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
-        :param raise_err: 等待识别时是否报错，为None时根据Settings设置
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
         if timeout is None:
