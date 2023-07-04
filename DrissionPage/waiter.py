@@ -78,6 +78,55 @@ class ChromiumBaseWaiter(object):
         while self._driver._upload_list:
             sleep(.01)
 
+    def url_change(self, text, exclude=False, timeout=None, raise_err=None):
+        """等待url变成包含或不包含指定文本
+        :param text: 用于识别的文本
+        :param exclude: 是否排除，为True时当url不包含text指定文本时返回True
+        :param timeout: 超时时间
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        return self._change('url', text, exclude, timeout, raise_err)
+
+    def title_change(self, text, exclude=False, timeout=None, raise_err=None):
+        """等待title变成包含或不包含指定文本
+        :param text: 用于识别的文本
+        :param exclude: 是否排除，为True时当title不包含text指定文本时返回True
+        :param timeout: 超时时间
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        return self._change('title', text, exclude, timeout, raise_err)
+
+    def _change(self, arg, text, exclude=False, timeout=None, raise_err=None):
+        """等待指定属性变成包含或不包含指定文本
+        :param arg: 要被匹配的属性
+        :param text: 用于识别的文本
+        :param exclude: 是否排除，为True时当属性不包含text指定文本时返回True
+        :param timeout: 超时时间
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        if timeout is None:
+            timeout = self._driver.timeout
+
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if arg == 'url':
+                val = self._driver.url
+            elif arg == 'title':
+                val = self._driver.title
+            else:
+                raise ValueError
+            if (not exclude and text in val) or (exclude and text not in val):
+                return True
+            sleep(.05)
+
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError(f'等待{arg}改变失败。')
+        else:
+            return False
+
     def _loading(self, timeout=None, start=True, gap=.01, raise_err=None):
         """等待页面开始加载或加载完成
         :param timeout: 超时时间，为None时使用页面timeout属性
