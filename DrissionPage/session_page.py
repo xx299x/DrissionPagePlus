@@ -316,7 +316,7 @@ def set_charset(response):
     content_type = response.headers.get('content-type', '').lower()
     if not content_type.endswith(';'):
         content_type += ';'
-    charset = search(r'charset[=: ]*(.*)?;', content_type)
+    charset = search(r'charset[=: ]*(.*)?;?', content_type)
 
     if charset:
         response.encoding = charset.group(1)
