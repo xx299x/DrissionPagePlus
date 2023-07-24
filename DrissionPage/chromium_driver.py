@@ -3,33 +3,12 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from functools import partial
 from json import dumps, loads
 from queue import Queue, Empty
 from threading import Thread, Event
 
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
-
-from .errors import CDPError
-
-
-class GenericAttr(object):
-    def __init__(self, name, tab):
-        self.__dict__['name'] = name
-        self.__dict__['tab'] = tab
-
-    def __getattr__(self, item):
-        method_name = f"{self.name}.{item}"
-        event_listener = self.tab.get_listener(method_name)
-
-        if event_listener:
-            return event_listener
-
-        return partial(self.tab.call_method, method_name)
-
-    def __setattr__(self, key, value):
-        self.tab.set_listener(f"{self.name}.{key}", value)
 
 
 class ChromiumDriver(object):
@@ -167,12 +146,7 @@ class ChromiumDriver(object):
 
             self.event_queue.task_done()
 
-    def __getattr__(self, item):
-        attr = GenericAttr(item, self)
-        setattr(self, item, attr)
-        return attr
-
-    def call_method(self, _method, *args, **kwargs):
+    def call_method(self, _method, **kwargs):
         """执行cdp方法
         :param _method: cdp方法名
         :param args: cdp参数
@@ -182,8 +156,6 @@ class ChromiumDriver(object):
         if not self._started:
             self.start()
             # raise RuntimeError("不能在启动前调用方法。")
-        if args:
-            raise CDPError("参数必须是key=value形式。")
 
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}

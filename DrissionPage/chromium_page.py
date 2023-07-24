@@ -95,8 +95,8 @@ class ChromiumPage(ChromiumBase):
         self._browser_driver.start()
 
         self._alert = Alert()
-        self._tab_obj.Page.javascriptDialogOpening = self._on_alert_open
-        self._tab_obj.Page.javascriptDialogClosed = self._on_alert_close
+        self._tab_obj.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
+        self._tab_obj.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
 
         self._rect = None
         self._main_tab = self.tab_id
@@ -106,7 +106,7 @@ class ChromiumPage(ChromiumBase):
         #     pass
 
         self._process_id = None
-        r = self.browser_driver.SystemInfo.getProcessInfo()
+        r = self.browser_driver.call_method('SystemInfo.getProcessInfo')
         if 'processInfo' not in r:
             return None
         for i in r['processInfo']:
@@ -329,14 +329,14 @@ class ChromiumPage(ChromiumBase):
 
         res_text = self._alert.text
         if self._alert.type == 'prompt':
-            self.driver.Page.handleJavaScriptDialog(accept=accept, promptText=send)
+            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept, promptText=send)
         else:
-            self.driver.Page.handleJavaScriptDialog(accept=accept)
+            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept)
         return res_text
 
     def quit(self):
         """关闭浏览器"""
-        self._tab_obj.Browser.close()
+        self._tab_obj.call_method('Browser.close')
         self._tab_obj.stop()
         ip, port = self.address.split(':')
         while port_is_using(ip, port):
@@ -431,7 +431,7 @@ class ChromiumTabRect(object):
 
     def _get_browser_rect(self):
         """获取浏览器范围信息"""
-        return self._page.browser_driver.Browser.getWindowForTarget(targetId=self._page.tab_id)['bounds']
+        return self._page.browser_driver.call_method('Browser.getWindowForTarget', targetId=self._page.tab_id)['bounds']
 
 
 # class BaseDownloadSetter(DownloadSetter):

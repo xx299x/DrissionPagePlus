@@ -101,7 +101,7 @@ class ChromiumBaseSetter(object):
         :return: None
         """
         if not self._page._upload_list:
-            self._page.driver.Page.fileChooserOpened = self._page._onFileChooserOpened
+            self._page.driver.set_listener('Page.fileChooserOpened', self._page._onFileChooserOpened)
             self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
 
         if isinstance(files, str):

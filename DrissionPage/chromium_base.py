@@ -103,14 +103,14 @@ class ChromiumBase(BasePage):
         self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
         self._tab_obj.start()
-        self._tab_obj.DOM.enable()
-        self._tab_obj.Page.enable()
+        self._tab_obj.call_method('DOM.enable')
+        self._tab_obj.call_method('Page.enable')
 
-        self._tab_obj.Page.frameStoppedLoading = self._onFrameStoppedLoading
-        self._tab_obj.Page.frameStartedLoading = self._onFrameStartedLoading
-        self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
-        self._tab_obj.Page.loadEventFired = self._onLoadEventFired
-        self._tab_obj.Page.frameNavigated = self._onFrameNavigated
+        self._tab_obj.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
+        self._tab_obj.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
+        self._tab_obj.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
+        self._tab_obj.set_listener('Page.loadEventFired', self._onLoadEventFired)
+        self._tab_obj.set_listener('Page.frameNavigated', self._onFrameNavigated)
 
     def _get_document(self):
         """刷新cdp使用的document数据"""
@@ -238,7 +238,7 @@ class ChromiumBase(BasePage):
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
 
-            self.driver.Page.fileChooserOpened = None
+            self.driver.set_listener('Page.fileChooserOpened', None)
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
@@ -972,7 +972,7 @@ class Screencast(object):
             raise ValueError('save_path必须设置。')
         clean_folder(self._path)
         if self._mode.startswith('frugal'):
-            self._page.driver.Page.screencastFrame = self._onScreencastFrame
+            self._page.driver.set_listener('Page.screencastFrame', self._onScreencastFrame)
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
 
         elif not self._mode.startswith('js'):
@@ -1029,7 +1029,7 @@ class Screencast(object):
             return path
 
         if self._mode.startswith('frugal'):
-            self._page.driver.Page.screencastFrame = None
+            self._page.driver.set_listener('Page.screencastFrame', None)
             self._page.run_cdp('Page.stopScreencast')
         else:
             self._enable = False
