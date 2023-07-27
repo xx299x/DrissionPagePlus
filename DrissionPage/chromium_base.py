@@ -1140,7 +1140,8 @@ class NetworkListener(object):
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
         request_id = kwargs['requestId']
-        if request_id in self._requests:
+        request = self._requests.get(request_id)
+        if request:
             try:
                 r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
                 body = r['body']
@@ -1149,7 +1150,6 @@ class NetworkListener(object):
                 body = ''
                 is_base64 = False
 
-            request = self._requests[request_id]
             target = request['target']
             rd = ResponseData(request_id, request['response'], body, self._page.tab_id, target)
             rd.method = request['method']
