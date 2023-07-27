@@ -68,6 +68,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def cookies(self) -> dict: ...
 
     @property
+    def user_agent(self) -> str: ...
+
+    @property
     def session(self) -> Session: ...
 
     @property

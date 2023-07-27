@@ -99,6 +99,11 @@ class SessionPage(BasePage):
             return None
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        return self.session.headers.get('user-agent', '')
+
+    @property
     def download_path(self):
         """返回下载路径"""
         return self._download_path

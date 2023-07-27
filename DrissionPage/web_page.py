@@ -188,6 +188,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return super().cookies
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        if self._mode == 's':
+            return super().user_agent
+        elif self._mode == 'd':
+            return super(SessionPage, self).user_agent
+
+    @property
     def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
@@ -361,8 +369,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return
 
         if copy_user_agent:
-            selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self.session.headers.update({"User-Agent": selenium_user_agent})
+            user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self.session.headers.update({"User-Agent": user_agent})
 
         set_session_cookies(self.session, super(SessionPage, self).get_cookies())
 
