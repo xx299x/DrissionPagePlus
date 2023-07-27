@@ -48,6 +48,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._download_set = None
         self._set = None
         self._screencast = None
+        self._DownloadKit = None
 
         self._set_start_options(driver_or_options, session_or_options)
         self._set_runtime_settings()
@@ -363,9 +364,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        # set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
-        # set_session_cookies(self.session, self._get_driver_cookies(all_domains=True))
-        set_session_cookies(self.session, self._get_driver_cookies())
+        set_session_cookies(self.session, super(SessionPage, self).get_cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
@@ -386,7 +385,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super().get_cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return self._get_driver_cookies(as_dict, all_info)
+            return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -395,21 +394,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         tab_id = tab_id or self.tab_id
         return WebPageTab(self, tab_id)
-
-    def _get_driver_cookies(self, as_dict=False, all_info=False):
-        """获取浏览器cookies
-        :param as_dict: 是否以dict形式返回，为True时all_info无效
-        :param all_info: 是否返回所有信息
-        :return: cookies信息
-        """
-        cookies = self.run_cdp('Network.getCookies')['cookies']
-        if as_dict:
-            return {cookie['name']: cookie['value'] for cookie in cookies}
-        elif all_info:
-            return cookies
-        else:
-            return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
-                    for cookie in cookies]
 
     def close_driver(self):
         """关闭driver及浏览器"""

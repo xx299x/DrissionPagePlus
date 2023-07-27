@@ -542,9 +542,11 @@ class ChromiumBase(BasePage):
             if ok:
                 try:
                     if single:
-                        return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        r = make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        break
                     else:
-                        return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        break
 
                 except ElementLossError:
                     ok = False
@@ -559,6 +561,12 @@ class ChromiumBase(BasePage):
                 return NoneElement() if single else []
 
             sleep(.1)
+
+        try:
+            self.run_cdp('DOM.discardSearchResults', searchId=search_result['searchId'])
+        except:
+            pass
+        return r
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
@@ -595,14 +603,14 @@ class ChromiumBase(BasePage):
         index = history['currentIndex']
         history = history['entries']
         direction = 1 if steps > 0 else -1
-        curr_url = history[index]['userTypedURL']
+        curr_url = history[index]['url']
         nid = None
         for num in range(abs(steps)):
             for i in history[index::direction]:
                 index += direction
-                if i['userTypedURL'] != curr_url:
+                if i['url'] != curr_url:
                     nid = i['id']
-                    curr_url = i['userTypedURL']
+                    curr_url = i['url']
                     break
 
         if nid:
@@ -1021,7 +1029,8 @@ class ChromiumBaseWaiter(object):
         :return: 是否等待成功
         """
         if timeout != 0:
-            timeout = self._driver.timeout if timeout in (None, True) else timeout
+            if timeout is None or timeout is True:
+                timeout = self._driver.timeout
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
                 if self._driver.is_loading == start:
