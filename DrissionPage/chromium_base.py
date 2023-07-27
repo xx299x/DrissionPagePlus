@@ -624,14 +624,14 @@ class ChromiumBase(BasePage):
         index = history['currentIndex']
         history = history['entries']
         direction = 1 if steps > 0 else -1
-        curr_url = history[index]['userTypedURL']
+        curr_url = history[index]['url']
         nid = None
         for num in range(abs(steps)):
             for i in history[index::direction]:
                 index += direction
-                if i['userTypedURL'] != curr_url:
+                if i['url'] != curr_url:
                     nid = i['id']
-                    curr_url = i['userTypedURL']
+                    curr_url = i['url']
                     break
 
         if nid:
