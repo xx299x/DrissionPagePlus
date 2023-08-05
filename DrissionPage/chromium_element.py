@@ -1535,21 +1535,24 @@ class Locations(object):
         """返回元素左上角在屏幕上坐标，左上角为(0, 0)"""
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_location
-        return vx + ex, ey + vy
+        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        return int((vx + ex) * pr), int((ey + vy) * pr)
 
     @property
     def screen_midpoint(self):
         """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_midpoint
-        return vx + ex, ey + vy
+        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        return int((vx + ex) * pr), int((ey + vy) * pr)
 
     @property
     def screen_click_point(self):
         """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_click_point
-        return vx + ex, ey + vy
+        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        return int((vx + ex) * pr), int((ey + vy) * pr)
 
     def _get_viewport_rect(self, quad):
         """按照类型返回在可视窗口中的范围
