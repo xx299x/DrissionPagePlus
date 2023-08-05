@@ -1043,7 +1043,7 @@ class Screencast(object):
             raise TypeError('转换成视频仅支持英文路径和文件名。')
 
         try:
-            from cv2 import VideoWriter, imread
+            from cv2 import VideoWriter, imread, VideoWriter_fourcc
             from numpy import fromfile, uint8
         except ModuleNotFoundError:
             raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
@@ -1053,10 +1053,7 @@ class Screencast(object):
         imgInfo = img.shape
         size = (imgInfo[1], imgInfo[0])
 
-        # if video_name and not video_name.endswith('mp4'):
-        #     video_name = f'{video_name}.mp4'
-        # name = f'{time()}.mp4' if not video_name else video_name
-        videoWrite = VideoWriter(path, 14, 5, size)
+        videoWrite = VideoWriter(path, VideoWriter_fourcc(*"mp4v"), 5, size)
 
         for i in pic_list:
             img = imread(str(i))
