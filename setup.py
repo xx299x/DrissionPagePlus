@@ -22,7 +22,7 @@ setup(
         'lxml',
         'requests',
         'cssselect',
-        'DownloadKit>=0.5.3',
+        'DownloadKit>=1.0.0',
         'FlowViewer>=0.3.0',
         'websocket-client',
         'click',
