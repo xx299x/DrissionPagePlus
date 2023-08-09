@@ -3,101 +3,13 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from base64 import b64decode
 from html import unescape
 from http.cookiejar import Cookie
-from json import loads, JSONDecodeError
 from re import sub
 from urllib.parse import urlparse, urljoin, urlunparse
 
 from requests.cookies import RequestsCookieJar
-from requests.structures import CaseInsensitiveDict
 from tldextract import extract
-
-
-class ResponseData(object):
-    """返回的数据包管理类"""
-    __slots__ = ('requestId', 'response', 'rawBody', 'tab', 'target', 'url', 'status', 'statusText', 'securityDetails',
-                 'headersText', 'mimeType', 'requestHeadersText', 'connectionReused', 'connectionId', 'remoteIPAddress',
-                 'remotePort', 'fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache', 'encodedDataLength', 'timing',
-                 'serviceWorkerResponseSource', 'responseTime', 'cacheStorageCacheName', 'protocol', 'securityState',
-                 '_requestHeaders', '_body', '_base64_body', '_rawPostData', '_postData', 'method')
-
-    def __init__(self, request_id, response, body, tab, target):
-        """
-        :param response: response的数据
-        :param body: response包含的内容
-        :param tab: 产生这个数据包的tab的id
-        :param target: 监听目标
-        """
-        self.requestId = request_id
-        self.response = CaseInsensitiveDict(response)
-        self.rawBody = body
-        self.tab = tab
-        self.target = target
-        self._requestHeaders = None
-        self._postData = None
-        self._body = None
-        self._base64_body = False
-        self._rawPostData = None
-
-    def __getattr__(self, item):
-        return self.response.get(item, None)
-
-    def __getitem__(self, item):
-        return self.response.get(item, None)
-
-    def __repr__(self):
-        return f'<ResponseData target={self.target} request_id={self.requestId}>'
-
-    @property
-    def headers(self):
-        """以大小写不敏感字典返回headers数据"""
-        headers = self.response.get('headers', None)
-        return CaseInsensitiveDict(headers) if headers else None
-
-    @property
-    def requestHeaders(self):
-        """以大小写不敏感字典返回requestHeaders数据"""
-        if self._requestHeaders:
-            return self._requestHeaders
-        headers = self.response.get('requestHeaders', None)
-        return CaseInsensitiveDict(headers) if headers else None
-
-    @requestHeaders.setter
-    def requestHeaders(self, val):
-        """设置requestHeaders"""
-        self._requestHeaders = val
-
-    @property
-    def postData(self):
-        """返回postData数据"""
-        if self._postData is None and self._rawPostData:
-            try:
-                self._postData = loads(self._rawPostData)
-            except (JSONDecodeError, TypeError):
-                self._postData = self._rawPostData
-        return self._postData
-
-    @postData.setter
-    def postData(self, val):
-        """设置postData"""
-        self._rawPostData = val
-
-    @property
-    def body(self):
-        """返回body内容，如果是json格式，自动进行转换，如果时图片格式，进行base64转换，其它格式直接返回文本"""
-        if self._body is None:
-            if self._base64_body:
-                self._body = b64decode(self.rawBody)
-
-            else:
-                try:
-                    self._body = loads(self.rawBody)
-                except (JSONDecodeError, TypeError):
-                    self._body = self.rawBody
-
-        return self._body
 
 
 def get_ele_txt(e):
@@ -190,8 +102,6 @@ def location_in_viewport(page, loc_x, loc_y):
     if (x< scrollLeft || y < scrollTop || x > vWidth + scrollLeft || y > vHeight + scrollTop){{return false;}}
     return true;}}'''
     return page.run_js(js)
-    # const vWidth = window.innerWidth || document.documentElement.clientWidth;
-    # const vHeight = window.innerHeight || document.documentElement.clientHeight;
 
 
 def offset_scroll(ele, offset_x, offset_y):
@@ -334,8 +244,7 @@ def set_browser_cookies(page, cookies):
     :param cookies: cookies信息
     :return: None
     """
-    cookies = cookies_to_tuple(cookies)
-    for cookie in cookies:
+    for cookie in cookies_to_tuple(cookies):
         if 'expiry' in cookie:
             cookie['expires'] = int(cookie['expiry'])
             cookie.pop('expiry')
@@ -343,6 +252,15 @@ def set_browser_cookies(page, cookies):
             cookie['expires'] = int(cookie['expires'])
         if cookie['value'] is None:
             cookie['value'] = ''
+        if cookie['name'].startswith('__Secure-'):
+            cookie['secure'] = True
+
+        if cookie['name'].startswith('__Host-'):
+            cookie['path'] = '/'
+            cookie['secure'] = True
+            cookie['url'] = page.url
+            page.run_cdp_loaded('Network.setCookie', **cookie)
+            continue  # 不用设置域名，可退出
 
         if cookie.get('domain', None):
             try:
@@ -376,7 +294,13 @@ def is_cookie_in_driver(page, cookie):
     :param cookie: dict格式cookie
     :return: bool
     """
-    for c in page.get_cookies():
-        if cookie['name'] == c['name'] and cookie['value'] == c['value']:
-            return True
+    if 'domain' in cookie:
+        for c in page.get_cookies(all_domains=True):
+            if cookie['name'] == c['name'] and cookie['value'] == c['value'] and cookie['domain'] == c.get('domain',
+                                                                                                           None):
+                return True
+    else:
+        for c in page.get_cookies(all_domains=True):
+            if cookie['name'] == c['name'] and cookie['value'] == c['value']:
+                return True
     return False

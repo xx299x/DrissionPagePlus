@@ -7,7 +7,6 @@ from base64 import b64decode
 from json import loads, JSONDecodeError
 from os import sep
 from pathlib import Path
-from re import search
 from threading import Thread
 from time import perf_counter, sleep, time
 
@@ -19,10 +18,12 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies, ResponseData
-from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
-    NoRectError, BrowserConnectError
+from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
+    NoRectError, BrowserConnectError, GetDocumentError
+from .network_listener import NetworkListener
 from .session_element import make_session_ele
+from .setter import ChromiumBaseSetter
+from .waiter import ChromiumBaseWaiter
 
 
 class ChromiumBase(BasePage):
@@ -41,6 +42,7 @@ class ChromiumBase(BasePage):
         self._tab_obj = None
         self._set = None
         self._screencast = None
+        self._listener = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -70,7 +72,9 @@ class ChromiumBase(BasePage):
         """
         self._chromium_init()
         if not tab_id:
-            json = self._control_session.get(f'http://{self.address}/json').json()
+            u = f'http://{self.address}/json'
+            json = self._control_session.get(u).json()
+            self._control_session.get(u, headers={'Connection': 'close'})
             tab_id = [i['id'] for i in json if i['type'] == 'page']
             if not tab_id:
                 raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -83,6 +87,7 @@ class ChromiumBase(BasePage):
         """浏览器初始设置"""
         self._control_session = Session()
         self._control_session.keep_alive = False
+        self._control_session.proxies = {'http': None, 'https': None}
         self._first_run = True
         self._is_reading = False
         self._upload_list = None
@@ -98,14 +103,14 @@ class ChromiumBase(BasePage):
         self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
         self._tab_obj.start()
-        self._tab_obj.DOM.enable()
-        self._tab_obj.Page.enable()
+        self._tab_obj.call_method('DOM.enable')
+        self._tab_obj.call_method('Page.enable')
 
-        self._tab_obj.Page.frameStoppedLoading = self._onFrameStoppedLoading
-        self._tab_obj.Page.frameStartedLoading = self._onFrameStartedLoading
-        self._tab_obj.DOM.documentUpdated = self._onDocumentUpdated
-        self._tab_obj.Page.loadEventFired = self._onLoadEventFired
-        self._tab_obj.Page.frameNavigated = self._onFrameNavigated
+        self._tab_obj.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
+        self._tab_obj.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
+        self._tab_obj.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
+        self._tab_obj.set_listener('Page.loadEventFired', self._onLoadEventFired)
+        self._tab_obj.set_listener('Page.frameNavigated', self._onFrameNavigated)
 
     def _get_document(self):
         """刷新cdp使用的document数据"""
@@ -131,7 +136,8 @@ class ChromiumBase(BasePage):
                         self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
                     break
 
-                except Exception:
+                except CDPError as e:
+                    err = e
                     if self._debug:
                         print('重试获取document')
                         if self._debug_recorder:
@@ -140,7 +146,9 @@ class ChromiumBase(BasePage):
                     sleep(.1)
 
             else:
-                raise RuntimeError('获取document失败。')
+                txt = f'请检查是否创建了过多页面对象同时操作浏览器。\n如无法解决，请把以下信息报告作者。\n{err._info}\n' \
+                      f'报告网址：https://gitee.com/g1879/DrissionPage/issues'
+                raise GetDocumentError(txt)
 
             if self._debug:
                 print('获取document结束')
@@ -230,7 +238,7 @@ class ChromiumBase(BasePage):
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
 
-            self.driver.Page.fileChooserOpened = None
+            self.driver.set_listener('Page.fileChooserOpened', None)
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
@@ -326,6 +334,11 @@ class ChromiumBase(BasePage):
         return self._page_load_strategy
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        return self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+
+    @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
         self.wait.load_complete()
@@ -364,6 +377,13 @@ class ChromiumBase(BasePage):
             self._screencast = Screencast(self)
         return self._screencast
 
+    @property
+    def listener(self):
+        """返回用于聆听数据包的对象"""
+        if self._listener is None:
+            self._listener = NetworkListener(self)
+        return self._listener
+
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
         :param cmd: 协议项目
@@ -391,7 +411,7 @@ class ChromiumBase(BasePage):
         elif error in ('Node does not have a layout object', 'Could not compute box model.'):
             raise NoRectError
         elif r['type'] == 'call_method_error':
-            raise CallMethodError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
+            raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
         else:
             raise RuntimeError(r)
 
@@ -542,9 +562,12 @@ class ChromiumBase(BasePage):
             if ok:
                 try:
                     if single:
-                        return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        r = make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        break
+
                     else:
-                        return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        break
 
                 except ElementLossError:
                     ok = False
@@ -559,6 +582,12 @@ class ChromiumBase(BasePage):
                 return NoneElement() if single else []
 
             sleep(.1)
+
+        try:
+            self.run_cdp('DOM.discardSearchResults', searchId=search_result['searchId'])
+        except:
+            pass
+        return r
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
@@ -595,14 +624,14 @@ class ChromiumBase(BasePage):
         index = history['currentIndex']
         history = history['entries']
         direction = 1 if steps > 0 else -1
-        curr_url = history[index]['userTypedURL']
+        curr_url = history[index]['url']
         nid = None
         for num in range(abs(steps)):
             for i in history[index::direction]:
                 index += direction
-                if i['userTypedURL'] != curr_url:
+                if i['url'] != curr_url:
                     nid = i['id']
-                    curr_url = i['userTypedURL']
+                    curr_url = i['url']
                     break
 
         if nid:
@@ -784,7 +813,7 @@ class ChromiumBase(BasePage):
                 while self.ready_state not in ('complete', None):
                     sleep(.1)
                 if self._debug or show_errmsg:
-                    print(f'重试 {to_url}')
+                    print(f'重试{t + 1} {to_url}')
 
         if err:
             if show_errmsg:
@@ -861,301 +890,6 @@ class ChromiumBase(BasePage):
         return str(path.absolute())
 
 
-class ChromiumBaseSetter(object):
-    def __init__(self, page):
-        self._page = page
-
-    @property
-    def load_strategy(self):
-        """返回用于设置页面加载策略的对象"""
-        return PageLoadStrategy(self._page)
-
-    @property
-    def scroll(self):
-        """返回用于设置页面滚动设置的对象"""
-        return PageScrollSetter(self._page.scroll)
-
-    def retry_times(self, times):
-        """设置连接失败重连次数"""
-        self._page.retry_times = times
-
-    def retry_interval(self, interval):
-        """设置连接失败重连间隔"""
-        self._page.retry_interval = interval
-
-    def timeouts(self, implicit=None, page_load=None, script=None):
-        """设置超时时间，单位为秒
-        :param implicit: 查找元素超时时间
-        :param page_load: 页面加载超时时间
-        :param script: 脚本运行超时时间
-        :return: None
-        """
-        if implicit is not None:
-            self._page.timeouts.implicit = implicit
-
-        if page_load is not None:
-            self._page.timeouts.page_load = page_load
-
-        if script is not None:
-            self._page.timeouts.script = script
-
-    def user_agent(self, ua, platform=None):
-        """为当前tab设置user agent，只在当前tab有效
-        :param ua: user agent字符串
-        :param platform: platform字符串
-        :return: None
-        """
-        keys = {'userAgent': ua}
-        if platform:
-            keys['platform'] = platform
-        self._page.run_cdp('Emulation.setUserAgentOverride', **keys)
-
-    def session_storage(self, item, value):
-        """设置或删除某项sessionStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
-
-    def local_storage(self, item, value):
-        """设置或删除某项localStorage信息
-        :param item: 要设置的项
-        :param value: 项的值，设置为False时，删除该项
-        :return: None
-        """
-        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
-
-    def cookies(self, cookies):
-        """设置cookies值
-        :param cookies: cookies信息
-        :return: None
-        """
-        set_browser_cookies(self._page, cookies)
-
-    def upload_files(self, files):
-        """等待上传的文件路径
-        :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
-        :return: None
-        """
-        if not self._page._upload_list:
-            self._page.driver.Page.fileChooserOpened = self._page._onFileChooserOpened
-            self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
-
-        if isinstance(files, str):
-            files = files.split('\n')
-        self._page._upload_list = [str(Path(i).absolute()) for i in files]
-
-    def headers(self, headers: dict) -> None:
-        """设置固定发送的headers
-        :param headers: dict格式的headers数据
-        :return: None
-        """
-        self._page.run_cdp('Network.enable')
-        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
-
-
-class ChromiumBaseWaiter(object):
-    def __init__(self, page_or_ele):
-        """
-        :param page_or_ele: 页面对象或元素对象
-        """
-        self._driver = page_or_ele
-        self._listener = None
-
-    def ele_delete(self, loc_or_ele, timeout=None):
-        """等待元素从DOM中删除
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        if isinstance(loc_or_ele, (str, tuple)):
-            ele = self._driver._ele(loc_or_ele, timeout=.3, raise_err=False)
-            return ele.wait.delete(timeout) if ele else True
-        return loc_or_ele.wait.delete(timeout)
-
-    def ele_display(self, loc_or_ele, timeout=None):
-        """等待元素变成显示状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        ele = self._driver._ele(loc_or_ele, raise_err=False)
-        return ele.wait.display(timeout) if ele else False
-
-    def ele_hidden(self, loc_or_ele, timeout=None):
-        """等待元素变成隐藏状态
-        :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
-        :param timeout: 超时时间，默认读取页面超时时间
-        :return: 是否等待成功
-        """
-        ele = self._driver._ele(loc_or_ele, raise_err=False)
-        return ele.wait.hidden(timeout)
-
-    def load_start(self, timeout=None):
-        """等待页面开始加载
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :return: 是否等待成功
-        """
-        return self._loading(timeout=timeout, gap=.002)
-
-    def load_complete(self, timeout=None):
-        """等待页面开始加载
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :return: 是否等待成功
-        """
-        return self._loading(timeout=timeout, start=False)
-
-    def upload_paths_inputted(self):
-        """等待自动填写上传文件路径"""
-        while self._driver._upload_list:
-            sleep(.01)
-
-    def _loading(self, timeout=None, start=True, gap=.01):
-        """等待页面开始加载或加载完成
-        :param timeout: 超时时间，为None时使用页面timeout属性
-        :param start: 等待开始还是结束
-        :param gap: 间隔秒数
-        :return: 是否等待成功
-        """
-        if timeout != 0:
-            timeout = self._driver.timeout if timeout in (None, True) else timeout
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
-                if self._driver.is_loading == start:
-                    return True
-                sleep(gap)
-            return False
-
-    def set_targets(self, targets, is_regex=False):
-        """指定要等待的数据包
-        :param targets: 要匹配的数据包url特征，可用list等传入多个
-        :param is_regex: 设置的target是否正则表达式
-        :return: None
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.set_targets(targets, is_regex)
-
-    def data_packets(self, timeout=None, any_one=False):
-        """等待指定数据包加载完成
-        :param timeout: 超时时间，为None则使用页面对象timeout
-        :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
-        :return: ResponseData对象或监听结果字典
-        """
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        return self._listener.listen(timeout, any_one)
-
-    def stop_listening(self):
-        """停止监听数据包"""
-        if not self._listener:
-            self._listener = NetworkListener(self._driver)
-        self._listener.stop()
-
-
-class NetworkListener(object):
-    def __init__(self, page):
-        self._page = page
-        self._targets = None
-        self._is_regex = False
-        self._results = {}
-        self._single = False
-        self._requests = {}
-
-    def set_targets(self, targets, is_regex=False):
-        """指定要等待的数据包
-        :param targets: 要匹配的数据包url特征，可用list等传入多个
-        :param is_regex: 设置的target是否正则表达式
-        :return: None
-        """
-        if not isinstance(targets, (str, list, tuple, set)):
-            raise TypeError('targets只能是str、list、tuple、set。')
-        self._is_regex = is_regex
-        if isinstance(targets, str):
-            self._targets = {targets}
-            self._single = True
-        else:
-            self._targets = set(targets)
-            self._single = False
-        self._page.run_cdp('Network.enable')
-        if targets is not None:
-            self._page.driver.Network.requestWillBeSent = self._requestWillBeSent
-            self._page.driver.Network.responseReceived = self._response_received
-            self._page.driver.Network.loadingFinished = self._loading_finished
-        else:
-            self.stop()
-
-    def stop(self):
-        """停止监听数据包"""
-        self._page.run_cdp('Network.disable')
-        self._page.driver.Network.requestWillBeSent = None
-        self._page.driver.Network.responseReceived = None
-        self._page.driver.Network.loadingFinished = None
-
-    def listen(self, timeout=None, any_one=False):
-        """等待指定数据包加载完成
-        :param timeout: 超时时间，为None则使用页面对象timeout
-        :param any_one: 多个target时，是否全部监听到才结束，为True时监听到一个目标就结束
-        :return: ResponseData对象或监听结果字典
-        """
-        if self._targets is None:
-            raise RuntimeError('必须先用set_targets()设置等待目标。')
-
-        timeout = timeout if timeout is not None else self._page.timeout
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._results and (any_one or set(self._results) == self._targets):
-                break
-            sleep(.1)
-
-        self._requests = {}
-        if not self._results:
-            return False
-        r = list(self._results.values())[0] if self._single else self._results
-        self._results = {}
-        return r
-
-    def _response_received(self, **kwargs):
-        """接收到返回信息时处理方法"""
-        if kwargs['requestId'] in self._requests:
-            self._requests[kwargs['requestId']]['response'] = kwargs['response']
-
-    def _loading_finished(self, **kwargs):
-        """请求完成时处理方法"""
-        request_id = kwargs['requestId']
-        if request_id in self._requests:
-            try:
-                r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
-                body = r['body']
-                is_base64 = r['base64Encoded']
-            except CallMethodError:
-                body = ''
-                is_base64 = False
-
-            request = self._requests[request_id]
-            target = request['target']
-            rd = ResponseData(request_id, request['response'], body, self._page.tab_id, target)
-            rd.method = request['method']
-            rd.postData = request['post_data']
-            rd._base64_body = is_base64
-            rd.requestHeaders = request['request_headers']
-            self._results[target] = rd
-
-    def _requestWillBeSent(self, **kwargs):
-        """接收到请求时的回调函数"""
-        for target in self._targets:
-            if (self._is_regex and search(target, kwargs['request']['url'])) or (
-                    not self._is_regex and target in kwargs['request']['url']):
-                self._requests[kwargs['requestId']] = {'target': target,
-                                                       'method': kwargs['request']['method'],
-                                                       'post_data': kwargs['request'].get('postData', None),
-                                                       'request_headers': kwargs['request']['headers']}
-                break
-
-
 class ChromiumPageScroll(ChromiumScroll):
     def __init__(self, page):
         """
@@ -1165,10 +899,10 @@ class ChromiumPageScroll(ChromiumScroll):
         self.t1 = 'window'
         self.t2 = 'document.documentElement'
 
-    def to_see(self, loc_or_ele, center=False):
+    def to_see(self, loc_or_ele, center=None):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
         ele = self._driver._ele(loc_or_ele)
@@ -1177,17 +911,22 @@ class ChromiumPageScroll(ChromiumScroll):
     def _to_see(self, ele, center):
         """执行滚动页面直到元素可见
         :param ele: 元素对象
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
-        if center:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
-            self._wait_scrolled()
-            return
-
-        ele.run_js('this.scrollIntoViewIfNeeded(false);')
-        if ele.states.is_covered:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
+        txt = 'true' if center else 'false'
+        ele.run_js(f'this.scrollIntoViewIfNeeded({txt});')
+        if center or (center is not False and ele.states.is_covered):
+            ele.run_js('''function getWindowScrollTop() {var scroll_top = 0;
+                    if (document.documentElement && document.documentElement.scrollTop) {
+                      scroll_top = document.documentElement.scrollTop;
+                    } else if (document.body) {scroll_top = document.body.scrollTop;}
+                    return scroll_top;}
+            const { top, height } = this.getBoundingClientRect();
+                    const elCenter = top + height / 2;
+                    const center = window.innerHeight / 2;
+                    window.scrollTo({top: getWindowScrollTop() - (center - elCenter),
+                    behavior: 'instant'});''')
         self._wait_scrolled()
 
 
@@ -1208,62 +947,6 @@ class Timeout(object):
 
     def __repr__(self):
         return str({'implicit': self.implicit, 'page_load': self.page_load, 'script': self.script})
-
-
-class PageLoadStrategy(object):
-    """用于设置页面加载策略的类"""
-
-    def __init__(self, page):
-        """
-        :param page: ChromiumBase对象
-        """
-        self._page = page
-
-    def __call__(self, value):
-        """设置加载策略
-        :param value: 可选 'normal', 'eager', 'none'
-        :return: None
-        """
-        if value.lower() not in ('normal', 'eager', 'none'):
-            raise ValueError("只能选择 'normal', 'eager', 'none'。")
-        self._page._page_load_strategy = value
-
-    def normal(self):
-        """设置页面加载策略为normal"""
-        self._page._page_load_strategy = 'normal'
-
-    def eager(self):
-        """设置页面加载策略为eager"""
-        self._page._page_load_strategy = 'eager'
-
-    def none(self):
-        """设置页面加载策略为none"""
-        self._page._page_load_strategy = 'none'
-
-
-class PageScrollSetter(object):
-    def __init__(self, scroll):
-        self._scroll = scroll
-
-    def wait_complete(self, on_off=True):
-        """设置滚动命令后是否等待完成
-        :param on_off: 开或关
-        :return: None
-        """
-        if not isinstance(on_off, bool):
-            raise TypeError('on_off必须为bool。')
-        self._scroll._wait_complete = on_off
-
-    def smooth(self, on_off=True):
-        """设置页面滚动是否平滑滚动
-        :param on_off: 开或关
-        :return: None
-        """
-        if not isinstance(on_off, bool):
-            raise TypeError('on_off必须为bool。')
-        b = 'smooth' if on_off else 'auto'
-        self._scroll._driver.run_js(f'document.documentElement.style.setProperty("scroll-behavior","{b}");')
-        self._scroll._wait_complete = on_off
 
 
 class Screencast(object):
@@ -1289,7 +972,7 @@ class Screencast(object):
             raise ValueError('save_path必须设置。')
         clean_folder(self._path)
         if self._mode.startswith('frugal'):
-            self._page.driver.Page.screencastFrame = self._onScreencastFrame
+            self._page.driver.set_listener('Page.screencastFrame', self._onScreencastFrame)
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
 
         elif not self._mode.startswith('js'):
@@ -1346,7 +1029,7 @@ class Screencast(object):
             return path
 
         if self._mode.startswith('frugal'):
-            self._page.driver.Page.screencastFrame = None
+            self._page.driver.set_listener('Page.screencastFrame', None)
             self._page.run_cdp('Page.stopScreencast')
         else:
             self._enable = False
@@ -1360,7 +1043,7 @@ class Screencast(object):
             raise TypeError('转换成视频仅支持英文路径和文件名。')
 
         try:
-            from cv2 import VideoWriter, imread
+            from cv2 import VideoWriter, imread, VideoWriter_fourcc
             from numpy import fromfile, uint8
         except ModuleNotFoundError:
             raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
@@ -1370,10 +1053,7 @@ class Screencast(object):
         imgInfo = img.shape
         size = (imgInfo[1], imgInfo[0])
 
-        # if video_name and not video_name.endswith('mp4'):
-        #     video_name = f'{video_name}.mp4'
-        # name = f'{time()}.mp4' if not video_name else video_name
-        videoWrite = VideoWriter(path, 14, 5, size)
+        videoWrite = VideoWriter(path, VideoWriter_fourcc(*"mp4v"), 5, size)
 
         for i in pic_list:
             img = imread(str(i))

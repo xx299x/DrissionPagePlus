@@ -24,7 +24,7 @@ class ElementLossError(BaseError):
     _info = '元素对象因刷新已失效。'
 
 
-class CallMethodError(BaseError):
+class CDPError(BaseError):
     _info = '方法调用错误。'
 
 
@@ -54,3 +54,11 @@ class NoResourceError(BaseError):
 
 class CanNotClickError(BaseError):
     _info = '该元素无法滚动到视口或被遮挡，无法点击。'
+
+
+class GetDocumentError(BaseError):
+    _info = '获取文档失败。'
+
+
+class WaitTimeoutError(BaseError):
+    _info = '等待失败。'

@@ -6,8 +6,10 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
-from .chromium_element import ChromiumElement, Locations, ChromiumElementStates, ChromiumElementWaiter
+from .chromium_base import ChromiumBase, ChromiumPageScroll
+from .chromium_element import ChromiumElement, Locations, ChromiumElementStates
+from .setter import ChromiumFrameSetter
+from .waiter import FrameWaiter
 
 
 class ChromiumFrame(ChromiumBase):
@@ -120,24 +122,24 @@ class ChromiumFrame(ChromiumBase):
 
     def run_js(self, script: str, *args: Any, as_expr: bool = False) -> Any: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union[ChromiumElement, None]: ...
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[ChromiumElement, None]: ...
 
-    def prev(self, filter_loc: Union[tuple, str] = '',
+    def prev(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def next(self, filter_loc: Union[tuple, str] = '',
+    def next(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def before(self, filter_loc: Union[tuple, str] = '',
+    def before(self, filter_loc: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def after(self, filter_loc: Union[tuple, str] = '',
+    def after(self, filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[ChromiumElement, str]: ...
@@ -203,14 +205,4 @@ class ChromiumFrameIds(object):
 class ChromiumFrameScroll(ChromiumPageScroll):
     def __init__(self, frame: ChromiumFrame) -> None: ...
 
-    def to_see(self, loc_or_ele: Union[str, tuple, ChromiumElement], center: bool = False) -> None: ...
-
-
-class ChromiumFrameSetter(ChromiumBaseSetter):
-    _page: ChromiumFrame = ...
-
-    def attr(self, attr: str, value: str) -> None: ...
-
-
-class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
-    def __init__(self, frame: ChromiumFrame): ...
+    def to_see(self, loc_or_ele: Union[str, tuple, ChromiumElement], center: Union[None, bool] = None) -> None: ...

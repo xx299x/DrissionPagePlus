@@ -6,6 +6,8 @@
 from abc import abstractmethod
 from typing import Union, Tuple, List
 
+from DownloadKit import DownloadKit
+
 from .commons.constants import NoneElement
 
 
@@ -78,30 +80,35 @@ class DrissionElement(BaseElement):
 
     def texts(self, text_node_only: bool = False) -> list: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union[DrissionElement, None]: ...
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[DrissionElement, None]: ...
 
-    def child(self, index: int = 1,
-              filter_loc: Union[tuple, str] = '',
+    def child(self,
+              filter_loc: Union[tuple, str, int] = '',
+              index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def prev(self, index: int = 1,
-             filter_loc: Union[tuple, str] = '',
+    def prev(self,
+             filter_loc: Union[tuple, str, int] = '',
+             index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def next(self, index: int = 1,
-             filter_loc: Union[tuple, str] = '',
+    def next(self,
+             filter_loc: Union[tuple, str, int] = '',
+             index: int = 1,
              timeout: float = 0,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def before(self, index: int = 1,
-               filter_loc: Union[tuple, str] = '',
+    def before(self,
+               filter_loc: Union[tuple, str, int] = '',
+               index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def after(self, index: int = 1,
-              filter_loc: Union[tuple, str] = '',
+    def after(self,
+              filter_loc: Union[tuple, str, int] = '',
+              index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
@@ -154,7 +161,9 @@ class BasePage(BaseParser):
         self._url_available: bool = ...
         self.retry_times: int = ...
         self.retry_interval: float = ...
-        self._timeout = float = ...
+        self._timeout: float = ...
+        self._download_path: str = ...
+        self._DownloadKit: DownloadKit = ...
 
     @property
     def title(self) -> Union[str, None]: ...
@@ -170,6 +179,12 @@ class BasePage(BaseParser):
 
     @property
     def url_available(self) -> bool: ...
+
+    @property
+    def download_path(self) -> str: ...
+
+    @property
+    def download(self) -> DownloadKit: ...
 
     def _before_connect(self, url: str, retry: int, interval: float) -> tuple: ...
 

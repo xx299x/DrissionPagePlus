@@ -12,8 +12,6 @@ from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .commons.constants import NoneElement
-from mixpage.driver_element import DriverElement
-from mixpage.driver_page import DriverPage
 from .session_page import SessionPage
 
 
@@ -50,29 +48,29 @@ class SessionElement(DrissionElement):
     @property
     def raw_text(self) -> str: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1) -> Union['SessionElement', None]: ...
+    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union['SessionElement', None]: ...
 
-    def child(self, filter_loc: Union[tuple, str] = '',
+    def child(self, filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union['SessionElement', str, None]: ...
 
-    def prev(self, filter_loc: Union[tuple, str] = '',
+    def prev(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union['SessionElement', str, None]: ...
 
-    def next(self, filter_loc: Union[tuple, str] = '',
+    def next(self, filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union['SessionElement', str, None]: ...
 
-    def before(self, filter_loc: Union[tuple, str] = '',
+    def before(self, filter_loc: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union['SessionElement', str, None]: ...
 
-    def after(self, filter_loc: Union[tuple, str] = '',
+    def after(self, filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union['SessionElement', str, None]: ...
@@ -124,8 +122,8 @@ class SessionElement(DrissionElement):
     def _get_ele_path(self, mode: str) -> str: ...
 
 
-def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, DriverElement, BaseElement,
-ChromiumFrame, ChromiumBase, DriverPage],
+def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, BaseElement, ChromiumFrame,
+ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
                      single: bool = True) -> Union[
     SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
