@@ -439,9 +439,10 @@ class ChromiumElement(DrissionElement):
         js = f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");'
         return self.run_js(js)
 
-    def get_src(self, timeout=None):
-        """返回元素src资源，base64的会转为bytes返回，其它返回str
+    def get_src(self, timeout=None, base64_to_bytes=True):
+        """返回元素src资源，base64的可转为bytes返回，其它返回str
         :param timeout: 等待资源加载的超时时间
+        :param base64_to_bytes: 为True时，如果是base64数据，转换为bytes格式
         :return: 资源内容
         """
         timeout = self.page.timeout if timeout is None else timeout
@@ -474,8 +475,11 @@ class ChromiumElement(DrissionElement):
             return None
 
         if result['base64Encoded']:
-            from base64 import b64decode
-            data = b64decode(result['content'])
+            if base64_to_bytes:
+                from base64 import b64decode
+                data = b64decode(result['content'])
+            else:
+                data = result['content']
         else:
             data = result['content']
         return data
