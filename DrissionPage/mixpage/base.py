@@ -7,10 +7,8 @@ from abc import abstractmethod
 from re import sub
 from urllib.parse import quote
 
-from .commons.constants import Settings, NoneElement
-from .commons.locator import get_loc
-from .commons.web import format_html
-from .errors import ElementNotFoundError
+from DrissionPage.commons.web import format_html
+from DrissionPage.commons.locator import get_loc
 
 
 class BaseParser(object):
@@ -36,11 +34,8 @@ class BaseParser(object):
     def s_eles(self, loc_or_str):
         pass
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
-        pass
-
     @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+    def _ele(self, loc_or_ele, timeout=None, single=True):
         pass
 
 
@@ -55,6 +50,10 @@ class BaseElement(BaseParser):
     def tag(self):
         return
 
+    @abstractmethod
+    def _ele(self, loc_or_str, timeout=None, single=True, relative=False):
+        pass
+
     def parent(self, level_or_loc=1):
         pass
 
@@ -68,18 +67,6 @@ class BaseElement(BaseParser):
         pass
 
     def nexts(self):
-        pass
-
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
-        r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
-        if not single or raise_err is False:
-            return r
-        if not r and (Settings.raise_ele_not_found or raise_err is True):
-            raise ElementNotFoundError
-        return r
-
-    @abstractmethod
-    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
         pass
 
 
@@ -138,154 +125,81 @@ class DrissionElement(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self._ele(loc, timeout=0, relative=True, raise_err=False)
+        return self._ele(loc, timeout=0, relative=True)
 
-    def child(self, index=1, filter_loc='', timeout=None, ele_only=True):
-        """返回直接子元素元素或节点组成的列表，可用查询语法筛选
-        :param index: 第几个查询结果，1开始
-        :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
-        :return: 直接子元素或节点文本组成的列表
-        """
-        nodes = self.children(filter_loc=filter_loc, timeout=timeout, ele_only=ele_only)
-        if not nodes:
-            if Settings.raise_ele_not_found:
-                raise ElementNotFoundError
-            else:
-                return NoneElement()
-
-        try:
-            return nodes[index - 1]
-        except IndexError:
-            if Settings.raise_ele_not_found:
-                raise ElementNotFoundError
-            else:
-                return NoneElement()
-
-    def prev(self, index=1, filter_loc='', timeout=0, ele_only=True):
+    def prev(self, index=1, filter_loc='', timeout=0):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 前面第几个查询结果，1开始
+        :param index: 前面第几个查询结果
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
-        nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[-1]
-        if Settings.raise_ele_not_found:
-            raise ElementNotFoundError
-        else:
-            return NoneElement()
+        nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout)
+        return nodes[-1] if nodes else None
 
-    def next(self, index=1, filter_loc='', timeout=0, ele_only=True):
+    def next(self, index=1, filter_loc='', timeout=0):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 后面第几个查询结果，1开始
+        :param index: 后面第几个查询结果
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
-        nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[0]
-        if Settings.raise_ele_not_found:
-            raise ElementNotFoundError
-        else:
-            return NoneElement()
+        nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout)
+        return nodes[0] if nodes else None
 
-    def before(self, index=1, filter_loc='', timeout=None, ele_only=True):
+    def before(self, index=1, filter_loc='', timeout=None):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 前面第几个查询结果，1开始
+        :param index: 前面第几个查询结果
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[-1]
-        if Settings.raise_ele_not_found:
-            raise ElementNotFoundError
-        else:
-            return NoneElement()
+        nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout)
+        return nodes[-1] if nodes else None
 
-    def after(self, index=1, filter_loc='', timeout=None, ele_only=True):
+    def after(self, index=1, filter_loc='', timeout=None):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param index: 后面第几个查询结果，1开始
+        :param index: 后面第几个查询结果
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        nodes = self._get_brothers(index, filter_loc, 'following', False, timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[0]
-        if Settings.raise_ele_not_found:
-            raise ElementNotFoundError
-        else:
-            return NoneElement()
+        nodes = self._get_brothers(index, filter_loc, 'following', False, timeout)
+        return nodes[0] if nodes else None
 
-    def children(self, filter_loc='', timeout=None, ele_only=True):
-        """返回直接子元素元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
-        :return: 直接子元素或节点文本组成的列表
-        """
-        if not filter_loc:
-            loc = '*' if ele_only else 'node()'
-        else:
-            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
-            if loc[0] == 'css selector':
-                raise ValueError('此css selector语法不受支持，请换成xpath。')
-            loc = loc[1].lstrip('./')
-
-        loc = f'xpath:./{loc}'
-        nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
-        return [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
-
-    def prevs(self, filter_loc='', timeout=0, ele_only=True):
+    def prevs(self, filter_loc='', timeout=0):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout, ele_only=ele_only)
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout)
 
-    def nexts(self, filter_loc='', timeout=0, ele_only=True):
+    def nexts(self, filter_loc='', timeout=0):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout, ele_only=ele_only)
+        return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, filter_loc='', timeout=None):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding',
-                                  brother=False, timeout=timeout, ele_only=ele_only)
+        return self._get_brothers(filter_loc=filter_loc, direction='preceding', brother=False, timeout=timeout)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, filter_loc='', timeout=None):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
-        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following',
-                                  brother=False, timeout=timeout, ele_only=ele_only)
+        return self._get_brothers(filter_loc=filter_loc, direction='following', brother=False, timeout=timeout)
 
-    def _get_brothers(self, index=None, filter_loc='', direction='following',
-                      brother=True, timeout=.5, ele_only=True):
+    def _get_brothers(self, index=None, filter_loc='', direction='following', brother=True, timeout=.5):
         """按要求返回兄弟元素或节点组成的列表
         :param index: 获取第几个，该参数不为None时只获取该编号的元素
         :param filter_loc: 用于筛选的查询语法
@@ -300,7 +214,7 @@ class DrissionElement(BaseElement):
         brother = '-sibling' if brother else ''
 
         if not filter_loc:
-            loc = '*' if ele_only else 'node()'
+            loc = '*'
 
         else:
             loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
@@ -357,7 +271,7 @@ class BasePage(BaseParser):
     @property
     def title(self):
         """返回网页title"""
-        ele = self._ele('xpath://title', raise_err=False)
+        ele = self.ele('xpath://title')
         return ele.text if ele else None
 
     @property
@@ -387,7 +301,7 @@ class BasePage(BaseParser):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        self._url = quote(url, safe='/:&?=%;#@+![]')
+        self._url = quote(url, safe='/:&?=%;#@+!')
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval
@@ -402,25 +316,9 @@ class BasePage(BaseParser):
         return
 
     @abstractmethod
-    def get_cookies(self, as_dict=False, all_info=False):
+    def get_cookies(self, as_dict=False):
         return {}
 
     @abstractmethod
     def get(self, url, show_errmsg=False, retry=None, interval=None):
-        pass
-
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
-        if not loc_or_ele:
-            raise ElementNotFoundError
-
-        r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
-
-        if not single or raise_err is False:
-            return r
-        if not r and (Settings().raise_ele_not_found is True or raise_err is True):
-            raise ElementNotFoundError
-        return r
-
-    @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
         pass

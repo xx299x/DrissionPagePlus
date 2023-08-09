@@ -326,6 +326,11 @@ class ChromiumBase(BasePage):
         return self._page_load_strategy
 
     @property
+    def user_agent(self):
+        """返回user agent"""
+        return self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+
+    @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
         self.wait.load_complete()
@@ -542,9 +547,11 @@ class ChromiumBase(BasePage):
             if ok:
                 try:
                     if single:
-                        return make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        r = make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
+                        break
                     else:
-                        return [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
+                        break
 
                 except ElementLossError:
                     ok = False
@@ -559,6 +566,12 @@ class ChromiumBase(BasePage):
                 return NoneElement() if single else []
 
             sleep(.1)
+
+        try:
+            self.run_cdp('DOM.discardSearchResults', searchId=search_result['searchId'])
+        except:
+            pass
+        return r
 
     def refresh(self, ignore_cache=False):
         """刷新当前页面
@@ -595,14 +608,14 @@ class ChromiumBase(BasePage):
         index = history['currentIndex']
         history = history['entries']
         direction = 1 if steps > 0 else -1
-        curr_url = history[index]['userTypedURL']
+        curr_url = history[index]['url']
         nid = None
         for num in range(abs(steps)):
             for i in history[index::direction]:
                 index += direction
-                if i['userTypedURL'] != curr_url:
+                if i['url'] != curr_url:
                     nid = i['id']
-                    curr_url = i['userTypedURL']
+                    curr_url = i['url']
                     break
 
         if nid:
@@ -1021,7 +1034,8 @@ class ChromiumBaseWaiter(object):
         :return: 是否等待成功
         """
         if timeout != 0:
-            timeout = self._driver.timeout if timeout in (None, True) else timeout
+            if timeout is None or timeout is True:
+                timeout = self._driver.timeout
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
                 if self._driver.is_loading == start:
@@ -1126,7 +1140,8 @@ class NetworkListener(object):
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
         request_id = kwargs['requestId']
-        if request_id in self._requests:
+        request = self._requests.get(request_id)
+        if request:
             try:
                 r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
                 body = r['body']
@@ -1135,7 +1150,6 @@ class NetworkListener(object):
                 body = ''
                 is_base64 = False
 
-            request = self._requests[request_id]
             target = request['target']
             rd = ResponseData(request_id, request['response'], body, self._page.tab_id, target)
             rd.method = request['method']
@@ -1165,10 +1179,10 @@ class ChromiumPageScroll(ChromiumScroll):
         self.t1 = 'window'
         self.t2 = 'document.documentElement'
 
-    def to_see(self, loc_or_ele, center=False):
+    def to_see(self, loc_or_ele, center=None):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
         ele = self._driver._ele(loc_or_ele)
@@ -1177,17 +1191,22 @@ class ChromiumPageScroll(ChromiumScroll):
     def _to_see(self, ele, center):
         """执行滚动页面直到元素可见
         :param ele: 元素对象
-        :param center: 是否尽量滚动到页面正中
+        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
-        if center:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
-            self._wait_scrolled()
-            return
-
-        ele.run_js('this.scrollIntoViewIfNeeded(false);')
-        if ele.states.is_covered:
-            ele.run_js('this.scrollIntoViewIfNeeded();')
+        txt = 'true' if center else 'false'
+        ele.run_js(f'this.scrollIntoViewIfNeeded({txt});')
+        if center or (center is not False and ele.states.is_covered):
+            ele.run_js('''function getWindowScrollTop() {var scroll_top = 0;
+                            if (document.documentElement && document.documentElement.scrollTop) {
+                              scroll_top = document.documentElement.scrollTop;
+                            } else if (document.body) {scroll_top = document.body.scrollTop;}
+                            return scroll_top;}
+                    const { top, height } = this.getBoundingClientRect();
+                            const elCenter = top + height / 2;
+                            const center = window.innerHeight / 2;
+                            window.scrollTo({top: getWindowScrollTop() - (center - elCenter),
+                            behavior: 'instant'});''')
         self._wait_scrolled()
 
 
@@ -1360,7 +1379,7 @@ class Screencast(object):
             raise TypeError('转换成视频仅支持英文路径和文件名。')
 
         try:
-            from cv2 import VideoWriter, imread
+            from cv2 import VideoWriter, imread, VideoWriter_fourcc
             from numpy import fromfile, uint8
         except ModuleNotFoundError:
             raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
@@ -1370,10 +1389,7 @@ class Screencast(object):
         imgInfo = img.shape
         size = (imgInfo[1], imgInfo[0])
 
-        # if video_name and not video_name.endswith('mp4'):
-        #     video_name = f'{video_name}.mp4'
-        # name = f'{time()}.mp4' if not video_name else video_name
-        videoWrite = VideoWriter(path, 14, 5, size)
+        videoWrite = VideoWriter(path, VideoWriter_fourcc(*"mp4v"), 5, size)
 
         for i in pic_list:
             img = imread(str(i))

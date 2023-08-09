@@ -13,12 +13,9 @@ from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from .commons.constants import NoneElement
 from .base import BasePage
-from .chromium_page import ChromiumPage
-from .configs.session_options import SessionOptions
+from DrissionPage.configs.session_options import SessionOptions
 from .session_element import SessionElement
-from .web_page import WebPage
 
 
 class SessionPage(BasePage):
@@ -41,11 +38,19 @@ class SessionPage(BasePage):
 
     def _create_session(self) -> None: ...
 
+    def _set_session(self, opt: SessionOptions) -> None: ...
+
     def _set_runtime_settings(self) -> None: ...
+
+    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
+
+    def set_headers(self, headers: dict) -> None: ...
+
+    def set_user_agent(self, ua: str) -> None: ...
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
+                 timeout: float = None) -> Union[SessionElement, str, None]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -55,16 +60,10 @@ class SessionPage(BasePage):
     def url(self) -> str: ...
 
     @property
-    def _session_url(self) -> str: ...
-
-    @property
     def html(self) -> str: ...
 
     @property
     def json(self) -> Union[dict, None]: ...
-
-    @property
-    def user_agent(self) -> str: ...
 
     @property
     def download_path(self) -> str: ...
@@ -94,7 +93,7 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
+            timeout: float = None) -> Union[SessionElement, str, None]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
@@ -102,16 +101,18 @@ class SessionPage(BasePage):
 
     def s_ele(self,
               loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) \
-            -> Union[SessionElement, str, NoneElement]: ...
+            -> Union[SessionElement, str, None]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-                       timeout: float = None, single: bool = True, raise_err: bool = None) \
-            -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
+    def _ele(self,
+             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+             timeout: float = None,
+             single: bool = True) -> Union[SessionElement, str, None, List[Union[SessionElement, str]]]: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
-                    all_info: bool = False) -> Union[dict, list]: ...
+    def get_cookies(self,
+                    as_dict: bool = False,
+                    all_domains: bool = False) -> Union[dict, list]: ...
 
     # ----------------session独有属性和方法-----------------------
     @property
@@ -169,10 +170,6 @@ class SessionPageSetter(object):
     def __init__(self, page: SessionPage):
         self._page: SessionPage = ...
 
-    def retry_times(self, times: int) -> None: ...
-
-    def retry_interval(self, interval: float) -> None: ...
-
     def timeout(self, second: float) -> None: ...
 
     def cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict]) -> None: ...
@@ -205,7 +202,7 @@ class SessionPageSetter(object):
 
 
 class DownloadSetter(object):
-    def __init__(self, page: Union[SessionPage, WebPage, ChromiumPage]):
+    def __init__(self, page: SessionPage):
         self._page: SessionPage = ...
         self._DownloadKit: DownloadKit = ...
 
