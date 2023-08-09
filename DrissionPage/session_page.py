@@ -7,15 +7,15 @@ from re import search
 from time import sleep
 from urllib.parse import urlparse
 
-from requests import Session
+from DownloadKit import DownloadKit
+from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from .commons.web import cookie_to_dict
+from .commons.web import cookie_to_dict, set_session_cookies
 from .configs.session_options import SessionOptions
 from .session_element import SessionElement, make_session_ele
-from .setter import SessionPageSetter
 
 
 class SessionPage(BasePage):
@@ -27,6 +27,7 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         self._response = None
+        self._download_set = None
         self._session = None
         self._set = None
         self._set_start_options(session_or_options, None)
@@ -98,9 +99,21 @@ class SessionPage(BasePage):
             return None
 
     @property
-    def user_agent(self):
-        """返回user agent"""
-        return self.session.headers.get('user-agent', '')
+    def download_path(self):
+        """返回下载路径"""
+        return self._download_path
+
+    @property
+    def download_set(self):
+        """返回用于设置下载参数的对象"""
+        if self._download_set is None:
+            self._download_set = DownloadSetter(self)
+        return self._download_set
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set.DownloadKit
 
     @property
     def session(self):
@@ -305,18 +318,200 @@ class SessionPage(BasePage):
             return r, f'状态码：{r.status_code}'
 
 
-def check_headers(kwargs, headers, arg):
+class SessionPageSetter(object):
+    def __init__(self, page):
+        self._page = page
+
+    def retry_times(self, times):
+        """设置连接失败时重连次数"""
+        self._page.retry_times = times
+
+    def retry_interval(self, interval):
+        """设置连接失败时重连间隔"""
+        self._page.retry_interval = interval
+
+    def timeout(self, second):
+        """设置连接超时时间
+        :param second: 秒数
+        :return: None
+        """
+        self._page.timeout = second
+
+    def cookies(self, cookies):
+        """为Session对象设置cookies
+        :param cookies: cookies信息
+        :return: None
+        """
+        set_session_cookies(self._page.session, cookies)
+
+    def headers(self, headers):
+        """设置通用的headers
+        :param headers: dict形式的headers
+        :return: None
+        """
+        self._page.session.headers = CaseInsensitiveDict(headers)
+
+    def header(self, attr, value):
+        """设置headers中一个项
+        :param attr: 设置名称
+        :param value: 设置值
+        :return: None
+        """
+        self._page.session.headers[attr.lower()] = value
+
+    def user_agent(self, ua):
+        """设置user agent
+        :param ua: user agent
+        :return: None
+        """
+        self._page.session.headers['user-agent'] = ua
+
+    def proxies(self, http, https=None):
+        """设置proxies参数
+        :param http: http代理地址
+        :param https: https代理地址
+        :return: None
+        """
+        proxies = None if http == https is None else {'http': http, 'https': https or http}
+        self._page.session.proxies = proxies
+
+    def auth(self, auth):
+        """设置认证元组或对象
+        :param auth: 认证元组或对象
+        :return: None
+        """
+        self._page.session.auth = auth
+
+    def hooks(self, hooks):
+        """设置回调方法
+        :param hooks: 回调方法
+        :return: None
+        """
+        self._page.session.hooks = hooks
+
+    def params(self, params):
+        """设置查询参数字典
+        :param params: 查询参数字典
+        :return: None
+        """
+        self._page.session.params = params
+
+    def verify(self, on_off):
+        """设置是否验证SSL证书
+        :param on_off: 是否验证 SSL 证书
+        :return: None
+        """
+        self._page.session.verify = on_off
+
+    def cert(self, cert):
+        """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组
+        :param cert: 证书路径或元组
+        :return: None
+        """
+        self._page.session.cert = cert
+
+    def stream(self, on_off):
+        """设置是否使用流式响应内容
+        :param on_off: 是否使用流式响应内容
+        :return: None
+        """
+        self._page.session.stream = on_off
+
+    def trust_env(self, on_off):
+        """设置是否信任环境
+        :param on_off: 是否信任环境
+        :return: None
+        """
+        self._page.session.trust_env = on_off
+
+    def max_redirects(self, times):
+        """设置最大重定向次数
+        :param times: 最大重定向次数
+        :return: None
+        """
+        self._page.session.max_redirects = times
+
+    def add_adapter(self, url, adapter):
+        """添加适配器
+        :param url: 适配器对应url
+        :param adapter: 适配器对象
+        :return: None
+        """
+        self._page.session.mount(url, adapter)
+
+
+class DownloadSetter(object):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        self._page = page
+        self._DownloadKit = None
+
+    @property
+    def DownloadKit(self):
+        if self._DownloadKit is None:
+            self._DownloadKit = DownloadKit(session=self._page, goal_path=self._page.download_path)
+        return self._DownloadKit
+
+    @property
+    def if_file_exists(self):
+        """返回用于设置存在同名文件时处理方法的对象"""
+        return FileExists(self)
+
+    def split(self, on_off):
+        """设置是否允许拆分大文件用多线程下载
+        :param on_off: 是否启用多线程下载大文件
+        :return: None
+        """
+        self.DownloadKit.split = on_off
+
+    def save_path(self, path):
+        """设置下载保存路径
+        :param path: 下载保存路径
+        :return: None
+        """
+        path = path if path is None else str(path)
+        self._page._download_path = path
+        self.DownloadKit.goal_path = path
+
+
+class FileExists(object):
+    """用于设置存在同名文件时处理方法"""
+
+    def __init__(self, setter):
+        """
+        :param setter: DownloadSetter对象
+        """
+        self._setter = setter
+
+    def __call__(self, mode):
+        if mode not in ('skip', 'rename', 'overwrite'):
+            raise ValueError("mode参数只能是'skip', 'rename', 'overwrite'")
+        self._setter.DownloadKit.file_exists = mode
+
+    def skip(self):
+        """设为跳过"""
+        self._setter.DownloadKit.file_exists = 'skip'
+
+    def rename(self):
+        """设为重命名，文件名后加序号"""
+        self._setter.DownloadKit._file_exists = 'rename'
+
+    def overwrite(self):
+        """设为覆盖"""
+        self._setter.DownloadKit._file_exists = 'overwrite'
+
+
+def check_headers(kwargs, headers, arg) -> bool:
     """检查kwargs或headers中是否有arg所示属性"""
     return arg in kwargs['headers'] or arg in headers
 
 
-def set_charset(response):
+def set_charset(response) -> Response:
     """设置Response对象的编码"""
     # 在headers中获取编码
     content_type = response.headers.get('content-type', '').lower()
-    if not content_type.endswith(';'):
-        content_type += ';'
-    charset = search(r'charset[=: ]*(.*)?;?', content_type)
+    charset = search(r'charset[=: ]*(.*)?;', content_type)
 
     if charset:
         response.encoding = charset.group(1)

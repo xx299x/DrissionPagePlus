@@ -7,12 +7,10 @@ from re import search
 from threading import Thread
 from time import sleep, perf_counter
 
-from .chromium_base import ChromiumBase, ChromiumPageScroll
-from .chromium_element import ChromiumElement
+from .chromium_base import ChromiumBase, ChromiumPageScroll, ChromiumBaseSetter, ChromiumBaseWaiter
+from .chromium_element import ChromiumElement, ChromiumElementWaiter
 from .commons.tools import get_usable_path
 from .errors import ContextLossError
-from .setter import ChromiumFrameSetter
-from .waiter import FrameWaiter
 
 
 class ChromiumFrame(ChromiumBase):
@@ -71,9 +69,7 @@ class ChromiumFrame(ChromiumBase):
         try:
             super()._driver_init(tab_id)
         except:
-            u = f'http://{self.address}/json'
-            self._control_session.get(u)
-            self._control_session.get(u, headers={'Connection': 'close'})
+            self._control_session.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
 
     def _reload(self):
@@ -363,14 +359,13 @@ class ChromiumFrame(ChromiumBase):
         else:
             return self.doc_ele.run_js(script, *args, as_expr=as_expr)
 
-    def parent(self, level_or_loc=1, index=1):
+    def parent(self, level_or_loc=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
         self._check_ok()
-        return self.frame_ele.parent(level_or_loc, index)
+        return self.frame_ele.parent(level_or_loc)
 
     def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -643,11 +638,31 @@ class ChromiumFrameScroll(ChromiumPageScroll):
         self.t1 = self.t2 = 'this.documentElement'
         self._wait_complete = False
 
-    def to_see(self, loc_or_ele, center=None):
+    def to_see(self, loc_or_ele, center=False):
         """滚动页面直到元素可见
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
+        :param center: 是否尽量滚动到页面正中
         :return: None
         """
         ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver._ele(loc_or_ele)
         self._to_see(ele, center)
+
+
+class ChromiumFrameSetter(ChromiumBaseSetter):
+    def attr(self, attr, value):
+        """设置frame元素attribute属性
+        :param attr: 属性名
+        :param value: 属性值
+        :return: None
+        """
+        self._page._check_ok()
+        self._page.frame_ele.set.attr(attr, value)
+
+
+class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
+    def __init__(self, frame):
+        """
+        :param frame: ChromiumFrame对象
+        """
+        super().__init__(frame)
+        super(ChromiumBaseWaiter, self).__init__(frame, frame.frame_ele)

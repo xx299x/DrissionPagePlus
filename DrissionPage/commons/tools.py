@@ -3,10 +3,50 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from platform import system
 from pathlib import Path
 from re import search, sub
 from shutil import rmtree
+from zipfile import ZipFile
+
+
+def get_exe_from_port(port):
+    """获取端口号第一条进程的可执行文件路径
+    :param port: 端口号
+    :return: 可执行文件的绝对路径
+    """
+    from os import popen
+
+    pid = get_pid_from_port(port)
+    if not pid:
+        return
+    else:
+        file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
+        return file_lst[2].strip() if len(file_lst) > 2 else None
+
+
+def get_pid_from_port(port):
+    """获取端口号第一条进程的pid
+    :param port: 端口号
+    :return: 进程id
+    """
+    from platform import system
+    if system().lower() != 'windows' or port is None:
+        return None
+
+    from os import popen
+    from time import perf_counter
+
+    try:  # 避免Anaconda中可能产生的报错
+        process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+
+        t = perf_counter()
+        while not process and perf_counter() - t < 5:
+            process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
+
+        return process.split(' ')[-1] or None
+
+    except Exception:
+        return None
 
 
 def get_usable_path(path):
@@ -103,114 +143,10 @@ def clean_folder(folder_path, ignore=None):
                 rmtree(f, True)
 
 
-def show_or_hide_browser(page, hide=True):
-    """执行显示或隐藏浏览器窗口
-    :param page: ChromePage对象
-    :param hide: 是否隐藏
-    :return: None
-    """
-    if not page.address.startswith(('127.0.0.1', 'localhost')):
+def unzip(zip_path, to_path):
+    """解压下载的chromedriver.zip文件"""
+    if not zip_path:
         return
 
-    if system().lower() != 'windows':
-        raise OSError('该方法只能在Windows系统使用。')
-
-    try:
-        from win32gui import ShowWindow
-        from win32con import SW_HIDE, SW_SHOW
-    except ImportError:
-        raise ImportError('请先安装：pip install pypiwin32')
-
-    pid = page.process_id
-    if not pid:
-        return None
-    hds = get_chrome_hwnds_from_pid(pid, page.title)
-    sw = SW_HIDE if hide else SW_SHOW
-    for hd in hds:
-        ShowWindow(hd, sw)
-
-
-def get_browser_progress_id(progress, address):
-    """获取浏览器进程id
-    :param progress: 已知的进程对象，没有时传入None
-    :param address: 浏览器管理地址，含端口
-    :return: 进程id或None
-    """
-    if progress:
-        return progress.pid
-
-    from os import popen
-    port = address.split(':')[-1]
-    txt = ''
-    progresses = popen(f'netstat -nao | findstr :{port}').read().split('\n')
-    for progress in progresses:
-        if 'LISTENING' in progress:
-            txt = progress
-            break
-    if not txt:
-        return None
-
-    return txt.split(' ')[-1]
-
-
-def get_chrome_hwnds_from_pid(pid, title):
-    """通过PID查询句柄ID
-    :param pid: 进程id
-    :param title: 窗口标题
-    :return: 进程句柄组成的列表
-    """
-    try:
-        from win32gui import IsWindow, GetWindowText, EnumWindows
-        from win32process import GetWindowThreadProcessId
-    except ImportError:
-        raise ImportError('请先安装win32gui，pip install pypiwin32')
-
-    def callback(hwnd, hds):
-        if IsWindow(hwnd) and title in GetWindowText(hwnd):
-            _, found_pid = GetWindowThreadProcessId(hwnd)
-            if str(found_pid) == str(pid):
-                hds.append(hwnd)
-            return True
-
-    hwnds = []
-    EnumWindows(callback, hwnds)
-    return hwnds
-
-# def get_exe_from_port(port):
-#     """获取端口号第一条进程的可执行文件路径
-#     :param port: 端口号
-#     :return: 可执行文件的绝对路径
-#     """
-#     from os import popen
-#
-#     pid = get_pid_from_port(port)
-#     if not pid:
-#         return
-#     else:
-#         file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
-#         return file_lst[2].strip() if len(file_lst) > 2 else None
-#
-#
-# def get_pid_from_port(port):
-#     """获取端口号第一条进程的pid
-#     :param port: 端口号
-#     :return: 进程id
-#     """
-#     from platform import system
-#     if system().lower() != 'windows' or port is None:
-#         return None
-#
-#     from os import popen
-#     from time import perf_counter
-#
-#     try:  # 避免Anaconda中可能产生的报错
-#         process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-#
-#         t = perf_counter()
-#         while not process and perf_counter() - t < 5:
-#             process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-#
-#         return process.split(' ')[-1] or None
-#
-#     except Exception:
-#         return None
+    with ZipFile(zip_path, 'r') as f:
+        return [f.extract(f.namelist()[0], path=to_path)]

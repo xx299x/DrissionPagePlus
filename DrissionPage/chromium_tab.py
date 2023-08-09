@@ -5,10 +5,9 @@
 """
 from copy import copy
 
-from .chromium_base import ChromiumBase
+from .chromium_base import ChromiumBase, ChromiumBaseSetter
 from .commons.web import set_session_cookies, set_browser_cookies
-from .session_page import SessionPage
-from .setter import WebPageTabSetter
+from .session_page import SessionPage, SessionPageSetter, DownloadSetter
 
 
 class ChromiumTab(ChromiumBase):
@@ -28,10 +27,6 @@ class ChromiumTab(ChromiumBase):
         self.retry_times = self.page.retry_times
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy
-
-    def close(self):
-        """关闭当前标签页"""
-        self.page.close_tabs(self.tab_id)
 
     @property
     def rect(self):
@@ -53,12 +48,11 @@ class WebPageTab(SessionPage, ChromiumTab):
         self._has_driver = True
         self._has_session = True
         self._session = copy(page.session)
-        self._response = None
-        self._set = None
 
+        self._response = None
         self._download_set = None
-        self._download_path = page.download_path
-        self._DownloadKit = None
+        self._download_path = None
+        self._set = None
         super(SessionPage, self)._set_runtime_settings()
         self._connect_browser(tab_id)
 
@@ -127,14 +121,6 @@ class WebPageTab(SessionPage, ChromiumTab):
         return super().cookies
 
     @property
-    def user_agent(self):
-        """返回user agent"""
-        if self._mode == 's':
-            return super().user_agent
-        elif self._mode == 'd':
-            return super(SessionPage, self).user_agent
-
-    @property
     def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
@@ -165,6 +151,18 @@ class WebPageTab(SessionPage, ChromiumTab):
         if self._set is None:
             self._set = WebPageTabSetter(self)
         return self._set
+
+    @property
+    def download_set(self):
+        """返回下载设置对象"""
+        if self._download_set is None:
+            self._download_set = WebPageTabDownloadSetter(self)
+        return self._download_set
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set._switched_DownloadKit
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url
@@ -294,12 +292,17 @@ class WebPageTab(SessionPage, ChromiumTab):
             selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        set_session_cookies(self.session, super(SessionPage, self).get_cookies())
+        # set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
+        # set_session_cookies(self.session, self._get_driver_cookies(all_domains=True))
+        set_session_cookies(self.session, self._get_driver_cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
+
+        # set_browser_cookies(self, super().get_cookies(as_dict=True))
+        # set_browser_cookies(self, super().get_cookies(all_domains=True))
         set_browser_cookies(self, super().get_cookies())
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
@@ -312,7 +315,22 @@ class WebPageTab(SessionPage, ChromiumTab):
         if self._mode == 's':
             return super().get_cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
+            return self._get_driver_cookies(as_dict, all_info)
+
+    def _get_driver_cookies(self, as_dict=False, all_info=False):
+        """获取浏览器cookies
+        :param as_dict: 是否以dict形式返回，为True时all_info无效
+        :param all_info: 是否返回所有信息，为False时只返回name、value、domain
+        :return: cookies信息
+        """
+        cookies = self.run_cdp('Network.getCookies')['cookies']
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in cookies}
+        elif all_info:
+            return cookies
+        else:
+            return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
+                    for cookie in cookies]
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
@@ -328,3 +346,54 @@ class WebPageTab(SessionPage, ChromiumTab):
         elif self._mode == 'd':
             return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
                                                            relative=relative)
+
+
+class WebPageTabSetter(ChromiumBaseSetter):
+    def __init__(self, page):
+        super().__init__(page)
+        self._session_setter = SessionPageSetter(self._page)
+        self._chromium_setter = ChromiumBaseSetter(self._page)
+
+    def cookies(self, cookies):
+        """添加cookies信息到浏览器或session对象
+        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
+        :return: None
+        """
+        if self._page.mode == 'd' and self._page._has_driver:
+            self._chromium_setter.cookies(cookies)
+        elif self._page.mode == 's' and self._page._has_session:
+            self._session_setter.cookies(cookies)
+
+    def headers(self, headers) -> None:
+        """设置固定发送的headers
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        if self._page._has_session:
+            self._session_setter.headers(headers)
+        if self._page._has_driver:
+            self._chromium_setter.headers(headers)
+
+    def user_agent(self, ua, platform=None):
+        """设置user agent，d模式下只有当前tab有效"""
+        if self._page._has_session:
+            self._session_setter.user_agent(ua)
+        if self._page._has_driver:
+            self._chromium_setter.user_agent(ua, platform)
+
+
+class WebPageTabDownloadSetter(DownloadSetter):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        super().__init__(page)
+        self._session = page.session
+
+    @property
+    def _switched_DownloadKit(self):
+        """返回从浏览器同步cookies后的Session对象"""
+        if self._page.mode == 'd':
+            ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self._page.session.headers.update({"User-Agent": ua})
+            set_session_cookies(self._page.session, self._page.get_cookies(as_dict=False, all_domains=False))
+        return self.DownloadKit

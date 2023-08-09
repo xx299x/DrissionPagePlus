@@ -3,18 +3,21 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
+from warnings import warn
+
 from requests import Session
 
 from .base import BasePage
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
-from .chromium_page import ChromiumPage
+from .chromium_page import ChromiumPage, ChromiumDownloadSetter, ChromiumPageSetter
 from .chromium_tab import WebPageTab
 from .commons.web import set_session_cookies, set_browser_cookies
 from .configs.chromium_options import ChromiumOptions
 from .configs.session_options import SessionOptions
-from .session_page import SessionPage
-from .setter import WebPageSetter
+from .errors import CallMethodError
+from .session_page import SessionPage, SessionPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):
@@ -24,7 +27,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param driver_or_options: ChromiumDriver对象，只使用s模式时应传入False
+        :param driver_or_options: ChromiumDriver对象或DriverOptions对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
         self._mode = mode.lower()
@@ -42,6 +45,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._driver_options = None
         self._session_options = None
         self._response = None
+        self._download_set = None
         self._set = None
         self._screencast = None
 
@@ -55,7 +59,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def _set_start_options(self, dr_opt, se_opt):
         """处理两种模式的设置
-        :param dr_opt: ChromiumDriver或ChromiumOptions对象，为None则从ini读取，为False用默认信息创建
+        :param dr_opt: ChromiumDriver或DriverOptions对象，为None则从ini读取，为False用默认信息创建
         :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
         :return: None
         """
@@ -73,7 +77,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             elif dr_opt is False:
                 self._driver_options = ChromiumOptions(read_file=False)
 
-            elif isinstance(dr_opt, ChromiumOptions):
+            elif str(type(dr_opt)).endswith(("ChromiumOptions'>", "DriverOptions'>")):
                 self._driver_options = dr_opt
 
             else:
@@ -103,6 +107,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         self._timeouts = Timeout(self)
         self._page_load_strategy = self._driver_options.page_load_strategy
+        self._download_path = None
 
         if se_opt is not False:
             self.set.timeouts(implicit=self._session_options.timeout)
@@ -182,14 +187,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return super().cookies
 
     @property
-    def user_agent(self):
-        """返回user agent"""
-        if self._mode == 's':
-            return super().user_agent
-        elif self._mode == 'd':
-            return super(SessionPage, self).user_agent
-
-    @property
     def session(self):
         """返回Session对象，如未初始化则按配置信息创建"""
         if self._session is None:
@@ -213,6 +210,23 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: None
         """
         self.set.timeouts(implicit=second)
+
+    @property
+    def download_path(self):
+        """返回默认下载路径"""
+        return super(SessionPage, self).download_path
+
+    @property
+    def download_set(self):
+        """返回下载设置对象"""
+        if self._download_set is None:
+            self._download_set = WebPageDownloadSetter(self)
+        return self._download_set
+
+    @property
+    def download(self):
+        """返回下载器对象"""
+        return self.download_set._switched_DownloadKit
 
     @property
     def set(self):
@@ -346,15 +360,20 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return
 
         if copy_user_agent:
-            user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self.session.headers.update({"User-Agent": user_agent})
+            selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self.session.headers.update({"User-Agent": selenium_user_agent})
 
-        set_session_cookies(self.session, super(SessionPage, self).get_cookies())
+        # set_session_cookies(self.session, self._get_driver_cookies(as_dict=True))
+        # set_session_cookies(self.session, self._get_driver_cookies(all_domains=True))
+        set_session_cookies(self.session, self._get_driver_cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
+
+        # set_browser_cookies(self, super().get_cookies(as_dict=True))
+        # set_browser_cookies(self, super().get_cookies(all_domains=True))
         set_browser_cookies(self, super().get_cookies())
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
@@ -367,7 +386,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._mode == 's':
             return super().get_cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
+            return self._get_driver_cookies(as_dict, all_info)
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象
@@ -377,12 +396,27 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         tab_id = tab_id or self.tab_id
         return WebPageTab(self, tab_id)
 
+    def _get_driver_cookies(self, as_dict=False, all_info=False):
+        """获取浏览器cookies
+        :param as_dict: 是否以dict形式返回，为True时all_info无效
+        :param all_info: 是否返回所有信息
+        :return: cookies信息
+        """
+        cookies = self.run_cdp('Network.getCookies')['cookies']
+        if as_dict:
+            return {cookie['name']: cookie['value'] for cookie in cookies}
+        elif all_info:
+            return cookies
+        else:
+            return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
+                    for cookie in cookies]
+
     def close_driver(self):
         """关闭driver及浏览器"""
         if self._has_driver:
             self.change_mode('s')
             try:
-                self.driver.call_method('Browser.close')
+                self.driver.Browser.close()
             except Exception:
                 pass
             self._tab_obj.stop()
@@ -421,9 +455,104 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._response = None
             self._has_session = None
         if self._has_driver:
-            self._tab_obj.call_method('Browser.close')
+            self._tab_obj.Browser.close()
             self._tab_obj.stop()
             self._tab_obj = None
             self._has_driver = None
 
 
+class WebPageSetter(ChromiumPageSetter):
+    def __init__(self, page):
+        super().__init__(page)
+        self._session_setter = SessionPageSetter(self._page)
+        self._chromium_setter = ChromiumPageSetter(self._page)
+
+    def cookies(self, cookies):
+        """添加cookies信息到浏览器或session对象
+        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
+        :return: None
+        """
+        if self._page.mode == 'd' and self._page._has_driver:
+            self._chromium_setter.cookies(cookies)
+        elif self._page.mode == 's' and self._page._has_session:
+            self._session_setter.cookies(cookies)
+
+    def headers(self, headers) -> None:
+        """设置固定发送的headers
+        :param headers: dict格式的headers数据
+        :return: None
+        """
+        if self._page.mode == 's':
+            self._session_setter.headers(headers)
+        else:
+            self._chromium_setter.headers(headers)
+
+    def user_agent(self, ua, platform=None):
+        """设置user agent，d模式下只有当前tab有效"""
+        if self._page.mode == 's':
+            self._session_setter.user_agent(ua)
+        else:
+            self._chromium_setter.user_agent(ua, platform)
+
+
+class WebPageDownloadSetter(ChromiumDownloadSetter):
+    """用于设置下载参数的类"""
+
+    def __init__(self, page):
+        super().__init__(page)
+        self._session = page.session
+
+    @property
+    def _switched_DownloadKit(self):
+        """返回从浏览器同步cookies后的Session对象"""
+        if self._page.mode == 'd':
+            self._cookies_to_session()
+        return self.DownloadKit
+
+    def save_path(self, path):
+        """设置下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        path = path or ''
+        path = Path(path).absolute()
+        path.mkdir(parents=True, exist_ok=True)
+        path = str(path)
+        self._page._download_path = path
+        self.DownloadKit.goal_path = path
+
+        if self._page._has_driver:
+            try:
+                self._page.browser_driver.Browser.setDownloadBehavior(behavior=self._behavior, downloadPath=path,
+                                                                      eventsEnabled=True)
+            except CallMethodError:
+                warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
+                self._page.run_cdp('Page.setDownloadBehavior', behavior=self._behavior, downloadPath=path)
+
+    def by_browser(self):
+        """设置使用浏览器下载文件"""
+        if not self._page._has_driver:
+            raise RuntimeError('浏览器未连接。')
+
+        try:
+            self._page.browser_driver.Browser.setDownloadBehavior(behavior='allow', eventsEnabled=True,
+                                                                  downloadPath=self._page.download_path)
+            self._page.browser_driver.Browser.downloadWillBegin = self._download_by_browser
+
+        except CallMethodError:
+            warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
+            self._page.driver.Page.setDownloadBehavior(behavior='allow', downloadPath=self._page.download_path)
+            self._page.driver.Page.downloadWillBegin = self._download_by_browser
+
+        self._behavior = 'allow'
+
+    def by_DownloadKit(self):
+        """设置使用DownloadKit下载文件"""
+        if self._page._has_driver:
+            try:
+                self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
+                self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
+            except CallMethodError:
+                raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
+
+        self._behavior = 'deny'
