@@ -93,6 +93,9 @@ class ChromiumDriver(object):
 
                     continue
 
+        except Exception:
+            return None
+
         finally:
             self.method_results.pop(message['id'], None)
 
