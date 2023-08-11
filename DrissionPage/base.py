@@ -428,6 +428,10 @@ class BasePage(BaseParser):
     def json(self):
         return
 
+    @property
+    def user_agent(self):
+        pass
+
     @abstractmethod
     def get_cookies(self, as_dict=False, all_info=False):
         return {}

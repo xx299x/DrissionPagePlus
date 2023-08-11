@@ -195,6 +195,9 @@ class BasePage(BaseParser):
     @property
     def json(self) -> dict: ...
 
+    @property
+    def user_agent(self) -> str: ...
+
     @abstractmethod
     def get_cookies(self, as_dict: bool = False, all_info: bool = False) -> Union[list, dict]: ...
 
