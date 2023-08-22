@@ -80,7 +80,7 @@ class ChromiumFrame(ChromiumBase):
         """重新获取document"""
         debug = self._debug
         if debug:
-            print('reload')
+            print('重新获取document')
 
         self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
         node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
@@ -568,7 +568,7 @@ class ChromiumFrame(ChromiumBase):
 
         for t in range(times + 1):
             err = None
-            result = self.driver.Page.navigate(url=to_url, frameId=self.frame_id)
+            result = self.driver.call_method('Page.navigate', url=to_url, frameId=self.frame_id)
 
             is_timeout = not self._wait_loaded(timeout)
             sleep(.5)

@@ -66,7 +66,7 @@ class ChromiumBaseWaiter(object):
         return self._loading(timeout=timeout, gap=.002, raise_err=raise_err)
 
     def load_complete(self, timeout=None, raise_err=None):
-        """等待页面开始加载
+        """等待页面加载完成
         :param timeout: 超时时间，为None时使用页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功

@@ -159,7 +159,7 @@ class ChromiumBase(BasePage):
             self._is_reading = False
 
     def _wait_loaded(self, timeout=None):
-        """等待页面加载完成
+        """等待页面加载完成，超时触发停止加载
         :param timeout: 超时时间
         :return: 是否成功，超时返回False
         """
