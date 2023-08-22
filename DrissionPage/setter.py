@@ -42,7 +42,7 @@ class ChromiumBaseSetter(object):
         """
         if implicit is not None:
             self._page.timeouts.implicit = implicit
-            self._page.timeout = implicit
+            self._page._timeout = implicit
 
         if page_load is not None:
             self._page.timeouts.page_load = page_load
