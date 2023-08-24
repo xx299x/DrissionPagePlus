@@ -9,7 +9,6 @@ from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
-from .commons.tools import port_is_using
 from .configs.chromium_options import ChromiumOptions
 from .errors import BrowserConnectError
 from .setter import ChromiumPageSetter
@@ -338,9 +337,16 @@ class ChromiumPage(ChromiumBase):
         """关闭浏览器"""
         self._tab_obj.call_method('Browser.close')
         self._tab_obj.stop()
-        ip, port = self.address.split(':')
-        while port_is_using(ip, port):
-            sleep(.1)
+
+        if self.process_id:
+            from os import popen
+            from platform import system
+            txt = f'tasklist | findstr {self.process_id}' if system().lower() == 'windows' \
+                else f'ps -ef | grep  {self.process_id}'
+            while True:
+                p = popen(txt)
+                if f'  {self.process_id} ' not in p.read():
+                    break
 
     def _on_alert_close(self, **kwargs):
         """alert关闭时触发的方法"""
