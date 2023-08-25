@@ -363,10 +363,11 @@ class BasePage(BaseParser):
         """初始化函数"""
         self._url = None
         self.timeout = timeout if timeout is not None else 10
-        self.retry_times = 3
-        self.retry_interval = 2
         self._url_available = None
-        self._download_path = ''
+        if not hasattr(self, 'retry_times'):
+            self.retry_times = 3
+        if not hasattr(self, 'retry_interval'):
+            self.retry_interval = 2
         self._DownloadKit = None
 
     @property

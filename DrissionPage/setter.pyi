@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from http.cookiejar import Cookie
+from pathlib import Path
 from typing import Union, Tuple
 
 from requests.adapters import HTTPAdapter
@@ -50,7 +51,15 @@ class ChromiumBaseSetter(object):
     def upload_files(self, files: Union[str, list, tuple]) -> None: ...
 
 
-class ChromiumPageSetter(ChromiumBaseSetter):
+class DownloadSetter(object):
+    def download_path(self, path: Union[str, Path]) -> None: ...
+
+
+class TabSetter(ChromiumBaseSetter, DownloadSetter):
+    def __init__(self, page): ...
+
+
+class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
     _page: ChromiumPage = ...
 
     def main_tab(self, tab_id: str = None) -> None: ...
@@ -61,7 +70,7 @@ class ChromiumPageSetter(ChromiumBaseSetter):
     def tab_to_front(self, tab_or_id: Union[str, ChromiumTab] = None) -> None: ...
 
 
-class SessionPageSetter(object):
+class SessionPageSetter(DownloadSetter):
     def __init__(self, page: SessionPage):
         self._page: SessionPage = ...
 
@@ -102,7 +111,7 @@ class SessionPageSetter(object):
     def add_adapter(self, url: str, adapter: HTTPAdapter) -> None: ...
 
 
-class WebPageSetter(ChromiumPageSetter):
+class WebPageSetter(ChromiumPageSetter, DownloadSetter):
     _page: WebPage = ...
     _session_setter: SessionPageSetter = ...
     _chromium_setter: ChromiumPageSetter = ...
@@ -114,7 +123,7 @@ class WebPageSetter(ChromiumPageSetter):
     def cookies(self, cookies) -> None: ...
 
 
-class WebPageTabSetter(ChromiumBaseSetter):
+class WebPageTabSetter(ChromiumBaseSetter, DownloadSetter):
     _page: WebPage = ...
     _session_setter: SessionPageSetter = ...
     _chromium_setter: ChromiumBaseSetter = ...

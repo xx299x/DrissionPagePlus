@@ -8,6 +8,7 @@ from copy import copy
 from .chromium_base import ChromiumBase
 from .commons.web import set_session_cookies, set_browser_cookies
 from .session_page import SessionPage
+from .setter import TabSetter
 from .setter import WebPageTabSetter
 
 
@@ -28,6 +29,7 @@ class ChromiumTab(ChromiumBase):
         self.retry_times = self.page.retry_times
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy
+        self._download_path = self.page.download_path
 
     def close(self):
         """关闭当前标签页"""
@@ -37,6 +39,13 @@ class ChromiumTab(ChromiumBase):
     def rect(self):
         """返回获取窗口坐标和大小的对象"""
         return self.page.rect
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = TabSetter(self)
+        return self._set
 
 
 class WebPageTab(SessionPage, ChromiumTab):

@@ -13,6 +13,7 @@ from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage, ChromiumTabRect
 from .session_element import SessionElement
 from .session_page import SessionPage
+from .setter import TabSetter
 from .setter import WebPageTabSetter
 from .web_page import WebPage
 
@@ -28,6 +29,9 @@ class ChromiumTab(ChromiumBase):
 
     @property
     def rect(self) -> ChromiumTabRect: ...
+
+    @property
+    def set(self) -> TabSetter: ...
 
 
 class WebPageTab(SessionPage, ChromiumTab):

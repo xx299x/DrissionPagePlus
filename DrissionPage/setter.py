@@ -118,7 +118,23 @@ class ChromiumBaseSetter(object):
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
 
-class ChromiumPageSetter(ChromiumBaseSetter):
+class DownloadSetter(object):
+    def download_path(self, path):
+        """设置下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        self._page._download_path = str(path)
+        if self._page._DownloadKit:
+            self._page._DownloadKit.set.goal_path(path)
+
+
+class TabSetter(ChromiumBaseSetter, DownloadSetter):
+    def __init__(self, page):
+        super().__init__(page)
+
+
+class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
     def main_tab(self, tab_id=None):
         """设置主tab
         :param tab_id: 标签页id，不传入则设置当前tab
@@ -143,8 +159,11 @@ class ChromiumPageSetter(ChromiumBaseSetter):
         self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
 
 
-class SessionPageSetter(object):
+class SessionPageSetter(DownloadSetter):
     def __init__(self, page):
+        """
+        :param page: SessionPage对象
+        """
         self._page = page
 
     def retry_times(self, times):
@@ -154,6 +173,15 @@ class SessionPageSetter(object):
     def retry_interval(self, interval):
         """设置连接失败时重连间隔"""
         self._page.retry_interval = interval
+
+    def download_path(self, path):
+        """设置下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        self._page._download_path = str(path)
+        if self._page._DownloadKit:
+            self._page._DownloadKit.set.goal_path(path)
 
     def timeout(self, second):
         """设置连接超时时间
@@ -274,7 +302,7 @@ class SessionPageSetter(object):
         self._page.session.mount(url, adapter)
 
 
-class WebPageSetter(ChromiumPageSetter):
+class WebPageSetter(ChromiumPageSetter, DownloadSetter):
     def __init__(self, page):
         super().__init__(page)
         self._session_setter = SessionPageSetter(self._page)
@@ -308,7 +336,7 @@ class WebPageSetter(ChromiumPageSetter):
             self._chromium_setter.user_agent(ua, platform)
 
 
-class WebPageTabSetter(ChromiumBaseSetter):
+class WebPageTabSetter(ChromiumBaseSetter, DownloadSetter):
     def __init__(self, page):
         super().__init__(page)
         self._session_setter = SessionPageSetter(self._page)

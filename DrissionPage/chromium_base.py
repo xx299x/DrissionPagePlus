@@ -189,7 +189,7 @@ class ChromiumBase(BasePage):
 
     def _onFrameStartedLoading(self, **kwargs):
         """页面开始加载时触发"""
-        if kwargs['frameId'] == self.tab_id:
+        if kwargs['frameId'] == self._target_id:
             self._is_loading = True
 
             if self._debug:
@@ -199,7 +199,7 @@ class ChromiumBase(BasePage):
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
-        if kwargs['frameId'] == self.tab_id and self._first_run is False and self._is_loading:
+        if kwargs['frameId'] == self._target_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
                 if self._debug_recorder:
@@ -225,7 +225,7 @@ class ChromiumBase(BasePage):
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
-        if kwargs['frame'].get('parentId', None) == self.tab_id and self._first_run is False and self._is_loading:
+        if kwargs['frame'].get('parentId', None) == self._target_id and self._first_run is False and self._is_loading:
             self._is_loading = True
             if self._debug:
                 print('navigated')
@@ -275,12 +275,12 @@ class ChromiumBase(BasePage):
     @property
     def title(self):
         """返回当前页面title"""
-        return self.run_cdp_loaded('Target.getTargetInfo', targetId=self.tab_id)['targetInfo']['title']
+        return self.run_cdp_loaded('Target.getTargetInfo', targetId=self._target_id)['targetInfo']['title']
 
     @property
     def url(self):
         """返回当前页面url"""
-        return self.run_cdp_loaded('Target.getTargetInfo', targetId=self.tab_id)['targetInfo']['url']
+        return self.run_cdp_loaded('Target.getTargetInfo', targetId=self._target_id)['targetInfo']['url']
 
     @property
     def _browser_url(self):
@@ -303,6 +303,11 @@ class ChromiumBase(BasePage):
 
     @property
     def tab_id(self):
+        """返回当前标签页id"""
+        return self._target_id
+
+    @property
+    def _target_id(self):
         """返回当前标签页id"""
         return self.driver.id if self.driver.status == 'started' else ''
 

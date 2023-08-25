@@ -98,6 +98,9 @@ class ChromiumBase(BasePage):
     def json(self) -> Union[dict, None]: ...
 
     @property
+    def _target_id(self) -> str: ...
+
+    @property
     def tab_id(self) -> str: ...
 
     @property

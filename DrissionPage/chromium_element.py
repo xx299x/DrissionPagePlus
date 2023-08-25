@@ -463,7 +463,7 @@ class ChromiumElement(DrissionElement):
 
             node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
             frame = node.get('frameId', None)
-            frame = frame or self.page.tab_id
+            frame = frame or self.page._target_id
 
             try:
                 result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)

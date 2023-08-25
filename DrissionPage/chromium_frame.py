@@ -17,10 +17,15 @@ from .waiter import FrameWaiter
 
 class ChromiumFrame(ChromiumBase):
     def __init__(self, page, ele):
+        """
+        :param page: frame所在的页面对象
+        :param ele: frame所在元素
+        """
         self.page = page
         self.address = page.address
         node = page.run_cdp('DOM.describeNode', backendNodeId=ele.ids.backend_id)['node']
         self.frame_id = node['frameId']
+        self._tab_id = page.tab_id
         self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
         self._states = None
@@ -329,6 +334,11 @@ class ChromiumFrame(ChromiumBase):
             self._wait = FrameWaiter(self)
         return self._wait
 
+    @property
+    def tab_id(self):
+        """返回frame所在tab的id"""
+        return self._tab_id
+
     def refresh(self):
         """刷新frame页面"""
         self._check_ok()
@@ -616,7 +626,7 @@ class ChromiumFrameIds(object):
     @property
     def tab_id(self):
         """返回当前标签页id"""
-        return self._frame.page.tab_id
+        return self._frame._tab_id
 
     @property
     def backend_id(self):

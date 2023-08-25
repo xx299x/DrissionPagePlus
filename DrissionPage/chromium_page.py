@@ -99,10 +99,6 @@ class ChromiumPage(ChromiumBase):
 
         self._rect = None
         self._main_tab = self.tab_id
-        # try:
-        #     self.download_set.by_browser()
-        # except CDPError:
-        #     pass
 
         self._process_id = None
         r = self.browser_driver.call_method('SystemInfo.getProcessInfo')
@@ -440,6 +436,10 @@ class ChromiumTabRect(object):
         return self._page.browser_driver.call_method('Browser.getWindowForTarget', targetId=self._page.tab_id)['bounds']
 
 
+class BrowserDownloadManager(object):
+    def __init__(self, page):
+        self._page = page
+        self.frames = {}
 # class BaseDownloadSetter(DownloadSetter):
 #     """用于设置下载参数的类"""
 #
