@@ -25,7 +25,7 @@ class ChromiumDriver(object):
         self.id = tab_id
         self.address = address
         self.type = tab_type
-        self.debug = False
+        self._debug = False
         self.has_alert = False
 
         self._websocket_url = f'ws://{address}/devtools/{tab_type}/{tab_id}'
@@ -57,11 +57,12 @@ class ChromiumDriver(object):
 
         message_json = dumps(message)
 
-        if self.debug:
-            if self.debug is True or (isinstance(self.debug, str) and message.get('method', '').startswith(self.debug)):
+        if self._debug:
+            if self._debug is True or (
+                    isinstance(self._debug, str) and message.get('method', '').startswith(self._debug)):
                 print(f'发> {message_json}')
-            elif isinstance(self.debug, (list, tuple, set)):
-                for m in self.debug:
+            elif isinstance(self._debug, (list, tuple, set)):
+                for m in self._debug:
                     if message.get('method', '').startswith(m):
                         print(f'发> {message_json}')
                         break
@@ -112,12 +113,12 @@ class ChromiumDriver(object):
                 self.stop()
                 return
 
-            if self.debug:
-                if self.debug is True or 'id' in mes or (isinstance(self.debug, str)
-                                                         and mes.get('method', '').startswith(self.debug)):
+            if self._debug:
+                if self._debug is True or 'id' in mes or (isinstance(self._debug, str)
+                                                          and mes.get('method', '').startswith(self._debug)):
                     print(f'<收 {message_json}')
-                elif isinstance(self.debug, (list, tuple, set)):
-                    for m in self.debug:
+                elif isinstance(self._debug, (list, tuple, set)):
+                    for m in self._debug:
                         if mes.get('method', '').startswith(m):
                             print(f'<收 {message_json}')
                             break
@@ -129,7 +130,7 @@ class ChromiumDriver(object):
                 if mes["id"] in self.method_results:
                     self.method_results[mes['id']].put(mes)
 
-            elif self.debug:
+            elif self._debug:
                 print(f'未知信息：{mes}')
 
     def _handle_event_loop(self):

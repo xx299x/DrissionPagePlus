@@ -21,7 +21,14 @@ class ChromiumFrame(ChromiumBase):
         :param page: frame所在的页面对象
         :param ele: frame所在元素
         """
-        self.page = page
+        page_type = str(type(page))
+        if 'ChromiumPage' in page_type or 'WebPage' in page:
+            self.page = self._target_page = self.tab = page
+        else:  # Tab、Frame
+            self.page = page.page
+            self._target_page = page
+            self.tab = page.tab if 'ChromiumFrame' in page_type else page
+
         self.address = page.address
         node = page.run_cdp('DOM.describeNode', backendNodeId=ele.ids.backend_id)['node']
         self.frame_id = node['frameId']
@@ -32,7 +39,7 @@ class ChromiumFrame(ChromiumBase):
 
         if self._is_inner_frame():
             self._is_diff_domain = False
-            self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+            self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
             super().__init__(page.address, page.tab_id, page.timeout)
         else:
             self._is_diff_domain = True
@@ -65,8 +72,8 @@ class ChromiumFrame(ChromiumBase):
 
     def _runtime_settings(self):
         """重写设置浏览器运行参数方法"""
-        self._timeouts = self.page.timeouts
-        self._page_load_strategy = self.page.page_load_strategy
+        self._timeouts = self._target_page.timeouts
+        self._page_load_strategy = self._target_page.page_load_strategy
 
     def _driver_init(self, tab_id):
         """避免出现服务器500错误
@@ -87,18 +94,18 @@ class ChromiumFrame(ChromiumBase):
         if debug:
             print('重新获取document')
 
-        self._frame_ele = ChromiumElement(self.page, backend_id=self._backend_id)
-        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
+        self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
+        node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
 
         if self._is_inner_frame():
             self._is_diff_domain = False
-            self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
-            super().__init__(self.address, self.page.tab_id, self.page.timeout)
+            self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
+            super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
             self._debug = debug
         else:
             self._is_diff_domain = True
             self._tab_obj.stop()
-            super().__init__(self.address, self.frame_id, self.page.timeout)
+            super().__init__(self.address, self.frame_id, self._target_page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
             self._debug = debug
@@ -109,7 +116,7 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
         try:
-            self.page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
+            self._target_page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
         except Exception:
             self._reload()
             # sleep(2)
@@ -126,8 +133,9 @@ class ChromiumFrame(ChromiumBase):
             while self.is_alive and perf_counter() < end_time:
                 try:
                     if self._is_diff_domain is False:
-                        node = self.page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
-                        self.doc_ele = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+                        node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
+                        self.doc_ele = ChromiumElement(self._target_page,
+                                                       backend_id=node['contentDocument']['backendNodeId'])
 
                     else:
                         b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
@@ -207,7 +215,8 @@ class ChromiumFrame(ChromiumBase):
         """返回元素outerHTML文本"""
         self._check_ok()
         tag = self.tag
-        out_html = self.page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele.ids.backend_id)['outerHTML']
+        out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele.ids.backend_id)[
+            'outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 
@@ -296,7 +305,7 @@ class ChromiumFrame(ChromiumBase):
                 except ContextLossError:
                     try:
                         node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
-                        doc = ChromiumElement(self.page, backend_id=node['contentDocument']['backendNodeId'])
+                        doc = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
                         return doc.run_js('return this.readyState;')
                     except:
                         pass
@@ -525,7 +534,7 @@ class ChromiumFrame(ChromiumBase):
         cx, cy = ele.locations.viewport_location
         w, h = ele.size
         img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
-        body = self.page('t:body')
+        body = self._target_page('t:body')
         first_child = body('c::first-child')
         if not isinstance(first_child, ChromiumElement):
             first_child = first_child.frame_ele
@@ -540,9 +549,9 @@ class ChromiumFrame(ChromiumBase):
         new_ele.scroll.to_see(True)
         top = int(self.frame_ele.style('border-top').split('px')[0])
         left = int(self.frame_ele.style('border-left').split('px')[0])
-        r = self.page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
-                                     left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
-        self.page.remove_ele(new_ele)
+        r = self._target_page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+                                             left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
+        self._target_page.remove_ele(new_ele)
         return r
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
@@ -610,7 +619,7 @@ class ChromiumFrame(ChromiumBase):
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
-        return self.frame_id in str(self.page.run_cdp('Page.getFrameTree')['frameTree'])
+        return self.frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])
 
     def _check_alive(self):
         """检测iframe是否有效线程方法"""

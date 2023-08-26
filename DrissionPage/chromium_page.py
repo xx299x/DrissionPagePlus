@@ -343,6 +343,7 @@ class ChromiumPage(ChromiumBase):
                 p = popen(txt)
                 if f'  {self.process_id} ' not in p.read():
                     break
+                sleep(.2)
 
     def _on_alert_close(self, **kwargs):
         """alert关闭时触发的方法"""
@@ -438,8 +439,11 @@ class ChromiumTabRect(object):
 
 class BrowserDownloadManager(object):
     def __init__(self, page):
-        self._page = page
+        self.page = page
         self.frames = {}
+        self.pause = False
+
+
 # class BaseDownloadSetter(DownloadSetter):
 #     """用于设置下载参数的类"""
 #
