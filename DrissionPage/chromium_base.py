@@ -111,6 +111,7 @@ class ChromiumBase(BasePage):
         self._tab_obj.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
         self._tab_obj.set_listener('Page.loadEventFired', self._onLoadEventFired)
         self._tab_obj.set_listener('Page.frameNavigated', self._onFrameNavigated)
+        self._tab_obj.set_listener('Page.downloadWillBegin', self._onDownloadWillBegin)
 
     def _get_document(self):
         """刷新cdp使用的document数据"""
@@ -242,6 +243,9 @@ class ChromiumBase(BasePage):
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
+    def _onDownloadWillBegin(self, **kwargs):
+        self._page._dl_mgr.add_mission(kwargs['guid'], self.download_path, kwargs['suggestedFilename'])
+
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
@@ -250,6 +254,10 @@ class ChromiumBase(BasePage):
         :return: ChromiumElement对象
         """
         return self.ele(loc_or_str, timeout)
+
+    @property
+    def page(self):
+        return self._page
 
     @property
     def driver(self):

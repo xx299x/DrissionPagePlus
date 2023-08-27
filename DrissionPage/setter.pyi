@@ -69,6 +69,8 @@ class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
 
     def tab_to_front(self, tab_or_id: Union[str, ChromiumTab] = None) -> None: ...
 
+    def download_path(self, path: Union[str, Path]) -> None: ...
+
 
 class SessionPageSetter(DownloadSetter):
     def __init__(self, page: SessionPage):

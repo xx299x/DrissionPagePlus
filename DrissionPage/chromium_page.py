@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from shutil import move
 from time import perf_counter, sleep
 
 from .chromium_base import ChromiumBase, Timeout
@@ -25,6 +26,8 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 超时时间
         """
         super().__init__(addr_driver_opts, tab_id, timeout)
+        self._page = self
+        self._dl_mgr = BrowserDownloadManager(self)
 
     def _set_start_options(self, addr_driver_opts, none):
         """设置浏览器启动属性
@@ -439,9 +442,25 @@ class ChromiumTabRect(object):
 
 class BrowserDownloadManager(object):
     def __init__(self, page):
-        self.page = page
-        self.frames = {}
-        self.pause = False
+        self._page = page
+        page.set.download_path(page.download_path)
+        self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
+        self._missions = {}
+
+    def add_mission(self, guid, path, name):
+        print(name)
+        self._missions[guid] = {'path': path, 'name': name}
+
+    def _onDownloadProgress(self, **kwargs):
+        # todo: 处理同名文件、处理后缀
+        if kwargs['state'] == 'completed' and kwargs['guid'] in self._missions:
+            guid = kwargs['guid']
+            path = self._missions[guid]['path']
+            name = self._missions[guid]['name']
+            form_path = f'{self._page.download_path}\\{guid}'
+            to_path = f'{path}\\{name}'
+            move(form_path, to_path)
+            self._missions.pop(guid)
 
 
 # class BaseDownloadSetter(DownloadSetter):

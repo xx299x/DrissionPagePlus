@@ -20,7 +20,7 @@ class ChromiumTab(ChromiumBase):
         :param page: ChromiumPage对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         """
-        self.page = page
+        self._page = page
         super().__init__(page.address, tab_id, page.timeout)
 
     def _set_runtime_settings(self):
@@ -34,6 +34,11 @@ class ChromiumTab(ChromiumBase):
     def close(self):
         """关闭当前标签页"""
         self.page.close_tabs(self.tab_id)
+
+    @property
+    def page(self):
+        """返回总体page对象"""
+        return self._page
 
     @property
     def rect(self):

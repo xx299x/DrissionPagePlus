@@ -158,6 +158,15 @@ class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
             tab_or_id = tab_or_id.tab_id
         self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
 
+    def download_path(self, path):
+        """设置下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        super().download_path(path)
+        self._page.browser_driver.call_method('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
+                                              behavior='allowAndName', eventsEnabled=True)
+
 
 class SessionPageSetter(DownloadSetter):
     def __init__(self, page):

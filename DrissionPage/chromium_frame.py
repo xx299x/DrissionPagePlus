@@ -23,9 +23,9 @@ class ChromiumFrame(ChromiumBase):
         """
         page_type = str(type(page))
         if 'ChromiumPage' in page_type or 'WebPage' in page:
-            self.page = self._target_page = self.tab = page
+            self._page = self._target_page = self.tab = page
         else:  # Tab、Frame
-            self.page = page.page
+            self._page = page.page
             self._target_page = page
             self.tab = page.tab if 'ChromiumFrame' in page_type else page
 
@@ -190,6 +190,10 @@ class ChromiumFrame(ChromiumBase):
             self._get_new_document()
 
     @property
+    def page(self):
+        return self._page
+
+    @property
     def ids(self):
         return self._ids
 
@@ -347,6 +351,10 @@ class ChromiumFrame(ChromiumBase):
     def tab_id(self):
         """返回frame所在tab的id"""
         return self._tab_id
+
+    @property
+    def download_path(self):
+        return self.tab.download_path
 
     def refresh(self):
         """刷新frame页面"""
