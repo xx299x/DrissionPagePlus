@@ -78,6 +78,26 @@ class ChromiumBaseWaiter(object):
         while self._driver._upload_list:
             sleep(.01)
 
+    def browser_download_begin(self, timeout=None, cancel=False):
+        """等待浏览器下载开始，可将其拦截
+        :param timeout: 超时时间，None使用页面对象超时时间
+        :param cancel: 是否取消该任务
+        :return: 成功返回任务信息dict，失败返回False
+        """
+        self._driver._wait_download_flag = False if cancel else True
+        if timeout is None:
+            timeout = self._driver.timeout
+
+        r = False
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if not isinstance(self._driver._wait_download_flag, bool):
+                r = self._driver._wait_download_flag
+                break
+
+        self._driver._wait_download_flag = None
+        return r
+
     def url_change(self, text, exclude=False, timeout=None, raise_err=None):
         """等待url变成包含或不包含指定文本
         :param text: 用于识别的文本
@@ -172,6 +192,10 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
             raise WaitTimeoutError('等待新标签页失败。')
         else:
             return False
+
+    def browser_downloads_complete(self):
+        """等待所有下载任务结束"""
+        pass
 
 
 class ChromiumElementWaiter(object):

@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union
+from typing import Union, Optional
 
 from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
@@ -34,6 +34,8 @@ class ChromiumBaseWaiter(object):
     def load_complete(self, timeout: float = None, raise_err: bool = None) -> bool: ...
 
     def upload_paths_inputted(self) -> None: ...
+
+    def browser_download_begin(self, timeout: float = None, cancel: bool = False) -> Union[dict, bool]: ...
 
     def url_change(self, text: str, exclude: bool = False, timeout: float = None, raise_err: bool = None) -> bool: ...
 

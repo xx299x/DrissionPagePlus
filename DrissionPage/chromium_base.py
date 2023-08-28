@@ -64,6 +64,7 @@ class ChromiumBase(BasePage):
     def _set_runtime_settings(self):
         self._timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
+        self._wait_download_flag = None
 
     def _connect_browser(self, tab_id=None):
         """连接浏览器，在第一次时运行
@@ -244,7 +245,10 @@ class ChromiumBase(BasePage):
             self._upload_list = None
 
     def _onDownloadWillBegin(self, **kwargs):
+        if self._wait_download_flag is False:
+            self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'])
         self._page._dl_mgr.add_mission(kwargs['guid'], self.download_path, kwargs['suggestedFilename'])
+        self._wait_download_flag = {'url': kwargs['url'], 'name': kwargs['suggestedFilename']}
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素

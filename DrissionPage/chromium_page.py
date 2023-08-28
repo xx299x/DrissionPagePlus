@@ -10,6 +10,7 @@ from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
+from .commons.tools import get_usable_path
 from .configs.chromium_options import ChromiumOptions
 from .errors import BrowserConnectError
 from .setter import ChromiumPageSetter
@@ -448,17 +449,16 @@ class BrowserDownloadManager(object):
         self._missions = {}
 
     def add_mission(self, guid, path, name):
-        print(name)
         self._missions[guid] = {'path': path, 'name': name}
 
     def _onDownloadProgress(self, **kwargs):
-        # todo: 处理同名文件、处理后缀
         if kwargs['state'] == 'completed' and kwargs['guid'] in self._missions:
             guid = kwargs['guid']
             path = self._missions[guid]['path']
             name = self._missions[guid]['name']
             form_path = f'{self._page.download_path}\\{guid}'
-            to_path = f'{path}\\{name}'
+            to_path = get_usable_path(f'{path}\\{name}')
+
             move(form_path, to_path)
             self._missions.pop(guid)
 
