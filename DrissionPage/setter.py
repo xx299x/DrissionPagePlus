@@ -117,8 +117,6 @@ class ChromiumBaseSetter(object):
         self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
-
-class DownloadSetter(object):
     def download_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -128,13 +126,20 @@ class DownloadSetter(object):
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
+    def download_file_name(self, name):
+        """设置下一个被下载文件的名称
+        :param name: 文件名，可不含后缀
+        :return: None
+        """
+        self._page._download_rename = name
 
-class TabSetter(ChromiumBaseSetter, DownloadSetter):
+
+class TabSetter(ChromiumBaseSetter):
     def __init__(self, page):
         super().__init__(page)
 
 
-class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
+class ChromiumPageSetter(ChromiumBaseSetter):
     def main_tab(self, tab_id=None):
         """设置主tab
         :param tab_id: 标签页id，不传入则设置当前tab
@@ -168,7 +173,7 @@ class ChromiumPageSetter(ChromiumBaseSetter, DownloadSetter):
                                               behavior='allowAndName', eventsEnabled=True)
 
 
-class SessionPageSetter(DownloadSetter):
+class SessionPageSetter(object):
     def __init__(self, page):
         """
         :param page: SessionPage对象
@@ -311,7 +316,7 @@ class SessionPageSetter(DownloadSetter):
         self._page.session.mount(url, adapter)
 
 
-class WebPageSetter(ChromiumPageSetter, DownloadSetter):
+class WebPageSetter(ChromiumPageSetter):
     def __init__(self, page):
         super().__init__(page)
         self._session_setter = SessionPageSetter(self._page)
@@ -345,7 +350,7 @@ class WebPageSetter(ChromiumPageSetter, DownloadSetter):
             self._chromium_setter.user_agent(ua, platform)
 
 
-class WebPageTabSetter(ChromiumBaseSetter, DownloadSetter):
+class WebPageTabSetter(ChromiumBaseSetter):
     def __init__(self, page):
         super().__init__(page)
         self._session_setter = SessionPageSetter(self._page)

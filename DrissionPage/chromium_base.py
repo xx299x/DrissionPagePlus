@@ -43,6 +43,8 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._listener = None
+        self._wait_download_flag = None
+        self._download_rename = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -64,7 +66,6 @@ class ChromiumBase(BasePage):
     def _set_runtime_settings(self):
         self._timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
-        self._wait_download_flag = None
 
     def _connect_browser(self, tab_id=None):
         """连接浏览器，在第一次时运行
@@ -190,7 +191,7 @@ class ChromiumBase(BasePage):
         return False
 
     def _onFrameStartedLoading(self, **kwargs):
-        """页面开始加载时触发"""
+        """页面开始加载时执行"""
         if kwargs['frameId'] == self._target_id:
             self._is_loading = True
 
@@ -200,7 +201,7 @@ class ChromiumBase(BasePage):
                     self._debug_recorder.add_data((perf_counter(), '加载流程', 'FrameStartedLoading'))
 
     def _onFrameStoppedLoading(self, **kwargs):
-        """页面加载完成后触发"""
+        """页面加载完成后执行"""
         if kwargs['frameId'] == self._target_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
@@ -219,14 +220,14 @@ class ChromiumBase(BasePage):
         self._get_document()
 
     def _onDocumentUpdated(self, **kwargs):
-        """页面跳转时触发"""
+        """页面跳转时执行"""
         if self._debug:
             print('documentUpdated')
             if self._debug_recorder:
                 self._debug_recorder.add_data((perf_counter(), '加载流程', 'documentUpdated'))
 
     def _onFrameNavigated(self, **kwargs):
-        """页面跳转时触发"""
+        """页面跳转时执行"""
         if kwargs['frame'].get('parentId', None) == self._target_id and self._first_run is False and self._is_loading:
             self._is_loading = True
             if self._debug:
@@ -235,7 +236,7 @@ class ChromiumBase(BasePage):
                     self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def _onFileChooserOpened(self, **kwargs):
-        """文件选择框打开时触发"""
+        """文件选择框打开时执行"""
         if self._upload_list:
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
@@ -245,10 +246,23 @@ class ChromiumBase(BasePage):
             self._upload_list = None
 
     def _onDownloadWillBegin(self, **kwargs):
+        """下载即将开始时执行"""
         if self._wait_download_flag is False:
             self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'])
-        self._page._dl_mgr.add_mission(kwargs['guid'], self.download_path, kwargs['suggestedFilename'])
-        self._wait_download_flag = {'url': kwargs['url'], 'name': kwargs['suggestedFilename']}
+
+        if self._download_rename:
+            tmp = kwargs['suggestedFilename'].rsplit('.', 1)
+            ext_name = tmp[-1] if len(tmp) > 1 else ''
+            tmp = self._download_rename.rsplit('.', 1)
+            ext_rename = tmp[-1] if len(tmp) > 1 else ''
+            n = self._download_rename if ext_rename == ext_name else f'{self._download_rename}.{ext_name}'
+            self._download_rename = None
+
+        else:
+            n = kwargs['suggestedFilename']
+
+        self._page._dl_mgr.add_mission(kwargs['guid'], self.download_path, n)
+        self._wait_download_flag = {'url': kwargs['url'], 'name': n}
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素

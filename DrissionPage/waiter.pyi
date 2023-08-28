@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Optional
+from typing import Union
 
 from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
@@ -48,13 +48,9 @@ class ChromiumBaseWaiter(object):
 class ChromiumPageWaiter(ChromiumBaseWaiter):
     _driver: ChromiumPage = ...
 
-    # _listener: Union[NetworkListener, None] = ...
-
-    # def download_begin(self, timeout: float = 1.5) -> bool: ...
-
-    # def download_finish(self, timeout: float = None) -> bool: ...
-
     def new_tab(self, timeout: float = None, raise_err: bool = None) -> bool: ...
+
+    def browser_downloads_complete(self, timeout: float = None) -> bool: ...
 
 
 class ChromiumElementWaiter(object):

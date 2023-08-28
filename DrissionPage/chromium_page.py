@@ -446,264 +446,36 @@ class BrowserDownloadManager(object):
         self._page = page
         page.set.download_path(page.download_path)
         self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
+        self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
         self._missions = {}
 
     def add_mission(self, guid, path, name):
+        """添加下载任务信息
+        :param guid: guid
+        :param path: 保存路径
+        :param name: 保存文件名
+        :return: None
+        """
         self._missions[guid] = {'path': path, 'name': name}
 
+    def _onDownloadWillBegin(self, **kwargs):
+        """用于获取弹出新标签页触发的下载任务"""
+        sleep(.1)
+        if kwargs['guid'] not in self._missions:
+            self.add_mission(kwargs['guid'], self._page.download_path, kwargs['suggestedFilename'])
+
     def _onDownloadProgress(self, **kwargs):
-        if kwargs['state'] == 'completed' and kwargs['guid'] in self._missions:
+        """下载状态变化时执行"""
+        if kwargs['state'] in ('completed', 'canceled') and kwargs['guid'] in self._missions:
             guid = kwargs['guid']
-            path = self._missions[guid]['path']
-            name = self._missions[guid]['name']
-            form_path = f'{self._page.download_path}\\{guid}'
-            to_path = get_usable_path(f'{path}\\{name}')
+            if kwargs['state'] == 'completed':
+                path = self._missions[guid]['path']
+                name = self._missions[guid]['name']
+                form_path = f'{self._page.download_path}\\{guid}'
+                to_path = get_usable_path(f'{path}\\{name}')
+                move(form_path, to_path)
 
-            move(form_path, to_path)
             self._missions.pop(guid)
-
-
-# class BaseDownloadSetter(DownloadSetter):
-#     """用于设置下载参数的类"""
-#
-#     def __init__(self, page):
-#         """
-#         :param page: ChromiumPage对象
-#         """
-#         super().__init__(page)
-#         self._behavior = 'allowAndName'
-#         self._session = None
-#         self._save_path = ''
-#         self._rename = None
-#         self._waiting_download = False
-#         self._download_begin = False
-#         self._browser_missions = {}
-#         self._browser_downloading_count = 0
-#         self._show_msg = True
-#
-#     @property
-#     def session(self):
-#         """返回用于DownloadKit的Session对象"""
-#         if self._session is None:
-#             self._session = Session()
-#         return self._session
-#
-#     @property
-#     def browser_missions(self):
-#         """返回浏览器下载任务"""
-#         return list(self._browser_missions.values())
-#
-#     @property
-#     def DownloadKit_missions(self):
-#         """返回DownloadKit下载任务"""
-#         return list(self.DownloadKit.missions.values())
-#
-#     @property
-#     def _switched_DownloadKit(self):
-#         """返回从浏览器同步cookies后的Session对象"""
-#         self._cookies_to_session()
-#         return self.DownloadKit
-#
-#     def save_path(self, path):
-#         """设置下载路径
-#         :param path: 下载路径
-#         :return: None
-#         """
-#         path = path or ''
-#         path = Path(path).absolute()
-#         path.mkdir(parents=True, exist_ok=True)
-#         path = str(path)
-#         self._save_path = path
-#         self._page._download_path = path
-#         try:
-#             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', downloadPath=path,
-#                                                                   eventsEnabled=True)
-#         except CDPError:
-#             warn('\n您的浏览器版本太低，用新标签页下载文件可能崩溃，建议升级。')
-#             self._page.run_cdp('Page.setDownloadBehavior', behavior='allowAndName', downloadPath=path)
-#
-#         self.DownloadKit.goal_path = path
-#
-#     def rename(self, name):
-#         """设置浏览器下一个下载任务的文件名
-#         :param name: 文件名，不带后缀时自动使用原后缀
-#         :return: None
-#         """
-#         self._rename = name
-#
-#     def by_browser(self):
-#         """设置使用浏览器下载文件"""
-#         try:
-#             self._page.browser_driver.Browser.setDownloadBehavior(behavior='allowAndName', eventsEnabled=True,
-#                                                                   downloadPath=self._page.download_path)
-#             self._page.browser_driver.Browser.downloadWillBegin = self._download_will_begin
-#             self._page.browser_driver.Browser.downloadProgress = self._download_progress
-#         except CDPError:
-#             self._page.driver.Page.setDownloadBehavior(behavior='allowAndName', downloadPath=self._page.download_path)
-#             self._page.driver.Page.downloadWillBegin = self._download_will_begin
-#             self._page.driver.Page.downloadProgress = self._download_progress
-#
-#         self._behavior = 'allowAndName'
-#
-#     def by_DownloadKit(self):
-#         """设置使用DownloadKit下载文件"""
-#         try:
-#             self._page.browser_driver.Browser.setDownloadBehavior(behavior='deny', eventsEnabled=True)
-#             self._page.browser_driver.Browser.downloadWillBegin = self._download_by_DownloadKit
-#         except CDPError:
-#             raise RuntimeError('您的浏览器版本太低，不支持此方法，请升级。')
-#
-#         self._behavior = 'deny'
-#
-#     def wait_download_begin(self, timeout=None):
-#         """等待浏览器下载开始
-#         :param timeout: 等待超时时间，为None则使用页面对象timeout属性
-#         :return: 是否等到下载开始
-#         """
-#         self._waiting_download = True
-#         result = False
-#         timeout = timeout if timeout is not None else self._page.timeout
-#         end_time = perf_counter() + timeout
-#         while perf_counter() < end_time:
-#             if self._download_begin:
-#                 result = True
-#                 break
-#             sleep(.05)
-#         self._download_begin = False
-#         self._waiting_download = False
-#         return result
-#
-#     def wait_download_finish(self, timeout=None):
-#         """等待所有下载结束
-#         :param timeout: 超时时间
-#         :return: 是否等待到下载完成
-#         """
-#         timeout = timeout if timeout is not None else self._page.timeout
-#         end_time = perf_counter() + timeout
-#         while perf_counter() < end_time:
-#             if (self._DownloadKit is None or not self.DownloadKit.is_running) and self._browser_downloading_count == 0:
-#                 return True
-#             sleep(.5)
-#         return False
-#
-#     def show_msg(self, on_off=True):
-#         """是否显示下载信息
-#         :param on_off: bool表示开或关
-#         :return: None
-#         """
-#         self._show_msg = on_off
-#
-#     def _cookies_to_session(self):
-#         """把driver对象的cookies复制到session对象"""
-#         ua = self._page.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-#         self.session.headers.update({"User-Agent": ua})
-#         set_session_cookies(self.session, self._page.get_cookies(as_dict=False, all_info=False))
-#
-#     def _download_by_DownloadKit(self, **kwargs):
-#         """拦截浏览器下载并用downloadKit下载"""
-#         url = kwargs['url']
-#         if url.startswith('blob:'):
-#             raise TypeError('bolb:开头的链接无法使用DownloadKit下载，请用浏览器下载功能。')
-#
-#         self._page.browser_driver.Browser.cancelDownload(guid=kwargs['guid'])
-#
-#         if self._rename:
-#             rename = get_rename(kwargs['suggestedFilename'], self._rename)
-#             self._rename = None
-#         else:
-#             rename = kwargs['suggestedFilename']
-#
-#         mission = self._page.download.add(file_url=url, goal_path=self._page.download_path, rename=rename)
-#         Thread(target=self._wait_download_complete, args=(mission,), daemon=False).start()
-#
-#         if self._waiting_download:
-#             self._download_begin = True
-#
-#         self._browser_downloading_count += 1
-#
-#         if self._show_msg:
-#             print(f'(DownloadKit)开始下载：{Path(self._save_path) / rename}')
-#
-#     def _download_will_begin(self, **kwargs):
-#         """浏览器下载即将开始时调用"""
-#         if self._rename:
-#             rename = get_rename(kwargs['suggestedFilename'], self._rename)
-#             self._rename = None
-#         else:
-#             rename = kwargs['suggestedFilename']
-#
-#         m = BrowserDownloadMission(kwargs['guid'], kwargs['url'], rename)
-#         self._browser_missions[kwargs['guid']] = m
-#         aid_path = Path(self._save_path) / rename
-#
-#         if self._show_msg:
-#             print(f'(Browser)开始下载：{rename}')
-#         self._browser_downloading_count += 1
-#
-#         if self._file_exists == 'skip' and aid_path.exists():
-#             m.state = 'skipped'
-#             m.save_path = aid_path.absolute()
-#             self._page.browser_driver.call_method('Browser.cancelDownload', guid=kwargs['guid'])
-#             (Path(self._save_path) / kwargs["guid"]).unlink(missing_ok=True)
-#             return
-#
-#         if self._waiting_download:
-#             self._download_begin = True
-#
-#     def _download_progress(self, **kwargs):
-#         """下载状态产生变化时调用"""
-#         guid = kwargs['guid']
-#         m = self._browser_missions.get(guid, None)
-#         if m:
-#             m.size = kwargs['totalBytes']
-#             m.received = kwargs['receivedBytes']
-#             m.state = kwargs['state']
-#
-#             if m.state == 'completed':
-#                 path = Path(self._save_path) / m.name
-#                 from_path = Path(self._save_path) / guid
-#                 if path.exists():
-#                     if self._file_exists == 'rename':
-#                         path = get_usable_path(path)
-#                     else:  # 'overwrite'
-#                         path.unlink()
-#                 from_path.rename(path)
-#                 m.save_path = path.absolute()
-#
-#         if kwargs['state'] != 'inProgress':
-#             if self._show_msg and m:
-#                 if kwargs['state'] == 'completed':
-#                     print(f'(Browser)下载完成：{m.save_path}')
-#                 elif m.state != 'skipped':
-#                     print(f'(Browser)下载失败：{m.save_path}')
-#                 else:
-#                     print(f'(Browser)已跳过：{m.save_path}')
-#             self._browser_downloading_count -= 1
-#
-#     def _wait_download_complete(self, mission):
-#         """等待DownloadKit下载完成"""
-#         mission.wait(show=False)
-#         if self._show_msg:
-#             if mission.result == 'skip':
-#                 print(f'(DownloadKit)已跳过：{mission.path}')
-#             elif not mission.result:
-#                 print(f'(DownloadKit)下载失败：{mission.path}')
-#             else:
-#                 print(f'(DownloadKit)下载完成：{mission.path}')
-
-
-class BrowserDownloadMission(object):
-    def __init__(self, guid, url, name):
-        self.id = guid
-        self.url = url
-        self.name = name
-        self.save_path = None
-        self.state = None
-        self.size = None
-        self.received = None
-
-    def __repr__(self):
-        return f'<BrowserDownloadMission {self.save_path}>'
 
 
 class Alert(object):

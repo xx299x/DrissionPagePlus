@@ -16,6 +16,7 @@ def get_usable_path(path):
     """
     path = Path(path)
     parent = path.parent
+    parent.mkdir(parents=True, exist_ok=True)
     path = parent / make_valid_name(path.name)
     name = path.stem if path.is_file() else path.name
     ext = path.suffix if path.is_file() else ''

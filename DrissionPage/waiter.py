@@ -193,9 +193,23 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
         else:
             return False
 
-    def browser_downloads_complete(self):
-        """等待所有下载任务结束"""
-        pass
+    def browser_downloads_complete(self, timeout=None):
+        """等待所有下载任务结束
+        :param timeout: 超时时间，为None时无限等待
+        :return: 是否等待成功
+        """
+        if not timeout:
+            while self._driver._dl_mgr._missions:
+                sleep(.5)
+            return True
+
+        else:
+            end_time = perf_counter() + timeout
+            while end_time > perf_counter():
+                if not self._driver._dl_mgr._missions:
+                    return True
+                sleep(.5)
+            return False if self._driver._dl_mgr._missions else True
 
 
 class ChromiumElementWaiter(object):
