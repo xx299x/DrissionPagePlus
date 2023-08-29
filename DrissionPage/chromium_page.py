@@ -26,9 +26,10 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        super().__init__(addr_driver_opts, tab_id, timeout)
+        super().__init__(addr_driver_opts, tab_id)
         self._page = self
         self._dl_mgr = BrowserDownloadManager(self)
+        self.set.timeouts(implicit=timeout)
 
     def _set_start_options(self, addr_driver_opts, none):
         """设置浏览器启动属性
@@ -62,6 +63,8 @@ class ChromiumPage(ChromiumBase):
                                  page_load=self._driver_options.timeouts['pageLoad'],
                                  script=self._driver_options.timeouts['script'],
                                  implicit=self._driver_options.timeouts['implicit'])
+        if self._driver_options.timeouts['implicit'] is not None:
+            self._timeout = self._driver_options.timeouts['implicit']
         self._page_load_strategy = self._driver_options.page_load_strategy
         self._download_path = self._driver_options.download_path
 
@@ -460,9 +463,24 @@ class BrowserDownloadManager(object):
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
-        sleep(.1)
+        sleep(.2)
         if kwargs['guid'] not in self._missions:
-            self.add_mission(kwargs['guid'], self._page.download_path, kwargs['suggestedFilename'])
+            if self._page._wait_download_flag is False:
+                self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'])
+
+            if self._page._download_rename:
+                tmp = kwargs['suggestedFilename'].rsplit('.', 1)
+                ext_name = tmp[-1] if len(tmp) > 1 else ''
+                tmp = self._page._download_rename.rsplit('.', 1)
+                ext_rename = tmp[-1] if len(tmp) > 1 else ''
+                n = self._page._download_rename if ext_rename == ext_name else f'{self._page._download_rename}.{ext_name}'
+                self._download_rename = None
+
+            else:
+                n = kwargs['suggestedFilename']
+
+            self._page._dl_mgr.add_mission(kwargs['guid'], self._page.download_path, n)
+            self._wait_download_flag = {'url': kwargs['url'], 'name': n}
 
     def _onDownloadProgress(self, **kwargs):
         """下载状态变化时执行"""

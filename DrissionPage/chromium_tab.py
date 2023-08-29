@@ -25,7 +25,7 @@ class ChromiumTab(ChromiumBase):
 
     def _set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
-        self._timeouts = self.page.timeouts
+        self._timeouts = copy(self.page.timeouts)
         self.retry_times = self.page.retry_times
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy

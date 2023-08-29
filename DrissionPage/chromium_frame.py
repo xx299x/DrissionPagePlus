@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from copy import copy
 from re import search
 from threading import Thread
 from time import sleep, perf_counter
@@ -70,10 +71,13 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
-    def _runtime_settings(self):
+    def _set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
-        self._timeouts = self._target_page.timeouts
+        self._timeouts = copy(self._target_page.timeouts)
+        self.retry_times = self._target_page.retry_times
+        self.retry_interval = self._target_page.retry_interval
         self._page_load_strategy = self._target_page.page_load_strategy
+        self._download_path = self._target_page.download_path
 
     def _driver_init(self, tab_id):
         """避免出现服务器500错误
@@ -354,7 +358,7 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def download_path(self):
-        return self.tab.download_path
+        return self._download_path
 
     def refresh(self):
         """刷新frame页面"""

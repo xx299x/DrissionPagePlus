@@ -122,7 +122,7 @@ class ChromiumBaseSetter(object):
         :param path: 下载路径
         :return: None
         """
-        self._page._download_path = str(path)
+        self._page._download_path = str(Path(path).absolute())
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
@@ -193,7 +193,7 @@ class SessionPageSetter(object):
         :param path: 下载路径
         :return: None
         """
-        self._page._download_path = str(path)
+        self._page._download_path = str(Path(path).absolute())
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 

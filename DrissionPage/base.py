@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 """
 from abc import abstractmethod
-from pathlib import Path
 from re import sub
 from urllib.parse import quote
 
@@ -359,16 +358,15 @@ class DrissionElement(BaseElement):
 class BasePage(BaseParser):
     """页面类的基类"""
 
-    def __init__(self, timeout=None):
+    def __init__(self):
         """初始化函数"""
         self._url = None
-        self.timeout = timeout if timeout is not None else 10
+        self._timeout = 10
         self._url_available = None
-        if not hasattr(self, 'retry_times'):
-            self.retry_times = 3
-        if not hasattr(self, 'retry_interval'):
-            self.retry_interval = 2
+        self.retry_times = 3
+        self.retry_interval = 2
         self._DownloadKit = None
+        self._download_path = ''
 
     @property
     def title(self):
@@ -399,7 +397,7 @@ class BasePage(BaseParser):
     @property
     def download_path(self):
         """返回默认下载路径"""
-        return str(Path(self._download_path).absolute())
+        return self._download_path
 
     @property
     def download(self):

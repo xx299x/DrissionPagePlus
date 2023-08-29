@@ -35,6 +35,7 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
+        super().__init__()
         self._is_loading = None
         self._root_id = None  # object id
         self._debug = False
@@ -45,6 +46,7 @@ class ChromiumBase(BasePage):
         self._listener = None
         self._wait_download_flag = None
         self._download_rename = None
+        self._download_path = ''
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -52,8 +54,8 @@ class ChromiumBase(BasePage):
         self._set_start_options(address, None)
         self._set_runtime_settings()
         self._connect_browser(tab_id)
-        timeout = timeout if timeout is not None else self.timeouts.implicit
-        super().__init__(timeout)
+        if timeout is not None:
+            self.timeout = timeout
 
     def _set_start_options(self, address, none):
         """设置浏览器启动属性
