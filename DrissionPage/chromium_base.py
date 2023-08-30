@@ -904,7 +904,7 @@ class ChromiumBase(BasePage):
                 h = right_bottom[1] - y
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=False, clip=vp)['data']
+                                          captureBeyondViewport=True, clip=vp)['data']
             else:
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
 

@@ -518,8 +518,8 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        self.scroll.to_see(center=True)
-        sleep(1)
+        # self.scroll.to_see(center=True)
+        # sleep(1)
         left, top = self.location
         width, height = self.size
         left_top = (left, top)
