@@ -12,6 +12,13 @@ class ChromiumBaseWaiter(object):
         """
         self._driver = page_or_ele
 
+    def __call__(self, second):
+        """等待若干秒
+        :param second: 秒数
+        :return: None
+        """
+        sleep(second)
+
     def ele_delete(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素从DOM中删除
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
@@ -222,6 +229,13 @@ class ChromiumElementWaiter(object):
         """
         self._page = page
         self._ele = ele
+
+    def __call__(self, second):
+        """等待若干秒
+        :param second: 秒数
+        :return: None
+        """
+        sleep(second)
 
     def delete(self, timeout=None, raise_err=None):
         """等待元素从dom删除
