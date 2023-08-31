@@ -6,6 +6,7 @@
 from os import popen
 from pathlib import Path
 from typing import Union
+from types import FunctionType
 
 from chromium_page import ChromiumPage
 
@@ -38,3 +39,5 @@ def get_browser_progress_id(progress: Union[popen, None], address: str) -> Union
 
 
 def get_chrome_hwnds_from_pid(pid: Union[str, int], title: str) -> list: ...
+
+def wait_until(page, condition: Union[FunctionType, str, tuple], timeout: float, poll: float, raise_err: bool): ...
