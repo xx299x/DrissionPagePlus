@@ -8,6 +8,7 @@ from pathlib import Path
 from subprocess import Popen, DEVNULL
 from tempfile import gettempdir
 from time import perf_counter, sleep
+from platform import system
 
 from requests import get as requests_get
 
@@ -62,6 +63,7 @@ def get_launch_args(opt):
     result = set()
     has_user_path = False
     remote_allow = False
+    headless = False
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
             continue
@@ -71,6 +73,8 @@ def get_launch_args(opt):
             continue
         elif i.startswith('--remote-allow-origins='):
             remote_allow = True
+        elif i.startswith('--headless'):
+            headless = True
 
         result.add(i)
 
@@ -82,6 +86,12 @@ def get_launch_args(opt):
 
     if not remote_allow:
         result.add('--remote-allow-origins=*')
+
+    if not headless and system().lower() == 'linux':
+        from os import popen
+        r = popen('systemctl list-units | grep graphical.target')
+        if 'graphical.target' not in r.read():
+            result.add('--headless=new')
 
     result = list(result)
 
@@ -164,7 +174,7 @@ def test_connect(ip, port):
 def _run_browser(port, path: str, args) -> Popen:
     """创建chrome进程
     :param port: 端口号
-    :param path: 浏览器地址
+    :param path: 浏览器路径
     :param args: 启动参数
     :return: 进程对象
     """
