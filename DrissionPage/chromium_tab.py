@@ -30,6 +30,7 @@ class ChromiumTab(ChromiumBase):
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy
         self._download_path = self.page.download_path
+        self._when_download_file_exists = self.page._when_download_file_exists
 
     def close(self):
         """关闭当前标签页"""
@@ -59,7 +60,7 @@ class WebPageTab(SessionPage, ChromiumTab):
         :param page: WebPage对象
         :param tab_id: 要控制的标签页id
         """
-        self.page = page
+        self._page = page
         self.address = page.address
         self._debug = page._debug
         self._debug_recorder = page._debug_recorder

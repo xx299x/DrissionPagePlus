@@ -3,14 +3,14 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict, Optional, Set
 
 from .chromium_base import ChromiumBase
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .setter import ChromiumPageSetter
-from .waiter import ChromiumPageWaiter
+from .waiter import ChromiumPageWaiter, DownloadMission
 
 
 class ChromiumPage(ChromiumBase):
@@ -127,11 +127,16 @@ class ChromiumTabRect(object):
 
 class BrowserDownloadManager(object):
     _page: ChromiumPage = ...
-    _missions: dict = ...
+    _missions: Set[DownloadMission] = ...
 
     def __init__(self, page: ChromiumPage): ...
 
-    def add_mission(self, guid: str, path: str, name: str) -> None: ...
+    @property
+    def missions(self) -> Set[DownloadMission]: ...
+
+    def add_mission(self, mission: DownloadMission) -> None: ...
+
+    def cancel(self, mission: DownloadMission) -> None: ...
 
     def _onDownloadWillBegin(self, **kwargs) -> None: ...
 

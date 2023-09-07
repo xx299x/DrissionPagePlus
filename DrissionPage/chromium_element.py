@@ -12,6 +12,7 @@ from .base import DrissionElement, BaseElement
 from .commons.constants import FRAME_ELEMENT, NoneElement, Settings
 from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .commons.locator import get_loc
+from .commons.tools import make_valid_name
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
     CDPError, NoResourceError, CanNotClickError
@@ -474,15 +475,11 @@ class ChromiumElement(DrissionElement):
         if not result:
             return None
 
-        if result['base64Encoded']:
-            if base64_to_bytes:
-                from base64 import b64decode
-                data = b64decode(result['content'])
-            else:
-                data = result['content']
+        if result['base64Encoded'] and base64_to_bytes:
+            from base64 import b64decode
+            return b64decode(result['content'])
         else:
-            data = result['content']
-        return data
+            return result['content']
 
     def save(self, path=None, rename=None, timeout=None):
         """保存图片或其它有src属性的元素的资源
@@ -497,6 +494,7 @@ class ChromiumElement(DrissionElement):
 
         path = path or '.'
         rename = rename or basename(self.prop('currentSrc'))
+        rename = make_valid_name(rename)
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
         Path(path).mkdir(parents=True, exist_ok=True)

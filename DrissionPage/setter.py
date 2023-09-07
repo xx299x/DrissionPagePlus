@@ -133,6 +133,11 @@ class ChromiumBaseSetter(object):
         """
         self._page._download_rename = name
 
+    def when_download_file_exists(self, mode):
+        if mode not in ('rename', 'overwrite', 'skip'):
+            raise ValueError(f"mode参数只能是'rename', 'overwrite', 'skip' 之一，现在是：{mode}")
+        self._page._when_download_file_exists = mode
+
 
 class TabSetter(ChromiumBaseSetter):
     def __init__(self, page):

@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from pathlib import Path
 from time import sleep, perf_counter
 
 from .commons.constants import Settings
@@ -85,13 +86,13 @@ class ChromiumBaseWaiter(object):
         while self._driver._upload_list:
             sleep(.01)
 
-    def browser_download_begin(self, timeout=None, cancel=False):
+    def download_begin(self, timeout=None, cancel_it=False):
         """等待浏览器下载开始，可将其拦截
         :param timeout: 超时时间，None使用页面对象超时时间
-        :param cancel: 是否取消该任务
+        :param cancel_it: 是否取消该任务
         :return: 成功返回任务信息dict，失败返回False
         """
-        self._driver._wait_download_flag = False if cancel else True
+        self._driver._wait_download_flag = False if cancel_it else True
         if timeout is None:
             timeout = self._driver.timeout
 
@@ -104,6 +105,32 @@ class ChromiumBaseWaiter(object):
 
         self._driver._wait_download_flag = None
         return r
+
+    def downloads_done(self, timeout=None, cancel_if_timeout=True):
+        """等待所有浏览器下载任务结束
+        :param timeout: 超时时间，为None时无限等待
+        :param cancel_if_timeout: 超时时是否取消剩余任务
+        :return: 是否等待成功
+        """
+        if not timeout:
+            while self._driver._download_missions:
+                sleep(.5)
+            return True
+
+        else:
+            end_time = perf_counter() + timeout
+            while end_time > perf_counter():
+                if not self._driver._download_missions:
+                    return True
+                sleep(.5)
+
+            if self._driver._download_missions:
+                if cancel_if_timeout:
+                    for m in self._driver._download_missions:
+                        m.cancel()
+                return False
+            else:
+                return True
 
     def url_change(self, text, exclude=False, timeout=None, raise_err=None):
         """等待url变成包含或不包含指定文本
@@ -200,9 +227,10 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
         else:
             return False
 
-    def browser_downloads_complete(self, timeout=None):
-        """等待所有下载任务结束
+    def all_downloads_done(self, timeout=None, cancel_if_timeout=True):
+        """等待所有浏览器下载任务结束
         :param timeout: 超时时间，为None时无限等待
+        :param cancel_if_timeout: 超时时是否取消剩余任务
         :return: 是否等待成功
         """
         if not timeout:
@@ -216,7 +244,14 @@ class ChromiumPageWaiter(ChromiumBaseWaiter):
                 if not self._driver._dl_mgr._missions:
                     return True
                 sleep(.5)
-            return False if self._driver._dl_mgr._missions else True
+
+            if self._driver._dl_mgr._missions:
+                if cancel_if_timeout:
+                    for m in self._driver._dl_mgr._missions:
+                        m.cancel()
+                return False
+            else:
+                return True
 
 
 class ChromiumElementWaiter(object):
@@ -341,3 +376,90 @@ class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
         """
         super().__init__(frame)
         super(ChromiumBaseWaiter, self).__init__(frame, frame.frame_ele)
+
+
+class DownloadMission(object):
+    def __init__(self, tab, _id, path, name, url):
+        self.url = url
+        self.tab = tab
+        self.id = _id
+        self.path = path
+        self.name = name
+        self.state = 'waiting'
+        self.total_bytes = None
+        self.received_bytes = 0
+        self.final_path = None
+
+    def __repr__(self):
+        # return f'<DownloadMission {self.id} {self.state} {self.rate}>'
+        return f'<DownloadMission {id(self)} {self.rate}>'
+
+    @property
+    def rate(self):
+        """以百分比形式返回下载进度"""
+        return round((self.received_bytes / self.total_bytes) * 100, 2) if self.total_bytes else None
+
+    def cancel(self):
+        """取消该任务，如任务已完成，删除已下载的文件"""
+        self._set_done('canceled', True)
+        if self.final_path:
+            Path(self.final_path).unlink(True)
+
+    def wait(self, show=True, timeout=None, cancel_if_timeout=True):
+        """等待任务结束
+        :param show: 是否显示下载信息
+        :param timeout: 超时时间，为None则无限等待
+        :param cancel_if_timeout: 超时时是否取消任务
+        :return: 等待成功返回完整路径，否则返回False
+        """
+        if show:
+            print(f'url：{self.url}')
+            t2 = perf_counter()
+            while self.name is None and perf_counter() - t2 < 4:
+                sleep(0.01)
+            print(f'文件名：{self.name}')
+            print(f'目标路径：{self.path}')
+
+        if timeout is None:
+            while self.id in self.tab._page._dl_mgr.missions:
+                if show:
+                    print(f'\r{self.rate}% ', end='')
+                sleep(.2)
+
+        else:
+            running = True
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if show:
+                    print(f'\r{self.rate}% ', end='')
+                if self.id not in self.tab._page._dl_mgr.missions:
+                    running = False
+                    break
+                sleep(.2)
+
+            if running and cancel_if_timeout:
+                self.cancel()
+
+        if show:
+            if self.state == 'completed':
+                print(f'下载完成 {self.final_path}')
+            elif self.state == 'canceled':
+                print(f'下载取消')
+            elif self.state == 'skipped':
+                print(f'已跳过')
+            print()
+
+        return self.final_path if self.final_path else False
+
+    def _set_done(self, state, cancel=False, final_path=None):
+        """设置任务结束
+        :param state: 任务状态
+        :param cancel: 是否取消
+        :param final_path: 最终路径
+        :return: None
+        """
+        self.state = state
+        self.final_path = final_path
+        if cancel:
+            self.tab._page._dl_mgr.cancel(self)
+        self.tab._download_missions.remove(self)

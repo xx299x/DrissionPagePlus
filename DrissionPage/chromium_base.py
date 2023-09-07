@@ -23,7 +23,7 @@ from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPErr
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
 from .setter import ChromiumBaseSetter
-from .waiter import ChromiumBaseWaiter
+from .waiter import ChromiumBaseWaiter, DownloadMission
 
 
 class ChromiumBase(BasePage):
@@ -44,9 +44,12 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._listener = None
+
         self._wait_download_flag = None
         self._download_rename = None
         self._download_path = ''
+        self._when_download_file_exists = 'rename'
+        self._download_missions = set()
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -249,22 +252,7 @@ class ChromiumBase(BasePage):
 
     def _onDownloadWillBegin(self, **kwargs):
         """下载即将开始时执行"""
-        if self._wait_download_flag is False:
-            self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'])
-
-        if self._download_rename:
-            tmp = kwargs['suggestedFilename'].rsplit('.', 1)
-            ext_name = tmp[-1] if len(tmp) > 1 else ''
-            tmp = self._download_rename.rsplit('.', 1)
-            ext_rename = tmp[-1] if len(tmp) > 1 else ''
-            n = self._download_rename if ext_rename == ext_name else f'{self._download_rename}.{ext_name}'
-            self._download_rename = None
-
-        else:
-            n = kwargs['suggestedFilename']
-
-        self._page._dl_mgr.add_mission(kwargs['guid'], self.download_path, n)
-        self._wait_download_flag = {'url': kwargs['url'], 'name': n}
+        handle_download(self, kwargs)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -1141,3 +1129,34 @@ class ScreencastMode(object):
 
     def imgs_mode(self):
         self._screencast._mode = 'imgs'
+
+
+def handle_download(tab, kwargs):
+    """在下载开始前处理任务
+    :param tab: 触发任务的tab对象
+    :param kwargs: 浏览器返回的数据
+    :return: None
+    """
+    tab._page._dl_mgr._missions[kwargs['guid']] = None
+
+    if tab._download_rename:
+        tmp = kwargs['suggestedFilename'].rsplit('.', 1)
+        ext_name = tmp[-1] if len(tmp) > 1 else ''
+        tmp = tab._download_rename.rsplit('.', 1)
+        ext_rename = tmp[-1] if len(tmp) > 1 else ''
+        n = tab._download_rename if ext_rename == ext_name else f'{tab._download_rename}.{ext_name}'
+        tab._download_rename = None
+
+    else:
+        n = kwargs['suggestedFilename']
+
+    m = DownloadMission(tab, kwargs['guid'], tab.download_path, n, kwargs['url'])
+    tab._page._dl_mgr.add_mission(m)
+    tab._wait_download_flag = m
+    tab._download_missions.add(m)
+
+    if tab._wait_download_flag is False:  # 取消该任务
+        m._set_done('canceled', True)
+
+    if tab._when_download_file_exists == 'skip' and (Path(m.path) / m.name).exists():
+        m._set_done('skipped', True)

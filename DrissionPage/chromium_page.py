@@ -7,6 +7,7 @@ from shutil import move
 from time import perf_counter, sleep
 
 from .chromium_base import ChromiumBase, Timeout
+from .chromium_base import handle_download
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
@@ -450,50 +451,56 @@ class BrowserDownloadManager(object):
         page.set.download_path(page.download_path)
         self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
         self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
-        self._missions = {}
+        self._missions = set()
 
-    def add_mission(self, guid, path, name):
+    @property
+    def missions(self):
+        return self._missions
+
+    def add_mission(self, mission):
         """添加下载任务信息
-        :param guid: guid
-        :param path: 保存路径
-        :param name: 保存文件名
+        :param mission: DownloadMission对象
         :return: None
         """
-        self._missions[guid] = {'path': path, 'name': name}
+        self._missions.add(mission)
+
+    def cancel(self, mission):
+        """取消一个下载任务
+        :param mission: 任务对象
+        :return: None
+        """
+        self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
+        self._missions.remove(mission)
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
-        sleep(.2)
+        sleep(.3)
         if kwargs['guid'] not in self._missions:
-            if self._page._wait_download_flag is False:
-                self._page.run_cdp('Browser.cancelDownload', guid=kwargs['guid'])
-
-            if self._page._download_rename:
-                tmp = kwargs['suggestedFilename'].rsplit('.', 1)
-                ext_name = tmp[-1] if len(tmp) > 1 else ''
-                tmp = self._page._download_rename.rsplit('.', 1)
-                ext_rename = tmp[-1] if len(tmp) > 1 else ''
-                n = self._page._download_rename if ext_rename == ext_name else f'{self._page._download_rename}.{ext_name}'
-                self._download_rename = None
-
-            else:
-                n = kwargs['suggestedFilename']
-
-            self._page._dl_mgr.add_mission(kwargs['guid'], self._page.download_path, n)
-            self._wait_download_flag = {'url': kwargs['url'], 'name': n}
+            handle_download(self._page, kwargs)
 
     def _onDownloadProgress(self, **kwargs):
         """下载状态变化时执行"""
-        if kwargs['state'] in ('completed', 'canceled') and kwargs['guid'] in self._missions:
-            guid = kwargs['guid']
-            if kwargs['state'] == 'completed':
-                path = self._missions[guid]['path']
-                name = self._missions[guid]['name']
-                form_path = f'{self._page.download_path}\\{guid}'
-                to_path = get_usable_path(f'{path}\\{name}')
-                move(form_path, to_path)
+        if kwargs['guid'] in self._missions:
+            mission = self._missions[kwargs['guid']]
+            # print(mission)
+            if kwargs['state'] == 'inProgress':
+                mission.state = 'running'
+                mission.received_bytes = kwargs['receivedBytes']
+                mission.total_bytes = kwargs['totalBytes']
 
-            self._missions.pop(guid)
+            elif kwargs['state'] == 'completed':
+                mission.received_bytes = kwargs['receivedBytes']
+                mission.total_bytes = kwargs['totalBytes']
+                form_path = f'{self._page.download_path}\\{mission.id}'
+                to_path = get_usable_path(f'{mission.path}\\{mission.name}')
+                move(form_path, to_path)
+                mission.final_path = to_path
+                mission.state = 'completed'
+                self._missions.pop(mission.id)
+
+            else:
+                mission.state = 'canceled'
+                self._missions.pop(mission.id)
 
 
 class Alert(object):

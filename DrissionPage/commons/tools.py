@@ -178,14 +178,14 @@ def get_chrome_hwnds_from_pid(pid, title):
     EnumWindows(callback, hwnds)
     return hwnds
 
+
 def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
     """等待返回值不为False或空，直到超时
-    :param page (DrissionPage): DrissionPage对象
-    :param condition (function | str | tuple): 等待条件，返回值不为False则停止等待
-    :param timeout (float, optional): 超时时间
-    :param poll (float, optional): 轮询间隔
-    :param message (str, optional): 超时时的报错信息
-    :param ignored_exceptions (bool, optional): 是否忽略异常
+    :param page: DrissionPage对象
+    :param condition: 等待条件，返回值不为False则停止等待
+    :param timeout: 超时时间
+    :param poll: 轮询间隔
+    :param raise_err: 是否抛出异常
     :return: DP Element or bool
     """
     end_time = perf_counter() + timeout
@@ -204,11 +204,11 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
                 return value
         except Exception as exc:
             pass
-            
+
         sleep(poll)
         if perf_counter() > end_time:
             break
-        
+
     if raise_err:
         raise TimeoutError('等待超时')
     else:
