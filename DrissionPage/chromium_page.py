@@ -451,7 +451,7 @@ class BrowserDownloadManager(object):
         page.set.download_path(page.download_path)
         self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
         self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
-        self._missions = set()
+        self._missions = {}
 
     @property
     def missions(self):
@@ -462,7 +462,7 @@ class BrowserDownloadManager(object):
         :param mission: DownloadMission对象
         :return: None
         """
-        self._missions.add(mission)
+        self._missions[mission.id] = mission
 
     def cancel(self, mission):
         """取消一个下载任务
@@ -470,7 +470,7 @@ class BrowserDownloadManager(object):
         :return: None
         """
         self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
-        self._missions.remove(mission)
+        self._missions.pop(mission.id)
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
@@ -482,7 +482,6 @@ class BrowserDownloadManager(object):
         """下载状态变化时执行"""
         if kwargs['guid'] in self._missions:
             mission = self._missions[kwargs['guid']]
-            # print(mission)
             if kwargs['state'] == 'inProgress':
                 mission.state = 'running'
                 mission.received_bytes = kwargs['receivedBytes']
@@ -492,15 +491,12 @@ class BrowserDownloadManager(object):
                 mission.received_bytes = kwargs['receivedBytes']
                 mission.total_bytes = kwargs['totalBytes']
                 form_path = f'{self._page.download_path}\\{mission.id}'
-                to_path = get_usable_path(f'{mission.path}\\{mission.name}')
+                to_path = str(get_usable_path(f'{mission.path}\\{mission.name}'))
                 move(form_path, to_path)
-                mission.final_path = to_path
-                mission.state = 'completed'
-                self._missions.pop(mission.id)
+                mission._set_done('completed', final_path=to_path)
 
             else:
-                mission.state = 'canceled'
-                self._missions.pop(mission.id)
+                mission._set_done('canceled')
 
 
 class Alert(object):

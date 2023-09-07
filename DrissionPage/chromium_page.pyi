@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Tuple, List, Dict, Optional, Set
+from typing import Union, Tuple, List, Dict
 
 from .chromium_base import ChromiumBase
 from .chromium_driver import ChromiumDriver
@@ -127,12 +127,12 @@ class ChromiumTabRect(object):
 
 class BrowserDownloadManager(object):
     _page: ChromiumPage = ...
-    _missions: Set[DownloadMission] = ...
+    _missions: Dict[str, DownloadMission] = ...
 
     def __init__(self, page: ChromiumPage): ...
 
     @property
-    def missions(self) -> Set[DownloadMission]: ...
+    def missions(self) -> Dict[str, DownloadMission]: ...
 
     def add_mission(self, mission: DownloadMission) -> None: ...
 
