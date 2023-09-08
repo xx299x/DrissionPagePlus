@@ -123,8 +123,8 @@ class ChromiumElement(DrissionElement):
     @property
     def size(self):
         """返回元素宽和高组成的元组"""
-        model = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']
-        return model['width'], model['height']
+        border = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']['border']
+        return int(border[2] - border[0]), int(border[5] - border[1])
 
     @property
     def set(self):
