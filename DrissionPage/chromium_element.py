@@ -3,8 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from os import sep
-from os.path import basename
+from os.path import basename, sep
 from pathlib import Path
 from time import perf_counter, sleep
 
@@ -12,7 +11,7 @@ from .base import DrissionElement, BaseElement
 from .commons.constants import FRAME_ELEMENT, NoneElement, Settings
 from .commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .commons.locator import get_loc
-from .commons.tools import make_valid_name
+from .commons.tools import get_usable_path
 from .commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
 from .errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
     CDPError, NoResourceError, CanNotClickError
@@ -481,50 +480,53 @@ class ChromiumElement(DrissionElement):
         else:
             return result['content']
 
-    def save(self, path=None, rename=None, timeout=None):
+    def save(self, path=None, name=None, timeout=None):
         """保存图片或其它有src属性的元素的资源
         :param path: 文件保存路径，为None时保存到当前文件夹
-        :param rename: 文件名称，为None时从资源url获取
+        :param name: 文件名称，为None时从资源url获取
         :param timeout: 等待资源加载的超时时间
-        :return: None
+        :return: 返回保存路径
         """
         data = self.get_src(timeout=timeout)
         if not data:
             raise NoResourceError
 
         path = path or '.'
-        rename = rename or basename(self.prop('currentSrc'))
-        rename = make_valid_name(rename)
+        name = name or basename(self.prop('currentSrc'))
+        path = get_usable_path(f'{path}{sep}{name}').absolute()
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
-        Path(path).mkdir(parents=True, exist_ok=True)
-        with open(f'{path}{sep}{rename}', write_type) as f:
+        with open(path, write_type) as f:
             f.write(data)
 
-    def get_screenshot(self, path=None, as_bytes=None, as_base64=None):
+        return str(path)
+
+    def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None, scroll_to_center=False):
         """对当前元素截图，可保存到文件，或以字节方式返回
-        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param path: 文件保存路径
+        :param name: 完整文件名，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
         :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
+        :param scroll_to_center: 截图前是否滚动到视口中央
         :return: 图片完整路径或字节文本
         """
         if self.tag == 'img':  # 等待图片加载完成
-            js = ('return this.complete && typeof this.naturalWidth != "undefined" '
-                  '&& this.naturalWidth > 0 && typeof this.naturalHeight != "undefined" '
-                  '&& this.naturalHeight > 0')
+            js = ('return this.complete && typeof this.naturalWidth != "undefined" && this.naturalWidth > 0 '
+                  '&& typeof this.naturalHeight != "undefined" && this.naturalHeight > 0')
             end_time = perf_counter() + self.page.timeout
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
-        # self.scroll.to_see(center=True)
-        # sleep(1)
+        if scroll_to_center:
+            self.scroll.to_see(center=True)
+
         left, top = self.location
         width, height = self.size
         left_top = (left, top)
         right_bottom = (left + width, top + height)
-        if not path:
-            path = f'{self.tag}.jpg'
-        return self.page._get_screenshot(path, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
+        if not name:
+            name = f'{self.tag}.jpg'
+        return self.page._get_screenshot(path, name, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                          left_top=left_top, right_bottom=right_bottom, ele=self)
 
     def input(self, vals, clear=True, by_js=False):

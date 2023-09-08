@@ -174,11 +174,11 @@ class ChromiumFrame(ChromiumBase):
                timeout: float = None,
                ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
-    def get_screenshot(self, path: [str, Path] = None,
+    def get_screenshot(self, path: [str, Path] = None, name: str = None,
                        as_bytes: [bool, str] = None,
                        as_base64: [bool, str] = None) -> Union[str, bytes]: ...
 
-    def _get_screenshot(self, path: [str, Path] = None,
+    def _get_screenshot(self, path: [str, Path] = None, name: str = None,
                         as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
                         full_page: bool = False,
                         left_top: Tuple[int, int] = None,

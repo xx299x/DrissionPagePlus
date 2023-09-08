@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from copy import copy
+from os.path import sep
 from re import search
 from threading import Thread
 from time import sleep, perf_counter
@@ -492,19 +493,21 @@ class ChromiumFrame(ChromiumBase):
         self._check_ok()
         return self.frame_ele.afters(filter_loc, timeout, ele_only=ele_only)
 
-    def get_screenshot(self, path=None, as_bytes=None, as_base64=None):
+    def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
-        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        :param path: 文件保存路径
+        :param name: 完整文件名，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
         :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :return: 图片完整路径或字节文本
         """
-        return self.frame_ele.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64)
+        return self.frame_ele.get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64)
 
-    def _get_screenshot(self, path=None, as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
+    def _get_screenshot(self, path=None, name=None, as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
                         full_page=False, left_top=None, right_bottom=None, ele=None):
-        """实现对元素截图
-        :param path: 完整路径，后缀可选 'jpg','jpeg','png','webp'
+        """实现截图
+        :param path: 文件保存路径
+        :param name: 完整文件名，后缀可选 'jpg','jpeg','png','webp'
         :param as_bytes: 是否以字节形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数和as_base64参数无效
         :param as_base64: 是否以base64字符串形式返回图片，可选 'jpg','jpeg','png','webp'，生效时path参数无效
         :param full_page: 是否整页截图，为True截取整个网页，为False截取可视窗口
@@ -514,7 +517,7 @@ class ChromiumFrame(ChromiumBase):
         :return: 图片完整路径或字节文本
         """
         if not self._is_diff_domain:
-            return super().get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+            return super().get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
                                           full_page=full_page, left_top=left_top, right_bottom=right_bottom)
 
         if as_bytes:
@@ -522,7 +525,7 @@ class ChromiumFrame(ChromiumBase):
                 pic_type = 'png'
             else:
                 if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
 
         elif as_base64:
@@ -530,16 +533,18 @@ class ChromiumFrame(ChromiumBase):
                 pic_type = 'png'
             else:
                 if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
             if not path:
-                path = f'{self.title}.jpg'
-            path = get_usable_path(path)
+                path = '.'
+            if not name:
+                name = f'{self.title}.jpg'
+            if not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                name = f'{name}.jpg'
+            path = get_usable_path(f'{path}{sep}{name}')
             pic_type = path.suffix.lower()
-            if pic_type not in ('.jpg', '.jpeg', '.png', '.webp'):
-                raise TypeError(f'不支持的文件格式：{pic_type}。')
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
         self.frame_ele.scroll.to_see(center=True)
@@ -562,7 +567,7 @@ class ChromiumFrame(ChromiumBase):
         new_ele.scroll.to_see(True)
         top = int(self.frame_ele.style('border-top').split('px')[0])
         left = int(self.frame_ele.style('border-left').split('px')[0])
-        r = self._target_page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
+        r = self._target_page.get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
                                              left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
         self._target_page.remove_ele(new_ele)
         return r
