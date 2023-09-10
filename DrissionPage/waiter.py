@@ -401,9 +401,7 @@ class DownloadMission(object):
 
     def cancel(self):
         """取消该任务，如任务已完成，删除已下载的文件"""
-        self._set_done('canceled', True)
-        if self.final_path:
-            Path(self.final_path).unlink(True)
+        self.tab._page._dl_mgr.set_done(self, state='canceled', cancel=True)
 
     def wait(self, show=True, timeout=None, cancel_if_timeout=True):
         """等待任务结束
@@ -450,16 +448,3 @@ class DownloadMission(object):
             print()
 
         return self.final_path if self.final_path else False
-
-    def _set_done(self, state, cancel=False, final_path=None):
-        """设置任务结束
-        :param state: 任务状态
-        :param cancel: 是否取消
-        :param final_path: 最终路径
-        :return: None
-        """
-        self.state = state
-        self.final_path = final_path
-        if cancel:
-            self.tab._page._dl_mgr.cancel(self)
-        self.tab._download_missions.remove(self)

@@ -5,7 +5,7 @@
 """
 from queue import Queue
 from threading import Thread, Event
-from typing import Union, Callable
+from typing import Union, Callable, Dict
 
 
 class GenericAttr(object):
@@ -58,3 +58,7 @@ class ChromiumDriver(object):
     def get_listener(self, event: str) -> Union[Callable, None]: ...
 
     def __str__(self) -> str: ...
+
+
+class BrowserDriver(ChromiumDriver):
+    BROWSERS: Dict[str, ChromiumDriver] = ...

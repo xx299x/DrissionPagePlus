@@ -233,3 +233,21 @@ class ChromiumDriver(object):
         return f"<ChromiumDriver {self.id}>"
 
     __repr__ = __str__
+
+
+class BrowserDriver(ChromiumDriver):
+    BROWSERS = {}
+
+    def __new__(cls, tab_id, tab_type, address):
+        if tab_id in cls.BROWSERS:
+            return cls.BROWSERS[tab_id]
+        return object.__new__(cls)
+
+    def __init__(self, tab_id, tab_type, address):
+        if tab_id in BrowserDriver.BROWSERS:
+            return
+        super().__init__(tab_id, tab_type, address)
+        BrowserDriver.BROWSERS[tab_id] = self
+
+    def __repr__(self):
+        return f"<BrowserDriver {self.id}>"
