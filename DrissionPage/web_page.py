@@ -447,8 +447,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._response = None
             self._has_session = None
         if self._has_driver:
-            self._tab_obj.Browser.close()
-            self._tab_obj.stop()
+            super(SessionPage, self).quit()
             self._tab_obj = None
             self._has_driver = None
 

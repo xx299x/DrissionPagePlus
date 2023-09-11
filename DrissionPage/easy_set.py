@@ -314,7 +314,19 @@ def get_chrome_path(ini_path=None,
         return str(path)
 
     from platform import system
-    if system().lower() != 'windows':
+    sys = system().lower()
+    if sys in ('macos', 'darwin'):
+        return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+
+    elif sys == 'linux':
+        paths = ('/usr/bin/google-chrome', '/opt/google/chrome/google-chrome',
+                 '/user/lib/chromium-browser/chromium-browser')
+        for p in paths:
+            if Path(p).exists():
+                return p
+        return None
+
+    elif sys != 'windows':
         return None
 
     # -----------从注册表中获取--------------
