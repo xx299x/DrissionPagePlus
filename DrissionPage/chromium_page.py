@@ -476,6 +476,7 @@ class BrowserDownloadManager(object):
 
     @property
     def missions(self):
+        """返回所有未完成的下载任务"""
         return self._missions
 
     def add_mission(self, mission):

@@ -59,7 +59,7 @@ class ActionChains:
             cx = x + offset_x
             cy = y + offset_y
 
-        self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=cx, y=cy, modifiers=self.modifier)
+        self._dr.call_method('Input.dispatchMouseEvent', type='mouseMoved', x=cx, y=cy, modifiers=self.modifier)
         self.curr_x = cx
         self.curr_y = cy
         return self
@@ -72,7 +72,8 @@ class ActionChains:
         """
         self.curr_x += offset_x
         self.curr_y += offset_y
-        self._dr.Input.dispatchMouseEvent(type='mouseMoved', x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        self._dr.call_method('Input.dispatchMouseEvent', type='mouseMoved', x=self.curr_x, y=self.curr_y,
+                             modifiers=self.modifier)
         return self
 
     def click(self, on_ele=None):
@@ -170,8 +171,8 @@ class ActionChains:
         """
         if on_ele:
             self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mousePressed', button=button, clickCount=count,
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        self._dr.call_method('Input.dispatchMouseEvent', type='mousePressed', button=button, clickCount=count,
+                             x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
     def _release(self, button):
@@ -179,8 +180,8 @@ class ActionChains:
         :param button: 要释放的按键
         :return: self
         """
-        self._dr.Input.dispatchMouseEvent(type='mouseReleased', button=button, clickCount=1,
-                                          x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
+        self._dr.call_method('Input.dispatchMouseEvent', type='mouseReleased', button=button, clickCount=1,
+                             x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
     def scroll(self, delta_x=0, delta_y=0, on_ele=None):
@@ -192,8 +193,8 @@ class ActionChains:
         """
         if on_ele:
             self.move_to(on_ele)
-        self._dr.Input.dispatchMouseEvent(type='mouseWheel', x=self.curr_x, y=self.curr_y,
-                                          deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier)
+        self._dr.call_method('Input.dispatchMouseEvent', type='mouseWheel', x=self.curr_x, y=self.curr_y,
+                             deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier)
         return self
 
     def up(self, pixel):
