@@ -515,6 +515,7 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
+        self.scroll.to_see(True)
         left, top = self.location
         width, height = self.size
         left_top = (left, top)
@@ -1419,6 +1420,14 @@ class ChromiumElementStates(object):
         """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
         x, y = self._ele.locations.click_point
         return location_in_viewport(self._ele.page, x, y) if x else False
+
+    @property
+    def is_whole_in_viewport(self):
+        """返回元素是否整个都在视口内"""
+        x1, y1 = self._ele.location
+        w, h = self._ele.size
+        x2, y2 = x1 + w, y1 + h
+        return location_in_viewport(self._ele.page, x1, y1) and location_in_viewport(self._ele.page, x2, y2)
 
     @property
     def is_covered(self):

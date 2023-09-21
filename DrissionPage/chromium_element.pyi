@@ -231,6 +231,9 @@ class ChromiumElementStates(object):
     def is_in_viewport(self) -> bool: ...
 
     @property
+    def is_whole_in_viewport(self) -> bool: ...
+
+    @property
     def is_covered(self) -> bool: ...
 
 
