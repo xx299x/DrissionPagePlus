@@ -857,9 +857,8 @@ class ChromiumBase(BasePage):
                          location_in_viewport(self, right_bottom[0], right_bottom[1]))
 
                 if v:
-                    shu = self.run_js('return document.body.scrollHeight > window.innerHeight;')
-                    heng = self.run_js('return document.body.scrollWidth > window.innerWidth;')
-                    if shu and not heng:
+                    if (self.run_js('return document.body.scrollHeight > window.innerHeight;') and
+                            not self.run_js('return document.body.scrollWidth > window.innerWidth;')):
                         x += 10
                     # elif heng and not shu:
                     #     y += 5

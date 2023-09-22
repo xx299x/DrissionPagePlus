@@ -1422,14 +1422,6 @@ class ChromiumElementStates(object):
         return location_in_viewport(self._ele.page, x, y) if x else False
 
     @property
-    def is_whole_in_viewport(self):
-        """返回元素是否整个都在视口内"""
-        x1, y1 = self._ele.location
-        w, h = self._ele.size
-        x2, y2 = x1 + w, y1 + h
-        return location_in_viewport(self._ele.page, x1, y1) and location_in_viewport(self._ele.page, x2, y2)
-
-    @property
     def is_covered(self):
         """返回元素是否被覆盖，与是否在视口中无关"""
         lx, ly = self._ele.locations.click_point
