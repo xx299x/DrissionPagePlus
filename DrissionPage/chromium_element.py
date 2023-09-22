@@ -1436,6 +1436,14 @@ class ChromiumElementStates(object):
         return location_in_viewport(self._ele.page, x, y) if x else False
 
     @property
+    def is_whole_in_viewport(self):
+        """返回元素是否整个都在视口内"""
+        x1, y1 = self._ele.location
+        w, h = self._ele.size
+        x2, y2 = x1 + w, y1 + h
+        return location_in_viewport(self._ele.page, x1, y1) and location_in_viewport(self._ele.page, x2, y2)
+
+    @property
     def is_covered(self):
         """返回元素是否被覆盖，与是否在视口中无关"""
         lx, ly = self._ele.locations.click_point
@@ -1766,6 +1774,10 @@ class ChromiumElementScroll(ChromiumScroll):
         """
         self._driver.page.scroll.to_see(self._driver, center=center)
 
+    def to_center(self):
+        """元素尽量滚动到视口中间"""
+        self._driver.page.scroll.to_see(self._driver, center=True)
+
 
 class ChromiumSelect(object):
     """ChromiumSelect 类专门用于处理 d 模式下 select 标签"""
@@ -1936,10 +1948,10 @@ class ChromiumSelect(object):
 
         mode = 'false' if cancel else 'true'
         timeout = timeout if timeout is not None else self._ele.page.timeout
-        condition = {condition} if isinstance(condition, (str, int)) else set(condition)
+        condition = set(condition) if isinstance(condition, (list, tuple)) else {condition}
 
         if para_type in ('text', 'value'):
-            return self._text_value(condition, para_type, mode, timeout)
+            return self._text_value([str(i) for i in condition], para_type, mode, timeout)
         elif para_type == 'index':
             return self._index(condition, mode, timeout)
 

@@ -198,7 +198,7 @@ def get_chrome_path(ini_path=None,
 
     from platform import system
     sys = system().lower()
-    if sys == 'macos':
+    if sys in ('macos', 'darwin'):
         return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
     elif sys == 'linux':

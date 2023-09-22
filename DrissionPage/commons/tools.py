@@ -10,21 +10,24 @@ from shutil import rmtree
 from time import perf_counter, sleep
 
 
-def get_usable_path(path):
+def get_usable_path(path, is_file=True, parents=True):
     """检查文件或文件夹是否有重名，并返回可以使用的路径
     :param path: 文件或文件夹路径
+    :param is_file: 目标是文件还是文件夹
+    :param parents: 是否创建目标路径
     :return: 可用的路径，Path对象
     """
     path = Path(path)
     parent = path.parent
-    parent.mkdir(parents=True, exist_ok=True)
+    if parents:
+        parent.mkdir(parents=True, exist_ok=True)
     path = parent / make_valid_name(path.name)
     name = path.stem if path.is_file() else path.name
     ext = path.suffix if path.is_file() else ''
 
     first_time = True
 
-    while path.exists():
+    while path.exists() and path.is_file() == is_file:
         r = search(r'(.*)_(\d+)$', name)
 
         if not r or (r and first_time):
@@ -213,42 +216,3 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
         raise TimeoutError('等待超时')
     else:
         return False
-
-# def get_exe_from_port(port):
-#     """获取端口号第一条进程的可执行文件路径
-#     :param port: 端口号
-#     :return: 可执行文件的绝对路径
-#     """
-#     from os import popen
-#
-#     pid = get_pid_from_port(port)
-#     if not pid:
-#         return
-#     else:
-#         file_lst = popen(f'wmic process where processid={pid} get executablepath').read().split('\n')
-#         return file_lst[2].strip() if len(file_lst) > 2 else None
-#
-#
-# def get_pid_from_port(port):
-#     """获取端口号第一条进程的pid
-#     :param port: 端口号
-#     :return: 进程id
-#     """
-#     from platform import system
-#     if system().lower() != 'windows' or port is None:
-#         return None
-#
-#     from os import popen
-#     from time import perf_counter
-#
-#     try:  # 避免Anaconda中可能产生的报错
-#         process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-#
-#         t = perf_counter()
-#         while not process and perf_counter() - t < 5:
-#             process = popen(f'netstat -ano |findstr {port}').read().split('\n')[0]
-#
-#         return process.split(' ')[-1] or None
-#
-#     except Exception:
-#         return None

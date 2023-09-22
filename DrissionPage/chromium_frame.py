@@ -4,14 +4,12 @@
 @Contact :   g1879@qq.com
 """
 from copy import copy
-from os.path import sep
 from re import search
 from threading import Thread
 from time import sleep, perf_counter
 
 from .chromium_base import ChromiumBase, ChromiumPageScroll
 from .chromium_element import ChromiumElement
-from .commons.tools import get_usable_path
 from .errors import ContextLossError
 from .setter import ChromiumFrameSetter
 from .waiter import FrameWaiter
@@ -24,7 +22,7 @@ class ChromiumFrame(ChromiumBase):
         :param ele: frame所在元素
         """
         page_type = str(type(page))
-        if 'ChromiumPage' in page_type or 'WebPage' in page:
+        if 'ChromiumPage' in page_type or 'WebPage' in page_type:
             self._page = self._target_page = self.tab = page
         else:  # Tab、Frame
             self._page = page.page
@@ -79,7 +77,7 @@ class ChromiumFrame(ChromiumBase):
         self.retry_interval = self._target_page.retry_interval
         self._page_load_strategy = self._target_page.page_load_strategy
         self._download_path = self._target_page.download_path
-        self._when_download_file_exists = self._target_page._when_download_file_exists
+        # self._when_download_file_exists = self._target_page._when_download_file_exists
 
     def _driver_init(self, tab_id):
         """避免出现服务器500错误
@@ -543,16 +541,16 @@ class ChromiumFrame(ChromiumBase):
                 name = f'{self.title}.jpg'
             if not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
                 name = f'{name}.jpg'
-            path = get_usable_path(f'{path}{sep}{name}')
-            pic_type = path.suffix.lower()
-            pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
+            pic_type = name.split('.')[-1]
+            if pic_type == 'jpg':
+                pic_type = 'jpeg'
 
         self.frame_ele.scroll.to_see(center=True)
         self.scroll.to_see(ele, center=True)
         cx, cy = ele.locations.viewport_location
         w, h = ele.size
         img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
-        body = self._target_page('t:body')
+        body = self.tab('t:body')
         first_child = body('c::first-child')
         if not isinstance(first_child, ChromiumElement):
             first_child = first_child.frame_ele
@@ -564,12 +562,17 @@ class ChromiumFrame(ChromiumBase):
         arguments[0].insertBefore(img, this);
         return img;'''
         new_ele = first_child.run_js(js, body)
-        new_ele.scroll.to_see(True)
+        new_ele.scroll.to_see(center=True)
         top = int(self.frame_ele.style('border-top').split('px')[0])
         left = int(self.frame_ele.style('border-left').split('px')[0])
-        r = self._target_page.get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
-                                             left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
-        self._target_page.remove_ele(new_ele)
+
+        r = self.tab.run_cdp('Page.getLayoutMetrics')['visualViewport']
+        sx = r['pageX']
+        sy = r['pageY']
+        r = self.tab.get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
+                                    left_top=(cx + left + sx, cy + top + sy),
+                                    right_bottom=(cx + w + left + sx, cy + h + top + sy))
+        self.tab.remove_ele(new_ele)
         return r
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):

@@ -12,18 +12,20 @@ from time import perf_counter, sleep, time
 
 from requests import Session
 
+from .action_chains import ActionChains
 from .base import BasePage
 from .chromium_driver import ChromiumDriver
 from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
+from .commons.web import location_in_viewport
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
     NoRectError, BrowserConnectError, GetDocumentError
 from .network_listener import NetworkListener
 from .session_element import make_session_ele
 from .setter import ChromiumBaseSetter
-from .waiter import ChromiumBaseWaiter, DownloadMission
+from .waiter import ChromiumBaseWaiter
 
 
 class ChromiumBase(BasePage):
@@ -43,13 +45,10 @@ class ChromiumBase(BasePage):
         self._tab_obj = None
         self._set = None
         self._screencast = None
+        self._actions = None
         self._listener = None
 
-        self._wait_download_flag = None
-        self._download_rename = None
         self._download_path = ''
-        self._when_download_file_exists = 'rename'
-        self._download_missions = set()
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -252,7 +251,7 @@ class ChromiumBase(BasePage):
 
     def _onDownloadWillBegin(self, **kwargs):
         """下载即将开始时执行"""
-        handle_download(self, kwargs)
+        self._page._dl_mgr.set_mission(self.tab_id, kwargs['guid'])
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -397,6 +396,14 @@ class ChromiumBase(BasePage):
         if self._screencast is None:
             self._screencast = Screencast(self)
         return self._screencast
+
+    @property
+    def actions(self):
+        """返回用于执行动作链的对象"""
+        if self._actions is None:
+            self._actions = ActionChains(self)
+        self.wait.load_complete()
+        return self._actions
 
     @property
     def listener(self):
@@ -894,9 +901,17 @@ class ChromiumBase(BasePage):
                 x, y = left_top
                 w = right_bottom[0] - x
                 h = right_bottom[1] - y
+
+                v = not (location_in_viewport(self, x, y) and
+                         location_in_viewport(self, right_bottom[0], right_bottom[1]))
+                if v and (self.run_js('return document.body.scrollHeight > window.innerHeight;') and
+                          not self.run_js('return document.body.scrollWidth > window.innerWidth;')):
+                    x += 10
+
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=True, clip=vp)['data']
+                                          captureBeyondViewport=v, clip=vp)['data']
+
             else:
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
 
@@ -1132,34 +1147,3 @@ class ScreencastMode(object):
 
     def imgs_mode(self):
         self._screencast._mode = 'imgs'
-
-
-def handle_download(tab, kwargs):
-    """在下载开始前处理任务
-    :param tab: 触发任务的tab对象
-    :param kwargs: 浏览器返回的数据
-    :return: None
-    """
-    tab._page._dl_mgr._missions[kwargs['guid']] = None
-
-    if tab._download_rename:
-        tmp = kwargs['suggestedFilename'].rsplit('.', 1)
-        ext_name = tmp[-1] if len(tmp) > 1 else ''
-        tmp = tab._download_rename.rsplit('.', 1)
-        ext_rename = tmp[-1] if len(tmp) > 1 else ''
-        n = tab._download_rename if ext_rename == ext_name else f'{tab._download_rename}.{ext_name}'
-        tab._download_rename = None
-
-    else:
-        n = kwargs['suggestedFilename']
-
-    m = DownloadMission(tab, kwargs['guid'], tab.download_path, n, kwargs['url'])
-    tab._page._dl_mgr.add_mission(m)
-    tab._wait_download_flag = m
-    tab._download_missions.add(m)
-
-    if tab._wait_download_flag is False:  # 取消该任务
-        m._set_done('canceled', True)
-
-    if tab._when_download_file_exists == 'skip' and (Path(m.path) / m.name).exists():
-        m._set_done('skipped', True)

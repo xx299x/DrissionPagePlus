@@ -14,7 +14,7 @@ class ActionChains:
 
     def __init__(self, page):
         """
-        :param page: ChromiumPage对象
+        :param page: ChromiumBase对象
         """
         self.page = page
         self._dr = page.driver
