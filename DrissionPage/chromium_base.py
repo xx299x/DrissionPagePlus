@@ -19,7 +19,7 @@ from .chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chro
 from .commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
 from .commons.locator import get_loc
 from .commons.tools import get_usable_path, clean_folder
-from .commons.web import set_browser_cookies, ResponseData
+from .commons.web import set_browser_cookies, ResponseData, location_in_viewport
 from .errors import ContextLossError, ElementLossError, AlertExistsError, CallMethodError, TabClosedError, \
     NoRectError, BrowserConnectError
 from .session_element import make_session_ele
@@ -823,7 +823,7 @@ class ChromiumBase(BasePage):
                 pic_type = 'png'
             else:
                 if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
 
         elif as_base64:
@@ -831,7 +831,7 @@ class ChromiumBase(BasePage):
                 pic_type = 'png'
             else:
                 if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
@@ -853,9 +853,20 @@ class ChromiumBase(BasePage):
                 x, y = left_top
                 w = right_bottom[0] - x
                 h = right_bottom[1] - y
+                v = not (location_in_viewport(self, x, y) and
+                         location_in_viewport(self, right_bottom[0], right_bottom[1]))
+
+                if v:
+                    if (self.run_js('return document.body.scrollHeight > window.innerHeight;') and
+                            not self.run_js('return document.body.scrollWidth > window.innerWidth;')):
+                        x += 10
+                    # elif heng and not shu:
+                    #     y += 5
+
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=False, clip=vp)['data']
+                                          captureBeyondViewport=v, clip=vp)['data']
+
             else:
                 png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
 

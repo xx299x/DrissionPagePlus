@@ -485,7 +485,7 @@ class ChromiumFrame(ChromiumBase):
                 pic_type = 'png'
             else:
                 if as_bytes not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_bytes == 'jpg' else as_bytes
 
         elif as_base64:
@@ -493,7 +493,7 @@ class ChromiumFrame(ChromiumBase):
                 pic_type = 'png'
             else:
                 if as_base64 not in ('jpg', 'jpeg', 'png', 'webp'):
-                    raise ValueError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
+                    raise TypeError("只能接收 'jpg', 'jpeg', 'png', 'webp' 四种格式。")
                 pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
@@ -522,11 +522,16 @@ class ChromiumFrame(ChromiumBase):
         arguments[0].insertBefore(img, this);
         return img;'''
         new_ele = first_child.run_js(js, body)
-        new_ele.scroll.to_see(True)
+        new_ele.scroll.to_see(center=True)
         top = int(self.frame_ele.style('border-top').split('px')[0])
         left = int(self.frame_ele.style('border-left').split('px')[0])
+
+        r = self.page.run_cdp('Page.getLayoutMetrics')['visualViewport']
+        sx = r['pageX']
+        sy = r['pageY']
         r = self.page.get_screenshot(path=path, as_bytes=as_bytes, as_base64=as_base64,
-                                     left_top=(cx + left, cy + top), right_bottom=(cx + w + left, cy + h + top))
+                                     left_top=(cx + left + sx, cy + top + sy),
+                                     right_bottom=(cx + w + left + sx, cy + h + top + sy))
         self.page.remove_ele(new_ele)
         return r
 

@@ -180,7 +180,7 @@ def location_in_viewport(page, loc_x, loc_y):
     :param page: ChromePage对象
     :param loc_x: 页面绝对坐标x
     :param loc_y: 页面绝对坐标y
-    :return:
+    :return: bool
     """
     js = f'''function(){{var x = {loc_x}; var y = {loc_y};
     const scrollLeft = document.documentElement.scrollLeft;
