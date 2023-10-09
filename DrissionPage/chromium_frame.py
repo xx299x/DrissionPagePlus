@@ -535,13 +535,16 @@ class ChromiumFrame(ChromiumBase):
                 pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
-            if not path:
-                path = '.'
-            if not name:
-                name = f'{self.title}.jpg'
-            if not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                name = f'{name}.jpg'
-            pic_type = name.split('.')[-1]
+            path = str(path).rstrip('\\/') if path else '.'
+            if path and path.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                pic_type = path.rsplit('.', 1)[-1]
+
+            elif name and name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                pic_type = name.rsplit('.', 1)[-1]
+
+            else:
+                pic_type = 'jpeg'
+
             if pic_type == 'jpg':
                 pic_type = 'jpeg'
 

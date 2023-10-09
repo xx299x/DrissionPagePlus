@@ -881,13 +881,15 @@ class ChromiumBase(BasePage):
                 pic_type = 'jpeg' if as_base64 == 'jpg' else as_base64
 
         else:
-            if not name:
-                name = f'{self.title}.jpg'
-            if not path:
-                path = '.'
-            if not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                name = f'{name}.jpg'
-            path = get_usable_path(f'{path}{sep}{name}')
+            path = str(path).rstrip('\\/') if path else '.'
+            if not path.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                if not name:
+                    name = f'{self.title}.jpg'
+                elif not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                    name = f'{name}.jpg'
+                path = f'{path}{sep}{name}'
+
+            path = get_usable_path(path)
             pic_type = path.suffix.lower()
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
