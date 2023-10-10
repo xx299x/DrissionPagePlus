@@ -501,7 +501,7 @@ class ChromiumElement(DrissionElement):
 
         return str(path)
 
-    def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None, scroll_to_center=False):
+    def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None, scroll_to_center=True):
         """对当前元素截图，可保存到文件，或以字节方式返回
         :param path: 文件保存路径
         :param name: 完整文件名，后缀可选 'jpg','jpeg','png','webp'
@@ -516,7 +516,6 @@ class ChromiumElement(DrissionElement):
             end_time = perf_counter() + self.page.timeout
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
-
         if scroll_to_center:
             self.scroll.to_see(center=True)
 
@@ -526,6 +525,7 @@ class ChromiumElement(DrissionElement):
         right_bottom = (left + width, top + height)
         if not name:
             name = f'{self.tag}.jpg'
+
         return self.page._get_screenshot(path, name, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                          left_top=left_top, right_bottom=right_bottom, ele=self)
 
