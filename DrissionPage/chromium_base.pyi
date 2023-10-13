@@ -84,6 +84,9 @@ class ChromiumBase(BasePage):
                  timeout: float = None) -> ChromiumElement: ...
 
     @property
+    def browser(self) -> ChromiumPage: ...
+
+    @property
     def title(self) -> str: ...
 
     @property

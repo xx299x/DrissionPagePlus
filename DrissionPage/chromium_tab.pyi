@@ -7,6 +7,7 @@ from typing import Union, Tuple, Any, List
 
 from requests import Session, Response
 
+from waiter import ChromiumTabWaiter
 from .chromium_base import ChromiumBase
 from .chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
@@ -35,6 +36,9 @@ class ChromiumTab(ChromiumBase):
 
     @property
     def set(self) -> TabSetter: ...
+
+    @property
+    def wait(self) -> ChromiumTabWaiter: ...
 
 
 class WebPageTab(SessionPage, ChromiumTab):

@@ -12,10 +12,6 @@ from websocket import WebSocketTimeoutException, WebSocketException, WebSocketCo
 
 
 class ChromiumDriver(object):
-    _INITIAL_ = 'initial'
-    _STARTED_ = 'started'
-    _STOPPED_ = 'stopped'
-
     def __init__(self, tab_id, tab_type, address):
         """
         :param tab_id: 标签页id
@@ -38,12 +34,12 @@ class ChromiumDriver(object):
         self._handle_event_th.daemon = True
 
         self._stopped = Event()
-        self._started = False
-        self.status = self._INITIAL_
 
         self.event_handlers = {}
         self.method_results = {}
         self.event_queue = Queue()
+
+        self.start()
 
     def _send(self, message, timeout=None):
         """发送信息到浏览器，并返回浏览器返回的信息
@@ -105,8 +101,8 @@ class ChromiumDriver(object):
         while not self._stopped.is_set():
             try:
                 self._ws.settimeout(1)
-                message_json = self._ws.recv()
-                mes = loads(message_json)
+                msg_json = self._ws.recv()
+                msg = loads(msg_json)
             except WebSocketTimeoutException:
                 continue
             except (WebSocketException, OSError, WebSocketConnectionClosedException):
@@ -114,24 +110,23 @@ class ChromiumDriver(object):
                 return
 
             if self._debug:
-                if self._debug is True or 'id' in mes or (isinstance(self._debug, str)
-                                                          and mes.get('method', '').startswith(self._debug)):
-                    print(f'<收 {message_json}')
+                if self._debug is True or 'id' in msg or (isinstance(self._debug, str)
+                                                          and msg.get('method', '').startswith(self._debug)):
+                    print(f'<收 {msg_json}')
                 elif isinstance(self._debug, (list, tuple, set)):
                     for m in self._debug:
-                        if mes.get('method', '').startswith(m):
-                            print(f'<收 {message_json}')
+                        if msg.get('method', '').startswith(m):
+                            print(f'<收 {msg_json}')
                             break
 
-            if "method" in mes:
-                self.event_queue.put(mes)
+            if "method" in msg:
+                self.event_queue.put(msg)
 
-            elif "id" in mes:
-                if mes["id"] in self.method_results:
-                    self.method_results[mes['id']].put(mes)
+            elif msg.get('id') in self.method_results:
+                self.method_results[msg['id']].put(msg)
 
             elif self._debug:
-                print(f'未知信息：{mes}')
+                print(f'未知信息：{msg}')
 
     def _handle_event_loop(self):
         """当接收到浏览器信息，执行已绑定的方法"""
@@ -157,10 +152,6 @@ class ChromiumDriver(object):
         :param kwargs: cdp参数
         :return: 执行结果
         """
-        if not self._started:
-            self.start()
-            # raise RuntimeError("不能在启动前调用方法。")
-
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
 
@@ -178,13 +169,6 @@ class ChromiumDriver(object):
 
     def start(self):
         """启动连接"""
-        if self._started:
-            return False
-        if not self._websocket_url:
-            raise RuntimeError("已存在另一个连接。")
-
-        self._started = True
-        self.status = self._STARTED_
         self._stopped.clear()
         self._ws = create_connection(self._websocket_url, enable_multithread=True)
         self._recv_th.start()
@@ -195,10 +179,7 @@ class ChromiumDriver(object):
         """中断连接"""
         if self._stopped.is_set():
             return False
-        if not self._started:
-            return True
 
-        self.status = self._STOPPED_
         self._stopped.set()
         if self._ws:
             self._ws.close()
@@ -212,22 +193,12 @@ class ChromiumDriver(object):
         """绑定cdp event和回调方法
         :param event: cdp event
         :param callback: 绑定到cdp event的回调方法
-        :return: 回调方法
+        :return: None
         """
-        if not callback:
-            return self.event_handlers.pop(event, None)
-        if not callable(callback):
-            raise RuntimeError("方法不能调用。")
-
-        self.event_handlers[event] = callback
-        return True
-
-    def get_listener(self, event):
-        """获取cdp event对应的回调方法
-        :param event: cdp event
-        :return: 回调方法
-        """
-        return self.event_handlers.get(event, None)
+        if callback:
+            self.event_handlers[event] = callback
+        else:
+            self.event_handlers.pop(event, None)
 
     def __str__(self):
         return f"<ChromiumDriver {self.id}>"
@@ -246,8 +217,8 @@ class BrowserDriver(ChromiumDriver):
     def __init__(self, tab_id, tab_type, address):
         if tab_id in BrowserDriver.BROWSERS:
             return
-        super().__init__(tab_id, tab_type, address)
         BrowserDriver.BROWSERS[tab_id] = self
+        super().__init__(tab_id, tab_type, address)
 
     def __repr__(self):
         return f"<BrowserDriver {self.id}>"

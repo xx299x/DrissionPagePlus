@@ -3,17 +3,13 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from pathlib import Path
-from shutil import move
-from threading import Lock
 from time import perf_counter, sleep
 
+from .browser_download_manager import BrowserDownloadManager
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_base import handle_download
 from .chromium_driver import ChromiumDriver, BrowserDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
-from .commons.tools import get_usable_path
 from .configs.chromium_options import ChromiumOptions
 from .errors import BrowserConnectError
 from .setter import ChromiumPageSetter
@@ -101,7 +97,6 @@ class ChromiumPage(ChromiumBase):
         ws = self._control_session.get(u).json()['webSocketDebuggerUrl']
         self._control_session.get(u, headers={'Connection': 'close'})
         self._browser_driver = BrowserDriver(ws.split('/')[-1], 'browser', self.address)
-        self._browser_driver.start()
 
         self._alert = Alert()
         self._tab_obj.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
@@ -445,90 +440,6 @@ class ChromiumTabRect(object):
     def _get_browser_rect(self):
         """获取浏览器范围信息"""
         return self._page.browser_driver.call_method('Browser.getWindowForTarget', targetId=self._page.tab_id)['bounds']
-
-
-class BrowserDownloadManager(object):
-    BROWSERS = {}
-
-    def __new__(cls, page):
-        """
-        :param page: ChromiumPage对象
-        """
-        if page.browser_driver.id in cls.BROWSERS:
-            return cls.BROWSERS[page.browser_driver.id]
-        return object.__new__(cls)
-
-    def __init__(self, page):
-        """
-        :param page: ChromiumPage对象
-        """
-        if page.browser_driver.id in BrowserDownloadManager.BROWSERS:
-            return
-
-        self._page = page
-        self._lock = Lock()
-        page.set.download_path(page.download_path)
-        self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
-        self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
-        self._missions = {}
-
-        BrowserDownloadManager.BROWSERS[page.browser_driver.id] = self
-
-    @property
-    def missions(self):
-        """返回所有未完成的下载任务"""
-        return self._missions
-
-    def add_mission(self, mission):
-        """添加下载任务信息
-        :param mission: DownloadMission对象
-        :return: None
-        """
-        self._missions[mission.id] = mission
-
-    def set_done(self, mission, state, cancel=False, final_path=None):
-        """设置任务结束
-        :param mission: 任务对象
-        :param state: 任务状态
-        :param cancel: 是否取消
-        :param final_path: 最终路径
-        :return: None
-        """
-        mission.state = state
-        mission.final_path = final_path
-        if cancel:
-            self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
-            if mission.final_path:
-                Path(mission.final_path).unlink(True)
-        self._missions.pop(mission.id)
-
-    def _onDownloadWillBegin(self, **kwargs):
-        """用于获取弹出新标签页触发的下载任务"""
-        sleep(.3)
-        if kwargs['guid'] not in self._missions:
-            handle_download(self._page, kwargs)
-
-    def _onDownloadProgress(self, **kwargs):
-        """下载状态变化时执行"""
-        if kwargs['guid'] in self._missions:
-            with self._lock:
-                if kwargs['guid'] in self._missions:
-                    mission = self._missions[kwargs['guid']]
-                    if kwargs['state'] == 'inProgress':
-                        mission.state = 'running'
-                        mission.received_bytes = kwargs['receivedBytes']
-                        mission.total_bytes = kwargs['totalBytes']
-
-                    elif kwargs['state'] == 'completed':
-                        mission.received_bytes = kwargs['receivedBytes']
-                        mission.total_bytes = kwargs['totalBytes']
-                        form_path = f'{self._page.download_path}\\{mission.id}'
-                        to_path = str(get_usable_path(f'{mission.path}\\{mission.name}'))
-                        move(form_path, to_path)
-                        self.set_done(mission, 'completed', final_path=to_path)
-
-                    else:
-                        self.set_done(mission, 'canceled')
 
 
 class Alert(object):

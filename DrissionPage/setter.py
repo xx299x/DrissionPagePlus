@@ -126,22 +126,30 @@ class ChromiumBaseSetter(object):
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
+
+class TabSetter(ChromiumBaseSetter):
+    def __init__(self, page):
+        super().__init__(page)
+
+    def download_path(self, path):
+        """设置下载路径
+        :param path: 下载路径
+        :return: None
+        """
+        super().download_path(path)
+        self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
+
     def download_file_name(self, name):
         """设置下一个被下载文件的名称
         :param name: 文件名，可不含后缀
         :return: None
         """
-        self._page._download_rename = name
+        self._page.browser._dl_mgr.set_rename(self._page.tab_id, name)
 
     def when_download_file_exists(self, mode):
         if mode not in ('rename', 'overwrite', 'skip'):
             raise ValueError(f"mode参数只能是'rename', 'overwrite', 'skip' 之一，现在是：{mode}")
-        self._page._when_download_file_exists = mode
-
-
-class TabSetter(ChromiumBaseSetter):
-    def __init__(self, page):
-        super().__init__(page)
+        self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
 
 
 class ChromiumPageSetter(ChromiumBaseSetter):

@@ -27,6 +27,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param driver_or_options: ChromiumDriver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
+        super(ChromiumBase, self).__init__()  # 调用Base的__init__()
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
@@ -51,7 +52,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._create_session()
 
         t = timeout if isinstance(timeout, (int, float)) else self.timeouts.implicit
-        super(ChromiumBase, self).__init__(t)  # 调用Base的__init__()
 
     def _set_start_options(self, dr_opt, se_opt):
         """处理两种模式的设置

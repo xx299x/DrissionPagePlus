@@ -3,15 +3,15 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from threading import Lock
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List
 
+from .browser_download_manager import BrowserDownloadManager
 from .chromium_base import ChromiumBase
 from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .setter import ChromiumPageSetter
-from .waiter import ChromiumPageWaiter, DownloadMission
+from .waiter import ChromiumPageWaiter
 
 
 class ChromiumPage(ChromiumBase):
@@ -124,28 +124,6 @@ class ChromiumTabRect(object):
     def _get_page_rect(self) -> dict: ...
 
     def _get_browser_rect(self) -> dict: ...
-
-
-class BrowserDownloadManager(object):
-    _page: ChromiumPage = ...
-    _missions: Dict[str, DownloadMission] = ...
-    _lock: Lock = ...
-    BROWSERS: Dict[str, BrowserDownloadManager] = ...
-
-    def __new__(cls, page: ChromiumPage): ...
-
-    def __init__(self, page: ChromiumPage): ...
-
-    @property
-    def missions(self) -> Dict[str, DownloadMission]: ...
-
-    def add_mission(self, mission: DownloadMission) -> None: ...
-
-    def set_done(self, mission: DownloadMission, state: str, cancel: bool = False, final_path: str = None) -> None: ...
-
-    def _onDownloadWillBegin(self, **kwargs) -> None: ...
-
-    def _onDownloadProgress(self, **kwargs) -> None: ...
 
 
 class Alert(object):

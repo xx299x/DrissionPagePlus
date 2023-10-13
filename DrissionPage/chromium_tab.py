@@ -5,6 +5,7 @@
 """
 from copy import copy
 
+from .waiter import ChromiumTabWaiter
 from .chromium_base import ChromiumBase
 from .commons.web import set_session_cookies, set_browser_cookies
 from .session_page import SessionPage
@@ -30,7 +31,6 @@ class ChromiumTab(ChromiumBase):
         self.retry_interval = self.page.retry_interval
         self._page_load_strategy = self.page.page_load_strategy
         self._download_path = self.page.download_path
-        self._when_download_file_exists = self.page._when_download_file_exists
 
     def close(self):
         """关闭当前标签页"""
@@ -52,6 +52,13 @@ class ChromiumTab(ChromiumBase):
         if self._set is None:
             self._set = TabSetter(self)
         return self._set
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = ChromiumTabWaiter(self)
+        return self._wait
 
 
 class WebPageTab(SessionPage, ChromiumTab):

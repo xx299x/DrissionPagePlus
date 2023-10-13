@@ -108,7 +108,6 @@ class ChromiumBase(BasePage):
         self._is_loading = True
         self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
-        self._tab_obj.start()
         self._tab_obj.call_method('DOM.enable')
         self._tab_obj.call_method('Page.enable')
 
@@ -251,7 +250,7 @@ class ChromiumBase(BasePage):
 
     def _onDownloadWillBegin(self, **kwargs):
         """下载即将开始时执行"""
-        self._page._dl_mgr.set_mission(self.tab_id, kwargs['guid'])
+        self.browser._dl_mgr.set_mission(self.tab_id, kwargs['guid'])
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -263,7 +262,7 @@ class ChromiumBase(BasePage):
         return self.ele(loc_or_str, timeout)
 
     @property
-    def page(self):
+    def browser(self):
         return self._page
 
     @property
@@ -324,7 +323,7 @@ class ChromiumBase(BasePage):
     @property
     def _target_id(self):
         """返回当前标签页id"""
-        return self.driver.id if self.driver.status == 'started' else ''
+        return self.driver.id if not self.driver._stopped.is_set() else ''
 
     @property
     def ready_state(self):

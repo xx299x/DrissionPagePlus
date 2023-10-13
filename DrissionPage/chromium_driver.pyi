@@ -17,9 +17,6 @@ class GenericAttr(object):
 
 
 class ChromiumDriver(object):
-    _INITIAL_: str
-    _STARTED_: str
-    _STOPPED_: str
     id: str
     address: str
     type: str
@@ -31,8 +28,6 @@ class ChromiumDriver(object):
     _recv_th: Thread
     _handle_event_th: Thread
     _stopped: Event
-    _started: bool
-    status: str
     event_handlers: dict
     method_results: dict
     event_queue: Queue
@@ -53,9 +48,7 @@ class ChromiumDriver(object):
 
     def stop(self) -> bool: ...
 
-    def set_listener(self, event: str, callback: Union[Callable, None]) -> Union[Callable, None, bool]: ...
-
-    def get_listener(self, event: str) -> Union[Callable, None]: ...
+    def set_listener(self, event: str, callback: Union[Callable, None]) -> None: ...
 
     def __str__(self) -> str: ...
 

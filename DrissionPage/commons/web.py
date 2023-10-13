@@ -164,7 +164,7 @@ def is_js_func(func):
 
 def cookie_to_dict(cookie):
     """把Cookie对象转为dict格式
-    :param cookie: Cookie对象
+    :param cookie: Cookie对象、字符串或字典
     :return: cookie字典
     """
     if isinstance(cookie, Cookie):
@@ -177,7 +177,7 @@ def cookie_to_dict(cookie):
         cookie_dict = cookie
 
     elif isinstance(cookie, str):
-        cookie = cookie.split(',' if ',' in cookie else ';')
+        cookie = cookie.rstrip(';,').split(',' if ',' in cookie else ';')
         cookie_dict = {}
 
         for key, attr in enumerate(cookie):
