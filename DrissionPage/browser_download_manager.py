@@ -22,8 +22,9 @@ class BrowserDownloadManager(object):
         """
         :param page: ChromiumPage对象
         """
-        if page.browser_driver.id in BrowserDownloadManager.BROWSERS:
+        if hasattr(self, '_created'):
             return
+        self._created = True
 
         self._page = page
         self._lock = Lock()
@@ -39,6 +40,9 @@ class BrowserDownloadManager(object):
 
         self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
         self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
+        self._page.browser_driver.call_method('Browser.setDownloadBehavior',
+                                              downloadPath=self._page.download_path,
+                                              behavior='allowAndName', eventsEnabled=True)
 
         BrowserDownloadManager.BROWSERS[page.browser_driver.id] = self
 
@@ -54,6 +58,9 @@ class BrowserDownloadManager(object):
         :return: None
         """
         self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).path = str(Path(path).absolute())
+        self._page.browser_driver.call_method('Browser.setDownloadBehavior',
+                                              downloadPath=str(Path(path).absolute()),
+                                              behavior='allowAndName', eventsEnabled=True)
 
     def set_rename(self, tab_id, rename):
         """设置某个tab的重命名文件名
@@ -120,7 +127,7 @@ class BrowserDownloadManager(object):
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
         guid = kwargs['guid']
-        end = perf_counter() + .3
+        end = perf_counter() + .5
         while perf_counter() < end:
             tab_id = self._guid_and_tab.get(guid, None)
             if tab_id:
@@ -178,7 +185,7 @@ class BrowserDownloadManager(object):
                         move(form_path, to_path)
                         self.set_done(mission, 'completed', final_path=to_path)
 
-                    else:
+                    else:  # canceled
                         self.set_done(mission, 'canceled')
 
 
@@ -197,10 +204,15 @@ class TabDownloadSettings(object):
         """
         :param tab_id: tab id
         """
+        if hasattr(self, '_created'):
+            return
+        self._created = True
         self.tab_id = tab_id
         self.rename = None
         self.path = ''
         self.when_file_exists = 'rename'
+
+        TabDownloadSettings.TABS[tab_id] = self
 
 
 class DownloadMission(object):
@@ -217,7 +229,6 @@ class DownloadMission(object):
         self.final_path = None
 
     def __repr__(self):
-        # return f'<DownloadMission {self.id} {self.state} {self.rate}>'
         return f'<DownloadMission {id(self)} {self.rate}>'
 
     @property

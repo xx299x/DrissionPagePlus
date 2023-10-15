@@ -48,7 +48,7 @@ class ChromiumBase(BasePage):
         self._actions = None
         self._listener = None
 
-        self._download_path = ''
+        self._download_path = str(Path('.').absolute())
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'

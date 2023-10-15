@@ -123,6 +123,7 @@ class ChromiumBaseSetter(object):
         :return: None
         """
         self._page._download_path = str(Path(path).absolute())
+        self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
@@ -130,14 +131,6 @@ class ChromiumBaseSetter(object):
 class TabSetter(ChromiumBaseSetter):
     def __init__(self, page):
         super().__init__(page)
-
-    def download_path(self, path):
-        """设置下载路径
-        :param path: 下载路径
-        :return: None
-        """
-        super().download_path(path)
-        self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
 
     def download_file_name(self, name):
         """设置下一个被下载文件的名称
@@ -175,15 +168,6 @@ class ChromiumPageSetter(ChromiumBaseSetter):
         elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
         self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
-
-    def download_path(self, path):
-        """设置下载路径
-        :param path: 下载路径
-        :return: None
-        """
-        super().download_path(path)
-        self._page.browser_driver.call_method('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
-                                              behavior='allowAndName', eventsEnabled=True)
 
 
 class SessionPageSetter(object):

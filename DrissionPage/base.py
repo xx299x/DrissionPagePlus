@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from abc import abstractmethod
+from pathlib import Path
 from re import sub
 from urllib.parse import quote
 
@@ -366,7 +367,7 @@ class BasePage(BaseParser):
         self.retry_times = 3
         self.retry_interval = 2
         self._DownloadKit = None
-        self._download_path = ''
+        self._download_path = str(Path('.').absolute())
 
     @property
     def title(self):
@@ -403,7 +404,7 @@ class BasePage(BaseParser):
     def download(self):
         """返回下载器对象"""
         if self._DownloadKit is None:
-            self._DownloadKit = DownloadKit(session=self, goal_path=self.download_path)
+            self._DownloadKit = DownloadKit(driver=self, goal_path=self.download_path)
         return self._DownloadKit
 
     def _before_connect(self, url, retry, interval):

@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from time import perf_counter, sleep
 
 from .browser_download_manager import BrowserDownloadManager
@@ -65,7 +66,7 @@ class ChromiumPage(ChromiumBase):
         if self._driver_options.timeouts['implicit'] is not None:
             self._timeout = self._driver_options.timeouts['implicit']
         self._page_load_strategy = self._driver_options.page_load_strategy
-        self._download_path = self._driver_options.download_path
+        self._download_path = str(Path(self._driver_options.download_path).absolute())
 
     def _connect_browser(self, tab_id=None):
         """连接浏览器，在第一次时运行
