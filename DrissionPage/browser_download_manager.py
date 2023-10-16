@@ -58,9 +58,10 @@ class BrowserDownloadManager(object):
         :return: None
         """
         self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).path = str(Path(path).absolute())
-        self._page.browser_driver.call_method('Browser.setDownloadBehavior',
-                                              downloadPath=str(Path(path).absolute()),
-                                              behavior='allowAndName', eventsEnabled=True)
+        if tab_id == self._page.tab_id:
+            self._page.browser_driver.call_method('Browser.setDownloadBehavior',
+                                                  downloadPath=str(Path(path).absolute()),
+                                                  behavior='allowAndName', eventsEnabled=True)
 
     def set_rename(self, tab_id, rename):
         """设置某个tab的重命名文件名
@@ -122,6 +123,8 @@ class BrowserDownloadManager(object):
             self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
             if mission.final_path:
                 Path(mission.final_path).unlink(True)
+        if mission.tab_id in self._tab_missions:
+            self._tab_missions[mission.tab_id].remove(mission.id)
         self._missions.pop(mission.id)
 
     def _onDownloadWillBegin(self, **kwargs):
@@ -163,6 +166,8 @@ class BrowserDownloadManager(object):
             self.set_done(m, 'canceled', True)
         elif skip:
             self.set_done(m, 'skipped', True)
+        else:
+            self._tab_missions.setdefault(tab_id, []).append(guid)
 
         self._flags[tab_id] = m
 
@@ -235,6 +240,11 @@ class DownloadMission(object):
     def rate(self):
         """以百分比形式返回下载进度"""
         return round((self.received_bytes / self.total_bytes) * 100, 2) if self.total_bytes else None
+
+    @property
+    def is_done(self):
+        """返回任务是否在运行中"""
+        return self.state == 'completed'
 
     def cancel(self):
         """取消该任务，如任务已完成，删除已下载的文件"""

@@ -117,6 +117,11 @@ class ChromiumBaseSetter(object):
         self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
+
+class TabSetter(ChromiumBaseSetter):
+    def __init__(self, page):
+        super().__init__(page)
+
     def download_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -126,11 +131,6 @@ class ChromiumBaseSetter(object):
         self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
-
-
-class TabSetter(ChromiumBaseSetter):
-    def __init__(self, page):
-        super().__init__(page)
 
     def download_file_name(self, name):
         """设置下一个被下载文件的名称
@@ -145,7 +145,7 @@ class TabSetter(ChromiumBaseSetter):
         self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
 
 
-class ChromiumPageSetter(ChromiumBaseSetter):
+class ChromiumPageSetter(TabSetter):
     def main_tab(self, tab_id=None):
         """设置主tab
         :param tab_id: 标签页id，不传入则设置当前tab
