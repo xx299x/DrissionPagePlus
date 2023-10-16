@@ -140,8 +140,16 @@ class TabSetter(ChromiumBaseSetter):
         self._page.browser._dl_mgr.set_rename(self._page.tab_id, name)
 
     def when_download_file_exists(self, mode):
-        if mode not in ('rename', 'overwrite', 'skip'):
-            raise ValueError(f"mode参数只能是'rename', 'overwrite', 'skip' 之一，现在是：{mode}")
+        """设置当存在同名文件时的处理方式
+        :param mode: 可在 'rename', 'overwrite', 'skip', 'r', 'o', 's'中选择
+        :return: None
+        """
+        types = {'rename': 'rename', 'overwrite': 'overwrite', 'skip': 'skip', 'r': 'rename', 'o': 'overwrite',
+                 's': 'skip'}
+        mode = types.get(mode, None)
+        if not mode:
+            raise ValueError(f"mode参数只能是'rename', 'overwrite', 'skip', 'r', 'o', 's' 之一，现在是：{mode}")
+
         self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
 
 
