@@ -172,8 +172,7 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要获取的标签页id，为None时获取当前tab
         :return: 标签页对象
         """
-        tab_id = tab_id or self.tab_id
-        return ChromiumTab(self, tab_id)
+        return tab_id if isinstance(tab_id, ChromiumTab) else ChromiumTab(self, tab_id or self.tab_id)
 
     def find_tabs(self, title=None, url=None, tab_type=None, single=True):
         """查找符合条件的tab，返回它们的id组成的列表
@@ -197,7 +196,7 @@ class ChromiumPage(ChromiumBase):
                                  and (tab_type is None or i['type'] in tab_type))]
         return r[0]['id'] if r and single else r
 
-    def new_tab(self, url=None, switch_to=False):
+    def _new_tab(self, url=None, switch_to=False):
         """新建一个标签页,该标签页在最后面
         :param url: 新标签页跳转到的网址
         :param switch_to: 新建标签页后是否把焦点移过去
@@ -225,6 +224,14 @@ class ChromiumPage(ChromiumBase):
             tid = self.run_cdp('Target.createTarget', url='')['targetId']
 
         return tid
+
+    def new_tab(self, url=None, switch_to=False):
+        """新建一个标签页,该标签页在最后面
+        :param url: 新标签页跳转到的网址
+        :param switch_to: 新建标签页后是否把焦点移过去
+        :return: 新标签页对象
+        """
+        return ChromiumTab(self, self._new_tab(url, switch_to))
 
     def to_main_tab(self):
         """跳转到主标签页"""
