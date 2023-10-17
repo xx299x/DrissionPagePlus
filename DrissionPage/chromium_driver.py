@@ -215,8 +215,9 @@ class BrowserDriver(ChromiumDriver):
         return object.__new__(cls)
 
     def __init__(self, tab_id, tab_type, address):
-        if tab_id in BrowserDriver.BROWSERS:
+        if hasattr(self, '_created'):
             return
+        self._created = True
         BrowserDriver.BROWSERS[tab_id] = self
         super().__init__(tab_id, tab_type, address)
 

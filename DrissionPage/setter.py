@@ -146,9 +146,9 @@ class TabSetter(ChromiumBaseSetter):
         """
         types = {'rename': 'rename', 'overwrite': 'overwrite', 'skip': 'skip', 'r': 'rename', 'o': 'overwrite',
                  's': 'skip'}
-        mode = types.get(mode, None)
-        if not mode:
-            raise ValueError(f"mode参数只能是'rename', 'overwrite', 'skip', 'r', 'o', 's' 之一，现在是：{mode}")
+        mode = types.get(mode, mode)
+        if mode not in types:
+            raise ValueError(f'''mode参数只能是 '{"', '".join(types.keys())}' 之一，现在是：{mode}''')
 
         self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
 

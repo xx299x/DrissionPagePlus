@@ -5,7 +5,7 @@
 """
 from http.cookiejar import Cookie
 from pathlib import Path
-from typing import Union, Tuple
+from typing import Union, Tuple, Literal
 
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
@@ -18,6 +18,8 @@ from .chromium_page import ChromiumPage
 from .chromium_tab import ChromiumTab
 from .session_page import SessionPage
 from .web_page import WebPage
+
+FILE_EXISTS = Literal['skip', 'rename', 'overwrite', 's', 'r', 'o']
 
 
 class ChromiumBaseSetter(object):
@@ -58,7 +60,7 @@ class TabSetter(ChromiumBaseSetter):
 
     def download_file_name(self, name: str) -> None: ...
 
-    def when_download_file_exists(self, mode: str) -> None: ...
+    def when_download_file_exists(self, mode: FILE_EXISTS) -> None: ...
 
 
 class ChromiumPageSetter(TabSetter):
