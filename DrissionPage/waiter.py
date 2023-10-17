@@ -250,7 +250,7 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
 
             if self._driver._dl_mgr._missions:
                 if cancel_if_timeout:
-                    for m in self._driver._dl_mgr._missions.values():
+                    for m in list(self._driver._dl_mgr._missions.values()):
                         m.cancel()
                 return False
             else:

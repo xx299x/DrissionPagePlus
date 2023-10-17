@@ -250,6 +250,7 @@ class ChromiumBase(BasePage):
 
     def _onDownloadWillBegin(self, **kwargs):
         """下载即将开始时执行"""
+        print('aaa')
         self.browser._dl_mgr.set_mission(self.tab_id, kwargs['guid'])
 
     def __call__(self, loc_or_str, timeout=None):
