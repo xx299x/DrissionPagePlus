@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 from pathlib import Path
 from shutil import move
-from threading import Lock
 from time import sleep, perf_counter
 
 from .commons.tools import get_usable_path
@@ -27,7 +26,6 @@ class BrowserDownloadManager(object):
         self._created = True
 
         self._page = page
-        self._lock = Lock()
         self._when_download_file_exists = 'rename'
 
         t = TabDownloadSettings(page.tab_id)
@@ -36,7 +34,7 @@ class BrowserDownloadManager(object):
         self._missions = {}  # {guid: DownloadMission}
         self._tab_missions = {}  # {tab_id: DownloadMission}
         self._guid_and_tab = {}  # 记录guid在哪个tab
-        self._flags = {}  # {tab_id: bool, DownloadMission}
+        self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
         self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
         self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
@@ -109,28 +107,35 @@ class BrowserDownloadManager(object):
         """
         self._guid_and_tab[guid] = tab_id
 
-    def set_done(self, mission, state, cancel=False, final_path=None):
+    def set_done(self, mission, state, final_path=None):
         """设置任务结束
         :param mission: 任务对象
         :param state: 任务状态
-        :param cancel: 是否取消
         :param final_path: 最终路径
         :return: None
         """
-        mission.state = state
+        if mission.state not in ('canceled', 'skipped'):
+            mission.state = state
         mission.final_path = final_path
-        if cancel:
-            self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
-            if mission.final_path:
-                Path(mission.final_path).unlink(True)
         if mission.tab_id in self._tab_missions:
             self._tab_missions[mission.tab_id].remove(mission.id)
         self._missions.pop(mission.id)
 
+    def cancel(self, mission, state):
+        """取消任务
+        :param mission: 任务对象
+        :param state: 任务状态
+        :return: None
+        """
+        mission.state = state
+        self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
+        if mission.final_path:
+            Path(mission.final_path).unlink(True)
+
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
         guid = kwargs['guid']
-        end = perf_counter() + .5
+        end = perf_counter() + .3
         while perf_counter() < end:
             tab_id = self._guid_and_tab.get(guid, None)
             if tab_id:
@@ -163,9 +168,9 @@ class BrowserDownloadManager(object):
         self._missions[guid] = m
 
         if self.get_flag(tab_id) is False:  # 取消该任务
-            self.set_done(m, 'canceled', True)
+            self.cancel(m, 'canceled')
         elif skip:
-            self.set_done(m, 'skipped', True)
+            self.cancel(m, 'skipped')
         else:
             self._tab_missions.setdefault(tab_id, []).append(guid)
 
@@ -174,24 +179,22 @@ class BrowserDownloadManager(object):
     def _onDownloadProgress(self, **kwargs):
         """下载状态变化时执行"""
         if kwargs['guid'] in self._missions:
-            with self._lock:
-                if kwargs['guid'] in self._missions:
-                    mission = self._missions[kwargs['guid']]
-                    if kwargs['state'] == 'inProgress':
-                        mission.state = 'running'
-                        mission.received_bytes = kwargs['receivedBytes']
-                        mission.total_bytes = kwargs['totalBytes']
+            mission = self._missions[kwargs['guid']]
+            if kwargs['state'] == 'inProgress':
+                mission.state = 'running'
+                mission.received_bytes = kwargs['receivedBytes']
+                mission.total_bytes = kwargs['totalBytes']
 
-                    elif kwargs['state'] == 'completed':
-                        mission.received_bytes = kwargs['receivedBytes']
-                        mission.total_bytes = kwargs['totalBytes']
-                        form_path = f'{self._page.download_path}\\{mission.id}'
-                        to_path = str(get_usable_path(f'{mission.path}\\{mission.name}'))
-                        move(form_path, to_path)
-                        self.set_done(mission, 'completed', final_path=to_path)
+            elif kwargs['state'] == 'completed':
+                mission.received_bytes = kwargs['receivedBytes']
+                mission.total_bytes = kwargs['totalBytes']
+                form_path = f'{self._page.download_path}\\{mission.id}'
+                to_path = str(get_usable_path(f'{mission.path}\\{mission.name}'))
+                move(form_path, to_path)
+                self.set_done(mission, 'completed', final_path=to_path)
 
-                    else:  # canceled
-                        self.set_done(mission, 'canceled')
+            else:  # 'canceled'
+                self.set_done(mission, 'canceled')
 
 
 class TabDownloadSettings(object):
@@ -248,7 +251,7 @@ class DownloadMission(object):
 
     def cancel(self):
         """取消该任务，如任务已完成，删除已下载的文件"""
-        self._mgr.set_done(self, state='canceled', cancel=True)
+        self._mgr.cancel(self, state='canceled')
 
     def wait(self, show=True, timeout=None, cancel_if_timeout=True):
         """等待任务结束
