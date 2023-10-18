@@ -6,9 +6,11 @@
 from pathlib import Path
 from time import perf_counter, sleep
 
-from .browser_download_manager import BrowserDownloadManager
+from requests import get
+
+from .browser import Browser
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver, BrowserDriver
+from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
 from .configs.chromium_options import ChromiumOptions
@@ -27,9 +29,7 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 超时时间
         """
         self._page = self
-        self._frames = {}
         super().__init__(addr_driver_opts, tab_id)
-        self._dl_mgr = BrowserDownloadManager(self)
         self.set.timeouts(implicit=timeout)
 
     def _set_start_options(self, addr_driver_opts, none):
@@ -79,9 +79,7 @@ class ChromiumPage(ChromiumBase):
         if not self._tab_obj:  # 不是传入driver的情况
             connect_browser(self._driver_options)
             if not tab_id:
-                u = f'http://{self.address}/json'
-                json = self._control_session.get(u).json()
-                self._control_session.get(u, headers={'Connection': 'close'})
+                json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
                 tab_id = [i['id'] for i in json if i['type'] == 'page']
                 if not tab_id:
                     raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -95,10 +93,8 @@ class ChromiumPage(ChromiumBase):
 
     def _page_init(self):
         """浏览器相关设置"""
-        u = f'http://{self.address}/json/version'
-        ws = self._control_session.get(u).json()['webSocketDebuggerUrl']
-        self._control_session.get(u, headers={'Connection': 'close'})
-        self._browser_driver = BrowserDriver(ws.split('/')[-1], 'browser', self.address)
+        ws = get(f'http://{self.address}/json/version', headers={'Connection': 'close'}).json()['webSocketDebuggerUrl']
+        self._browser = Browser(ws.split('/')[-1], self)
 
         self._alert = Alert()
         self._tab_obj.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
@@ -107,32 +103,20 @@ class ChromiumPage(ChromiumBase):
         self._rect = None
         self._main_tab = self.tab_id
 
-        self._process_id = None
-        r = self.browser_driver.call_method('SystemInfo.getProcessInfo')
-        if 'processInfo' not in r:
-            return None
-        for i in r['processInfo']:
-            if i['type'] == 'browser':
-                self._process_id = i['id']
-                break
-
     @property
-    def browser_driver(self):
+    def browser(self):
         """返回用于控制浏览器cdp的driver"""
-        return self._browser_driver
+        return self._browser
 
     @property
     def tabs_count(self):
         """返回标签页数量"""
-        return len(self.tabs)
+        return self.browser.tabs_count
 
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        u = f'http://{self.address}/json'
-        j = self._control_session.get(u).json()  # 不要改用cdp
-        self._control_session.get(u, headers={'Connection': 'close'})
-        return [i['id'] for i in j if i['type'] == 'page']
+        return self.browser.tabs
 
     @property
     def main_tab(self):
@@ -146,7 +130,7 @@ class ChromiumPage(ChromiumBase):
     @property
     def process_id(self):
         """返回浏览器进程id"""
-        return self._process_id
+        return self.browser.process_id
 
     @property
     def set(self):
@@ -183,19 +167,7 @@ class ChromiumPage(ChromiumBase):
         :param single: 是否返回首个结果的id，为False返回所有信息
         :return: tab id或tab dict
         """
-        u = f'http://{self.address}/json'
-        tabs = self._control_session.get(u).json()  # 不要改用cdp
-        self._control_session.get(u, headers={'Connection': 'close'})
-        if isinstance(tab_type, str):
-            tab_type = {tab_type}
-        elif isinstance(tab_type, (list, tuple, set)):
-            tab_type = set(tab_type)
-        elif tab_type is not None:
-            raise TypeError('tab_type只能是set、list、tuple、str、None。')
-
-        r = [i for i in tabs if ((title is None or title in i['title']) and (url is None or url in i['url'])
-                                 and (tab_type is None or i['type'] in tab_type))]
-        return r[0]['id'] if r and single else r
+        return self._browser.find_tabs(title, url, tab_type, single)
 
     def _new_tab(self, url=None, switch_to=False):
         """新建一个标签页,该标签页在最后面
@@ -265,7 +237,7 @@ class ChromiumPage(ChromiumBase):
             tab_id = self.latest_tab
 
         if activate:
-            self._control_session.get(f'http://{self.address}/json/activate/{tab_id}')
+            self.browser.activate_tab(tab_id)
 
         if tab_id == self.tab_id:
             return
@@ -305,7 +277,7 @@ class ChromiumPage(ChromiumBase):
             self.driver.stop()
 
         for tab in tabs:
-            self._control_session.get(f'http://{self.address}/json/close/{tab}')
+            self.browser.close_tab(tab)
         while len(self.tabs) != end_len:
             sleep(.1)
 
@@ -345,19 +317,7 @@ class ChromiumPage(ChromiumBase):
 
     def quit(self):
         """关闭浏览器"""
-        self._tab_obj.call_method('Browser.close')
-        self._tab_obj.stop()
-
-        if self.process_id:
-            from os import popen
-            from platform import system
-            txt = f'tasklist | findstr {self.process_id}' if system().lower() == 'windows' \
-                else f'ps -ef | grep  {self.process_id}'
-            while True:
-                p = popen(txt)
-                if f'  {self.process_id} ' not in p.read():
-                    break
-                sleep(.2)
+        self.browser.quit()
 
     def _on_alert_close(self, **kwargs):
         """alert关闭时触发的方法"""
@@ -448,7 +408,7 @@ class ChromiumTabRect(object):
 
     def _get_browser_rect(self):
         """获取浏览器范围信息"""
-        return self._page.browser_driver.call_method('Browser.getWindowForTarget', targetId=self._page.tab_id)['bounds']
+        return self._page.browser.get_window_bounds()
 
 
 class Alert(object):

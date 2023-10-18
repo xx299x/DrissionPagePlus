@@ -175,7 +175,7 @@ class ChromiumPageSetter(TabSetter):
             tab_or_id = self._page.tab_id
         elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
-        self._page._control_session.get(f'http://{self._page.address}/json/activate/{tab_or_id}')
+        self._page.browser.activate_tab(tab_or_id)
 
 
 class SessionPageSetter(object):

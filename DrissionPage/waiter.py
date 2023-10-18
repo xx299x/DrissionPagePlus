@@ -237,20 +237,20 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
         :return: 是否等待成功
         """
         if not timeout:
-            while self._driver._dl_mgr._missions:
+            while self._driver.browser._dl_mgr._missions:
                 sleep(.5)
             return True
 
         else:
             end_time = perf_counter() + timeout
             while end_time > perf_counter():
-                if not self._driver._dl_mgr._missions:
+                if not self._driver.browser._dl_mgr._missions:
                     return True
                 sleep(.5)
 
-            if self._driver._dl_mgr._missions:
+            if self._driver.browser._dl_mgr._missions:
                 if cancel_if_timeout:
-                    for m in list(self._driver._dl_mgr._missions.values()):
+                    for m in list(self._driver.browser._dl_mgr._missions.values()):
                         m.cancel()
                 return False
             else:

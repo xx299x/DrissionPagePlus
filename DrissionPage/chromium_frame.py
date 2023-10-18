@@ -8,6 +8,8 @@ from re import search
 from threading import Thread
 from time import sleep, perf_counter
 
+from requests import get
+
 from .chromium_base import ChromiumBase, ChromiumPageScroll
 from .chromium_element import ChromiumElement
 from .errors import ContextLossError
@@ -24,8 +26,10 @@ class ChromiumFrame(ChromiumBase):
         page_type = str(type(page))
         if 'ChromiumPage' in page_type or 'WebPage' in page_type:
             self._page = self._target_page = self.tab = page
+            self._browser = page.browser
         else:  # Tab、Frame
             self._page = page.page
+            self._browser = self._page.browser
             self._target_page = page
             self.tab = page.tab if 'ChromiumFrame' in page_type else page
 
@@ -87,9 +91,7 @@ class ChromiumFrame(ChromiumBase):
         try:
             super()._driver_init(tab_id)
         except:
-            u = f'http://{self.address}/json'
-            self._control_session.get(u)
-            self._control_session.get(u, headers={'Connection': 'close'})
+            get(f'http://{self.address}/json', headers={'Connection': 'close'})
             super()._driver_init(tab_id)
 
     def _reload(self):

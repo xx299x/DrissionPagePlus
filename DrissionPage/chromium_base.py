@@ -11,7 +11,7 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep, time
 
-from requests import Session
+from requests import get
 
 from .action_chains import ActionChains
 from .base import BasePage
@@ -79,9 +79,8 @@ class ChromiumBase(BasePage):
         """
         self._chromium_init()
         if not tab_id:
-            u = f'http://{self.address}/json'
-            json = self._control_session.get(u).json()
-            self._control_session.get(u, headers={'Connection': 'close'})
+            json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
+
             tab_id = [i['id'] for i in json if i['type'] == 'page']
             if not tab_id:
                 raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -92,9 +91,6 @@ class ChromiumBase(BasePage):
 
     def _chromium_init(self):
         """浏览器初始设置"""
-        self._control_session = Session()
-        self._control_session.keep_alive = False
-        self._control_session.proxies = {'http': None, 'https': None}
         self._first_run = True
         self._is_reading = False
         self._upload_list = None
@@ -277,8 +273,12 @@ class ChromiumBase(BasePage):
         return self.ele(loc_or_str, timeout)
 
     @property
-    def browser(self):
+    def main(self):
         return self._page
+
+    @property
+    def browser(self):
+        return self._browser
 
     @property
     def driver(self):

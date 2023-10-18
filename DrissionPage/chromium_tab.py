@@ -22,6 +22,7 @@ class ChromiumTab(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         """
         self._page = page
+        self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
 
     def _set_runtime_settings(self):
@@ -68,6 +69,7 @@ class WebPageTab(SessionPage, ChromiumTab):
         :param tab_id: 要控制的标签页id
         """
         self._page = page
+        self._browser = page.browser
         self.address = page.address
         self._debug = page._debug
         self._debug_recorder = page._debug_recorder

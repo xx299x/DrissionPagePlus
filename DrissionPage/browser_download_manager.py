@@ -8,42 +8,26 @@ from .commons.tools import get_usable_path
 
 
 class BrowserDownloadManager(object):
-    BROWSERS = {}
 
-    def __new__(cls, page):
+    def __init__(self, browser):
         """
-        :param page: ChromiumPage对象
+        :param browser: Browser对象
         """
-        if page.browser_driver.id in cls.BROWSERS:
-            return cls.BROWSERS[page.browser_driver.id]
-        return object.__new__(cls)
-
-    def __init__(self, page):
-        """
-        :param page: ChromiumPage对象
-        """
-        if hasattr(self, '_created'):
-            return
-        self._created = True
-
-        self._page = page
+        self._browser = browser
+        self._page = browser.page
         self._when_download_file_exists = 'rename'
 
-        t = TabDownloadSettings(page.tab_id)
-        t.path = page.download_path
-        self._tabs_settings = {page.tab_id: t}  # {tab_id: TabDownloadSettings}
+        t = TabDownloadSettings(self._page.tab_id)
+        t.path = self._page.download_path
         self._missions = {}  # {guid: DownloadMission}
+        self._tabs_settings = {self._page.tab_id: t}  # {tab_id: TabDownloadSettings}
         self._tab_missions = {}  # {tab_id: DownloadMission}
-        self._guid_and_tab = {}  # 记录guid在哪个tab
         self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
-        self._page.browser_driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
-        self._page.browser_driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
-        self._page.browser_driver.call_method('Browser.setDownloadBehavior',
-                                              downloadPath=self._page.download_path,
-                                              behavior='allowAndName', eventsEnabled=True)
-
-        BrowserDownloadManager.BROWSERS[page.browser_driver.id] = self
+        self._browser.driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
+        self._browser.driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
+        self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
+                              behavior='allowAndName', eventsEnabled=True)
 
     @property
     def missions(self):
@@ -58,9 +42,8 @@ class BrowserDownloadManager(object):
         """
         self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).path = str(Path(path).absolute())
         if tab_id == self._page.tab_id:
-            self._page.browser_driver.call_method('Browser.setDownloadBehavior',
-                                                  downloadPath=str(Path(path).absolute()),
-                                                  behavior='allowAndName', eventsEnabled=True)
+            self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=str(Path(path).absolute()),
+                                  behavior='allowAndName', eventsEnabled=True)
 
     def set_rename(self, tab_id, rename):
         """设置某个tab的重命名文件名
@@ -100,14 +83,6 @@ class BrowserDownloadManager(object):
         """
         return self._tab_missions.get(tab_id, [])
 
-    def set_mission(self, tab_id, guid):
-        """绑定tab和下载任务信息
-        :param tab_id: tab id
-        :param guid: 下载任务id
-        :return: None
-        """
-        self._guid_and_tab[guid] = tab_id
-
     def set_done(self, mission, state, final_path=None):
         """设置任务结束
         :param mission: 任务对象
@@ -121,6 +96,7 @@ class BrowserDownloadManager(object):
         if mission.tab_id in self._tab_missions and mission.id in self._tab_missions[mission.tab_id]:
             self._tab_missions[mission.tab_id].remove(mission.id)
         self._missions.pop(mission.id)
+        mission._is_done = True
 
     def cancel(self, mission):
         """取消任务
@@ -128,7 +104,7 @@ class BrowserDownloadManager(object):
         :return: None
         """
         mission.state = 'canceled'
-        self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
+        self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
         if mission.final_path:
             Path(mission.final_path).unlink(True)
 
@@ -138,12 +114,22 @@ class BrowserDownloadManager(object):
         :return: None
         """
         mission.state = 'skipped'
-        self._page.browser_driver.call_method('Browser.cancelDownload', guid=mission.id)
+        self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
+
+    def clear_tab_info(self, tab_id):
+        """当tab关闭时清除有关信息
+        :param tab_id: 标签页id
+        :return: None
+        """
+        self._tabs_settings.pop(tab_id)
+        self._tab_missions.pop(tab_id)
+        self._flags.pop(tab_id)
+        TabDownloadSettings.TABS.pop(tab_id)
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
         guid = kwargs['guid']
-        tab_id = self._page._frames.get(kwargs['frameId'], self._page.tab_id)
+        tab_id = self._browser._frames.get(kwargs['frameId'], self._page.tab_id)
 
         settings = TabDownloadSettings(tab_id)
         if settings.rename:
@@ -249,6 +235,7 @@ class DownloadMission(object):
         self.received_bytes = 0
         self.final_path = None
         self.save_path = save_path
+        self._is_done = False
 
     def __repr__(self):
         return f'<DownloadMission {id(self)} {self.rate}>'
@@ -261,7 +248,7 @@ class DownloadMission(object):
     @property
     def is_done(self):
         """返回任务是否在运行中"""
-        return self.state in ('completed', 'skipped', 'canceled')
+        return self._is_done
 
     def cancel(self):
         """取消该任务，如任务已完成，删除已下载的文件"""

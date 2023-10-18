@@ -7,6 +7,7 @@ from json import dumps, loads
 from queue import Queue, Empty
 from threading import Thread, Event
 
+from requests import get
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
     create_connection
 
@@ -223,3 +224,6 @@ class BrowserDriver(ChromiumDriver):
 
     def __repr__(self):
         return f"<BrowserDriver {self.id}>"
+
+    def get(self, url):
+        return get(url, headers={'Connection': 'close'})
