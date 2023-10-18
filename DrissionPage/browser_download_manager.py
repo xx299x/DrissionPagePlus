@@ -143,17 +143,7 @@ class BrowserDownloadManager(object):
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
         guid = kwargs['guid']
-
-        end = perf_counter() + 2
-        while perf_counter() < end:
-            tab_id = self._guid_and_tab.get(guid, None)
-            if tab_id:
-                # print('拿到')
-                break
-            sleep(.005)
-        else:
-            # print('没拿到')
-            tab_id = self._page.tab_id
+        tab_id = self._page._frames.get(kwargs['frameId'], self._page.tab_id)
 
         settings = TabDownloadSettings(tab_id)
         if settings.rename:

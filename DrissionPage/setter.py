@@ -355,7 +355,7 @@ class WebPageSetter(ChromiumPageSetter):
             self._chromium_setter.user_agent(ua, platform)
 
 
-class WebPageTabSetter(ChromiumBaseSetter):
+class WebPageTabSetter(TabSetter):
     def __init__(self, page):
         super().__init__(page)
         self._session_setter = SessionPageSetter(self._page)

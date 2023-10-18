@@ -26,8 +26,9 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        super().__init__(addr_driver_opts, tab_id)
         self._page = self
+        self._frames = {}
+        super().__init__(addr_driver_opts, tab_id)
         self._dl_mgr = BrowserDownloadManager(self)
         self.set.timeouts(implicit=timeout)
 
@@ -93,7 +94,7 @@ class ChromiumPage(ChromiumBase):
         self._first_run = False
 
     def _page_init(self):
-        """页面相关设置"""
+        """浏览器相关设置"""
         u = f'http://{self.address}/json/version'
         ws = self._control_session.get(u).json()['webSocketDebuggerUrl']
         self._control_session.get(u, headers={'Connection': 'close'})

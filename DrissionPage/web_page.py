@@ -6,6 +6,7 @@
 from requests import Session
 
 from .base import BasePage
+from .browser_download_manager import BrowserDownloadManager
 from .chromium_base import ChromiumBase, Timeout
 from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage
@@ -45,13 +46,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._response = None
         self._set = None
         self._screencast = None
+        self._frames = {}
+        self._page = self
 
         self._set_start_options(driver_or_options, session_or_options)
         self._set_runtime_settings()
         self._connect_browser()
         self._create_session()
-
-        t = timeout if isinstance(timeout, (int, float)) else self.timeouts.implicit
+        self._dl_mgr = BrowserDownloadManager(self)
+        self.set.timeouts(implicit=timeout)
 
     def _set_start_options(self, dr_opt, se_opt):
         """处理两种模式的设置

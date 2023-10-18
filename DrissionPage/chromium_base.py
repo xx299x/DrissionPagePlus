@@ -7,6 +7,7 @@ from base64 import b64decode
 from json import loads, JSONDecodeError
 from os.path import sep
 from pathlib import Path
+from re import findall
 from threading import Thread
 from time import perf_counter, sleep, time
 
@@ -116,53 +117,60 @@ class ChromiumBase(BasePage):
         self._tab_obj.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
         self._tab_obj.set_listener('Page.loadEventFired', self._onLoadEventFired)
         self._tab_obj.set_listener('Page.frameNavigated', self._onFrameNavigated)
-        self._tab_obj.set_listener('Page.downloadWillBegin', self._onDownloadWillBegin)
+        self._tab_obj.set_listener('Page.frameAttached', self._onFrameAttached)
+        self._tab_obj.set_listener('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self):
         """刷新cdp使用的document数据"""
-        if not self._is_reading:
-            self._is_reading = True
+        if self._is_reading:
+            return
 
-            if self._debug:
-                print('获取document')
+        self._is_reading = True
+
+        if self._debug:
+            print('获取document')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
+
+        try:  # 遇到过网站在标签页关闭时触发读取文档导致错误，屏蔽掉
+            self._wait_loaded()
+        except TabClosedError:
+            return
+
+        end_time = perf_counter() + 10
+        while perf_counter() < end_time:
+            try:
+                b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
                 if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
+                    self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
+                break
 
-            try:  # 遇到过网站在标签页关闭时触发读取文档导致错误，屏蔽掉
-                self._wait_loaded()
-            except TabClosedError:
-                return
-
-            end_time = perf_counter() + 10
-            while perf_counter() < end_time:
-                try:
-                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                    self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
+            except CDPError as e:
+                err = e
+                if self._debug:
+                    print('重试获取document')
                     if self._debug_recorder:
-                        self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
-                    break
+                        self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
 
-                except CDPError as e:
-                    err = e
-                    if self._debug:
-                        print('重试获取document')
-                        if self._debug_recorder:
-                            self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
+                sleep(.1)
 
-                    sleep(.1)
+        else:
+            txt = f'请检查是否创建了过多页面对象同时操作浏览器。\n如无法解决，请把以下信息报告作者。\n{err._info}\n' \
+                  f'报告网址：https://gitee.com/g1879/DrissionPage/issues'
+            raise GetDocumentError(txt)
 
-            else:
-                txt = f'请检查是否创建了过多页面对象同时操作浏览器。\n如无法解决，请把以下信息报告作者。\n{err._info}\n' \
-                      f'报告网址：https://gitee.com/g1879/DrissionPage/issues'
-                raise GetDocumentError(txt)
+        if self._debug:
+            print('获取document结束')
+            if self._debug_recorder:
+                self._debug_recorder.add_data((perf_counter(), '获取document', '结束'))
 
-            if self._debug:
-                print('获取document结束')
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '获取document', '结束'))
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
 
-            self._is_loading = False
-            self._is_reading = False
+        self._is_loading = False
+        self._is_reading = False
 
     def _wait_loaded(self, timeout=None):
         """等待页面加载完成，超时触发停止加载
@@ -193,8 +201,18 @@ class ChromiumBase(BasePage):
         self.stop_loading()
         return False
 
+    def _onFrameDetached(self, **kwargs):
+        try:
+            self.browser._frames.pop(kwargs['frameId'])
+        except KeyError:
+            pass
+
+    def _onFrameAttached(self, **kwargs):
+        self.browser._frames[kwargs['frameId']] = self.tab_id
+
     def _onFrameStartedLoading(self, **kwargs):
         """页面开始加载时执行"""
+        self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._target_id:
             self._is_loading = True
 
@@ -205,6 +223,7 @@ class ChromiumBase(BasePage):
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
+        self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._target_id and self._first_run is False and self._is_loading:
             if self._debug:
                 print('页面停止加载 FrameStoppedLoading')
@@ -247,11 +266,6 @@ class ChromiumBase(BasePage):
             self.driver.set_listener('Page.fileChooserOpened', None)
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
-
-    def _onDownloadWillBegin(self, **kwargs):
-        """下载即将开始时执行"""
-        print('aaa')
-        self.browser._dl_mgr.set_mission(self.tab_id, kwargs['guid'])
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素

@@ -127,37 +127,39 @@ class ChromiumFrame(ChromiumBase):
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
-        if not self._is_reading:
-            self._is_reading = True
+        if self._is_reading:
+            return
 
-            if self._debug:
-                print('---获取document')
+        self._is_reading = True
 
-            end_time = perf_counter() + 3
-            while self.is_alive and perf_counter() < end_time:
-                try:
-                    if self._is_diff_domain is False:
-                        node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
-                        self.doc_ele = ChromiumElement(self._target_page,
-                                                       backend_id=node['contentDocument']['backendNodeId'])
+        if self._debug:
+            print('---获取document')
 
-                    else:
-                        b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                        self.doc_ele = ChromiumElement(self, backend_id=b_id)
+        end_time = perf_counter() + 3
+        while self.is_alive and perf_counter() < end_time:
+            try:
+                if self._is_diff_domain is False:
+                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
+                    self.doc_ele = ChromiumElement(self._target_page,
+                                                   backend_id=node['contentDocument']['backendNodeId'])
 
-                    break
+                else:
+                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                    self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
-                except Exception:
-                    sleep(.1)
+                break
 
-            # else:
-            #     raise RuntimeError('获取document失败。')
+            except Exception:
+                sleep(.1)
 
-            if self._debug:
-                print('---获取document结束')
+        # else:
+        #     raise RuntimeError('获取document失败。')
 
-            self._is_loading = False
-            self._is_reading = False
+        if self._debug:
+            print('---获取document结束')
+
+        self._is_loading = False
+        self._is_reading = False
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时触发"""
