@@ -54,13 +54,13 @@ class ChromiumBase(BasePage):
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
 
-        self._set_start_options(address, None)
-        self._set_runtime_settings()
+        self._d_set_start_options(address, None)
+        self._d_set_runtime_settings()
         self._connect_browser(tab_id)
         if timeout is not None:
             self.timeout = timeout
 
-    def _set_start_options(self, address, none):
+    def _d_set_start_options(self, address, none):
         """设置浏览器启动属性
         :param address: 'ip:port'
         :param none: 用于后代继承
@@ -68,7 +68,7 @@ class ChromiumBase(BasePage):
         """
         self.address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
 
-    def _set_runtime_settings(self):
+    def _d_set_runtime_settings(self):
         self._timeouts = Timeout(self)
         self._page_load_strategy = 'normal'
 
@@ -77,7 +77,12 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._chromium_init()
+        self._first_run = True
+        self._is_reading = False
+        self._upload_list = None
+        self._wait = None
+        self._scroll = None
+
         if not tab_id:
             json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
 
@@ -88,14 +93,6 @@ class ChromiumBase(BasePage):
         self._driver_init(tab_id)
         self._get_document()
         self._first_run = False
-
-    def _chromium_init(self):
-        """浏览器初始设置"""
-        self._first_run = True
-        self._is_reading = False
-        self._upload_list = None
-        self._wait = None
-        self._scroll = None
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化

@@ -74,7 +74,7 @@ class ChromiumFrame(ChromiumBase):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
-    def _set_runtime_settings(self):
+    def _d_set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
         self._timeouts = copy(self._target_page.timeouts)
         self.retry_times = self._target_page.retry_times

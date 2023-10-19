@@ -3,16 +3,11 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from requests import Session
 
 from .base import BasePage
-from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver
 from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .commons.web import set_session_cookies, set_browser_cookies
-from .configs.chromium_options import ChromiumOptions
-from .configs.session_options import SessionOptions
 from .session_page import SessionPage
 from .setter import WebPageSetter
 
@@ -27,96 +22,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param driver_or_options: ChromiumDriver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
-        super(ChromiumBase, self).__init__()  # 调用Base的__init__()
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
         self._has_driver = True
         self._has_session = True
 
-        self._debug = False
-        self._debug_recorder = None
-        self.address = None
-
-        self._session = None
-        self._driver = None
-        self._driver_options = None
-        self._session_options = None
-        self._response = None
-        self._set = None
-        self._screencast = None
-        self._frames = {}
-        self._page = self
-
-        self._set_start_options(driver_or_options, session_or_options)
-        self._set_runtime_settings()
-        self._connect_browser()
-        self._create_session()
-        self.set.timeouts(implicit=timeout)
-
-    def _set_start_options(self, dr_opt, se_opt):
-        """处理两种模式的设置
-        :param dr_opt: ChromiumDriver或ChromiumOptions对象，为None则从ini读取，为False用默认信息创建
-        :param se_opt: Session、SessionOptions对象或配置信息，为None则从ini读取，为False用默认信息创建
-        :return: None
-        """
-        # 浏览器配置
-        if isinstance(dr_opt, ChromiumDriver):
-            self._driver = dr_opt
-            self._driver_options = ChromiumOptions()
-            self._driver_options.debugger_address = dr_opt.address
-            dr_opt = False
-
-        else:
-            if dr_opt is None:
-                self._driver_options = ChromiumOptions()
-
-            elif dr_opt is False:
-                self._driver_options = ChromiumOptions(read_file=False)
-
-            elif isinstance(dr_opt, ChromiumOptions):
-                self._driver_options = dr_opt
-
-            else:
-                raise TypeError('driver_or_options参数只能接收ChromiumDriver, ChromiumOptions、None或False。')
-
-        self.address = self._driver_options.debugger_address.replace('localhost',
-                                                                     '127.0.0.1').lstrip('http://').lstrip('https://')
-
-        # Session配置
-        if isinstance(se_opt, Session):
-            self._session = se_opt
-            self._session_options = SessionOptions()
-            se_opt = False
-
-        else:
-            if se_opt is None:
-                self._session_options = SessionOptions()
-
-            elif se_opt is False:
-                self._session_options = SessionOptions(read_file=False)
-
-            elif isinstance(se_opt, SessionOptions):
-                self._session_options = se_opt
-
-            else:
-                raise TypeError('session_or_options参数只能接收Session, SessionOptions、None或False。')
-
-        self._timeouts = Timeout(self)
-        self._page_load_strategy = self._driver_options.page_load_strategy
-
-        if se_opt is not False:
-            self.set.timeouts(implicit=self._session_options.timeout)
-            self._download_path = self._session_options.download_path
-
-        if dr_opt is not False:
-            t = self._driver_options.timeouts
-            self.set.timeouts(t['implicit'], t['pageLoad'], t['script'])
-            self._download_path = self._driver_options.download_path
-
-    def _set_runtime_settings(self):
-        """设置运行时用到的属性"""
-        pass
+        super().__init__(session_or_options=session_or_options, timeout=timeout)
+        super(SessionPage, self).__init__(addr_or_opts=driver_or_options, timeout=timeout)
+        self.change_mode(self._mode, go=False, copy_cookies=False)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素

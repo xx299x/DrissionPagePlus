@@ -30,13 +30,13 @@ class SessionPage(BasePage):
         self._response = None
         self._session = None
         self._set = None
-        self._set_start_options(session_or_options, None)
-        self._set_runtime_settings()
+        self._s_set_start_options(session_or_options, None)
+        self._s_set_runtime_settings()
         self._create_session()
         if timeout is not None:
             self.timeout = timeout
 
-    def _set_start_options(self, session_or_options, none):
+    def _s_set_start_options(self, session_or_options, none):
         """启动配置
         :param session_or_options: Session、SessionOptions
         :param none: 用于后代继承
@@ -49,7 +49,7 @@ class SessionPage(BasePage):
             self._session_options = SessionOptions()
             self._session = session_or_options
 
-    def _set_runtime_settings(self):
+    def _s_set_runtime_settings(self):
         """设置运行时用到的属性"""
         self._timeout = self._session_options.timeout
         self._download_path = self._session_options.download_path

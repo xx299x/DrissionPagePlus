@@ -63,7 +63,7 @@ class ChromiumPage(ChromiumBase):
                  headers={'Connection': 'close'}).json()['webSocketDebuggerUrl']
         self._browser = Browser(self._driver_options.debugger_address, ws.split('/')[-1], self)
 
-    def _set_runtime_settings(self):
+    def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""
         self._timeouts = Timeout(self,
                                  page_load=self._driver_options.timeouts['pageLoad'],

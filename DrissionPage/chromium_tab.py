@@ -5,12 +5,13 @@
 """
 from copy import copy
 
-from .waiter import ChromiumTabWaiter
+from .base import BasePage
 from .chromium_base import ChromiumBase
 from .commons.web import set_session_cookies, set_browser_cookies
 from .session_page import SessionPage
 from .setter import TabSetter
 from .setter import WebPageTabSetter
+from .waiter import ChromiumTabWaiter
 
 
 class ChromiumTab(ChromiumBase):
@@ -25,7 +26,7 @@ class ChromiumTab(ChromiumBase):
         self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
 
-    def _set_runtime_settings(self):
+    def _d_set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
         self._timeouts = copy(self.page.timeouts)
         self.retry_times = self.page.retry_times
@@ -62,29 +63,17 @@ class ChromiumTab(ChromiumBase):
         return self._wait
 
 
-class WebPageTab(SessionPage, ChromiumTab):
+class WebPageTab(SessionPage, ChromiumTab, BasePage):
     def __init__(self, page, tab_id):
         """
         :param page: WebPage对象
         :param tab_id: 要控制的标签页id
         """
-        self._page = page
-        self._browser = page.browser
-        self.address = page.address
-        self._debug = page._debug
-        self._debug_recorder = page._debug_recorder
         self._mode = 'd'
         self._has_driver = True
         self._has_session = True
-        self._session = copy(page.session)
-        self._response = None
-        self._set = None
-
-        self._download_set = None
-        self._download_path = page.download_path
-        self._DownloadKit = None
-        super(SessionPage, self)._set_runtime_settings()
-        self._connect_browser(tab_id)
+        super().__init__(session_or_options=copy(page.session))
+        super(SessionPage, self).__init__(page=page, tab_id=tab_id)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
