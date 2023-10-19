@@ -43,7 +43,6 @@ class ChromiumBase(BasePage):
         self._root_id = None  # object id
         self._debug = False
         self._debug_recorder = None
-        self._driver = None
         self._set = None
         self._screencast = None
         self._actions = None
@@ -100,6 +99,8 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
+        if hasattr(self, '_driver'):
+            return
         self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
         self._driver.call_method('DOM.enable')

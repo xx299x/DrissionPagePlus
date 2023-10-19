@@ -26,7 +26,7 @@ class SessionPage(BasePage):
         :param session_or_options: Session对象或SessionOptions对象
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
-        super().__init__()
+        super(SessionPage, SessionPage).__init__(self)
         self._response = None
         self._session = None
         self._set = None

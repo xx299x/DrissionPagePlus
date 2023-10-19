@@ -3,11 +3,11 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-
 from .base import BasePage
 from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .commons.web import set_session_cookies, set_browser_cookies
+from .configs.chromium_options import ChromiumOptions
 from .session_page import SessionPage
 from .setter import WebPageSetter
 
@@ -28,8 +28,11 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._has_driver = True
         self._has_session = True
 
-        super().__init__(session_or_options=session_or_options, timeout=timeout)
-        super(SessionPage, self).__init__(addr_or_opts=driver_or_options, timeout=timeout)
+        super().__init__(session_or_options=session_or_options)
+        if not driver_or_options:
+            driver_or_options = ChromiumOptions(read_file=driver_or_options)
+            driver_or_options.set_timeouts(implicit=self._timeout).set_paths(download_path=self.download_path)
+        super(SessionPage, self).__init__(addr_driver_opts=driver_or_options, timeout=timeout)
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
     def __call__(self, loc_or_str, timeout=None):
