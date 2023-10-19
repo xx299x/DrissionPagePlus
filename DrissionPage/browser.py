@@ -8,18 +8,20 @@ from .chromium_driver import BrowserDriver
 class Browser(object):
     BROWSERS = {}
 
-    def __new__(cls, browser_id, page):
+    def __new__(cls, address, browser_id, page):
         """
-        :param browser_id: BrowserDriver对象
+        :param address: 浏览器地址
+        :param browser_id: 浏览器id
         :param page: ChromiumPage对象
         """
         if browser_id in cls.BROWSERS:
             return cls.BROWSERS[browser_id]
         return object.__new__(cls)
 
-    def __init__(self, browser_id, page):
+    def __init__(self, address, browser_id, page):
         """
-        :param page: BrowserDriver对象
+        :param address: 浏览器地址
+        :param browser_id: 浏览器id
         :param page: ChromiumPage对象
         """
         if hasattr(self, '_created'):
@@ -28,10 +30,11 @@ class Browser(object):
         Browser.BROWSERS[browser_id] = self
 
         self.page = page
-        self.address = page.address
-        self._driver = BrowserDriver(browser_id, 'browser', page.address)
+        self.address = address
+        self._driver = BrowserDriver(browser_id, 'browser', address)
         self.id = browser_id
         self._frames = {}
+        self._connected = False
 
         self._process_id = None
         r = self.run_cdp('SystemInfo.getProcessInfo')
@@ -39,8 +42,6 @@ class Browser(object):
             if i['type'] == 'browser':
                 self._process_id = i['id']
                 break
-
-        self._dl_mgr = BrowserDownloadManager(self)
 
         self.run_cdp('Target.setDiscoverTargets')
         self._driver.set_listener('Target.targetDestroyed', self._onTargetDestroyed)
@@ -52,6 +53,12 @@ class Browser(object):
         for k, i in self._frames.items():
             if i == tab_id:
                 self._frames.pop(k)
+
+    def connect_to_page(self):
+        """执行与page相关的逻辑"""
+        if not self._connected:
+            self._dl_mgr = BrowserDownloadManager(self)
+            self._connected = True
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句

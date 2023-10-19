@@ -10,11 +10,9 @@ from requests import get
 
 from .browser import Browser
 from .chromium_base import ChromiumBase, Timeout
-from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .commons.browser import connect_browser
 from .configs.chromium_options import ChromiumOptions
-from .errors import BrowserConnectError
 from .setter import ChromiumPageSetter
 from .waiter import ChromiumPageWaiter
 
@@ -22,41 +20,48 @@ from .waiter import ChromiumPageWaiter
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
 
-    def __init__(self, addr_driver_opts=None, tab_id=None, timeout=None):
+    def __init__(self, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
         """
-        :param addr_driver_opts: 浏览器地址:端口、ChromiumDriver对象或ChromiumOptions对象
+        :param addr_or_opts: 浏览器地址:端口或ChromiumOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
+        if addr_driver_opts:
+            addr_or_opts = addr_driver_opts
         self._page = self
-        super().__init__(addr_driver_opts, tab_id)
+        address = self._handle_options(addr_or_opts)
+        self._run_browser()
+        super().__init__(address, tab_id)
         self.set.timeouts(implicit=timeout)
+        self._page_init()
 
-    def _set_start_options(self, addr_driver_opts, none):
+    def _handle_options(self, addr_or_opts):
         """设置浏览器启动属性
-        :param addr_driver_opts: 'ip:port'、ChromiumOptions
-        :param none: 用于后代继承
-        :return: None
+        :param addr_or_opts: 'ip:port'、ChromiumOptions
+        :return: 返回浏览器地址
         """
-        if not addr_driver_opts or isinstance(addr_driver_opts, ChromiumOptions):
-            self._driver_options = addr_driver_opts or ChromiumOptions(addr_driver_opts)
+        if not addr_or_opts:
+            self._driver_options = ChromiumOptions(addr_or_opts)
+
+        elif isinstance(addr_or_opts, ChromiumOptions):
+            self._driver_options = addr_or_opts
 
         # 接收浏览器地址和端口
-        elif isinstance(addr_driver_opts, str):
+        elif isinstance(addr_or_opts, str):
             self._driver_options = ChromiumOptions()
-            self._driver_options.debugger_address = addr_driver_opts
-
-        # 接收传递过来的ChromiumDriver，浏览器
-        elif isinstance(addr_driver_opts, ChromiumDriver):
-            self._driver_options = ChromiumOptions(read_file=False)
-            self._driver_options.debugger_address = addr_driver_opts.address
-            self._tab_obj = addr_driver_opts
+            self._driver_options.debugger_address = addr_or_opts
 
         else:
-            raise TypeError('只能接收ChromiumDriver或ChromiumOptions类型参数。')
+            raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
 
-        self.address = self._driver_options.debugger_address.replace('localhost',
-                                                                     '127.0.0.1').lstrip('http://').lstrip('https://')
+        return self._driver_options.debugger_address
+
+    def _run_browser(self):
+        """连接浏览器"""
+        connect_browser(self._driver_options)
+        ws = get(f'http://{self._driver_options.debugger_address}/json/version',
+                 headers={'Connection': 'close'}).json()['webSocketDebuggerUrl']
+        self._browser = Browser(self._driver_options.debugger_address, ws.split('/')[-1], self)
 
     def _set_runtime_settings(self):
         """设置运行时用到的属性"""
@@ -69,39 +74,16 @@ class ChromiumPage(ChromiumBase):
         self._page_load_strategy = self._driver_options.page_load_strategy
         self._download_path = str(Path(self._driver_options.download_path).absolute())
 
-    def _connect_browser(self, tab_id=None):
-        """连接浏览器，在第一次时运行
-        :param tab_id: 要控制的标签页id，不指定默认为激活的
-        :return: None
-        """
-        self._chromium_init()
-
-        if not self._tab_obj:  # 不是传入driver的情况
-            connect_browser(self._driver_options)
-            if not tab_id:
-                json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
-                tab_id = [i['id'] for i in json if i['type'] == 'page']
-                if not tab_id:
-                    raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
-                tab_id = tab_id[0]
-
-            self._driver_init(tab_id)
-
-        self._page_init()
-        self._get_document()
-        self._first_run = False
-
     def _page_init(self):
         """浏览器相关设置"""
-        ws = get(f'http://{self.address}/json/version', headers={'Connection': 'close'}).json()['webSocketDebuggerUrl']
-        self._browser = Browser(ws.split('/')[-1], self)
-
         self._alert = Alert()
-        self._tab_obj.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
-        self._tab_obj.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
+        self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
+        self._driver.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
 
         self._rect = None
         self._main_tab = self.tab_id
+
+        self._browser.connect_to_page()
 
     @property
     def browser(self):
@@ -327,7 +309,7 @@ class ChromiumPage(ChromiumBase):
         self._alert.defaultPrompt = None
         self._alert.response_accept = kwargs.get('result')
         self._alert.response_text = kwargs['userInput']
-        self._tab_obj.has_alert = False
+        self._driver.has_alert = False
 
     def _on_alert_open(self, **kwargs):
         """alert出现时触发的方法"""
@@ -337,7 +319,7 @@ class ChromiumPage(ChromiumBase):
         self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
         self._alert.response_accept = None
         self._alert.response_text = None
-        self._tab_obj.has_alert = True
+        self._driver.has_alert = True
 
 
 class ChromiumTabRect(object):

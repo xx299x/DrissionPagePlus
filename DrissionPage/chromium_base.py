@@ -43,7 +43,7 @@ class ChromiumBase(BasePage):
         self._root_id = None  # object id
         self._debug = False
         self._debug_recorder = None
-        self._tab_obj = None
+        self._driver = None
         self._set = None
         self._screencast = None
         self._actions = None
@@ -103,18 +103,18 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
-        self._tab_obj = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
+        self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
 
-        self._tab_obj.call_method('DOM.enable')
-        self._tab_obj.call_method('Page.enable')
+        self._driver.call_method('DOM.enable')
+        self._driver.call_method('Page.enable')
 
-        self._tab_obj.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
-        self._tab_obj.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
-        self._tab_obj.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
-        self._tab_obj.set_listener('Page.loadEventFired', self._onLoadEventFired)
-        self._tab_obj.set_listener('Page.frameNavigated', self._onFrameNavigated)
-        self._tab_obj.set_listener('Page.frameAttached', self._onFrameAttached)
-        self._tab_obj.set_listener('Page.frameDetached', self._onFrameDetached)
+        self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
+        self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
+        self._driver.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
+        self._driver.set_listener('Page.loadEventFired', self._onLoadEventFired)
+        self._driver.set_listener('Page.frameNavigated', self._onFrameNavigated)
+        self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
+        self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self):
         """刷新cdp使用的document数据"""
@@ -283,9 +283,9 @@ class ChromiumBase(BasePage):
     @property
     def driver(self):
         """返回用于控制浏览器的ChromiumDriver对象"""
-        if self._tab_obj is None:
+        if self._driver is None:
             raise RuntimeError('浏览器已关闭或链接已断开。')
-        return self._tab_obj
+        return self._driver
 
     @property
     def is_loading(self):
@@ -738,7 +738,7 @@ class ChromiumBase(BasePage):
             raise TypeError('必须传入定位符、iframe序号、id、name、ChromiumFrame对象其中之一。')
 
     def get_frames(self, loc=None, timeout=None):
-        """获取所有符号条件的frame对象
+        """获取所有符合条件的frame对象
         :param loc: 定位符，为None时返回所有
         :param timeout: 查找超时时间
         :return: ChromiumFrame对象组成的列表

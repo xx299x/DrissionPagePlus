@@ -7,7 +7,6 @@ from typing import Union, Tuple, List, Optional
 
 from .browser import Browser
 from .chromium_base import ChromiumBase
-from .chromium_driver import ChromiumDriver
 from .chromium_tab import ChromiumTab
 from .configs.chromium_options import ChromiumOptions
 from .setter import ChromiumPageSetter
@@ -17,7 +16,7 @@ from .waiter import ChromiumPageWaiter
 class ChromiumPage(ChromiumBase):
 
     def __init__(self,
-                 addr_driver_opts: Union[str, int, ChromiumOptions, ChromiumDriver] = None,
+                 addr_or_opts: Union[str, int, ChromiumOptions] = None,
                  tab_id: str = None,
                  timeout: float = None):
         self._driver_options: ChromiumOptions = ...
@@ -26,11 +25,9 @@ class ChromiumPage(ChromiumBase):
         self._browser: Browser = ...
         self._rect: ChromiumTabRect = ...
 
-    def _connect_browser(self,
-                         addr_driver_opts: Union[str, ChromiumDriver] = None,
-                         tab_id: str = None) -> None: ...
+    def _handle_options(self, addr_or_opts) -> str: ...
 
-    def _set_start_options(self, addr_driver_opts: Union[str, ChromiumDriver], none) -> None: ...
+    def _run_browser(self) -> None: ...
 
     def _page_init(self) -> None: ...
 

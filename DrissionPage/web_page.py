@@ -39,7 +39,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self.address = None
 
         self._session = None
-        self._tab_obj = None
+        self._driver = None
         self._driver_options = None
         self._session_options = None
         self._response = None
@@ -62,7 +62,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         # 浏览器配置
         if isinstance(dr_opt, ChromiumDriver):
-            self._tab_obj = dr_opt
+            self._driver = dr_opt
             self._driver_options = ChromiumOptions()
             self._driver_options.debugger_address = dr_opt.address
             dr_opt = False
@@ -141,7 +141,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def _browser_url(self):
         """返回浏览器当前url"""
-        return super(SessionPage, self).url if self._tab_obj else None
+        return super(SessionPage, self).url if self._driver else None
 
     @property
     def title(self):
@@ -311,7 +311,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         # s模式转d模式
         if self._mode == 'd':
-            if self._tab_obj is None:
+            if self._driver is None:
                 self._connect_browser(self._driver_options)
 
             self._url = None if not self._has_driver else super(SessionPage, self).url
@@ -393,8 +393,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 self.driver.call_method('Browser.close')
             except Exception:
                 pass
-            self._tab_obj.stop()
-            self._tab_obj = None
+            self._driver.stop()
+            self._driver = None
             self._has_driver = None
 
     def close_session(self):
@@ -430,5 +430,5 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_session = None
         if self._has_driver:
             super(SessionPage, self).quit()
-            self._tab_obj = None
+            self._driver = None
             self._has_driver = None

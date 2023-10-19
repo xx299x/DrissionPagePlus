@@ -110,7 +110,7 @@ class ChromiumFrame(ChromiumBase):
             self._debug = debug
         else:
             self._is_diff_domain = True
-            self._tab_obj.stop()
+            self._driver.stop()
             super().__init__(self.address, self.frame_id, self._target_page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
@@ -118,7 +118,7 @@ class ChromiumFrame(ChromiumBase):
 
     def _check_ok(self):
         """用于应付同域异域之间跳转导致元素丢失问题"""
-        if self._tab_obj._stopped.is_set():
+        if self._driver._stopped.is_set():
             self._reload()
 
         try:

@@ -109,7 +109,7 @@ class WebPageTab(SessionPage, ChromiumTab):
     @property
     def _browser_url(self):
         """返回浏览器当前url"""
-        return super(SessionPage, self).url if self._tab_obj else None
+        return super(SessionPage, self).url if self._driver else None
 
     @property
     def title(self):
@@ -279,7 +279,7 @@ class WebPageTab(SessionPage, ChromiumTab):
 
         # s模式转d模式
         if self._mode == 'd':
-            if self._tab_obj is None:
+            if self._driver is None:
                 self._connect_browser(self.page._driver_options)
 
             self._url = None if not self._has_driver else super(SessionPage, self).url
