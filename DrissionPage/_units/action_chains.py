@@ -5,8 +5,8 @@
 """
 from time import sleep
 
-from DrissionPage._commons.keys import modifierBit, keyDescriptionForString
-from DrissionPage._commons.web import location_in_viewport
+from .._commons.keys import modifierBit, keyDescriptionForString
+from .._commons.web import location_in_viewport
 
 
 class ActionChains:

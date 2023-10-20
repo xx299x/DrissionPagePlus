@@ -7,16 +7,16 @@ from typing import Union, Tuple, Any, List
 
 from requests import Session, Response
 
-from DrissionPage._base.browser import Browser
-from DrissionPage._elements.chromium_element import ChromiumElement
-from DrissionPage._elements.session_element import SessionElement
-from DrissionPage._pages.chromium_base import ChromiumBase
-from DrissionPage._pages.chromium_frame import ChromiumFrame
-from DrissionPage._pages.chromium_page import ChromiumPage, ChromiumTabRect
-from DrissionPage._pages.session_page import SessionPage
-from DrissionPage._pages.web_page import WebPage
-from DrissionPage._units.setter import TabSetter, WebPageTabSetter
-from DrissionPage._units.waiter import ChromiumTabWaiter
+from .chromium_base import ChromiumBase
+from .chromium_frame import ChromiumFrame
+from .chromium_page import ChromiumPage, ChromiumTabRect
+from .session_page import SessionPage
+from .web_page import WebPage
+from .._base.browser import Browser
+from .._elements.chromium_element import ChromiumElement
+from .._elements.session_element import SessionElement
+from .._units.setter import TabSetter, WebPageTabSetter
+from .._units.waiter import ChromiumTabWaiter
 
 
 class ChromiumTab(ChromiumBase):

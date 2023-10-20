@@ -3,13 +3,13 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from DrissionPage._base.base import BasePage
-from DrissionPage._commons.web import set_session_cookies, set_browser_cookies
-from DrissionPage._configs.chromium_options import ChromiumOptions
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage._pages.chromium_tab import WebPageTab
-from DrissionPage._units.setter import WebPageSetter
+from .chromium_page import ChromiumPage
+from .chromium_tab import WebPageTab
 from .session_page import SessionPage
+from .._base.base import BasePage
+from .._commons.web import set_session_cookies, set_browser_cookies
+from .._configs.chromium_options import ChromiumOptions
+from .._units.setter import WebPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):

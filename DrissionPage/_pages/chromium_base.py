@@ -13,20 +13,20 @@ from time import perf_counter, sleep, time
 
 from requests import get
 
-from DrissionPage._base.base import BasePage
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
-from DrissionPage._commons.locator import get_loc
-from DrissionPage._commons.tools import get_usable_path, clean_folder
-from DrissionPage._commons.web import location_in_viewport
-from DrissionPage._elements.chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
-from DrissionPage._elements.session_element import make_session_ele
-from DrissionPage._units.network_listener import NetworkListener
-from DrissionPage._units.setter import ChromiumBaseSetter
-from DrissionPage._units.waiter import ChromiumBaseWaiter
-from DrissionPage.errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
+from .._base.base import BasePage
+from .._base.chromium_driver import ChromiumDriver
+from .._commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
+from .._commons.locator import get_loc
+from .._commons.tools import get_usable_path, clean_folder
+from .._commons.web import location_in_viewport
+from .._elements.chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
+from .._elements.session_element import make_session_ele
+from .._units.action_chains import ActionChains
+from .._units.network_listener import NetworkListener
+from .._units.setter import ChromiumBaseSetter
+from .._units.waiter import ChromiumBaseWaiter
+from ..errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
     NoRectError, BrowserConnectError, GetDocumentError
-from _units.action_chains import ActionChains
 
 
 class ChromiumBase(BasePage):

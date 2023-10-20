@@ -8,11 +8,11 @@ from typing import Any, Union, Tuple, List
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 
-from DrissionPage._base.base import BasePage
-from DrissionPage._commons.constants import NoneElement
-from DrissionPage._configs.session_options import SessionOptions
-from DrissionPage._elements.session_element import SessionElement
-from DrissionPage._units.setter import SessionPageSetter
+from .._base.base import BasePage
+from .._commons.constants import NoneElement
+from .._configs.session_options import SessionOptions
+from .._elements.session_element import SessionElement
+from .._units.setter import SessionPageSetter
 
 
 class SessionPage(BasePage):

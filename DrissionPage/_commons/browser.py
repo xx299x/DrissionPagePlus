@@ -12,7 +12,7 @@ from platform import system
 
 from requests import get as requests_get
 
-from DrissionPage.errors import BrowserConnectError
+from ..errors import BrowserConnectError
 from .tools import port_is_using
 
 
@@ -42,7 +42,7 @@ def connect_browser(option):
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        from DrissionPage.easy_set import get_chrome_path
+        from ..easy_set import get_chrome_path
         chrome_path = get_chrome_path(show_msg=False)
 
         if not chrome_path:

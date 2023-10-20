@@ -7,17 +7,17 @@ from os.path import basename, sep
 from pathlib import Path
 from time import perf_counter, sleep
 
-from DrissionPage._base.base import DrissionElement, BaseElement
-from DrissionPage._commons.constants import FRAME_ELEMENT, NoneElement, Settings
-from DrissionPage._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
-from DrissionPage._commons.locator import get_loc
-from DrissionPage._commons.tools import get_usable_path
-from DrissionPage._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
-from DrissionPage.errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
+from .._base.base import DrissionElement, BaseElement
+from .._commons.constants import FRAME_ELEMENT, NoneElement, Settings
+from .._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
+from .._commons.locator import get_loc
+from .._commons.tools import get_usable_path
+from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, location_in_viewport, offset_scroll
+from ..errors import ContextLossError, ElementLossError, JavaScriptError, NoRectError, ElementNotFoundError, \
     CDPError, NoResourceError, CanNotClickError
 from .session_element import make_session_ele
-from DrissionPage._units.setter import ChromiumElementSetter
-from DrissionPage._units.waiter import ChromiumElementWaiter
+from .._units.setter import ChromiumElementSetter
+from .._units.waiter import ChromiumElementWaiter
 
 
 class ChromiumElement(DrissionElement):
@@ -641,7 +641,7 @@ class ChromiumElement(DrissionElement):
         points = [(int(current_x + i * (width / num)), int(current_y + i * (height / num))) for i in range(1, num)]
         points.append((target_x, target_y))
 
-        from .action_chains import ActionChains
+        from .._units.action_chains import ActionChains
         actions = ActionChains(self.page)
         actions.hold(self)
 
@@ -1203,7 +1203,7 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
 
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=backend_id)
     if ele.tag in FRAME_ELEMENT:
-        from ._chromium_frame import ChromiumFrame
+        from .._pages.chromium_frame import ChromiumFrame
         ele = ChromiumFrame(page, ele)
 
     return ele

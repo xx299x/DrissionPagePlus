@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from DrissionPage._base.browser import Browser
-from DrissionPage._pages.chromium_page import ChromiumPage
+from .._base.browser import Browser
+from .._pages.chromium_page import ChromiumPage
 
 
 class BrowserDownloadManager(object):

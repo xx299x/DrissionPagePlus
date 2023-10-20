@@ -8,14 +8,14 @@ from time import perf_counter, sleep
 
 from requests import get
 
-from DrissionPage._base.browser import Browser
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._commons.browser import connect_browser
-from DrissionPage._configs.chromium_options import ChromiumOptions
-from DrissionPage._pages.chromium_base import ChromiumBase, Timeout
-from DrissionPage._pages.chromium_tab import ChromiumTab
-from DrissionPage._units.setter import ChromiumPageSetter
-from DrissionPage._units.waiter import ChromiumPageWaiter
+from .._base.browser import Browser
+from .._base.chromium_driver import ChromiumDriver
+from .._commons.browser import connect_browser
+from .._configs.chromium_options import ChromiumOptions
+from .._pages.chromium_base import ChromiumBase, Timeout
+from .._pages.chromium_tab import ChromiumTab
+from .._units.setter import ChromiumPageSetter
+from .._units.waiter import ChromiumPageWaiter
 
 
 class ChromiumPage(ChromiumBase):

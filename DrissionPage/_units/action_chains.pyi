@@ -5,9 +5,9 @@
 """
 from typing import Union, Tuple
 
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._elements.chromium_element import ChromiumElement
-from DrissionPage._pages.chromium_base import ChromiumBase
+from .._base.chromium_driver import ChromiumDriver
+from .._elements.chromium_element import ChromiumElement
+from .._pages.chromium_base import ChromiumBase
 
 
 class ActionChains:

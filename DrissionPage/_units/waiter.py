@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 from time import sleep, perf_counter
 
-from DrissionPage._commons.constants import Settings
-from DrissionPage.errors import WaitTimeoutError
+from .._commons.constants import Settings
+from ..errors import WaitTimeoutError
 
 
 class ChromiumBaseWaiter(object):

@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from DrissionPage._configs.chromium_options import ChromiumOptions
+from .._configs.chromium_options import ChromiumOptions
 
 
 def connect_browser(option: ChromiumOptions) -> tuple: ...

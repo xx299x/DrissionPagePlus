@@ -9,10 +9,10 @@ from re import match, DOTALL
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
-from DrissionPage._base.base import DrissionElement, BasePage, BaseElement
-from DrissionPage._commons.constants import NoneElement
-from DrissionPage._commons.locator import get_loc
-from DrissionPage._commons.web import get_ele_txt, make_absolute_link
+from .._base.base import DrissionElement, BasePage, BaseElement
+from .._commons.constants import NoneElement
+from .._commons.locator import get_loc
+from .._commons.web import get_ele_txt, make_absolute_link
 
 
 class SessionElement(DrissionElement):

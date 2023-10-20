@@ -5,13 +5,13 @@
 """
 from typing import Union, Tuple, List, Optional
 
-from DrissionPage._base.browser import Browser
-from DrissionPage._pages.chromium_base import ChromiumBase
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._pages.chromium_tab import ChromiumTab
-from DrissionPage._configs.chromium_options import ChromiumOptions
-from DrissionPage._units.setter import ChromiumPageSetter
-from DrissionPage._units.waiter import ChromiumPageWaiter
+from .._base.browser import Browser
+from .._pages.chromium_base import ChromiumBase
+from .._base.chromium_driver import ChromiumDriver
+from .._pages.chromium_tab import ChromiumTab
+from .._configs.chromium_options import ChromiumOptions
+from .._units.setter import ChromiumPageSetter
+from .._units.waiter import ChromiumPageWaiter
 
 
 class ChromiumPage(ChromiumBase):

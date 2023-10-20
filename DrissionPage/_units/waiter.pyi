@@ -5,11 +5,11 @@
 """
 from typing import Union
 
-from DrissionPage._elements.chromium_element import ChromiumElement
-from DrissionPage._pages.chromium_base import ChromiumBase
-from DrissionPage._pages.chromium_frame import ChromiumFrame
-from DrissionPage._pages.chromium_page import ChromiumPage
 from .browser_download_manager import DownloadMission
+from .._elements.chromium_element import ChromiumElement
+from .._pages.chromium_base import ChromiumBase
+from .._pages.chromium_frame import ChromiumFrame
+from .._pages.chromium_page import ChromiumPage
 
 
 class ChromiumBaseWaiter(object):

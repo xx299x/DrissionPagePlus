@@ -8,18 +8,18 @@ from typing import Union, Tuple, List, Any
 
 from DataRecorder import Recorder
 
-from DrissionPage._base.base import BasePage
-from DrissionPage._base.browser import Browser
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._commons.constants import NoneElement
-from DrissionPage._elements.chromium_element import ChromiumElement, ChromiumScroll
-from DrissionPage._elements.session_element import SessionElement
-from DrissionPage._pages.chromium_frame import ChromiumFrame
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage._units.action_chains import ActionChains
-from DrissionPage._units.network_listener import NetworkListener
-from DrissionPage._units.setter import ChromiumBaseSetter
-from DrissionPage._units.waiter import ChromiumBaseWaiter
+from .._base.base import BasePage
+from .._base.browser import Browser
+from .._base.chromium_driver import ChromiumDriver
+from .._commons.constants import NoneElement
+from .._elements.chromium_element import ChromiumElement, ChromiumScroll
+from .._elements.session_element import SessionElement
+from .._pages.chromium_frame import ChromiumFrame
+from .._pages.chromium_page import ChromiumPage
+from .._units.action_chains import ActionChains
+from .._units.network_listener import NetworkListener
+from .._units.setter import ChromiumBaseSetter
+from .._units.waiter import ChromiumBaseWaiter
 
 
 class ChromiumBase(BasePage):

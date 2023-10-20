@@ -1,10 +1,14 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from os.path import sep
 from pathlib import Path
 from shutil import move
 from time import sleep, perf_counter
 
-from DrissionPage._commons.tools import get_usable_path
+from .._commons.tools import get_usable_path
 
 
 class BrowserDownloadManager(object):

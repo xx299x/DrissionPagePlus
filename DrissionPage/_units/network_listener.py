@@ -12,7 +12,7 @@ from time import perf_counter, sleep
 
 from requests.structures import CaseInsensitiveDict
 
-from DrissionPage.errors import CDPError
+from ..errors import CDPError
 
 
 class NetworkListener(object):

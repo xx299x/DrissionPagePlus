@@ -5,8 +5,8 @@
 """
 from click import command, option
 
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage.easy_set import set_paths, configs_to_here as ch
+from .._pages.chromium_page import ChromiumPage
+from ..easy_set import set_paths, configs_to_here as ch
 
 
 @command()

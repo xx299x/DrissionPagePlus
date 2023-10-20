@@ -9,9 +9,9 @@ from typing import Union
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
-from DrissionPage.base import DrissionElement, BasePage
-from DrissionPage._chromium_element import ChromiumElement
-from DrissionPage._chromium_base import ChromiumBase
+from .._elements.chromium_element import ChromiumElement
+from .._pages.chromium_base import ChromiumBase
+from ..base import DrissionElement, BasePage
 
 
 def get_ele_txt(e: DrissionElement) -> str: ...

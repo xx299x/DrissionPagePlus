@@ -5,9 +5,9 @@
 """
 from typing import List, Optional, Union
 
-from DrissionPage._units.browser_download_manager import BrowserDownloadManager
-from DrissionPage._pages.chromium_page import ChromiumPage
 from .chromium_driver import BrowserDriver
+from .._pages.chromium_page import ChromiumPage
+from .._units.browser_download_manager import BrowserDownloadManager
 
 
 class Browser(object):

@@ -7,17 +7,17 @@ from typing import Union, Tuple, List, Any
 
 from requests import Session, Response
 
-from ._base import BasePage
-from ._chromium_driver import ChromiumDriver
-from ._chromium_element import ChromiumElement
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
-from ._configs.chromium_options import ChromiumOptions
-from ._configs.session_options import SessionOptions
-from ._session_element import SessionElement
 from .session_page import SessionPage
-from ._units.setter import WebPageSetter
+from .._base.base import BasePage
+from .._base.chromium_driver import ChromiumDriver
+from .._configs.chromium_options import ChromiumOptions
+from .._configs.session_options import SessionOptions
+from .._elements.chromium_element import ChromiumElement
+from .._elements.session_element import SessionElement
+from .._units.setter import WebPageSetter
 
 
 class WebPage(SessionPage, ChromiumPage, BasePage):

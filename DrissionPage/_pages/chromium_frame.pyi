@@ -6,13 +6,13 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
-from DrissionPage._elements.chromium_element import ChromiumElement, Locations, ChromiumElementStates
-from DrissionPage._pages.chromium_base import ChromiumBase, ChromiumPageScroll
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage._pages.chromium_tab import ChromiumTab
-from DrissionPage._pages.web_page import WebPage
-from DrissionPage._units.setter import ChromiumFrameSetter
-from DrissionPage._units.waiter import FrameWaiter
+from .chromium_base import ChromiumBase, ChromiumPageScroll
+from .chromium_page import ChromiumPage
+from .chromium_tab import ChromiumTab
+from .web_page import WebPage
+from .._elements.chromium_element import ChromiumElement, Locations, ChromiumElementStates
+from .._units.setter import ChromiumFrameSetter
+from .._units.waiter import FrameWaiter
 
 
 class ChromiumFrame(ChromiumBase):

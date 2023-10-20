@@ -10,10 +10,10 @@ from urllib.parse import quote
 
 from DownloadKit import DownloadKit
 
-from DrissionPage._commons.constants import Settings, NoneElement
-from DrissionPage._commons.locator import get_loc
-from DrissionPage._commons.web import format_html
-from DrissionPage.errors import ElementNotFoundError
+from .._commons.constants import Settings, NoneElement
+from .._commons.locator import get_loc
+from .._commons.web import format_html
+from ..errors import ElementNotFoundError
 
 
 class BaseParser(object):

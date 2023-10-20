@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Union
 from types import FunctionType
 
-from DrissionPage._pages.chromium_page import ChromiumPage
+from .._pages.chromium_page import ChromiumPage
 
 
 def get_usable_path(path: Union[str, Path], is_file: bool = True, parents: bool = True) -> Path: ...

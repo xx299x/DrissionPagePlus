@@ -6,15 +6,15 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
-from DrissionPage._base.base import DrissionElement, BaseElement
-from DrissionPage._commons.constants import NoneElement
-from DrissionPage._elements.session_element import SessionElement
-from DrissionPage._pages.chromium_base import ChromiumBase
-from DrissionPage._pages.chromium_frame import ChromiumFrame
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage._pages.web_page import WebPage
-from DrissionPage._units.setter import ChromiumElementSetter
-from DrissionPage._units.waiter import ChromiumElementWaiter
+from .._base.base import DrissionElement, BaseElement
+from .._commons.constants import NoneElement
+from .._elements.session_element import SessionElement
+from .._pages.chromium_base import ChromiumBase
+from .._pages.chromium_frame import ChromiumFrame
+from .._pages.chromium_page import ChromiumPage
+from .._pages.web_page import WebPage
+from .._units.setter import ChromiumElementSetter
+from .._units.waiter import ChromiumElementWaiter
 
 
 class ChromiumElement(DrissionElement):

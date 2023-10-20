@@ -7,8 +7,8 @@ from pathlib import Path
 
 from requests.structures import CaseInsensitiveDict
 
-from DrissionPage._commons.tools import show_or_hide_browser
-from DrissionPage._commons.web import set_browser_cookies, set_session_cookies
+from .._commons.tools import show_or_hide_browser
+from .._commons.web import set_browser_cookies, set_session_cookies
 
 
 class ChromiumBaseSetter(object):

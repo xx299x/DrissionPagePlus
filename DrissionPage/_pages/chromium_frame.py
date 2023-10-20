@@ -10,11 +10,11 @@ from time import sleep, perf_counter
 
 from requests import get
 
-from DrissionPage._elements.chromium_element import ChromiumElement
-from DrissionPage._pages.chromium_base import ChromiumBase, ChromiumPageScroll
-from DrissionPage._units.setter import ChromiumFrameSetter
-from DrissionPage._units.waiter import FrameWaiter
-from DrissionPage.errors import ContextLossError
+from .._elements.chromium_element import ChromiumElement
+from .._pages.chromium_base import ChromiumBase, ChromiumPageScroll
+from .._units.setter import ChromiumFrameSetter
+from .._units.waiter import FrameWaiter
+from ..errors import ContextLossError
 
 
 class ChromiumFrame(ChromiumBase):

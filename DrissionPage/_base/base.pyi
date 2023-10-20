@@ -8,7 +8,7 @@ from typing import Union, Tuple, List
 
 from DownloadKit import DownloadKit
 
-from DrissionPage._commons.constants import NoneElement
+from .._commons.constants import NoneElement
 
 
 class BaseParser(object):

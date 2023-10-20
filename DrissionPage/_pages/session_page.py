@@ -11,11 +11,11 @@ from requests import Session
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
-from DrissionPage._base.base import BasePage
-from DrissionPage._commons.web import cookie_to_dict
-from DrissionPage._configs.session_options import SessionOptions
-from DrissionPage._elements.session_element import SessionElement, make_session_ele
-from DrissionPage._units.setter import SessionPageSetter
+from .._base.base import BasePage
+from .._commons.web import cookie_to_dict
+from .._configs.session_options import SessionOptions
+from .._elements.session_element import SessionElement, make_session_ele
+from .._units.setter import SessionPageSetter
 
 
 class SessionPage(BasePage):

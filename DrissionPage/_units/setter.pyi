@@ -11,13 +11,13 @@ from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 
-from DrissionPage._elements.chromium_element import ChromiumElement
-from DrissionPage._pages.chromium_base import ChromiumBase, ChromiumPageScroll
-from DrissionPage._pages.chromium_frame import ChromiumFrame
-from DrissionPage._pages.chromium_page import ChromiumPage
-from DrissionPage._pages.chromium_tab import ChromiumTab
-from DrissionPage._pages.session_page import SessionPage
-from DrissionPage._pages.web_page import WebPage
+from .._elements.chromium_element import ChromiumElement
+from .._pages.chromium_base import ChromiumBase, ChromiumPageScroll
+from .._pages.chromium_frame import ChromiumFrame
+from .._pages.chromium_page import ChromiumPage
+from .._pages.chromium_tab import ChromiumTab
+from .._pages.session_page import SessionPage
+from .._pages.web_page import WebPage
 
 FILE_EXISTS = Literal['skip', 'rename', 'overwrite', 's', 'r', 'o']
 

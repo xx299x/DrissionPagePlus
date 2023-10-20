@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from DrissionPage.errors import ElementNotFoundError
+from ..errors import ElementNotFoundError
 
 HANDLE_ALERT_METHOD = 'Page.handleJavaScriptDialog'
 FRAME_ELEMENT = ('iframe', 'frame')

@@ -8,8 +8,8 @@ from typing import Union, Dict, List, Iterable, Tuple
 
 from requests.structures import CaseInsensitiveDict
 
-from DrissionPage._base.chromium_driver import ChromiumDriver
-from DrissionPage._pages.chromium_base import ChromiumBase
+from .._base.chromium_driver import ChromiumDriver
+from .._pages.chromium_base import ChromiumBase
 
 
 class NetworkListener(object):

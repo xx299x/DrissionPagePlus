@@ -5,12 +5,12 @@
 """
 from copy import copy
 
-from DrissionPage._base.base import BasePage
-from DrissionPage._commons.web import set_session_cookies, set_browser_cookies
-from DrissionPage._pages.chromium_base import ChromiumBase
-from DrissionPage._pages.session_page import SessionPage
-from DrissionPage._units.setter import TabSetter, WebPageTabSetter
-from DrissionPage._units.waiter import ChromiumTabWaiter
+from .._base.base import BasePage
+from .._commons.web import set_session_cookies, set_browser_cookies
+from .._pages.chromium_base import ChromiumBase
+from .._pages.session_page import SessionPage
+from .._units.setter import TabSetter, WebPageTabSetter
+from .._units.waiter import ChromiumTabWaiter
 
 
 class ChromiumTab(ChromiumBase):
