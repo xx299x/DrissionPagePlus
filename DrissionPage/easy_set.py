@@ -7,8 +7,8 @@ from os import popen
 from pathlib import Path
 from re import search
 
-from .configs.chromium_options import ChromiumOptions
-from .configs.options_manage import OptionsManager
+from ._configs.chromium_options import ChromiumOptions
+from ._configs.options_manage import OptionsManager
 
 
 def configs_to_here(save_name=None):
