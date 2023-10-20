@@ -25,7 +25,7 @@ class ChromiumElement(DrissionElement):
 
     def __init__(self, page, node_id=None, obj_id=None, backend_id=None):
         """node_id、obj_id和backend_id必须至少传入一个
-        :param page: 元素所在ChromePage页面对象
+        :param page: 元素所在页面对象
         :param node_id: cdp中的node id
         :param obj_id: js中的object id
         :param backend_id: backend id

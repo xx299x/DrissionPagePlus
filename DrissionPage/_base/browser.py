@@ -149,3 +149,5 @@ class Browser(object):
                 if f'  {self.process_id} ' not in p.read():
                     break
                 sleep(.2)
+
+        Browser.BROWSERS.pop(self.id)
