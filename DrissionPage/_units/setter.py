@@ -152,6 +152,10 @@ class TabSetter(ChromiumBaseSetter):
 
         self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
 
+    def activate(self):
+        """使标签页处于最前面"""
+        self._page.browser.activate_tab(self._page.tab_id)
+
 
 class ChromiumPageSetter(TabSetter):
     def main_tab(self, tab_id=None):

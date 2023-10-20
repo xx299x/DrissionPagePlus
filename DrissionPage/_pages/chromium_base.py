@@ -105,6 +105,7 @@ class ChromiumBase(BasePage):
 
         self._driver.call_method('DOM.enable')
         self._driver.call_method('Page.enable')
+        self._driver.call_method('Emulation.setFocusEmulationEnabled', enabled=True)
 
         self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)

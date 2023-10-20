@@ -3,13 +3,14 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Tuple, Any, List
+from typing import Union, Tuple, Any, List, Optional
 
 from requests import Session, Response
 
+from .._units.tab_rect import ChromiumTabRect
 from .chromium_base import ChromiumBase
 from .chromium_frame import ChromiumFrame
-from .chromium_page import ChromiumPage, ChromiumTabRect
+from .chromium_page import ChromiumPage
 from .session_page import SessionPage
 from .web_page import WebPage
 from .._base.browser import Browser
@@ -24,6 +25,7 @@ class ChromiumTab(ChromiumBase):
     def __init__(self, page: ChromiumPage, tab_id: str = None):
         self._page: ChromiumPage = ...
         self._browser: Browser = ...
+        self._rect: Optional[ChromiumTabRect] = ...
 
     def _d_set_runtime_settings(self) -> None: ...
 

@@ -127,9 +127,12 @@ class Browser(object):
         """
         self._driver.get(f'http://{self.address}/json/activate/{tab_id}')
 
-    def get_window_bounds(self):
-        """返回浏览器窗口位置和大小信息"""
-        return self.run_cdp('Browser.getWindowForTarget', targetId=self.id)['bounds']
+    def get_window_bounds(self, tab_id=None):
+        """返回浏览器窗口位置和大小信息
+        :param tab_id: 标签页id
+        :return: 窗口大小字典
+        """
+        return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
 
     def quit(self):
         """关闭浏览器"""

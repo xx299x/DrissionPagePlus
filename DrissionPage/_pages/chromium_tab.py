@@ -10,6 +10,7 @@ from .._commons.web import set_session_cookies, set_browser_cookies
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
 from .._units.setter import TabSetter, WebPageTabSetter
+from .._units.tab_rect import ChromiumTabRect
 from .._units.waiter import ChromiumTabWaiter
 
 
@@ -24,6 +25,7 @@ class ChromiumTab(ChromiumBase):
         self._page = page
         self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
+        self._rect = None
 
     def _d_set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
@@ -45,7 +47,9 @@ class ChromiumTab(ChromiumBase):
     @property
     def rect(self):
         """返回获取窗口坐标和大小的对象"""
-        return self.page.rect
+        if self._rect is None:
+            self._rect = ChromiumTabRect(self)
+        return self._rect
 
     @property
     def set(self):
