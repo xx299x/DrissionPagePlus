@@ -35,6 +35,7 @@ class ChromiumOptions(object):
             self._page_load_strategy = options.get('page_load_strategy', 'normal')
             self._proxy = om.proxies.get('http', None)
             self._system_user_path = options.get('system_user_path', False)
+            self._existing_only = options.get('existing_only', False)
 
             user_path = user = False
             for arg in self._arguments:
@@ -71,6 +72,7 @@ class ChromiumOptions(object):
         self._proxy = None
         self._auto_port = False
         self._system_user_path = False
+        self._existing_only = False
 
     @property
     def download_path(self):
@@ -137,6 +139,11 @@ class ChromiumOptions(object):
     def system_user_path(self):
         """返回是否使用系统安装的浏览器所使用的用户数据文件夹"""
         return self._system_user_path
+
+    @property
+    def is_existing_only(self):
+        """返回是否只接管现有浏览器方式"""
+        return self._existing_only
 
     def set_argument(self, arg, value=None):
         """设置浏览器配置的argument属性
@@ -242,7 +249,7 @@ class ChromiumOptions(object):
         :param on_off: 开或关
         :return: 当前对象
         """
-        on_off = 'new' if on_off else False
+        on_off = 'new' if on_off else 'false'
         return self.set_argument('--headless', on_off)
 
     def set_no_imgs(self, on_off=True):
@@ -354,6 +361,14 @@ class ChromiumOptions(object):
             self._auto_port = False
         return self
 
+    def existing_only(self, on_off=True):
+        """设置只接管已有浏览器，不自动启动新的
+        :param on_off: 是否开启自动获取端口号
+        :return: 当前对象
+        """
+        self._existing_only = on_off
+        return self
+
     def save(self, path=None):
         """保存设置到文件
         :param path: ini文件的路径， None 保存到当前读取的配置文件，传入 'default' 保存到默认ini文件
@@ -380,7 +395,7 @@ class ChromiumOptions(object):
 
         # 设置chrome_options
         attrs = ('debugger_address', 'binary_location', 'arguments', 'extensions', 'user', 'page_load_strategy',
-                 'auto_port', 'system_user_path')
+                 'auto_port', 'system_user_path', 'is_existing_only')
         for i in attrs:
             om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理

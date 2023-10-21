@@ -5,7 +5,7 @@
 """
 from typing import Union
 
-from .browser_download_manager import DownloadMission
+from .download_manager import DownloadMission
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame

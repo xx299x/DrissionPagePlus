@@ -19,24 +19,19 @@ from .tools import port_is_using
 def connect_browser(option):
     """连接或启动浏览器
     :param option: ChromiumOptions对象
-    :return: chrome 路径和进程对象组成的元组
+    :return: None
     """
     debugger_address = option.debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
     chrome_path = option.browser_path
 
     ip, port = debugger_address.split(':')
-    if ip != '127.0.0.1':
+    if ip != '127.0.0.1' or port_is_using(ip, port) or option.is_existing_only:
         test_connect(ip, port)
-        return None, None
-
-    if port_is_using(ip, port):
-        test_connect(ip, port)
-        return None, None
-
-    args = get_launch_args(option)
-    set_prefs(option)
+        return
 
     # ----------创建浏览器进程----------
+    args = get_launch_args(option)
+    set_prefs(option)
     try:
         debugger = _run_browser(port, chrome_path, args)
 
@@ -63,7 +58,7 @@ def get_launch_args(opt):
     result = set()
     has_user_path = False
     remote_allow = False
-    headless = False
+    headless = None
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
             continue
@@ -74,7 +69,14 @@ def get_launch_args(opt):
         elif i.startswith('--remote-allow-origins='):
             remote_allow = True
         elif i.startswith('--headless'):
-            headless = True
+            if i == '--headless=false':
+                headless = False
+                continue
+            elif i == '--headless':
+                i = '--headless=new'
+                headless = True
+            else:
+                headless = True
 
         result.add(i)
 
@@ -87,7 +89,7 @@ def get_launch_args(opt):
     if not remote_allow:
         result.add('--remote-allow-origins=*')
 
-    if not headless and system().lower() == 'linux':
+    if headless is not None and system().lower() == 'linux':
         from os import popen
         r = popen('systemctl list-units | grep graphical.target')
         if 'graphical.target' not in r.read():
@@ -146,27 +148,29 @@ def set_prefs(opt):
         dump(prefs_dict, f)
 
 
-def test_connect(ip, port):
+def test_connect(ip, port, timeout=30):
     """测试浏览器是否可用
     :param ip: 浏览器ip
     :param port: 浏览器端口
+    :param timeout: 超时时间
     :return: None
     """
-    end_time = perf_counter() + 30
+    end_time = perf_counter() + timeout
     while perf_counter() < end_time:
         try:
-            tabs = requests_get(f'http://{ip}:{port}/json', timeout=10, headers={'Connection': 'close'}, proxies={'http': None, 'https': None}).json()
+            tabs = requests_get(f'http://{ip}:{port}/json', timeout=10, headers={'Connection': 'close'},
+                                proxies={'http': None, 'https': None}).json()
             for tab in tabs:
                 if tab['type'] == 'page':
                     return
         except Exception:
             sleep(.2)
 
-    if ip in ('127.0.0.1', 'localhost'):
-        raise BrowserConnectError(f'\n连接浏览器失败，可能原因：\n1、浏览器未启动\n2、{port}端口不是Chromium内核浏览器\n'
-                                  f'3、该浏览器未允许控制\n4、和已打开的浏览器冲突\n'
-                                  f'请尝试用ChromiumOptions指定别的端口和指定浏览器路径')
-    raise BrowserConnectError(f'{ip}:{port}浏览器无法链接。')
+    raise BrowserConnectError(f'\n{ip}:{port}浏览器无法链接。\n请确认：\n1、该端口为浏览器\n'
+                              f'2、已添加--remote-allow-origins=*和--remote-debugging-port={port}启动项\n'
+                              f'3、用户文件夹没有和已打开的浏览器冲突\n'
+                              f'4、如为无界面系统，请使用headless模式\n'
+                              f'可使用ChromiumOptions设置端口和用户文件夹路径。')
 
 
 def _run_browser(port, path: str, args) -> Popen:

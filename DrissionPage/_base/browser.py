@@ -6,7 +6,7 @@
 from time import sleep
 
 from .chromium_driver import BrowserDriver
-from .._units.browser_download_manager import BrowserDownloadManager
+from .._units.download_manager import BrowserDownloadManager
 
 
 class Browser(object):

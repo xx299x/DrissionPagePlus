@@ -7,7 +7,7 @@ from typing import List, Optional, Union
 
 from .chromium_driver import BrowserDriver
 from .._pages.chromium_page import ChromiumPage
-from .._units.browser_download_manager import BrowserDownloadManager
+from .._units.download_manager import BrowserDownloadManager
 
 
 class Browser(object):
