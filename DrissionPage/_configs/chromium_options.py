@@ -316,28 +316,76 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         if browser_path is not None:
-            self._binary_location = str(browser_path)
-            self._auto_port = False
+            self.set_browser_path(browser_path)
 
         if local_port is not None:
-            self._debugger_address = f'127.0.0.1:{local_port}'
-            self._auto_port = False
+            self.set_local_port(local_port)
 
         if debugger_address is not None:
-            self.debugger_address = debugger_address
+            self.set_debugger_address(debugger_address)
 
         if download_path is not None:
-            self._download_path = str(download_path)
+            self.set_download_path(download_path)
 
         if user_data_path is not None:
-            u = str(user_data_path)
-            self.set_argument('--user-data-dir', u)
-            self._user_data_path = u
-            self._auto_port = False
+            self.set_user_data_path(user_data_path)
 
         if cache_path is not None:
-            self.set_argument('--disk-cache-dir', str(cache_path))
+            self.set_cache_path(cache_path)
 
+        return self
+
+    def set_local_port(self, port):
+        """设置本地启动端口
+        :param port: 端口号
+        :return: 当前对象
+        """
+        self._debugger_address = f'127.0.0.1:{port}'
+        self._auto_port = False
+        return self
+
+    def set_debugger_address(self, address):
+        """设置浏览器地址，格式'ip:port'
+        :param address: 浏览器地址
+        :return: 当前对象
+        """
+        self.debugger_address = address
+        return self
+
+    def set_browser_path(self, path):
+        """设置浏览器可执行文件路径
+        :param path: 浏览器路径
+        :return: 当前对象
+        """
+        self._binary_location = str(path)
+        self._auto_port = False
+        return self
+
+    def set_download_path(self, path):
+        """设置下载文件保存路径
+        :param path: 下载路径
+        :return: 当前对象
+        """
+        self._download_path = str(path)
+        return self
+
+    def set_user_data_path(self, path):
+        """设置用户文件夹路径
+        :param path: 用户文件夹路径
+        :return: 当前对象
+        """
+        u = str(path)
+        self.set_argument('--user-data-dir', u)
+        self._user_data_path = u
+        self._auto_port = False
+        return self
+
+    def set_cache_path(self, path):
+        """设置缓存路径
+        :param path: 缓存路径
+        :return: 当前对象
+        """
+        self.set_argument('--disk-cache-dir', str(path))
         return self
 
     def use_system_user_path(self, on_off=True):

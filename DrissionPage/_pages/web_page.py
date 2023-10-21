@@ -294,6 +294,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         return tab_id if isinstance(tab_id, WebPageTab) else WebPageTab(self, tab_id or self.tab_id)
 
+    def new_tab(self, url=None, switch_to=False):
+        """新建一个标签页,该标签页在最后面
+        :param url: 新标签页跳转到的网址
+        :param switch_to: 新建标签页后是否把焦点移过去
+        :return: switch_to为False时返回新标签页对象，否则返回当前对象，
+        """
+        return self if switch_to else WebPageTab(self, self._new_tab(url, switch_to))
+
     def close_driver(self):
         """关闭driver及浏览器"""
         if self._has_driver:
