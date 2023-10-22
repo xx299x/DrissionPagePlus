@@ -49,11 +49,11 @@ class ChromiumPage(ChromiumBase):
         # 接收浏览器地址和端口
         elif isinstance(addr_driver_opts, str):
             self._driver_options = ChromiumOptions()
-            self._driver_options.debugger_address = addr_driver_opts
+            self._driver_options.set_debugger_address(addr_driver_opts)
 
         elif isinstance(addr_driver_opts, ChromiumDriver):
             self._driver_options = ChromiumOptions(False)
-            self._driver_options.debugger_address = addr_driver_opts.address
+            self._driver_options.set_debugger_address(addr_driver_opts.address)
             self._driver = addr_driver_opts
 
         else:

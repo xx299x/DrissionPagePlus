@@ -24,7 +24,6 @@ class BrowserDownloadManager(object):
         t = TabDownloadSettings(self._page.tab_id)
         t.path = self._page.download_path
         self._missions = {}  # {guid: DownloadMission}
-        self._tabs_settings = {self._page.tab_id: t}  # {tab_id: TabDownloadSettings}
         self._tab_missions = {}  # {tab_id: DownloadMission}
         self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
@@ -44,7 +43,7 @@ class BrowserDownloadManager(object):
         :param path: 下载路径
         :return: None
         """
-        self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).path = str(Path(path).absolute())
+        TabDownloadSettings(tab_id).path = str(Path(path).absolute())
         if tab_id == self._page.tab_id:
             self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=str(Path(path).absolute()),
                                   behavior='allowAndName', eventsEnabled=True)
@@ -55,7 +54,7 @@ class BrowserDownloadManager(object):
         :param rename: 文件名
         :return: None
         """
-        self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).rename = rename
+        TabDownloadSettings(tab_id).rename = rename
 
     def set_file_exists(self, tab_id, mode):
         """设置某个tab下载文件重名时执行的策略
@@ -63,7 +62,7 @@ class BrowserDownloadManager(object):
         :param mode: 下载路径
         :return: None
         """
-        self._tabs_settings.setdefault(tab_id, TabDownloadSettings(tab_id)).when_file_exists = mode
+        TabDownloadSettings(tab_id).when_file_exists = mode
 
     def set_flag(self, tab_id, flag):
         """设置某个tab的重命名文件名
@@ -125,7 +124,6 @@ class BrowserDownloadManager(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self._tabs_settings.pop(tab_id)
         self._tab_missions.pop(tab_id)
         self._flags.pop(tab_id)
         TabDownloadSettings.TABS.pop(tab_id)
@@ -135,7 +133,7 @@ class BrowserDownloadManager(object):
         guid = kwargs['guid']
         tab_id = self._browser._frames.get(kwargs['frameId'], self._page.tab_id)
 
-        settings = TabDownloadSettings(tab_id)
+        settings = TabDownloadSettings(tab_id if tab_id in TabDownloadSettings.TABS else self._page.tab_id)
         if settings.rename:
             tmp = kwargs['suggestedFilename'].rsplit('.', 1)
             ext_name = tmp[-1] if len(tmp) > 1 else ''
@@ -165,7 +163,8 @@ class BrowserDownloadManager(object):
         else:
             self._tab_missions.setdefault(tab_id, []).append(guid)
 
-        self._flags[tab_id] = m
+        if self.get_flag(tab_id) is not None:
+            self._flags[tab_id] = m
 
     def _onDownloadProgress(self, **kwargs):
         """下载状态变化时执行"""

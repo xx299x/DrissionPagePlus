@@ -454,31 +454,64 @@ class ChromiumElement(DrissionElement):
             while not self.run_js(js) and perf_counter() < end_time:
                 sleep(.1)
 
+        src = self.attr('src')
+        is_blob = src.startswith('blob')
         result = None
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            src = self.prop('currentSrc')
-            if not src:
-                continue
+            if is_blob:
+                js = """
+                           function fetchData(url) {
+                          return new Promise((resolve, reject) => {
+                            var xhr = new XMLHttpRequest();
+                            xhr.responseType = 'blob';
+                            xhr.onload = function() {
+                              var reader  = new FileReader();
+                              reader.onloadend = function() {resolve(reader.result);}
+                              reader.readAsDataURL(xhr.response);
+                            };
+                            xhr.open('GET', url, true);
+                            xhr.send();
+                          });
+                        }
+                    """
+                try:
+                    result = self.page.run_js(js, src)
+                    break
+                except:
+                    continue
 
-            node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
-            frame = node.get('frameId', None)
-            frame = frame or self.page._target_id
+            else:
+                src = self.prop('currentSrc')
+                if not src:
+                    continue
 
-            try:
-                result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
-                break
-            except CDPError:
-                sleep(.1)
+                node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
+                frame = node.get('frameId', None)
+                frame = frame or self.page._target_id
+
+                try:
+                    result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
+                    break
+                except CDPError:
+                    sleep(.1)
 
         if not result:
             return None
 
-        if result['base64Encoded'] and base64_to_bytes:
-            from base64 import b64decode
-            return b64decode(result['content'])
+        if is_blob:
+            if base64_to_bytes:
+                from base64 import b64decode
+                return b64decode(result.split(',', 1)[1])
+            else:
+                return result
+
         else:
-            return result['content']
+            if result['base64Encoded'] and base64_to_bytes:
+                from base64 import b64decode
+                return b64decode(result['content'])
+            else:
+                return result['content']
 
     def save(self, path=None, name=None, timeout=None):
         """保存图片或其它有src属性的元素的资源

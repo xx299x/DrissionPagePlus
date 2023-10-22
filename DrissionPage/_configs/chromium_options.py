@@ -117,8 +117,7 @@ class ChromiumOptions(object):
     @debugger_address.setter
     def debugger_address(self, address):
         """设置浏览器地址，格式ip:port"""
-        address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
-        self._debugger_address = address
+        self.set_debugger_address(address)
 
     @property
     def arguments(self):
@@ -349,7 +348,8 @@ class ChromiumOptions(object):
         :param address: 浏览器地址
         :return: 当前对象
         """
-        self.debugger_address = address
+        address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
+        self._debugger_address = address
         return self
 
     def set_browser_path(self, path):

@@ -137,12 +137,9 @@ class ChromiumDriver(object):
             except Empty:
                 continue
 
-            if event['method'] in self.event_handlers:
-                try:
-                    self.event_handlers[event['method']](**event['params'])
-                except Exception as e:
-                    raise
-                    # raise RuntimeError(f"\n回调函数错误：\n{e}")
+            function = self.event_handlers.get(event['method'])
+            if function:
+                function(**event['params'])
 
             self.event_queue.task_done()
 

@@ -5,7 +5,9 @@
 """
 from queue import Queue
 from threading import Thread, Event
-from typing import Union, Callable, Dict
+from typing import Union, Callable, Dict, Optional
+
+from websocket import WebSocket
 
 
 class GenericAttr(object):
@@ -24,7 +26,7 @@ class ChromiumDriver(object):
     has_alert: bool
     _websocket_url: str
     _cur_id: int
-    _ws = None
+    _ws: Optional[WebSocket]
     _recv_th: Thread
     _handle_event_th: Thread
     _stopped: Event
