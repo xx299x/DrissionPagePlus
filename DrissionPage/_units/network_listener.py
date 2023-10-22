@@ -7,7 +7,6 @@ from base64 import b64decode
 from json import JSONDecodeError, loads
 from queue import Queue
 from re import search
-from threading import Thread
 from time import perf_counter, sleep
 
 from requests.structures import CaseInsensitiveDict
@@ -23,23 +22,23 @@ class NetworkListener(object):
         :param page: ChromiumBase对象
         """
         self._page = page
-        self._driver = self._page.driver
+        self._driver = page.driver
+        self._driver.call_method('Network.enable')
 
-        self._tmp = None  # 临存捕捉到的数据
+        self._caught = None  # 临存捕捉到的数据
         self._request_ids = None  # 暂存须要拦截的请求id
-
-        self._total_count = None  # 当次监听的数量上限
-        self._caught_count = None  # 当次已监听到的数量
-        self._begin_time = None  # 当次监听开始时间
-        self._timeout = None  # 当次监听超时时间
 
         self.listening = False
         self._targets = None  # 默认监听所有
         self.tab_id = None  # 当前tab的id
-        self._results = []
 
         self._is_regex = False
         self._method = None
+
+    @property
+    def targets(self):
+        """返回监听目标"""
+        return self._targets
 
     def set_targets(self, targets=True, is_regex=False, method=None):
         """指定要等待的数据包
@@ -54,10 +53,7 @@ class NetworkListener(object):
             if targets is True:
                 targets = ''
 
-            if isinstance(targets, str):
-                self._targets = {targets}
-            else:
-                self._targets = set(targets)
+            self._targets = {targets} if isinstance(targets, str) else set(targets)
 
         self._is_regex = is_regex
 
@@ -69,93 +65,128 @@ class NetworkListener(object):
             else:
                 raise TypeError('method参数只能是str、list、tuple、set类型。')
 
-    def listen(self, targets=None, count=None, timeout=None):
-        """拦截目标请求，直到超时或达到拦截个数，每次拦截前清空结果
-        可监听多个目标，请求url包含这些字符串就会被记录
-        :param targets: 要监听的目标字符串或其组成的列表，True监听所有，None则保留之前的目标不变
-        :param count: 要记录的个数，到达个数停止监听
-        :param timeout: 监听最长时间，到时间即使未达到记录个数也停止，None为无限长
+    def listen(self, targets=None, is_regex=False, method=None):
+        """拦截目标请求，每次拦截前清空结果
+        :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
+        :param is_regex: 设置的target是否正则表达式
+        :param method: 设置监听的请求类型，可用list等指定多个，为None时监听全部
         :return: None
         """
         if targets:
-            self.set_targets(targets)
+            self.set_targets(targets, is_regex, method)
 
         self.listening = True
-        self._results = []
         self._request_ids = {}
-        self._tmp = Queue(maxsize=0)
+        self._caught = Queue(maxsize=0)
 
-        self._caught_count = 0
-        self._begin_time = perf_counter()
-        self._timeout = timeout
+        self._set_callback()
 
-        self._set_callback_func()
-
-        self._total_count = len(self._targets) if not count else count
-
-        Thread(target=self._wait_to_stop).start()
-
-    def stop(self):
-        """停止监听"""
-        self._stop()
-        self.listening = False
-
-    def wait(self):
-        """等待监听结束"""
-        while self.listening:
-            sleep(.2)
-        return self._results
-
-    def get_results(self, target=None):
-        """获取结果列表
-        :param target: 要获取的目标，为None时获取全部
-        :return: 结果数据组成的列表
+    def wait(self, count=1, timeout=None, fix_count=True):
+        """等待符合要求的数据包到达指定数量
+        :param count: 需要捕捉的数据包数量
+        :param timeout: 超时时间，为None无限等待
+        :param fix_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
+        :return: count为1时返回数据包对象，大于1时返回列表，超时且fix_count为True时返回False
         """
-        return self._results if target is None else [i for i in self._results if i.target == target]
+        if not self.listening:
+            raise RuntimeError('监听未启动或已暂停。')
+        if not timeout:
+            while self._caught.qsize() < count:
+                sleep(.05)
+            fail = False
 
-    def _wait_to_stop(self):
-        """当收到停止信号、到达须获取结果数、到时间就停止"""
-        while self._is_continue():
-            sleep(.2)
-        self.stop()
+        else:
+            end = perf_counter() + count
+            while True:
+                if perf_counter() > end:
+                    fail = True
+                    break
+                if self._caught.qsize() >= count:
+                    fail = False
+                    break
 
-    def _is_continue(self):
-        """是否继续当前监听"""
-        return self.listening \
-            and (self._total_count is None or self._caught_count < self._total_count) \
-            and (self._timeout is None or perf_counter() - self._begin_time < self._timeout)
+        if fail:
+            if fix_count or not self._caught.qsize():
+                return False
+            else:
+                return [self._caught.get_nowait() for _ in range(self._caught.qsize())]
 
-    def steps(self, gap=1):
+        if count == 1:
+            return self._caught.get_nowait()
+
+        return [self._caught.get_nowait() for _ in range(count)]
+
+    def steps(self, count=None, timeout=None, gap=1):
         """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）
+        :param count: 需捕获的数据包总数，为None表示无限
+        :param timeout: 每个数据包等待时间，为None表示无限
         :param gap: 每接收到多少个数据包触发
         :return: 用于在接收到监听目标时触发动作的可迭代对象
         """
-        if not isinstance(gap, int) or gap < 1:
-            raise ValueError('gap参数必须为大于0的整数。')
-        while self.listening or not self._tmp.empty():
-            while self._tmp.qsize() >= gap:
-                yield self._tmp.get(False) if gap == 1 else [self._tmp.get(False) for _ in range(gap)]
+        caught = 0
+        end = perf_counter() + timeout if timeout else None
+        while True:
+            if timeout and perf_counter() > end:
+                return
+            if self._caught.qsize() >= gap:
+                yield self._caught.get_nowait() if gap == 1 else [self._caught.get_nowait() for _ in range(gap)]
+                if timeout:
+                    end = perf_counter() + timeout
+                if count:
+                    caught += gap
+                    if caught >= count:
+                        return
+            sleep(.05)
 
-            sleep(.1)
+    def stop(self):
+        """停止监听，清空已监听到的列表"""
+        if self.listening:
+            self.pause()
+            self.clear()
 
-    def _set_callback_func(self):
+    def pause(self, clear=True):
+        """暂停监听
+        :param clear: 是否清空已获取队列
+        :return: None
+        """
+        if self.listening:
+            self._driver.set_listener('Network.requestWillBeSent', None)
+            self._driver.set_listener('Network.responseReceived', None)
+            self._driver.set_listener('Network.loadingFinished', None)
+            self._driver.set_listener('Network.loadingFailed', None)
+            self.listening = False
+        if clear:
+            self.clear()
+
+    def go_on(self):
+        """继续暂停的监听"""
+        if self.listening:
+            return
+        self._set_callback()
+        self.listening = True
+
+    def clear(self):
+        """清空结果"""
+        self._request_ids = {}
+        self._caught.queue.clear()
+
+    def _set_callback(self):
         """设置监听请求的回调函数"""
         self._driver.set_listener('Network.requestWillBeSent', self._requestWillBeSent)
         self._driver.set_listener('Network.responseReceived', self._response_received)
         self._driver.set_listener('Network.loadingFinished', self._loading_finished)
         self._driver.set_listener('Network.loadingFailed', self._loading_failed)
-        self._driver.call_method('Network.enable')
-
-    def _stop(self) -> None:
-        """停止监听前要做的工作"""
-        self._driver.set_listener('Network.requestWillBeSent', None)
-        self._driver.set_listener('Network.responseReceived', None)
-        self._driver.set_listener('Network.loadingFinished', None)
-        self._driver.set_listener('Network.loadingFailed', None)
-        # self._driver.call_method('Network.disable')
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
+        if not self._targets:
+            self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, None, kwargs)
+            if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
+                self._request_ids[kwargs['requestId']]._raw_post_data = \
+                    self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+
+            return
+
         for target in self._targets:
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
@@ -191,9 +222,11 @@ class NetworkListener(object):
             dp._raw_body = body
             dp._base64_body = is_base64
 
-            self._tmp.put(dp)
-            self._results.append(dp)
-            self._caught_count += 1
+            self._caught.put(dp)
+            try:
+                self._request_ids.pop(request_id)
+            except:
+                pass
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
@@ -203,21 +236,23 @@ class NetworkListener(object):
             dp.errorText = kwargs['errorText']
             dp._resource_type = kwargs['type']
 
-            self._tmp.put(dp)
-            self._results.append(dp)
-            self._caught_count += 1
+            self._caught.put(dp)
+            try:
+                self._request_ids.pop(request_id)
+            except:
+                pass
 
 
 class DataPacket(object):
     """返回的数据包管理类"""
 
-    def __init__(self, tab, target, raw_request):
+    def __init__(self, tab_id, target, raw_request):
         """
-        :param tab: 产生这个数据包的tab的id
+        :param tab_id: 产生这个数据包的tab的id
         :param target: 监听目标
         :param raw_request: 原始request数据，从cdp获得
         """
-        self.tab = tab
+        self.tab = tab_id
         self.target = target
 
         self._raw_request = raw_request
@@ -231,6 +266,10 @@ class DataPacket(object):
         self._response = None
         self.errorText = None
         self._resource_type = None
+
+    def __repr__(self):
+        t = f'"{self.target}"' if self.target is not None else None
+        return f'<DataPacket target={t} url="{self.url}">'
 
     @property
     def url(self):

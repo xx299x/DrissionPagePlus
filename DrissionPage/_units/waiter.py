@@ -126,6 +126,14 @@ class ChromiumBaseWaiter(object):
         """
         return self._change('title', text, exclude, timeout, raise_err)
 
+    def data_packets(self, count=1, timeout=None, fix_count: bool = True):
+        """等待符合要求的数据包到达指定数量
+        :param count: 需要捕捉的数据包数量
+        :param timeout: 超时时间，为None无限等待
+        :param fix_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
+        :return: count为1时返回数据包对象，大于1时返回列表，超时且fix_count为True时返回False"""
+        return self._driver.listener.wait(count, timeout, fix_count)
+
     def _change(self, arg, text, exclude=False, timeout=None, raise_err=None):
         """等待指定属性变成包含或不包含指定文本
         :param arg: 要被匹配的属性
