@@ -239,6 +239,9 @@ class ChromiumElementStates(object):
     @property
     def is_covered(self) -> bool: ...
 
+    @property
+    def has_rect(self) -> Union[bool, Tuple[int, int]]: ...
+
 
 class ChromiumShadowRoot(BaseElement):
 

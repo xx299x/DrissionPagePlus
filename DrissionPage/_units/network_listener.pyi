@@ -42,8 +42,8 @@ class NetworkListener(object):
 
     def clear(self) -> None: ...
 
-    def listen(self, targets: Union[str, List[str], Tuple, bool, None] = None, is_regex: bool = False,
-               method: Union[str, list, tuple, set] = None) \
+    def start(self, targets: Union[str, List[str], Tuple, bool, None] = None, is_regex: bool = False,
+              method: Union[str, list, tuple, set] = None) \
             -> Union[DataPacket, Dict[str, List[DataPacket]], False]: ...
 
     def _requestWillBeSent(self, **kwargs) -> None: ...

@@ -255,6 +255,8 @@ class ChromiumBase(BasePage):
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""
         if self._upload_list:
+            if 'backendNodeId' not in kwargs:
+                raise TypeError('该输入框无法接管，请改用对<input>元素输入路径的方法设置。')
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
 
@@ -419,7 +421,7 @@ class ChromiumBase(BasePage):
         return self._actions
 
     @property
-    def listener(self):
+    def listen(self):
         """返回用于聆听数据包的对象"""
         if self._listener is None:
             self._listener = NetworkListener(self)

@@ -11,6 +11,7 @@ from time import perf_counter, sleep
 
 from requests.structures import CaseInsensitiveDict
 
+from .._base.chromium_driver import ChromiumDriver
 from ..errors import CDPError
 
 
@@ -22,7 +23,7 @@ class NetworkListener(object):
         :param page: ChromiumBase对象
         """
         self._page = page
-        self._driver = page.driver
+        self._driver = ChromiumDriver(page.tab_id, 'page', page.address)
         self._driver.call_method('Network.enable')
 
         self._caught = None  # 临存捕捉到的数据
@@ -65,7 +66,7 @@ class NetworkListener(object):
             else:
                 raise TypeError('method参数只能是str、list、tuple、set类型。')
 
-    def listen(self, targets=None, is_regex=False, method=None):
+    def start(self, targets=None, is_regex=False, method=None):
         """拦截目标请求，每次拦截前清空结果
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
         :param is_regex: 设置的target是否正则表达式
@@ -180,10 +181,10 @@ class NetworkListener(object):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         if not self._targets:
-            self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, None, kwargs)
+            self._request_ids[kwargs['requestId']] = DataPacket(self._driver.id, None, kwargs)
             if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                 self._request_ids[kwargs['requestId']]._raw_post_data = \
-                    self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+                    self._driver.call_method('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
 
             return
 
@@ -191,11 +192,11 @@ class NetworkListener(object):
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
                     not self._method or kwargs['request']['method'] in self._method):
-                self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, target, kwargs)
+                self._request_ids[kwargs['requestId']] = DataPacket(self._driver.id, target, kwargs)
 
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     self._request_ids[kwargs['requestId']]._raw_post_data = \
-                        self._page.run_cdp('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+                        self._driver.call_method('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
 
                 break
 
@@ -212,7 +213,7 @@ class NetworkListener(object):
         dp = self._request_ids.get(request_id)
         if dp:
             try:
-                r = self._page.run_cdp('Network.getResponseBody', requestId=request_id)
+                r = self._driver.call_method('Network.getResponseBody', requestId=request_id)
                 body = r['body']
                 is_base64 = r['base64Encoded']
             except CDPError:

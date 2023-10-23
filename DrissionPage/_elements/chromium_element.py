@@ -18,7 +18,7 @@ from .._units.clicker import Clicker
 from .._units.setter import ChromiumElementSetter
 from .._units.waiter import ChromiumElementWaiter
 from ..errors import ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError, \
-    CDPError, NoResourceError
+    CDPError, NoResourceError, NoRectError
 
 
 class ChromiumElement(DrissionElement):
@@ -1465,7 +1465,7 @@ class ChromiumElementStates(object):
 
     @property
     def is_in_viewport(self):
-        """返回元素是否出现在视口中，以元素可以接受点击的点为判断"""
+        """返回元素是否出现在视口中，以元素click_point为判断"""
         x, y = self._ele.locations.click_point
         return location_in_viewport(self._ele.page, x, y) if x else False
 
@@ -1490,6 +1490,14 @@ class ChromiumElementStates(object):
             return True
 
         return False
+
+    @property
+    def has_rect(self):
+        """返回元素是否拥有位置和大小，没有返回False，有返回大小元组"""
+        try:
+            return self._ele.size
+        except NoRectError:
+            return False
 
 
 class ShadowRootStates(object):

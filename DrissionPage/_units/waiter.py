@@ -2,7 +2,7 @@
 from time import sleep, perf_counter
 
 from .._commons.constants import Settings
-from ..errors import WaitTimeoutError
+from ..errors import WaitTimeoutError, NoRectError
 
 
 class ChromiumBaseWaiter(object):
@@ -132,7 +132,7 @@ class ChromiumBaseWaiter(object):
         :param timeout: 超时时间，为None无限等待
         :param fix_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
         :return: count为1时返回数据包对象，大于1时返回列表，超时且fix_count为True时返回False"""
-        return self._driver.listener.wait(count, timeout, fix_count)
+        return self._driver.listen.wait(count, timeout, fix_count)
 
     def _change(self, arg, text, exclude=False, timeout=None, raise_err=None):
         """等待指定属性变成包含或不包含指定文本
@@ -309,7 +309,7 @@ class ChromiumElementWaiter(object):
 
     def covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
@@ -317,7 +317,7 @@ class ChromiumElementWaiter(object):
 
     def not_covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
@@ -325,7 +325,7 @@ class ChromiumElementWaiter(object):
 
     def enabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
@@ -333,7 +333,7 @@ class ChromiumElementWaiter(object):
 
     def disabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
@@ -341,7 +341,7 @@ class ChromiumElementWaiter(object):
 
     def disabled_or_delete(self, timeout=None, raise_err=None):
         """等待当前元素变成不可用或从DOM移除
-        :param timeout:超时时间，为None使用元素所在页面timeout属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
@@ -355,6 +355,38 @@ class ChromiumElementWaiter(object):
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
             raise WaitTimeoutError('等待元素隐藏或删除失败。')
+        else:
+            return False
+
+    def stop_moving(self, gap=.1, timeout=None, raise_err=None):
+        """等待当前元素停止运动
+        :param gap: 检测间隔时间
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        if timeout is None:
+            timeout = self._page.timeout
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            try:
+                size = self._ele.states.has_rect
+                location = self._ele.location
+                break
+            except NoRectError:
+                pass
+        else:
+            raise NoRectError
+
+        while perf_counter() < end_time:
+            sleep(gap)
+            if self._ele.size == size and location == self._ele.location:
+                return True
+            size = self._ele.size
+            location = self._ele.location
+
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError('等待元素停止运动失败。')
         else:
             return False
 
