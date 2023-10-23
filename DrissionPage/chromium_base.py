@@ -100,6 +100,7 @@ class ChromiumBase(BasePage):
         self._tab_obj.start()
         self._tab_obj.DOM.enable()
         self._tab_obj.Page.enable()
+        self._tab_obj.call_method('Emulation.setFocusEmulationEnabled', enabled=True)
 
         self._tab_obj.Page.frameStoppedLoading = self._onFrameStoppedLoading
         self._tab_obj.Page.frameStartedLoading = self._onFrameStartedLoading
