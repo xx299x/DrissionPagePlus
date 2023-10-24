@@ -18,7 +18,7 @@ from .._units.clicker import Clicker
 from .._units.setter import ChromiumElementSetter
 from .._units.waiter import ChromiumElementWaiter
 from ..errors import ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError, \
-    CDPError, NoResourceError, NoRectError
+    CDPError, NoResourceError, NoRectError, AlertExistsError
 
 
 class ChromiumElement(DrissionElement):
@@ -205,6 +205,14 @@ class ChromiumElement(DrissionElement):
                 self._select = ChromiumSelect(self)
 
         return self._select
+
+    def check(self, uncheck=False):
+        """选中或取消选中当前元素
+        :param uncheck: 是否取消选中
+        :return: None
+        """
+        js = 'this.checked=false' if uncheck else 'this.checked=true'
+        self.run_js(js)
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -1302,6 +1310,9 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         page = page_or_ele
         obj_id = page_or_ele._root_id
         is_page = True
+
+    if page.has_alert:
+        raise AlertExistsError
 
     try:
         if as_expr:

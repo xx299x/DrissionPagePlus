@@ -23,7 +23,7 @@ class ChromiumDriver(object):
     address: str
     type: str
     _debug: bool
-    has_alert: bool
+    alert_flag: bool
     _websocket_url: str
     _cur_id: int
     _ws: Optional[WebSocket]

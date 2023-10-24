@@ -15,7 +15,7 @@ from requests import get
 
 from .._base.base import BasePage
 from .._base.chromium_driver import ChromiumDriver
-from .._commons.constants import HANDLE_ALERT_METHOD, ERROR, NoneElement
+from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path, clean_folder
 from .._commons.web import location_in_viewport
@@ -47,6 +47,7 @@ class ChromiumBase(BasePage):
         self._screencast = None
         self._actions = None
         self._listener = None
+        self._has_alert = False
 
         self._download_path = str(Path('../..').absolute())
 
@@ -103,6 +104,9 @@ class ChromiumBase(BasePage):
         if is_init and hasattr(self, '_driver'):
             return  # ChromiumPage接收ChromiumDriver方式启动时
         self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
+        self._alert = Alert()
+        self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
+        self._driver.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
 
         self._driver.call_method('DOM.enable')
         self._driver.call_method('Page.enable')
@@ -429,14 +433,19 @@ class ChromiumBase(BasePage):
             self._listener = NetworkListener(self)
         return self._listener
 
+    @property
+    def has_alert(self):
+        """返回是否存在提示框"""
+        return self._has_alert
+
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
         :param cmd: 协议项目
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        if self.driver.has_alert and cmd != HANDLE_ALERT_METHOD:
-            raise AlertExistsError
+        # if self.driver.has_alert and cmd != HANDLE_ALERT_METHOD:
+        #     raise AlertExistsError
 
         r = self.driver.call_method(cmd, **cmd_args)
         if ERROR not in r:
@@ -824,6 +833,48 @@ class ChromiumBase(BasePage):
         if cookies:
             self.run_cdp_loaded('Network.clearBrowserCookies')
 
+    def handle_alert(self, accept=True, send=None, timeout=None):
+        """处理提示框，可以自动等待提示框出现
+        :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
+        :param send: 处理prompt提示框时可输入文本
+        :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
+        :return: 提示框内容文本，未等到提示框则返回False
+        """
+        timeout = self.timeout if timeout is None else timeout
+        timeout = .1 if timeout <= 0 else timeout
+        end_time = perf_counter() + timeout
+        while not self._alert.activated and perf_counter() < end_time:
+            sleep(.1)
+        if not self._alert.activated:
+            return False
+
+        res_text = self._alert.text
+        if self._alert.type == 'prompt':
+            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept, promptText=send)
+        else:
+            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept)
+        return res_text
+
+    def _on_alert_close(self, **kwargs):
+        """alert关闭时触发的方法"""
+        self._alert.activated = False
+        self._alert.text = None
+        self._alert.type = None
+        self._alert.defaultPrompt = None
+        self._alert.response_accept = kwargs.get('result')
+        self._alert.response_text = kwargs['userInput']
+        self._has_alert = False
+
+    def _on_alert_open(self, **kwargs):
+        """alert出现时触发的方法"""
+        self._alert.activated = True
+        self._alert.text = kwargs['message']
+        self._alert.type = kwargs['message']
+        self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
+        self._alert.response_accept = None
+        self._alert.response_text = None
+        self._has_alert = True
+
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次
         :param to_url: 要访问的url
@@ -1166,3 +1217,15 @@ class ScreencastMode(object):
 
     def imgs_mode(self):
         self._screencast._mode = 'imgs'
+
+
+class Alert(object):
+    """用于保存alert信息的类"""
+
+    def __init__(self):
+        self.activated = False
+        self.text = None
+        self.type = None
+        self.defaultPrompt = None
+        self.response_accept = None
+        self.response_text = None

@@ -24,7 +24,7 @@ class ChromiumDriver(object):
         self.address = address
         self.type = tab_type
         self._debug = False
-        self.has_alert = False
+        self.alert_flag = False  # 标记alert出现，跳过一条请求后复原
 
         self._websocket_url = f'ws://{address}/devtools/{tab_type}/{tab_id}'
         self._cur_id = 0
@@ -77,8 +77,9 @@ class ChromiumDriver(object):
                     return self.method_results[message['id']].get_nowait()
 
                 except Empty:
-                    if self.has_alert:
-                        return {'error': {'message': 'alert exists'}, 'type': 'alert_exists'}
+                    if self.alert_flag:
+                        self.alert_flag = False
+                        return {'result': []}
 
                     if timeout is not None and perf_counter() > timeout:
                         return {'error': {'message': 'timeout'}}
@@ -114,7 +115,10 @@ class ChromiumDriver(object):
                             print(f'<收 {msg_json}')
                             break
 
-            if "method" in msg:
+            if 'method' in msg:
+                if msg['method'].startswith('Page.javascriptDialog'):
+                    self.alert_flag = msg['method'].endswith('Opening')
+
                 self.event_queue.put(msg)
 
             elif msg.get('id') in self.method_results:

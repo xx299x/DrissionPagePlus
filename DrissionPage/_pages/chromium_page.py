@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from time import perf_counter, sleep
+from time import sleep
 
 from requests import get
 
@@ -85,13 +85,8 @@ class ChromiumPage(ChromiumBase):
 
     def _page_init(self):
         """浏览器相关设置"""
-        self._alert = Alert()
-        self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
-        self._driver.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
-
         self._rect = None
         self._main_tab = self.tab_id
-
         self._browser.connect_to_page()
 
     @property
@@ -284,63 +279,9 @@ class ChromiumPage(ChromiumBase):
         """
         self.close_tabs(tabs_or_ids, True)
 
-    def handle_alert(self, accept=True, send=None, timeout=None):
-        """处理提示框，可以自动等待提示框出现
-        :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
-        :param send: 处理prompt提示框时可输入文本
-        :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
-        :return: 提示框内容文本，未等到提示框则返回False
-        """
-        timeout = self.timeout if timeout is None else timeout
-        timeout = .1 if timeout <= 0 else timeout
-        end_time = perf_counter() + timeout
-        while not self._alert.activated and perf_counter() < end_time:
-            sleep(.1)
-        if not self._alert.activated:
-            return False
-
-        res_text = self._alert.text
-        if self._alert.type == 'prompt':
-            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept, promptText=send)
-        else:
-            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept)
-        return res_text
-
     def quit(self):
         """关闭浏览器"""
         self.browser.quit()
-
-    def _on_alert_close(self, **kwargs):
-        """alert关闭时触发的方法"""
-        self._alert.activated = False
-        self._alert.text = None
-        self._alert.type = None
-        self._alert.defaultPrompt = None
-        self._alert.response_accept = kwargs.get('result')
-        self._alert.response_text = kwargs['userInput']
-        self._driver.has_alert = False
-
-    def _on_alert_open(self, **kwargs):
-        """alert出现时触发的方法"""
-        self._alert.activated = True
-        self._alert.text = kwargs['message']
-        self._alert.type = kwargs['message']
-        self._alert.defaultPrompt = kwargs.get('defaultPrompt', None)
-        self._alert.response_accept = None
-        self._alert.response_text = None
-        self._driver.has_alert = True
-
-
-class Alert(object):
-    """用于保存alert信息的类"""
-
-    def __init__(self):
-        self.activated = False
-        self.text = None
-        self.type = None
-        self.defaultPrompt = None
-        self.response_accept = None
-        self.response_text = None
 
 
 def get_rename(original, rename):
