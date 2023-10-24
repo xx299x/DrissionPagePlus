@@ -6,6 +6,7 @@
 from json import dumps, loads
 from queue import Queue, Empty
 from threading import Thread, Event
+from time import perf_counter
 
 from requests import get
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
@@ -45,7 +46,7 @@ class ChromiumDriver(object):
     def _send(self, message, timeout=None):
         """发送信息到浏览器，并返回浏览器返回的信息
         :param message: 发送给浏览器的数据
-        :param timeout: 超时时间
+        :param timeout: 超时时间，为None表示无限
         :return: 浏览器返回的数据
         """
         if 'id' not in message:
@@ -64,10 +65,8 @@ class ChromiumDriver(object):
                         print(f'发> {message_json}')
                         break
 
-        if not isinstance(timeout, (int, float)) or timeout > 1:
-            q_timeout = 1
-        else:
-            q_timeout = timeout / 2.0
+        if timeout is not None:
+            timeout = perf_counter() + timeout
 
         try:
             self.method_results[message['id']] = Queue()
@@ -75,19 +74,14 @@ class ChromiumDriver(object):
 
             while not self._stopped.is_set():
                 try:
-                    if isinstance(timeout, (int, float)):
-                        if timeout < q_timeout:
-                            q_timeout = timeout
-                        timeout -= q_timeout
-
-                    return self.method_results[message['id']].get(timeout=q_timeout)
+                    return self.method_results[message['id']].get_nowait()
 
                 except Empty:
                     if self.has_alert:
                         return {'error': {'message': 'alert exists'}, 'type': 'alert_exists'}
 
-                    if isinstance(timeout, (int, float)) and timeout <= 0:
-                        raise TimeoutError(f"调用{message['method']}超时。")
+                    if timeout is not None and perf_counter() > timeout:
+                        return {'error': {'message': 'timeout'}}
 
                     continue
 

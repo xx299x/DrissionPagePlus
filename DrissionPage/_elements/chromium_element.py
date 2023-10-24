@@ -1306,7 +1306,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     try:
         if as_expr:
             res = page.run_cdp('Runtime.evaluate', expression=script, returnByValue=False,
-                               awaitPromise=True, userGesture=True, timeout=timeout * 1000)
+                               awaitPromise=True, userGesture=True, _timeout=timeout)
 
         else:
             args = args or ()
@@ -1314,7 +1314,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
                 script = f'function(){{{script}}}'
             res = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=script, objectId=obj_id,
                                arguments=[convert_argument(arg) for arg in args], returnByValue=False,
-                               awaitPromise=True, userGesture=True)
+                               awaitPromise=True, userGesture=True, _timeout=timeout)
 
     except ContextLossError:
         if is_page:
