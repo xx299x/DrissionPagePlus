@@ -23,8 +23,7 @@ class NetworkListener(object):
         :param page: ChromiumBase对象
         """
         self._page = page
-        self._driver = ChromiumDriver(page.tab_id, 'page', page.address)
-        self._driver.call_method('Network.enable')
+        self._driver = None
 
         self._caught = None  # 临存捕捉到的数据
         self._request_ids = None  # 暂存须要拦截的请求id
@@ -75,6 +74,11 @@ class NetworkListener(object):
         """
         if targets:
             self.set_targets(targets, is_regex, method)
+        if self.listening:
+            return
+
+        self._driver = ChromiumDriver(self._page.tab_id, 'page', self._page.address)
+        self._driver.call_method('Network.enable')
 
         self.listening = True
         self._request_ids = {}
@@ -118,10 +122,10 @@ class NetworkListener(object):
         return [self._caught.get_nowait() for _ in range(count)]
 
     def steps(self, count=None, timeout=None, gap=1):
-        """用于单步操作，可实现没收到若干个数据包执行一步操作（如翻页）
+        """用于单步操作，可实现每收到若干个数据包执行一步操作（如翻页）
         :param count: 需捕获的数据包总数，为None表示无限
         :param timeout: 每个数据包等待时间，为None表示无限
-        :param gap: 每接收到多少个数据包触发
+        :param gap: 每接收到多少个数据包返回一次数据
         :return: 用于在接收到监听目标时触发动作的可迭代对象
         """
         caught = 0
@@ -144,6 +148,8 @@ class NetworkListener(object):
         if self.listening:
             self.pause()
             self.clear()
+        self._driver.stop()
+        self._driver = None
 
     def pause(self, clear=True):
         """暂停监听
@@ -181,7 +187,7 @@ class NetworkListener(object):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         if not self._targets:
-            self._request_ids[kwargs['requestId']] = DataPacket(self._driver.id, None, kwargs)
+            self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, None, kwargs)
             if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                 self._request_ids[kwargs['requestId']]._raw_post_data = \
                     self._driver.call_method('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
@@ -192,7 +198,7 @@ class NetworkListener(object):
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
                     not self._method or kwargs['request']['method'] in self._method):
-                self._request_ids[kwargs['requestId']] = DataPacket(self._driver.id, target, kwargs)
+                self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, target, kwargs)
 
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     self._request_ids[kwargs['requestId']]._raw_post_data = \
@@ -253,7 +259,7 @@ class DataPacket(object):
         :param target: 监听目标
         :param raw_request: 原始request数据，从cdp获得
         """
-        self.tab = tab_id
+        self.tab_id = tab_id
         self.target = target
 
         self._raw_request = raw_request
@@ -352,6 +358,11 @@ class Response(object):
         if self._headers is None:
             self._headers = CaseInsensitiveDict(self._response['headers'])
         return self._headers
+
+    @property
+    def raw_body(self):
+        """返回未被处理的body文本"""
+        return self._raw_body
 
     @property
     def body(self):

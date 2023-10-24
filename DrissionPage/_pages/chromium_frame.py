@@ -81,9 +81,8 @@ class ChromiumFrame(ChromiumBase):
         self.retry_interval = self._target_page.retry_interval
         self._page_load_strategy = self._target_page.page_load_strategy
         self._download_path = self._target_page.download_path
-        # self._when_download_file_exists = self._target_page._when_download_file_exists
 
-    def _driver_init(self, tab_id):
+    def _driver_init(self, tab_id, is_init=True):
         """避免出现服务器500错误
         :param tab_id: 要跳转到的标签页id
         :return: None
