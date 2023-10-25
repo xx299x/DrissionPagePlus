@@ -384,7 +384,6 @@ class ChromiumBase(BasePage):
         self.wait.load_complete()
         if self._scroll is None:
             self._scroll = ChromiumPageScroll(self)
-            self.set.scroll.smooth(False)
         return self._scroll
 
     @property

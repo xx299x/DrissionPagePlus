@@ -6,7 +6,7 @@
 from json import dumps, loads
 from queue import Queue, Empty
 from threading import Thread, Event
-from time import perf_counter
+from time import perf_counter, sleep
 
 from requests import get
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
@@ -84,6 +84,7 @@ class ChromiumDriver(object):
                     if timeout is not None and perf_counter() > timeout:
                         return {'error': {'message': 'timeout'}}
 
+                    sleep(.02)
                     continue
 
         except Exception:

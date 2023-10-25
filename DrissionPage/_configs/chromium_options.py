@@ -4,7 +4,9 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
+from shutil import rmtree
 from tempfile import gettempdir, TemporaryDirectory
+from threading import Lock
 
 from .options_manage import OptionsManager
 from .._commons.tools import port_is_using, clean_folder
@@ -471,24 +473,34 @@ class ChromiumOptions(object):
 
 
 class PortFinder(object):
-    used_port = []
+    used_port = {}
 
     def __init__(self):
         self.tmp_dir = Path(gettempdir()) / 'DrissionPage' / 'TempFolder'
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
         if not PortFinder.used_port:
             clean_folder(self.tmp_dir)
+        self._lock = Lock()
 
     def get_port(self):
         """查找一个可用端口
         :return: 可以使用的端口和用户文件夹路径组成的元组
         """
-        for i in range(9600, 19800):
-            if i in PortFinder.used_port or port_is_using('127.0.0.1', i):
-                continue
+        with self._lock:
+            for i in range(9600, 19600):
+                if i in PortFinder.used_port:
+                    continue
+                elif port_is_using('127.0.0.1', i):
+                    PortFinder.used_port[i] = None
+                    continue
+                path = TemporaryDirectory(dir=self.tmp_dir).name
+                PortFinder.used_port[i] = path
+                return i, path
 
-            path = TemporaryDirectory(dir=self.tmp_dir)
-            PortFinder.used_port.append(i)
-            return i, path.name
+            for i in range(9600, 19600):
+                if port_is_using('127.0.0.1', i):
+                    continue
+                rmtree(PortFinder.used_port[i], ignore_errors=True)
+                return i, TemporaryDirectory(dir=self.tmp_dir).name
 
         raise OSError('未找到可用端口。')
