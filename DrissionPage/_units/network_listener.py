@@ -12,7 +12,6 @@ from time import perf_counter, sleep
 from requests.structures import CaseInsensitiveDict
 
 from .._base.chromium_driver import ChromiumDriver
-from ..errors import CDPError
 
 
 class NetworkListener(object):
@@ -218,16 +217,13 @@ class NetworkListener(object):
         request_id = kwargs['requestId']
         dp = self._request_ids.get(request_id)
         if dp:
-            try:
-                r = self._driver.call_method('Network.getResponseBody', requestId=request_id)
-                body = r['body']
-                is_base64 = r['base64Encoded']
-            except CDPError:
-                body = ''
-                is_base64 = False
-
-            dp._raw_body = body
-            dp._base64_body = is_base64
+            r = self._driver.call_method('Network.getResponseBody', requestId=request_id)
+            if 'body' in r:
+                dp._raw_body = r['body']
+                dp._base64_body = r['base64Encoded']
+            else:
+                dp._raw_body = ''
+                dp._base64_body = False
 
             self._caught.put(dp)
             try:
