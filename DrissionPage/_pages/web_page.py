@@ -15,13 +15,15 @@ from .._units.setter import WebPageSetter
 class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
-    def __init__(self, mode='d', timeout=None, driver_or_options=None, session_or_options=None):
+    def __init__(self, mode='d', timeout=None, driver_options=None, session_or_options=None, driver_or_options=None):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param driver_or_options: ChromiumDriver对象，只使用s模式时应传入False
+        :param driver_options: ChromiumDriver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
+        if not driver_options and driver_or_options:
+            driver_options = driver_or_options
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
@@ -29,10 +31,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._has_session = True
 
         super().__init__(session_or_options=session_or_options)
-        if not driver_or_options:
-            driver_or_options = ChromiumOptions(read_file=driver_or_options)
-            driver_or_options.set_timeouts(implicit=self._timeout).set_paths(download_path=self.download_path)
-        super(SessionPage, self).__init__(addr_driver_opts=driver_or_options, timeout=timeout)
+        if not driver_options:
+            driver_options = ChromiumOptions(read_file=driver_options)
+            driver_options.set_timeouts(implicit=self._timeout).set_paths(download_path=self.download_path)
+        super(SessionPage, self).__init__(addr_or_opts=driver_options, timeout=timeout)
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
     def __call__(self, loc_or_str, timeout=None):

@@ -9,7 +9,6 @@ from time import sleep
 from requests import get
 
 from .._base.browser import Browser
-from .._base.chromium_driver import ChromiumDriver
 from .._commons.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_base import ChromiumBase, Timeout
@@ -23,42 +22,39 @@ from ..errors import BrowserConnectError
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
 
-    def __init__(self, addr_driver_opts=None, tab_id=None, timeout=None):
+    def __init__(self, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
         """
-        :param addr_driver_opts: 浏览器地址:端口或ChromiumOptions对象
+        :param addr_or_opts: 浏览器地址:端口或ChromiumOptions对象
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
+        if not addr_or_opts and addr_driver_opts:
+            addr_or_opts = addr_driver_opts
         self._page = self
-        address = self._handle_options(addr_driver_opts)
+        address = self._handle_options(addr_or_opts)
         self._run_browser()
         super().__init__(address, tab_id)
         self.set.timeouts(implicit=timeout)
         self._page_init()
 
-    def _handle_options(self, addr_driver_opts):
+    def _handle_options(self, addr_or_opts):
         """设置浏览器启动属性
-        :param addr_driver_opts: 'ip:port'、ChromiumOptions、ChromiumDriver
+        :param addr_or_opts: 'ip:port'、ChromiumOptions、ChromiumDriver
         :return: 返回浏览器地址
         """
-        if not addr_driver_opts:
-            self._driver_options = ChromiumOptions(addr_driver_opts)
+        if not addr_or_opts:
+            self._driver_options = ChromiumOptions(addr_or_opts)
 
-        elif isinstance(addr_driver_opts, ChromiumOptions):
-            self._driver_options = addr_driver_opts
+        elif isinstance(addr_or_opts, ChromiumOptions):
+            self._driver_options = addr_or_opts
 
         # 接收浏览器地址和端口
-        elif isinstance(addr_driver_opts, str):
+        elif isinstance(addr_or_opts, str):
             self._driver_options = ChromiumOptions()
-            self._driver_options.set_debugger_address(addr_driver_opts)
-
-        elif isinstance(addr_driver_opts, ChromiumDriver):
-            self._driver_options = ChromiumOptions(False)
-            self._driver_options.set_debugger_address(addr_driver_opts.address)
-            self._driver = addr_driver_opts
+            self._driver_options.set_debugger_address(addr_or_opts)
 
         else:
-            raise TypeError('只能接收ip:port格式、ChromiumOptions或ChromiumDriver类型参数。')
+            raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
 
         return self._driver_options.debugger_address
 
@@ -229,7 +225,7 @@ class ChromiumPage(ChromiumBase):
             return
 
         self.driver.stop()
-        self._driver_init(tab_id, False)
+        self._driver_init(tab_id)
         if read_doc and self.ready_state in ('complete', None):
             self._get_document()
 

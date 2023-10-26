@@ -93,15 +93,12 @@ class ChromiumBase(BasePage):
         self._get_document()
         self._first_run = False
 
-    def _driver_init(self, tab_id, is_init=True):
+    def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
-        :param is_init: 是否初始化时执行本方法，用于判断是否to_tab()调用
         :return: None
         """
         self._is_loading = True
-        if is_init and hasattr(self, '_driver'):
-            return  # ChromiumPage接收ChromiumDriver方式启动时
         self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
         self._alert = Alert()
         self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
