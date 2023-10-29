@@ -24,8 +24,8 @@ from .._units.network_listener import NetworkListener
 from .._units.screencast import Screencast
 from .._units.setter import ChromiumBaseSetter
 from .._units.waiter import ChromiumBaseWaiter
-from ..errors import ContextLossError, ElementLossError, AlertExistsError, CDPError, TabClosedError, \
-    NoRectError, BrowserConnectError, GetDocumentError
+from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, BrowserConnectError,
+                      AlertExistsError)
 
 
 class ChromiumBase(BasePage):
@@ -41,14 +41,14 @@ class ChromiumBase(BasePage):
         self._is_loading = None
         self._root_id = None  # object id
         self._debug = False
-        self._debug_recorder = None
         self._set = None
         self._screencast = None
         self._actions = None
         self._listener = None
         self._has_alert = False
+        self._ready_state = None
 
-        self._download_path = str(Path('../..').absolute())
+        self._download_path = str(Path('.').absolute())
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -76,7 +76,6 @@ class ChromiumBase(BasePage):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :return: None
         """
-        self._first_run = True
         self._is_reading = False
         self._upload_list = None
         self._wait = None
@@ -89,9 +88,15 @@ class ChromiumBase(BasePage):
             if not tab_id:
                 raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
             tab_id = tab_id[0]
+
         self._driver_init(tab_id)
-        self._get_document()
-        self._first_run = False
+        if self.ready_state == 'complete' and self._ready_state is None:
+            self._get_document()
+            self._ready_state = 'complete'
+
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -99,6 +104,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
+        self._frame_id = tab_id
         self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
         self._alert = Alert()
         self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
@@ -108,59 +114,20 @@ class ChromiumBase(BasePage):
         self._driver.call_method('Page.enable')
         self._driver.call_method('Emulation.setFocusEmulationEnabled', enabled=True)
 
-        self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
-        self._driver.set_listener('DOM.documentUpdated', self._onDocumentUpdated)
-        self._driver.set_listener('Page.loadEventFired', self._onLoadEventFired)
         self._driver.set_listener('Page.frameNavigated', self._onFrameNavigated)
+        self._driver.set_listener('Page.domContentEventFired', self._onDomContentEventFired)
+        self._driver.set_listener('Page.loadEventFired', self._onLoadEventFired)
+        self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
         self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self):
-        """刷新cdp使用的document数据"""
         if self._is_reading:
             return
-
         self._is_reading = True
-
-        if self._debug:
-            print('获取document')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '获取document', '开始'))
-
-        try:  # 遇到过网站在标签页关闭时触发读取文档导致错误，屏蔽掉
-            self._wait_loaded()
-        except TabClosedError:
-            return
-
-        end_time = perf_counter() + 10
-        while perf_counter() < end_time:
-            try:
-                b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '信息', f'root_id：{self._root_id}'))
-                break
-
-            except CDPError as e:
-                err = e
-                if self._debug:
-                    print('重试获取document')
-                    if self._debug_recorder:
-                        self._debug_recorder.add_data((perf_counter(), 'err', '读取root_id出错'))
-
-                sleep(.1)
-
-        else:
-            txt = f'请检查是否创建了过多页面对象同时操作浏览器。\n如无法解决，请把以下信息报告作者。\n{err._info}\n' \
-                  f'报告网址：https://gitee.com/g1879/DrissionPage/issues'
-            raise GetDocumentError(txt)
-
-        if self._debug:
-            print('获取document结束')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '获取document', '结束'))
-
+        b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+        self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
         r = self.run_cdp('Page.getFrameTree')
         for i in findall(r"'id': '(.*?)'", str(r)):
             self.browser._frames[i] = self.tab_id
@@ -173,25 +140,18 @@ class ChromiumBase(BasePage):
         :param timeout: 超时时间
         :return: 是否成功，超时返回False
         """
-        timeout = timeout if timeout is not None else self.timeouts.page_load
+        if self.page_load_strategy == 'none':
+            return True
 
+        timeout = timeout if timeout is not None else self.timeouts.page_load
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            state = self.ready_state
-            if state is None:  # 存在alert的情况
-                return None
-
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), 'waiting', state))
-
-            if state == 'complete':
+            if self._ready_state == 'complete':
                 return True
-            elif self.page_load_strategy == 'eager' and state in ('interactive', 'complete'):
+            elif self.page_load_strategy == 'eager' and self._ready_state in ('interactive', 'complete'):
                 self.stop_loading()
                 return True
-            elif self.page_load_strategy == 'none':
-                self.stop_loading()
-                return True
+
             sleep(.1)
 
         self.stop_loading()
@@ -209,49 +169,43 @@ class ChromiumBase(BasePage):
     def _onFrameStartedLoading(self, **kwargs):
         """页面开始加载时执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self._target_id:
+        if kwargs['frameId'] == self._frame_id:
+            self._ready_state = 'loading'
             self._is_loading = True
-
             if self._debug:
-                print('页面开始加载 FrameStartedLoading')
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'FrameStartedLoading'))
+                print(f'frameStartedLoading {kwargs}')
+
+    def _onFrameNavigated(self, **kwargs):
+        """页面跳转时执行"""
+        if kwargs['frame']['id'] == self._frame_id:
+            self._ready_state = 'loading'
+            self._is_loading = True
+            if self._debug:
+                print(f'FrameNavigated {kwargs}')
+
+    def _onDomContentEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        self._ready_state = 'interactive'
+        if self.page_load_strategy == 'eager':
+            self.run_cdp('Page.stopLoading')
+        if self._debug:
+            print(f'DomContentEventFired {kwargs}')
+
+    def _onLoadEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        self._ready_state = 'complete'
+        if self._debug:
+            print(f'LoadEventFired {kwargs}')
+        # self._get_document()
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self._target_id and self._first_run is False and self._is_loading:
+        if kwargs['frameId'] == self._frame_id:
+            self._ready_state = 'complete'
             if self._debug:
-                print('页面停止加载 FrameStoppedLoading')
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'FrameStoppedLoading'))
-
+                print(f'FrameStoppedLoading {kwargs}')
             self._get_document()
-
-    def _onLoadEventFired(self, **kwargs):
-        """在页面刷新、变化后重新读取页面内容"""
-        if self._debug:
-            print('loadEventFired')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
-
-        self._get_document()
-
-    def _onDocumentUpdated(self, **kwargs):
-        """页面跳转时执行"""
-        if self._debug:
-            print('documentUpdated')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '加载流程', 'documentUpdated'))
-
-    def _onFrameNavigated(self, **kwargs):
-        """页面跳转时执行"""
-        if kwargs['frame'].get('parentId', None) == self._target_id and self._first_run is False and self._is_loading:
-            self._is_loading = True
-            if self._debug:
-                print('navigated')
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
 
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""
@@ -344,14 +298,13 @@ class ChromiumBase(BasePage):
 
     @property
     def ready_state(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'，有弹出框时返回None"""
-        while True:
-            try:
-                return self.run_cdp('Runtime.evaluate', expression='document.readyState;')['result']['value']
-            except (AlertExistsError, TypeError):
-                return None
-            except ContextLossError:
-                continue
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'，'timeout' 表示可能有弹出框"""
+        try:
+            return self.run_cdp('Runtime.evaluate', expression='document.readyState;', _timeout=3)['result']['value']
+        except ContextLossError:
+            return None
+        except TimeoutError:
+            return 'timeout'
 
     @property
     def size(self):
@@ -439,9 +392,6 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        # if self.driver.has_alert and cmd != HANDLE_ALERT_METHOD:
-        #     raise AlertExistsError
-
         r = self.driver.call_method(cmd, **cmd_args)
         if ERROR not in r:
             return r
@@ -455,8 +405,10 @@ class ChromiumBase(BasePage):
             raise ElementLossError
         elif error == 'tab closed':
             raise TabClosedError
-        elif error == 'alert exists':
-            pass
+        elif error == 'timeout':
+            raise TimeoutError
+        elif error == 'alert exists.':
+            raise AlertExistsError
         elif error in ('Node does not have a layout object', 'Could not compute box model.'):
             raise NoRectError
         elif r['type'] == 'call_method_error':
@@ -476,7 +428,7 @@ class ChromiumBase(BasePage):
     def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
@@ -485,7 +437,7 @@ class ChromiumBase(BasePage):
     def run_js_loaded(self, script, *args, as_expr=False):
         """运行javascript代码，执行前等待页面加载完毕
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
@@ -495,7 +447,7 @@ class ChromiumBase(BasePage):
     def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: None
         """
@@ -691,11 +643,12 @@ class ChromiumBase(BasePage):
         """页面停止加载"""
         if self._debug:
             print('停止页面加载')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '操作', '停止页面加载'))
-
-        self.run_cdp('Page.stopLoading')
-        while self.ready_state not in ('complete', None):
+        try:
+            self.run_cdp('Page.stopLoading')
+        except TabClosedError:
+            pass
+        end_time = perf_counter() + self.timeouts.page_load
+        while self._ready_state != 'complete' and perf_counter() < end_time:
             sleep(.1)
 
     def remove_ele(self, loc_or_ele):
@@ -881,31 +834,38 @@ class ChromiumBase(BasePage):
         """
         err = None
         timeout = timeout if timeout is not None else self.timeouts.page_load
-
         for t in range(times + 1):
             err = None
-            result = self.run_cdp('Page.navigate', url=to_url)
-
-            is_timeout = self._wait_loaded(timeout)
-            if is_timeout is None:
-                return None
-            is_timeout = not is_timeout
-            self.wait.load_complete()
-
-            if is_timeout:
+            end_time = perf_counter() + timeout
+            result = self.run_cdp('Page.navigate', url=to_url, _timeout=timeout)
+            if result.get('error') == 'timeout':
                 err = TimeoutError('页面连接超时。')
-            if 'errorText' in result:
+
+            elif 'errorText' in result:
                 err = ConnectionError(result['errorText'])
+
+            if err:
+                sleep(interval)
+                if self._debug or show_errmsg:
+                    print(f'重试{t + 1} {to_url}')
+                self.stop_loading()
+                continue
+
+            if self.page_load_strategy == 'none':
+                return True
+
+            yu = end_time - perf_counter()
+            ok = self._wait_loaded(1 if yu <= 0 else yu)
+            if not ok:
+                err = TimeoutError('页面连接超时。')
+                sleep(interval)
+                if self._debug or show_errmsg:
+                    print(f'重试{t + 1} {to_url}')
+                self.stop_loading()
+                continue
 
             if not err:
                 break
-
-            if t < times:
-                sleep(interval)
-                while self.ready_state not in ('complete', None):
-                    sleep(.1)
-                if self._debug or show_errmsg:
-                    print(f'重试{t + 1} {to_url}')
 
         if err:
             if show_errmsg:

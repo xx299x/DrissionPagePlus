@@ -6,7 +6,7 @@
 from json import dumps, loads
 from queue import Queue, Empty
 from threading import Thread, Event
-from time import perf_counter, sleep
+from time import perf_counter
 
 from requests import get
 from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
@@ -56,8 +56,8 @@ class ChromiumDriver(object):
         message_json = dumps(message)
 
         if self._debug:
-            if self._debug is True or (
-                    isinstance(self._debug, str) and message.get('method', '').startswith(self._debug)):
+            if self._debug is True or (isinstance(self._debug, str) and
+                                       message.get('method', '').startswith(self._debug)):
                 print(f'发> {message_json}')
             elif isinstance(self._debug, (list, tuple, set)):
                 for m in self._debug:
@@ -74,17 +74,16 @@ class ChromiumDriver(object):
 
             while not self._stopped.is_set():
                 try:
-                    return self.method_results[message['id']].get_nowait()
+                    return self.method_results[message['id']].get(.2)
 
                 except Empty:
                     if self.alert_flag:
                         self.alert_flag = False
-                        return {'result': []}
+                        return {'error': {'message': 'alert exists.'}}
 
                     if timeout is not None and perf_counter() > timeout:
                         return {'error': {'message': 'timeout'}}
 
-                    sleep(.02)
                     continue
 
         except Exception:
@@ -138,7 +137,11 @@ class ChromiumDriver(object):
 
             function = self.event_handlers.get(event['method'])
             if function:
+                if self._debug:
+                    print(f'开始执行 {function.__name__}')
                 function(**event['params'])
+                if self._debug:
+                    print(f'执行 {function.__name__}完毕')
 
             self.event_queue.task_done()
 

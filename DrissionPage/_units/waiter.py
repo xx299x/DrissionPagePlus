@@ -82,8 +82,12 @@ class ChromiumBaseWaiter(object):
 
     def upload_paths_inputted(self):
         """等待自动填写上传文件路径"""
-        while self._driver._upload_list:
+        end_time = perf_counter() + self._driver.timeout
+        while perf_counter() < end_time:
+            if not self._driver._upload_list:
+                return True
             sleep(.01)
+        return False
 
     def download_begin(self, timeout=None, cancel_it=False):
         """等待浏览器下载开始，可将其拦截
@@ -201,7 +205,7 @@ class ChromiumTabWaiter(ChromiumBaseWaiter):
 
         else:
             end_time = perf_counter() + timeout
-            while end_time > perf_counter():
+            while perf_counter() < end_time:
                 if not self._driver.browser._dl_mgr.get_tab_missions(self._driver.tab_id):
                     return True
                 sleep(.5)
@@ -224,13 +228,14 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
         """等待新标签页出现
         :param timeout: 等待超时时间，为None则使用页面对象timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
-        :return: 是否等到新标签页出现
+        :return: 等到新标签页返回其id，否则返回False
         """
         timeout = timeout if timeout is not None else self._driver.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._driver.tab_id != self._driver.latest_tab:
-                return True
+            latest_tab = self._driver.latest_tab
+            if self._driver.tab_id != latest_tab:
+                return latest_tab
             sleep(.01)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
@@ -251,7 +256,7 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
 
         else:
             end_time = perf_counter() + timeout
-            while end_time > perf_counter():
+            while perf_counter() < end_time:
                 if not self._driver.browser._dl_mgr._missions:
                     return True
                 sleep(.5)

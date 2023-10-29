@@ -367,7 +367,7 @@ class BasePage(BaseParser):
         self.retry_times = 3
         self.retry_interval = 2
         self._DownloadKit = None
-        self._download_path = str(Path('../..').absolute())
+        self._download_path = str(Path('.').absolute())
 
     @property
     def title(self):

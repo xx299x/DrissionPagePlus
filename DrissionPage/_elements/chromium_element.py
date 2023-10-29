@@ -376,7 +376,7 @@ class ChromiumElement(DrissionElement):
     def run_js(self, script, *args, as_expr=False):
         """对本元素执行javascript代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
@@ -385,7 +385,7 @@ class ChromiumElement(DrissionElement):
     def run_async_js(self, script, *args, as_expr=False):
         """以异步方式对本元素执行javascript代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: None
         """
@@ -841,7 +841,7 @@ class ChromiumShadowRoot(BaseElement):
     def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
@@ -850,7 +850,7 @@ class ChromiumShadowRoot(BaseElement):
     def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: None
         """
@@ -1042,9 +1042,9 @@ class ChromiumShadowRoot(BaseElement):
             loc = loc[0], loc[1][5:]
 
         timeout = timeout if timeout is not None else self.page.timeout
-        t1 = perf_counter()
+        end_time = perf_counter() + timeout
         eles = make_session_ele(self.html).eles(loc)
-        while not eles and perf_counter() - t1 <= timeout:
+        while not eles and perf_counter() <= end_time:
             eles = make_session_ele(self.html).eles(loc)
 
         if not eles:
@@ -1299,7 +1299,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     :param script: js文本
     :param as_expr: 是否作为表达式运行，为True时args无效
     :param timeout: 超时时间
-    :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+    :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
     :return: js执行结果
     """
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRoot)):
@@ -1701,7 +1701,8 @@ class ChromiumScroll(object):
         x = r['layoutViewport']['pageX']
         y = r['layoutViewport']['pageY']
 
-        while True:
+        end_time = perf_counter() + self._driver.page.timeout
+        while perf_counter() < end_time:
             sleep(.1)
             r = page.run_cdp('Page.getLayoutMetrics')
             x1 = r['layoutViewport']['pageX']

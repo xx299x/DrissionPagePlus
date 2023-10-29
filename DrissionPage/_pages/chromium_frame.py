@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from copy import copy
-from re import search
+from re import search, findall
 from threading import Thread
 from time import sleep, perf_counter
 
@@ -14,7 +14,7 @@ from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase, ChromiumPageScroll
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLossError
+from ..errors import ContextLossError, ElementLossError, GetDocumentError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -40,6 +40,7 @@ class ChromiumFrame(ChromiumBase):
         self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
         self._states = None
+        self._ids = ChromiumFrameIds(self)
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -50,9 +51,8 @@ class ChromiumFrame(ChromiumBase):
             super().__init__(page.address, self.frame_id, page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-        self._ids = ChromiumFrameIds(self)
 
-        end_time = perf_counter() + 2
+        end_time = perf_counter() + 5
         while perf_counter() < end_time and self.url == 'about:blank':
             sleep(.1)
 
@@ -92,28 +92,46 @@ class ChromiumFrame(ChromiumBase):
         except:
             get(f'http://{self.address}/json', headers={'Connection': 'close'})
             super()._driver_init(tab_id)
+        self.driver.set_listener('Inspector.detached', self._onInspectorDetached)
 
     def _reload(self):
         """重新获取document"""
         debug = self._debug
+        d_debug = self.driver._debug
         if debug:
             print('重新获取document')
 
         self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
         node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
 
-        if self._is_inner_frame():
-            self._is_diff_domain = False
-            self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
-            super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
-            self._debug = debug
+        end_time = perf_counter() + self.timeout
+        while perf_counter() < end_time:
+            try:
+                if self._is_inner_frame():
+                    self._is_diff_domain = False
+                    self.doc_ele = ChromiumElement(self._target_page,
+                                                   backend_id=node['contentDocument']['backendNodeId'])
+                    super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
+                    self._debug = debug
+                    self.driver._debug = d_debug
+                else:
+                    self._is_diff_domain = True
+                    self._driver.stop()
+                    super().__init__(self.address, self.frame_id, self._target_page.timeout)
+                    obj_id = super().run_js('document;', as_expr=True)['objectId']
+                    self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+                    self._debug = debug
+                    self.driver._debug = d_debug
+                break
+            except:
+                pass
+
+            sleep(.1)
+
         else:
-            self._is_diff_domain = True
-            self._driver.stop()
-            super().__init__(self.address, self.frame_id, self._target_page.timeout)
-            obj_id = super().run_js('document;', as_expr=True)['objectId']
-            self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-            self._debug = debug
+            raise GetDocumentError
+
+        self.wait.load_complete()
 
     def _check_ok(self):
         """用于应付同域异域之间跳转导致元素丢失问题"""
@@ -122,7 +140,7 @@ class ChromiumFrame(ChromiumBase):
 
         try:
             self._target_page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
-        except Exception:
+        except ElementLossError:
             self._reload()
             # sleep(2)
 
@@ -130,71 +148,41 @@ class ChromiumFrame(ChromiumBase):
         """刷新cdp使用的document数据"""
         if self._is_reading:
             return
-
         self._is_reading = True
+        if self._is_diff_domain is False:
+            node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
+            self.doc_ele = ChromiumElement(self._target_page,
+                                           backend_id=node['contentDocument']['backendNodeId'])
 
-        if self._debug:
-            print('---获取document')
+        else:
+            b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+            self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
-        end_time = perf_counter() + 3
-        while self.is_alive and perf_counter() < end_time:
-            try:
-                if self._is_diff_domain is False:
-                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
-                    self.doc_ele = ChromiumElement(self._target_page,
-                                                   backend_id=node['contentDocument']['backendNodeId'])
-
-                else:
-                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                    self.doc_ele = ChromiumElement(self, backend_id=b_id)
-
-                break
-
-            except Exception:
-                sleep(.1)
-
-        # else:
-        #     raise RuntimeError('获取document失败。')
-
-        if self._debug:
-            print('---获取document结束')
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
 
         self._is_loading = False
         self._is_reading = False
 
-    def _onFrameNavigated(self, **kwargs):
-        """页面跳转时触发"""
-        if kwargs['frame']['id'] == self.frame_id and self._first_run is False and self._is_loading:
-            self._is_loading = True
-
-            if self._debug:
-                print('navigated')
-                if self._debug_recorder:
-                    self._debug_recorder.add_data((perf_counter(), '加载流程', 'navigated'))
-
-    def _onLoadEventFired(self, **kwargs):
-        """在页面刷新、变化后重新读取页面内容"""
-        # 用于覆盖父类方法，不能删
-        self._get_new_document()
-
-        if self._debug:
-            print('loadEventFired')
-            if self._debug_recorder:
-                self._debug_recorder.add_data((perf_counter(), '加载流程', 'loadEventFired'))
-
-    def _onFrameStartedLoading(self, **kwargs):
-        """页面开始加载时触发"""
-        if kwargs['frameId'] == self.frame_id:
-            self._is_loading = True
-            if self._debug:
-                print('页面开始加载 FrameStartedLoading')
-
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
-        if kwargs['frameId'] == self.frame_id and self._first_run is False and self._is_loading:
+        self.browser._frames[kwargs['frameId']] = self.tab_id
+        if kwargs['frameId'] == self.frame_id:
+            self._ready_state = 'complete'
             if self._debug:
-                print('页面停止加载 FrameStoppedLoading')
+                print(f'FrameStoppedLoading {kwargs}')
             self._get_new_document()
+
+    def _onInspectorDetached(self, **kwargs):
+        self._is_loading = True
+        # print('reload')
+        self._reload()
+
+    # def _onFrameDetached(self, **kwargs):
+    #     if kwargs['frameId'] == self.frame_id:
+    #         self._is_loading = True
+    #         self._reload()
 
     @property
     def page(self):
@@ -387,7 +375,7 @@ class ChromiumFrame(ChromiumBase):
     def run_js(self, script, *args, as_expr=False):
         """运行javascript代码
         :param script: js文本
-        :param args: 参数，按顺序在js文本中对应argument[0]、argument[1]...
+        :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
@@ -614,34 +602,43 @@ class ChromiumFrame(ChromiumBase):
 
         for t in range(times + 1):
             err = None
-            result = self.driver.call_method('Page.navigate', url=to_url, frameId=self.frame_id)
-
-            is_timeout = not self._wait_loaded(timeout)
-            sleep(.5)
-            self.wait.load_complete()
-
-            if is_timeout:
+            end_time = perf_counter() + timeout
+            result = self.driver.call_method('Page.navigate', url=to_url, frameId=self.frame_id, _timeout=timeout)
+            if result.get('error') == 'timeout':
                 err = TimeoutError('页面连接超时。')
-            if 'errorText' in result:
+
+            elif 'errorText' in result:
                 err = ConnectionError(result['errorText'])
+
+            if err:
+                sleep(interval)
+                if self._debug or show_errmsg:
+                    print(f'重试{t + 1} {to_url}')
+                self.stop_loading()
+                continue
+
+            if self.page_load_strategy == 'none':
+                return True
+
+            yu = end_time - perf_counter()
+            ok = self._wait_loaded(1 if yu <= 0 else yu)
+            if not ok:
+                err = TimeoutError('页面连接超时。')
+                sleep(interval)
+                if self._debug or show_errmsg:
+                    print(f'重试{t + 1} {to_url}')
+                self.stop_loading()
+                continue
 
             if not err:
                 break
-
-            if t < times:
-                sleep(interval)
-                while self.ready_state not in ('complete', None):
-                    sleep(.1)
-                if self._debug:
-                    print('重试')
-                if show_errmsg:
-                    print(f'重试 {to_url}')
 
         if err:
             if show_errmsg:
                 raise err if err is not None else ConnectionError('连接异常。')
             return False
 
+        self._check_ok()
         return True
 
     def _is_inner_frame(self):

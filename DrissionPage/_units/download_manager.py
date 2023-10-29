@@ -266,8 +266,8 @@ class DownloadMission(object):
         """
         if show:
             print(f'url：{self.url}')
-            t2 = perf_counter()
-            while self.name is None and perf_counter() - t2 < 4:
+            end_time = perf_counter()
+            while self.name is None and perf_counter() < end_time:
                 sleep(0.01)
             print(f'文件名：{self.name}')
             print(f'目标路径：{self.path}')
