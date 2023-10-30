@@ -179,17 +179,20 @@ class NetworkListener(object):
     def _set_callback(self):
         """设置监听请求的回调函数"""
         self._driver.set_listener('Network.requestWillBeSent', self._requestWillBeSent)
+        self._driver.set_listener('Network.requestWillBeSentExtraInfo', self._requestWillBeSentExtraInfo)
         self._driver.set_listener('Network.responseReceived', self._response_received)
+        self._driver.set_listener('Network.responseReceivedExtraInfo', self._responseReceivedExtraInfo)
         self._driver.set_listener('Network.loadingFinished', self._loading_finished)
         self._driver.set_listener('Network.loadingFailed', self._loading_failed)
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         if not self._targets:
-            self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, None, kwargs)
+            packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
+            packet._raw_request = kwargs
             if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                self._request_ids[kwargs['requestId']]._raw_post_data = \
-                    self._driver.call_method('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+                packet._raw_post_data = self._driver.call_method('Network.getRequestPostData',
+                                                                 requestId=kwargs['requestId'])['postData']
 
             return
 
@@ -197,20 +200,40 @@ class NetworkListener(object):
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
                     not self._method or kwargs['request']['method'] in self._method):
-                self._request_ids[kwargs['requestId']] = DataPacket(self._page.tab_id, target, kwargs)
-
+                packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
+                packet._raw__request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                    self._request_ids[kwargs['requestId']]._raw_post_data = \
-                        self._driver.call_method('Network.getRequestPostData', requestId=kwargs['requestId'])['postData']
+                    packet._raw_post_data = self._driver.call_method('Network.getRequestPostData',
+                                                                     requestId=kwargs['requestId'])['postData']
+
+                break
+
+    def _requestWillBeSentExtraInfo(self, **kwargs):
+        if not self._targets:
+            packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
+            packet._requestExtraInfo = kwargs
+            return
+
+        for target in self._targets:
+            if ((self._is_regex and search(target, kwargs['request']['url'])) or
+                (not self._is_regex and target in kwargs['request']['url'])) and (
+                    not self._method or kwargs['request']['method'] in self._method):
+                packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
+                packet._requestExtraInfo = kwargs
 
                 break
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        request_id = kwargs['requestId']
-        if request_id in self._request_ids:
-            self._request_ids[request_id]._raw_response = kwargs['response']
-            self._request_ids[request_id]._resource_type = kwargs['type']
+        request = self._request_ids.get(kwargs['requestId'])
+        if request:
+            request._raw_response = kwargs['response']
+            request._resource_type = kwargs['type']
+
+    def _responseReceivedExtraInfo(self, **kwargs):
+        request = self._request_ids.get(kwargs['requestId'])
+        if request:
+            request._responseExtraInfo = kwargs
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
@@ -249,21 +272,22 @@ class NetworkListener(object):
 class DataPacket(object):
     """返回的数据包管理类"""
 
-    def __init__(self, tab_id, target, raw_request):
+    def __init__(self, tab_id, target):
         """
         :param tab_id: 产生这个数据包的tab的id
         :param target: 监听目标
-        :param raw_request: 原始request数据，从cdp获得
         """
         self.tab_id = tab_id
         self.target = target
 
-        self._raw_request = raw_request
+        self._raw_request = None
         self._raw_post_data = None
 
         self._raw_response = None
         self._raw_body = None
         self._base64_body = False
+        self._requestExtraInfo = None
+        self._responseExtraInfo = None
 
         self._request = None
         self._response = None
@@ -293,22 +317,23 @@ class DataPacket(object):
     @property
     def request(self):
         if self._request is None:
-            self._request = Request(self._raw_request['request'], self._raw_post_data)
+            self._request = Request(self._raw_request['request'], self._raw_post_data, self._requestExtraInfo)
         return self._request
 
     @property
     def response(self):
         if self._response is None:
-            self._response = Response(self._raw_response, self._raw_body, self._base64_body)
+            self._response = Response(self._raw_response, self._raw_body, self._base64_body, self._responseExtraInfo)
         return self._response
 
 
 class Request(object):
-    def __init__(self, raw_request, post_data):
+    def __init__(self, raw_request, post_data, extra_info):
         self._request = raw_request
         self._raw_post_data = post_data
         self._postData = None
         self._headers = None
+        self.extra_info = RequestExtraInfo(extra_info or {})
 
     def __getattr__(self, item):
         return self._request.get(item, None)
@@ -338,12 +363,13 @@ class Request(object):
 
 
 class Response(object):
-    def __init__(self, raw_response, raw_body, base64_body):
+    def __init__(self, raw_response, raw_body, base64_body, extra_info):
         self._response = raw_response
         self._raw_body = raw_body
         self._is_base64_body = base64_body
         self._body = None
         self._headers = None
+        self.extra_info = ResponseExtraInfo(extra_info or {})
 
     def __getattr__(self, item):
         return self._response.get(item, None)
@@ -374,3 +400,19 @@ class Response(object):
                     self._body = self._raw_body
 
         return self._body
+
+
+class ExtraInfo(object):
+    def __init__(self, extra_info):
+        self._extra_info = extra_info
+
+    def __getattr__(self, item):
+        return self._extra_info.get(item, None)
+
+
+class RequestExtraInfo(ExtraInfo):
+    pass
+
+
+class ResponseExtraInfo(ExtraInfo):
+    pass

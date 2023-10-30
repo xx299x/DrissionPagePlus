@@ -48,6 +48,7 @@ class ChromiumBase(BasePage):
         self._listener = None
         self._has_alert = False
         self._ready_state = None
+        self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
 
         self._download_path = str(Path('.').absolute())
 
@@ -188,16 +189,18 @@ class ChromiumBase(BasePage):
         self._ready_state = 'complete'
         if self._debug:
             print(f'LoadEventFired {kwargs}')
-        # self._get_document()
+        self._get_document()
+        self._doc_got = True
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self._frame_id:
+        if kwargs['frameId'] == self._frame_id and self._doc_got is False:
             self._ready_state = 'complete'
             if self._debug:
                 print(f'FrameStoppedLoading {kwargs}')
             self._get_document()
+            self._doc_got = False
 
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""
