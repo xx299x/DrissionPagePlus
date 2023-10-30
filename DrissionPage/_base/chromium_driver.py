@@ -155,7 +155,7 @@ class ChromiumDriver(object):
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
 
-        timeout = kwargs.pop("_timeout", None)
+        timeout = kwargs.pop("_timeout", 30)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
         if result is None:
             return {'error': 'tab closed', 'type': 'tab_closed'}

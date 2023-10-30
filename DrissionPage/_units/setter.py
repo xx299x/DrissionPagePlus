@@ -122,6 +122,11 @@ class TabSetter(ChromiumBaseSetter):
     def __init__(self, page):
         super().__init__(page)
 
+    @property
+    def window(self):
+        """返回用于设置浏览器窗口的对象"""
+        return WindowSetter(self._page)
+
     def download_path(self, path):
         """设置下载路径
         :param path: 下载路径
@@ -164,11 +169,6 @@ class ChromiumPageSetter(TabSetter):
         :return: None
         """
         self._page._main_tab = tab_id or self._page.tab_id
-
-    @property
-    def window(self):
-        """返回用于设置浏览器窗口的对象"""
-        return WindowSetter(self._page)
 
     def tab_to_front(self, tab_or_id=None):
         """激活标签页使其处于最前面

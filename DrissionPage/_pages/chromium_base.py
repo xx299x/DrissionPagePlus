@@ -145,28 +145,6 @@ class ChromiumBase(BasePage):
         self._is_loading = False
         self._is_reading = False
 
-    def _wait_loaded(self, timeout=None):
-        """等待页面加载完成，超时触发停止加载
-        :param timeout: 超时时间
-        :return: 是否成功，超时返回False
-        """
-        if self.page_load_strategy == 'none':
-            return True
-
-        timeout = timeout if timeout is not None else self.timeouts.page_load
-        end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if self._ready_state == 'complete':
-                return True
-            elif self.page_load_strategy == 'eager' and self._ready_state in ('interactive', 'complete'):
-                self.stop_loading()
-                return True
-
-            sleep(.1)
-
-        self.stop_loading()
-        return False
-
     def _onFrameDetached(self, **kwargs):
         try:
             self.browser._frames.pop(kwargs['frameId'])
@@ -844,6 +822,28 @@ class ChromiumBase(BasePage):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._has_alert = True
+
+    def _wait_loaded(self, timeout=None):
+        """等待页面加载完成，超时触发停止加载
+        :param timeout: 超时时间
+        :return: 是否成功，超时返回False
+        """
+        if self.page_load_strategy == 'none':
+            return True
+
+        timeout = timeout if timeout is not None else self.timeouts.page_load
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self._ready_state == 'complete':
+                return True
+            elif self.page_load_strategy == 'eager' and self._ready_state in ('interactive',
+                                                                              'complete') and not self._is_loading:
+                return True
+
+            sleep(.1)
+
+        self.stop_loading()
+        return False
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次

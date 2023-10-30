@@ -12,15 +12,26 @@ class ChromiumTabRect(object):
     @property
     def window_state(self):
         """返回窗口状态：normal、fullscreen、maximized、 minimized"""
-        return self._get_browser_rect()['windowState']
+        return self._get_window_rect()['windowState']
 
     @property
-    def browser_location(self):
-        """返回浏览器在屏幕上的坐标，左上角为(0, 0)"""
-        r = self._get_browser_rect()
+    def window_location(self):
+        """返回窗口在屏幕上的坐标，左上角为(0, 0)"""
+        r = self._get_window_rect()
         if r['windowState'] in ('maximized', 'fullscreen'):
             return 0, 0
         return r['left'] + 7, r['top']
+
+    @property
+    def window_size(self):
+        """返回窗口大小"""
+        r = self._get_window_rect()
+        if r['windowState'] == 'fullscreen':
+            return r['width'], r['height']
+        elif r['windowState'] == 'maximized':
+            return r['width'] - 16, r['height'] - 16
+        else:
+            return r['width'] - 16, r['height'] - 7
 
     @property
     def page_location(self):
@@ -32,21 +43,10 @@ class ChromiumTabRect(object):
     @property
     def viewport_location(self):
         """返回视口在屏幕中坐标，左上角为(0, 0)"""
-        w_bl, h_bl = self.browser_location
-        w_bs, h_bs = self.browser_size
+        w_bl, h_bl = self.window_location
+        w_bs, h_bs = self.window_size
         w_vs, h_vs = self.viewport_size_with_scrollbar
         return w_bl + w_bs - w_vs, h_bl + h_bs - h_vs
-
-    @property
-    def browser_size(self):
-        """返回浏览器大小"""
-        r = self._get_browser_rect()
-        if r['windowState'] == 'fullscreen':
-            return r['width'], r['height']
-        elif r['windowState'] == 'maximized':
-            return r['width'] - 16, r['height'] - 16
-        else:
-            return r['width'] - 16, r['height'] - 7
 
     @property
     def page_size(self):
@@ -71,6 +71,6 @@ class ChromiumTabRect(object):
         """获取页面范围信息"""
         return self._page.run_cdp_loaded('Page.getLayoutMetrics')
 
-    def _get_browser_rect(self):
-        """获取浏览器范围信息"""
+    def _get_window_rect(self):
+        """获取窗口范围信息"""
         return self._page.browser.get_window_bounds(self._page.tab_id)
