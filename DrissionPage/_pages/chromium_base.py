@@ -7,6 +7,7 @@ from json import loads, JSONDecodeError
 from os.path import sep
 from pathlib import Path
 from re import findall
+from threading import Thread
 from time import perf_counter, sleep
 
 from requests import get
@@ -25,7 +26,7 @@ from .._units.screencast import Screencast
 from .._units.setter import ChromiumBaseSetter
 from .._units.waiter import ChromiumBaseWaiter
 from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, BrowserConnectError,
-                      AlertExistsError)
+                      AlertExistsError, GetDocumentError)
 
 
 class ChromiumBase(BasePage):
@@ -126,8 +127,17 @@ class ChromiumBase(BasePage):
         if self._is_reading:
             return
         self._is_reading = True
-        b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-        self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
+        end_time = perf_counter() + 10
+        while perf_counter() < end_time:
+            try:
+                b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
+                break
+            except:
+                continue
+        else:
+            raise GetDocumentError
+
         r = self.run_cdp('Page.getFrameTree')
         for i in findall(r"'id': '(.*?)'", str(r)):
             self.browser._frames[i] = self.tab_id
@@ -172,6 +182,10 @@ class ChromiumBase(BasePage):
         if kwargs['frameId'] == self._frame_id:
             self._ready_state = 'loading'
             self._is_loading = True
+            if self.page_load_strategy == 'eager':
+                t = Thread(target=self._wait_to_stop)
+                t.daemon = True
+                t.start()
             if self._debug:
                 print(f'frameStartedLoading {kwargs}')
 
@@ -227,6 +241,14 @@ class ChromiumBase(BasePage):
         :return: ChromiumElement对象
         """
         return self.ele(loc_or_str, timeout)
+
+    def _wait_to_stop(self):
+        """eager策略超时时使页面停止加载"""
+        end_time = perf_counter() + self.timeouts.page_load
+        while perf_counter() < end_time:
+            sleep(.1)
+        if self._ready_state in ('interactive', 'complete') and self._is_loading:
+            self.stop_loading()
 
     @property
     def main(self):

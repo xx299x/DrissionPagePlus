@@ -149,14 +149,24 @@ class ChromiumFrame(ChromiumBase):
         if self._is_reading:
             return
         self._is_reading = True
-        if self._is_diff_domain is False:
-            node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
-            self.doc_ele = ChromiumElement(self._target_page,
-                                           backend_id=node['contentDocument']['backendNodeId'])
+        end_time = perf_counter() + 10
+        while perf_counter() < end_time:
+            try:
+                if self._is_diff_domain is False:
+                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
+                    self.doc_ele = ChromiumElement(self._target_page,
+                                                   backend_id=node['contentDocument']['backendNodeId'])
+
+                else:
+                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                    self.doc_ele = ChromiumElement(self, backend_id=b_id)
+
+                break
+            except:
+                continue
 
         else:
-            b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-            self.doc_ele = ChromiumElement(self, backend_id=b_id)
+            raise GetDocumentError
 
         r = self.run_cdp('Page.getFrameTree')
         for i in findall(r"'id': '(.*?)'", str(r)):

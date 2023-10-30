@@ -181,7 +181,7 @@ class BrowserDownloadManager(object):
                     return
                 mission.received_bytes = kwargs['receivedBytes']
                 mission.total_bytes = kwargs['totalBytes']
-                form_path = f'{mission.save_path}{sep}{mission.id}'
+                form_path = f'{mission.path}{sep}{mission.id}'
                 to_path = str(get_usable_path(f'{mission.path}{sep}{mission.name}'))
                 move(form_path, to_path)
                 self.set_done(mission, 'completed', final_path=to_path)
