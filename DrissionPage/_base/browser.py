@@ -84,8 +84,9 @@ class Browser(object):
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp
-        return [i['id'] for i in j if i['type'] == 'page']
+        # j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp
+        j = self.run_cdp('Target.getTargets')['targetInfos']
+        return [i['targetId'] for i in j if i['type'] == 'page']
 
     @property
     def process_id(self):

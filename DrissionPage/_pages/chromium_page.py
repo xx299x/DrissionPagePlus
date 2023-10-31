@@ -264,6 +264,7 @@ class ChromiumPage(ChromiumBase):
 
         for tab in tabs:
             self.browser.close_tab(tab)
+            sleep(.2)
         while len(self.tabs) != end_len:
             sleep(.1)
 

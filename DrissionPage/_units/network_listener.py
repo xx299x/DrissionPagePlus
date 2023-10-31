@@ -203,7 +203,7 @@ class NetworkListener(object):
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
                     not self._method or kwargs['request']['method'] in self._method):
-                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
+                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
@@ -220,7 +220,9 @@ class NetworkListener(object):
             request._resource_type = kwargs['type']
 
     def _responseReceivedExtraInfo(self, **kwargs):
-        self._extra_info_ids[kwargs['requestId']]['response'] = kwargs
+        r = self._extra_info_ids.get(kwargs['requestId'])
+        if r:
+            r['response'] = kwargs
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""

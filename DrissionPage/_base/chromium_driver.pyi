@@ -7,6 +7,7 @@ from queue import Queue
 from threading import Thread, Event
 from typing import Union, Callable, Dict, Optional
 
+from requests import Response
 from websocket import WebSocket
 
 
@@ -57,3 +58,5 @@ class ChromiumDriver(object):
 
 class BrowserDriver(ChromiumDriver):
     BROWSERS: Dict[str, ChromiumDriver] = ...
+
+    def get(self, url) -> Response: ...
