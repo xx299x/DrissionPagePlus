@@ -95,17 +95,12 @@ class ChromiumBase(BasePage):
             self._get_document()
             self._ready_state = 'complete'
 
-        r = self.run_cdp('Page.getFrameTree')
-        for i in findall(r"'id': '(.*?)'", str(r)):
-            self.browser._frames[i] = self.tab_id
-
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
         :param tab_id: 要跳转到的标签页id
         :return: None
         """
         self._is_loading = True
-        self._frame_id = tab_id
         self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
         self._alert = Alert()
         self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
@@ -122,6 +117,11 @@ class ChromiumBase(BasePage):
         self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
         self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
+
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
+        self._frame_id = r['frameTree']['frame']['id']
 
     def _get_document(self):
         if self._is_reading:

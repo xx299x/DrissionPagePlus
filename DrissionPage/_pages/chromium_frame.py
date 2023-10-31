@@ -46,6 +46,7 @@ class ChromiumFrame(ChromiumBase):
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
             super().__init__(page.address, page.tab_id, page.timeout)
+            self._frame_id = self.frame_id
         else:
             self._is_diff_domain = True
             super().__init__(page.address, self.frame_id, page.timeout)
@@ -113,6 +114,7 @@ class ChromiumFrame(ChromiumBase):
                     self.doc_ele = ChromiumElement(self._target_page,
                                                    backend_id=node['contentDocument']['backendNodeId'])
                     super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
+                    self._frame_id = self.frame_id
                     self._debug = debug
                     self.driver._debug = d_debug
                 else:

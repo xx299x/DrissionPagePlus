@@ -137,11 +137,11 @@ class ChromiumDriver(object):
 
             function = self.event_handlers.get(event['method'])
             if function:
-                if self._debug:
-                    print(f'开始执行 {function.__name__}')
+                # if self._debug:
+                #     print(f'开始执行 {function.__name__}')
                 function(**event['params'])
-                if self._debug:
-                    print(f'执行 {function.__name__}完毕')
+                # if self._debug:
+                #     print(f'执行 {function.__name__}完毕')
 
             self.event_queue.task_done()
 
@@ -225,4 +225,6 @@ class BrowserDriver(ChromiumDriver):
         return f"<BrowserDriver {self.id}>"
 
     def get(self, url):
-        return get(url, headers={'Connection': 'close'})
+        r = get(url, headers={'Connection': 'close'})
+        r.close()
+        return r
