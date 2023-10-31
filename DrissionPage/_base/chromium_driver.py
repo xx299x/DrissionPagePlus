@@ -74,12 +74,12 @@ class ChromiumDriver(object):
 
             while not self._stopped.is_set():
                 try:
-                    return self.method_results[message['id']].get(.2)
+                    return self.method_results[message['id']].get(timeout=.2)
 
                 except Empty:
                     if self.alert_flag:
                         self.alert_flag = False
-                        return {'error': {'message': 'alert exists.'}}
+                        return {'result': {'message': 'alert exists.'}}
 
                     if timeout is not None and perf_counter() > timeout:
                         return {'error': {'message': 'timeout'}}
@@ -155,7 +155,7 @@ class ChromiumDriver(object):
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
 
-        timeout = kwargs.pop("_timeout", 30)
+        timeout = kwargs.pop("_timeout", 20)
         result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
         if result is None:
             return {'error': 'tab closed', 'type': 'tab_closed'}

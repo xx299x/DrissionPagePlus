@@ -85,7 +85,6 @@ class ChromiumBase(BasePage):
 
         if not tab_id:
             json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
-
             tab_id = [i['id'] for i in json if i['type'] == 'page']
             if not tab_id:
                 raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
@@ -159,6 +158,7 @@ class ChromiumBase(BasePage):
         """页面开始加载时执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._frame_id:
+            self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
             if self.page_load_strategy == 'eager':
@@ -171,6 +171,7 @@ class ChromiumBase(BasePage):
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时执行"""
         if kwargs['frame']['id'] == self._frame_id:
+            self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
             if self._debug:
@@ -200,7 +201,6 @@ class ChromiumBase(BasePage):
             if self._debug:
                 print(f'FrameStoppedLoading {kwargs}')
             self._get_document()
-            self._doc_got = False
 
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""

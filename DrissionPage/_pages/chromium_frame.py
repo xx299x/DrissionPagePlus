@@ -98,6 +98,7 @@ class ChromiumFrame(ChromiumBase):
         """重新获取document"""
         debug = self._debug
         d_debug = self.driver._debug
+        old_driver = self.driver
         if debug:
             print('重新获取document')
 
@@ -131,6 +132,7 @@ class ChromiumFrame(ChromiumBase):
         else:
             raise GetDocumentError
 
+        old_driver.stop()
         self.wait.load_complete()
 
     def _check_ok(self):
@@ -186,13 +188,7 @@ class ChromiumFrame(ChromiumBase):
 
     def _onInspectorDetached(self, **kwargs):
         self._is_loading = True
-        # print('reload')
         self._reload()
-
-    # def _onFrameDetached(self, **kwargs):
-    #     if kwargs['frameId'] == self.frame_id:
-    #         self._is_loading = True
-    #         self._reload()
 
     @property
     def page(self):

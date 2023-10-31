@@ -26,6 +26,7 @@ class NetworkListener(object):
 
         self._caught = None  # 临存捕捉到的数据
         self._request_ids = None  # 暂存须要拦截的请求id
+        self._extra_info_ids = None
 
         self.listening = False
         self._targets = None  # 默认监听所有
@@ -81,6 +82,7 @@ class NetworkListener(object):
 
         self.listening = True
         self._request_ids = {}
+        self._extra_info_ids = {}
         self._caught = Queue(maxsize=0)
 
         self._set_callback()
@@ -174,6 +176,7 @@ class NetworkListener(object):
     def clear(self):
         """清空结果"""
         self._request_ids = {}
+        self._extra_info_ids = {}
         self._caught.queue.clear()
 
     def _set_callback(self):
@@ -188,59 +191,43 @@ class NetworkListener(object):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         if not self._targets:
-            packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
-            packet._raw_request = kwargs
+            rid = kwargs['requestId']
+            p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
+            p._raw_request = kwargs
             if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                packet._raw_post_data = self._driver.call_method('Network.getRequestPostData',
-                                                                 requestId=kwargs['requestId'])['postData']
-
+                p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
             return
 
+        rid = kwargs['requestId']
         for target in self._targets:
             if ((self._is_regex and search(target, kwargs['request']['url'])) or
                 (not self._is_regex and target in kwargs['request']['url'])) and (
                     not self._method or kwargs['request']['method'] in self._method):
-                packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
-                packet._raw__request = kwargs
+                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
+                p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                    packet._raw_post_data = self._driver.call_method('Network.getRequestPostData',
-                                                                     requestId=kwargs['requestId'])['postData']
-
+                    p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
                 break
 
     def _requestWillBeSentExtraInfo(self, **kwargs):
-        if not self._targets:
-            packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
-            packet._requestExtraInfo = kwargs
-            return
-
-        for target in self._targets:
-            if ((self._is_regex and search(target, kwargs['request']['url'])) or
-                (not self._is_regex and target in kwargs['request']['url'])) and (
-                    not self._method or kwargs['request']['method'] in self._method):
-                packet = self._request_ids.setdefault(kwargs['requestId'], DataPacket(self._page.tab_id, None))
-                packet._requestExtraInfo = kwargs
-
-                break
+        self._extra_info_ids.setdefault(kwargs['requestId'], {})['request'] = kwargs
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        request = self._request_ids.get(kwargs['requestId'])
+        request = self._request_ids.get(kwargs['requestId'], None)
         if request:
             request._raw_response = kwargs['response']
             request._resource_type = kwargs['type']
 
     def _responseReceivedExtraInfo(self, **kwargs):
-        request = self._request_ids.get(kwargs['requestId'])
-        if request:
-            request._responseExtraInfo = kwargs
+        self._extra_info_ids[kwargs['requestId']]['response'] = kwargs
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
-        request_id = kwargs['requestId']
-        dp = self._request_ids.get(request_id)
+        r_id = kwargs['requestId']
+        dp = self._request_ids.get(r_id)
         if dp:
-            r = self._driver.call_method('Network.getResponseBody', requestId=request_id)
+            r = self._driver.call_method('Network.getResponseBody', requestId=r_id)
             if 'body' in r:
                 dp._raw_body = r['body']
                 dp._base64_body = r['base64Encoded']
@@ -248,25 +235,37 @@ class NetworkListener(object):
                 dp._raw_body = ''
                 dp._base64_body = False
 
+            ei = self._extra_info_ids.get(r_id, None)
+            if ei:
+                dp._requestExtraInfo = ei.get('request', None)
+                dp._responseExtraInfo = ei.get('response', None)
+
             self._caught.put(dp)
-            try:
-                self._request_ids.pop(request_id)
-            except:
-                pass
+
+        try:
+            self._request_ids.pop(r_id)
+            self._extra_info_ids.pop(r_id)
+        except:
+            pass
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
-        request_id = kwargs['requestId']
-        if request_id in self._request_ids:
-            dp = self._request_ids[request_id]
+        r_id = kwargs['requestId']
+        dp = self._request_ids.get(r_id, None)
+        if dp:
             dp.errorText = kwargs['errorText']
             dp._resource_type = kwargs['type']
-
+            ei = self._extra_info_ids.get(r_id, None)
+            if ei:
+                dp._requestExtraInfo = ei.get('request', None)
+                dp._responseExtraInfo = ei.get('response', None)
             self._caught.put(dp)
-            try:
-                self._request_ids.pop(request_id)
-            except:
-                pass
+
+        try:
+            self._request_ids.pop(r_id)
+            self._extra_info_ids.pop(r_id)
+        except:
+            pass
 
 
 class DataPacket(object):
