@@ -611,12 +611,12 @@ class ChromiumFrame(ChromiumBase):
         for t in range(times + 1):
             err = None
             end_time = perf_counter() + timeout
-            result = self.driver.call_method('Page.navigate', url=to_url, frameId=self.frame_id, _timeout=timeout)
-            if result.get('error') == 'timeout':
+            try:
+                result = self.run_cdp('Page.navigate', url=to_url, _timeout=timeout)
+                if 'errorText' in result:
+                    err = ConnectionError(result['errorText'])
+            except TimeoutError:
                 err = TimeoutError('页面连接超时。')
-
-            elif 'errorText' in result:
-                err = ConnectionError(result['errorText'])
 
             if err:
                 sleep(interval)
