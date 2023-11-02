@@ -79,12 +79,13 @@ class Browser(object):
     @property
     def tabs_count(self):
         """返回标签页数量"""
-        return len(self.tabs)
+        j = self.run_cdp('Target.getTargets')['targetInfos']  # 不要改用get，避免卡死
+        return len([i for i in j if i['type'] == 'page'])
 
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
-        j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp
+        j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp，因为顺序不对
         return [i['id'] for i in j if i['type'] == 'page']
 
     @property
@@ -118,14 +119,14 @@ class Browser(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self._driver.get(f'http://{self.address}/json/close/{tab_id}')
+        self.run_cdp('Target.closeTarget', targetId=tab_id)
 
     def activate_tab(self, tab_id):
         """使标签页变为活动状态
         :param tab_id: 标签页id
         :return: None
         """
-        self._driver.get(f'http://{self.address}/json/activate/{tab_id}')
+        self.run_cdp('Target.activateTarget', targetId=tab_id)
 
     def get_window_bounds(self, tab_id=None):
         """返回浏览器窗口位置和大小信息

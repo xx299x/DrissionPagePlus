@@ -161,17 +161,8 @@ class ChromiumPage(ChromiumBase):
         :return: 新标签页的id
         """
         if switch_to:
-            begin_tabs = set(self.tabs)
-            len_tabs = len(begin_tabs)
             tid = self.run_cdp('Target.createTarget', url='')['targetId']
-
-            tabs = self.tabs
-            while len(tabs) == len_tabs:
-                tabs = self.tabs
-                sleep(.005)
-
-            new_tab = set(tabs) - begin_tabs
-            self._to_tab(new_tab.pop(), read_doc=False)
+            self._to_tab(tid, read_doc=False)
             if url:
                 self.get(url)
 
@@ -265,7 +256,7 @@ class ChromiumPage(ChromiumBase):
         for tab in tabs:
             self.browser.close_tab(tab)
             sleep(.2)
-        while len(self.tabs) != end_len:
+        while self.tabs_count != end_len:
             sleep(.1)
 
         if self._main_tab in tabs:

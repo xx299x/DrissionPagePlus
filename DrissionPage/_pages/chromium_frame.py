@@ -91,7 +91,7 @@ class ChromiumFrame(ChromiumBase):
         try:
             super()._driver_init(tab_id)
         except:
-            get(f'http://{self.address}/json', headers={'Connection': 'close'})
+            self.browser.driver.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
         self.driver.set_listener('Inspector.detached', self._onInspectorDetached)
 
