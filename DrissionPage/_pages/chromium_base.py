@@ -10,8 +10,6 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 
-from requests import get
-
 from .._base.base import BasePage
 from .._base.chromium_driver import ChromiumDriver
 from .._commons.constants import ERROR, NoneElement
@@ -25,8 +23,8 @@ from .._units.network_listener import NetworkListener
 from .._units.screencast import Screencast
 from .._units.setter import ChromiumBaseSetter
 from .._units.waiter import ChromiumBaseWaiter
-from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, BrowserConnectError,
-                      AlertExistsError, GetDocumentError)
+from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, AlertExistsError,
+                      GetDocumentError)
 
 
 class ChromiumBase(BasePage):
@@ -84,11 +82,7 @@ class ChromiumBase(BasePage):
         self._scroll = None
 
         if not tab_id:
-            json = get(f'http://{self.address}/json', headers={'Connection': 'close'}).json()
-            tab_id = [i['id'] for i in json if i['type'] == 'page']
-            if not tab_id:
-                raise BrowserConnectError('浏览器连接失败，可能是浏览器版本原因。')
-            tab_id = tab_id[0]
+            tab_id = self.browser.tabs[0]
 
         self._driver_init(tab_id)
         if self.ready_state == 'complete' and self._ready_state is None:

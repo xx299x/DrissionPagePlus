@@ -32,7 +32,7 @@ class Clicker(object):
         :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
         :return: 是否点击成功
         """
-        if not by_js:
+        if not by_js:  # 模拟点击
             try:
                 self._ele.scroll.to_see()
                 can_click = False
@@ -65,7 +65,6 @@ class Clicker(object):
             return True
         if Settings.raise_when_click_failed:
             raise CanNotClickError
-
         return False
 
     def right(self):
