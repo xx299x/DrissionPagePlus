@@ -48,13 +48,16 @@ class BrowserDownloadManager(object):
             self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=str(Path(path).absolute()),
                                   behavior='allowAndName', eventsEnabled=True)
 
-    def set_rename(self, tab_id, rename):
+    def set_rename(self, tab_id, rename=None, suffix=None):
         """设置某个tab的重命名文件名
         :param tab_id: tab id
-        :param rename: 文件名
+        :param rename: 文件名，可不含后缀，会自动使用远程文件后缀
+        :param suffix: 后缀名，显式设置后缀名，不使用远程文件后缀
         :return: None
         """
-        TabDownloadSettings(tab_id).rename = rename
+        ts = TabDownloadSettings(tab_id)
+        ts.rename = rename
+        ts.suffix = suffix
 
     def set_file_exists(self, tab_id, mode):
         """设置某个tab下载文件重名时执行的策略
@@ -135,12 +138,22 @@ class BrowserDownloadManager(object):
 
         settings = TabDownloadSettings(tab_id if tab_id in TabDownloadSettings.TABS else self._page.tab_id)
         if settings.rename:
-            tmp = kwargs['suggestedFilename'].rsplit('.', 1)
-            ext_name = tmp[-1] if len(tmp) > 1 else ''
-            tmp = settings.rename.rsplit('.', 1)
-            ext_rename = tmp[-1] if len(tmp) > 1 else ''
-            name = settings.rename if ext_rename == ext_name else f'{settings.rename}.{ext_name}'
+            if settings.suffix is not None:
+                name = f'{settings.rename}.{settings.suffix}'
+
+            else:
+                tmp = kwargs['suggestedFilename'].rsplit('.', 1)
+                ext_name = tmp[-1] if len(tmp) > 1 else ''
+                tmp = settings.rename.rsplit('.', 1)
+                ext_rename = tmp[-1] if len(tmp) > 1 else ''
+                name = settings.rename if ext_rename == ext_name else f'{settings.rename}.{ext_name}'
+
             settings.rename = None
+            settings.suffix = None
+
+        elif settings.suffix is not None:
+            name = f'{kwargs["suggestedFilename"].rsplit(".", 1)[0]}.{settings.suffix}'
+            settings.suffix = None
 
         else:
             name = kwargs['suggestedFilename']
@@ -210,6 +223,7 @@ class TabDownloadSettings(object):
         self._created = True
         self.tab_id = tab_id
         self.rename = None
+        self.suffix = None
         self.path = ''
         self.when_file_exists = 'rename'
 

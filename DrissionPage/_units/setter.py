@@ -137,12 +137,13 @@ class TabSetter(ChromiumBaseSetter):
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
-    def download_file_name(self, name):
+    def download_file_name(self, name=None, suffix=None):
         """设置下一个被下载文件的名称
-        :param name: 文件名，可不含后缀
+        :param name: 文件名，可不含后缀，会自动使用远程文件后缀
+        :param suffix: 后缀名，显式设置后缀名，不使用远程文件后缀
         :return: None
         """
-        self._page.browser._dl_mgr.set_rename(self._page.tab_id, name)
+        self._page.browser._dl_mgr.set_rename(self._page.tab_id, name, suffix)
 
     def when_download_file_exists(self, mode):
         """设置当存在同名文件时的处理方式
@@ -180,6 +181,11 @@ class ChromiumPageSetter(TabSetter):
         elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
         self._page.browser.activate_tab(tab_or_id)
+
+    @property
+    def window(self):
+        """返回用于设置浏览器窗口的对象"""
+        return PageWindowSetter(self._page)
 
 
 class SessionPageSetter(object):
@@ -558,14 +564,6 @@ class WindowSetter(object):
             y = y if y is not None else info['top']
             self._perform({'left': x - 8, 'top': y})
 
-    def hide(self):
-        """隐藏浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=True)
-
-    def show(self):
-        """显示浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=False)
-
     def _get_info(self):
         """获取窗口位置及大小信息"""
         return self._page.run_cdp('Browser.getWindowForTarget')
@@ -576,3 +574,13 @@ class WindowSetter(object):
         :return: None
         """
         self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+
+
+class PageWindowSetter(WindowSetter):
+    def hide(self):
+        """隐藏浏览器窗口，只在Windows系统可用"""
+        show_or_hide_browser(self._page, hide=True)
+
+    def show(self):
+        """显示浏览器窗口，只在Windows系统可用"""
+        show_or_hide_browser(self._page, hide=False)
