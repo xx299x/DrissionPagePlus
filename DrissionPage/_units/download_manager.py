@@ -139,7 +139,7 @@ class BrowserDownloadManager(object):
         settings = TabDownloadSettings(tab_id if tab_id in TabDownloadSettings.TABS else self._page.tab_id)
         if settings.rename:
             if settings.suffix is not None:
-                name = f'{settings.rename}.{settings.suffix}'
+                name = f'{settings.rename}.{settings.suffix}' if settings.suffix else settings.rename
 
             else:
                 tmp = kwargs['suggestedFilename'].rsplit('.', 1)
@@ -152,7 +152,9 @@ class BrowserDownloadManager(object):
             settings.suffix = None
 
         elif settings.suffix is not None:
-            name = f'{kwargs["suggestedFilename"].rsplit(".", 1)[0]}.{settings.suffix}'
+            name = kwargs["suggestedFilename"].rsplit(".", 1)[0]
+            if settings.suffix:
+                name = f'{name}.{settings.suffix}'
             settings.suffix = None
 
         else:
