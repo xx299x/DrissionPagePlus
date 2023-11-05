@@ -49,10 +49,9 @@ class ChromiumDriver(object):
         :param timeout: 超时时间，为None表示无限
         :return: 浏览器返回的数据
         """
-        if 'id' not in message:
-            self._cur_id += 1
-            message['id'] = self._cur_id
-
+        self._cur_id += 1
+        ws_id = self._cur_id
+        message['id'] = ws_id
         message_json = dumps(message)
 
         if self._debug:
@@ -68,35 +67,35 @@ class ChromiumDriver(object):
         if timeout is not None:
             timeout = perf_counter() + timeout
 
+        self.method_results[ws_id] = Queue()
         try:
-            self.method_results[message['id']] = Queue()
             self._ws.send(message_json)
-
-            while not self._stopped.is_set():
-                try:
-                    return self.method_results[message['id']].get(timeout=.2)
-
-                except Empty:
-                    if self.alert_flag:
-                        self.alert_flag = False
-                        return {'result': {'message': 'alert exists.'}}
-
-                    if timeout is not None and perf_counter() > timeout:
-                        return {'error': {'message': 'timeout'}}
-
-                    continue
-
-        except Exception:
+        except OSError:
+            self.method_results.pop(ws_id)
             return None
 
-        finally:
-            self.method_results.pop(message['id'], None)
+        while not self._stopped.is_set():
+            try:
+                return self.method_results[ws_id].get(timeout=.2)
+
+            except Empty:
+                if self.alert_flag:
+                    self.alert_flag = False
+                    return {'result': {'message': 'alert exists.'}}
+
+                elif timeout is not None and perf_counter() > timeout:
+                    return {'error': {'message': 'timeout'}}
+
+                continue
+
+            finally:
+                self.method_results.pop(ws_id)
 
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""
         while not self._stopped.is_set():
             try:
-                self._ws.settimeout(1)
+                # self._ws.settimeout(1)
                 msg_json = self._ws.recv()
                 msg = loads(msg_json)
             except WebSocketTimeoutException:
