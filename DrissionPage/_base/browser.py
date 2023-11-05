@@ -47,16 +47,15 @@ class Browser(object):
                 self._process_id = i['id']
                 break
 
-        self.run_cdp('Target.setDiscoverTargets')
+        self.run_cdp('Target.setDiscoverTargets', discover=True)
         self._driver.set_listener('Target.targetDestroyed', self._onTargetDestroyed)
 
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
         tab_id = kwargs['targetId']
         self._dl_mgr.clear_tab_info(tab_id)
-        for k, i in self._frames.items():
-            if i == tab_id:
-                self._frames.pop(k)
+        for item in [(k, i) for k, i in self._frames.items() if i == tab_id]:
+            self._frames.pop(item[0])
 
     def connect_to_page(self):
         """执行与page相关的逻辑"""

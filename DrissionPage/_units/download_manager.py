@@ -127,9 +127,18 @@ class BrowserDownloadManager(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self._tab_missions.pop(tab_id)
-        self._flags.pop(tab_id)
-        TabDownloadSettings.TABS.pop(tab_id)
+        try:
+            self._tab_missions.pop(tab_id)
+        except KeyError:
+            pass
+        try:
+            self._flags.pop(tab_id)
+        except KeyError:
+            pass
+        try:
+            TabDownloadSettings.TABS.pop(tab_id)
+        except KeyError:
+            pass
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
