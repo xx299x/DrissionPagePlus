@@ -71,25 +71,28 @@ class ChromiumDriver(object):
         try:
             self._ws.send(message_json)
         except OSError:
-            self.method_results.pop(ws_id)
+            self.method_results.pop(ws_id, None)
             return None
 
         while not self._stopped.is_set():
             try:
-                return self.method_results[ws_id].get(timeout=.2)
+                result = self.method_results[ws_id].get(timeout=.2)
+                self.method_results.pop(ws_id, None)
+                return result
 
             except Empty:
                 if self.alert_flag:
                     self.alert_flag = False
-                    return {'result': {'message': 'alert exists.'}}
+                    result = {'result': {'message': 'alert exists.'}}
+                    self.method_results.pop(ws_id, None)
+                    return result
 
                 elif timeout is not None and perf_counter() > timeout:
-                    return {'error': {'message': 'timeout'}}
+                    result = {'error': {'message': 'timeout'}}
+                    self.method_results.pop(ws_id, None)
+                    return result
 
                 continue
-
-            finally:
-                self.method_results.pop(ws_id)
 
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""

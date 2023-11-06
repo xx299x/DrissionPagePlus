@@ -72,7 +72,7 @@ class NetworkListener(object):
         :param method: 设置监听的请求类型，可用list等指定多个，为None时监听全部
         :return: None
         """
-        if targets:
+        if targets or method:
             self.set_targets(targets, is_regex, method)
         if self.listening:
             return
@@ -191,23 +191,26 @@ class NetworkListener(object):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
         if not self._targets:
-            rid = kwargs['requestId']
-            p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
-            p._raw_request = kwargs
-            if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
-            return
-
-        rid = kwargs['requestId']
-        for target in self._targets:
-            if ((self._is_regex and search(target, kwargs['request']['url'])) or
-                (not self._is_regex and target in kwargs['request']['url'])) and (
-                    not self._method or kwargs['request']['method'] in self._method):
-                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
+            if not self._method or kwargs['request']['method'] in self._method:
+                rid = kwargs['requestId']
+                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
-                break
+                return
+
+        else:
+            rid = kwargs['requestId']
+            for target in self._targets:
+                if ((self._is_regex and search(target, kwargs['request']['url'])) or
+                    (not self._is_regex and target in kwargs['request']['url'])) and (
+                        not self._method or kwargs['request']['method'] in self._method):
+                    p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
+                    p._raw_request = kwargs
+                    if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
+                        p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)[
+                            'postData']
+                    break
 
     def _requestWillBeSentExtraInfo(self, **kwargs):
         self._extra_info_ids.setdefault(kwargs['requestId'], {})['request'] = kwargs
@@ -244,11 +247,8 @@ class NetworkListener(object):
 
             self._caught.put(dp)
 
-        try:
-            self._request_ids.pop(r_id)
-            self._extra_info_ids.pop(r_id)
-        except:
-            pass
+        self._request_ids.pop(r_id, None)
+        self._extra_info_ids.pop(r_id, None)
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
@@ -263,11 +263,8 @@ class NetworkListener(object):
                 dp._responseExtraInfo = ei.get('response', None)
             self._caught.put(dp)
 
-        try:
-            self._request_ids.pop(r_id)
-            self._extra_info_ids.pop(r_id)
-        except:
-            pass
+        self._request_ids.pop(r_id, None)
+        self._extra_info_ids.pop(r_id, None)
 
 
 class DataPacket(object):
