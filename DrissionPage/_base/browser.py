@@ -35,7 +35,7 @@ class Browser(object):
 
         self.page = page
         self.address = address
-        self._driver = BrowserDriver(browser_id, 'browser', address)
+        self._driver = BrowserDriver(browser_id, 'browser', address, self)
         self.id = browser_id
         self._frames = {}
         self._drivers = {}
@@ -63,7 +63,8 @@ class Browser(object):
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
         if kwargs['targetInfo']['type'] == 'page' and not kwargs['targetInfo']['url'].startswith('devtools://'):
-            self._drivers[kwargs['targetInfo']['targetId']] = ChromiumDriver(kwargs['targetInfo']['targetId'], 'page', self.address)
+            self._drivers[kwargs['targetInfo']['targetId']] = ChromiumDriver(kwargs['targetInfo']['targetId'], 'page',
+                                                                             self.address)
 
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
@@ -166,4 +167,5 @@ class Browser(object):
                     break
                 sleep(.2)
 
+    def _on_quit(self):
         Browser.BROWSERS.pop(self.id, None)

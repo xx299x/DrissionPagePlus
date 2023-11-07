@@ -211,17 +211,18 @@ class ChromiumDriver(object):
 class BrowserDriver(ChromiumDriver):
     BROWSERS = {}
 
-    def __new__(cls, tab_id, tab_type, address):
+    def __new__(cls, tab_id, tab_type, address, browser):
         if tab_id in cls.BROWSERS:
             return cls.BROWSERS[tab_id]
         return object.__new__(cls)
 
-    def __init__(self, tab_id, tab_type, address):
+    def __init__(self, tab_id, tab_type, address, browser):
         if hasattr(self, '_created'):
             return
         self._created = True
         BrowserDriver.BROWSERS[tab_id] = self
         super().__init__(tab_id, tab_type, address)
+        self.browser = browser
 
     def __repr__(self):
         return f"<BrowserDriver {self.id}>"
@@ -230,3 +231,7 @@ class BrowserDriver(ChromiumDriver):
         r = get(url, headers={'Connection': 'close'})
         r.close()
         return r
+
+    def stop(self):
+        super().stop()
+        self.browser._on_quit()

@@ -10,6 +10,8 @@ from typing import Union, Callable, Dict, Optional
 from requests import Response
 from websocket import WebSocket
 
+from .browser import Browser
+
 
 class GenericAttr(object):
     def __init__(self, name: str, tab: ChromiumDriver): ...
@@ -58,5 +60,10 @@ class ChromiumDriver(object):
 
 class BrowserDriver(ChromiumDriver):
     BROWSERS: Dict[str, ChromiumDriver] = ...
+    browser: Browser = ...
+
+    def __new__(cls, tab_id: str, tab_type: str, address: str, browser: Browser): ...
+
+    def __init__(self, tab_id: str, tab_type: str, address: str, browser: Browser): ...
 
     def get(self, url) -> Response: ...
