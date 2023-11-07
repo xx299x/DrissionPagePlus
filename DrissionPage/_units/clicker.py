@@ -3,11 +3,11 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from time import perf_counter
+from time import perf_counter, sleep
 
 from .._commons.constants import Settings
 from .._commons.web import offset_scroll
-from ..errors import NoRectError, CanNotClickError
+from ..errors import CanNotClickError, CDPError
 
 
 class Clicker(object):
@@ -33,32 +33,44 @@ class Clicker(object):
         :return: 是否点击成功
         """
         if not by_js:  # 模拟点击
-            try:
+            can_click = False
+            timeout = self._ele.page.timeout if timeout is None else timeout
+            if timeout == 0 and self._ele.states.has_rect:
                 self._ele.scroll.to_see()
-                can_click = False
+                if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+                    can_click = True
 
-                timeout = self._ele.page.timeout if timeout is None else timeout
-                if timeout == 0:
-                    if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
-                        can_click = True
-                else:
-                    end_time = perf_counter() + timeout
+            else:
+                end_time = perf_counter() + timeout
+                while not self._ele.states.has_rect and perf_counter() < end_time:
+                    sleep(.001)
+                if self._ele.states.has_rect:
+                    self._ele.scroll.to_see()
                     while perf_counter() < end_time:
-                        if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+                        if (self._ele.states.is_in_viewport and self._ele.states.is_enabled
+                                and self._ele.states.is_displayed):
                             can_click = True
                             break
+                        sleep(.001)
 
-                if not self._ele.states.is_in_viewport:
-                    by_js = True
-
-                elif can_click and (by_js is False or not self._ele.states.is_covered):
-                    client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
-                        else self._ele.locations.viewport_click_point
-                    self._click(client_x, client_y)
-                    return True
-
-            except NoRectError:
+            if not self._ele.states.has_rect or not self._ele.states.is_in_viewport:
                 by_js = True
+
+            elif can_click and (by_js is False or not self._ele.states.is_covered):
+                vx, vy = self._ele.locations.click_point
+                try:
+                    r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=vx, y=vy, includeUserAgentShadowDOM=True,
+                                               ignorePointerEventsNone=True)
+                    if r['backendNodeId'] != self._ele.ids.backend_id:
+                        vx, vy = self._ele.locations.viewport_click_point
+                    else:
+                        vx, vy = self._ele.locations.viewport_click_point
+
+                except CDPError:
+                    vx, vy = self._ele.locations.viewport_midpoint
+
+                self._click(vx, vy)
+                return True
 
         if by_js is not False:
             self._ele.run_js('this.click();')

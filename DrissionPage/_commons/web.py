@@ -169,8 +169,8 @@ def cookie_to_dict(cookie):
     """
     if isinstance(cookie, Cookie):
         cookie_dict = cookie.__dict__.copy()
-        cookie_dict.pop('rfc2109')
-        cookie_dict.pop('_rest')
+        cookie_dict.pop('rfc2109', None)
+        cookie_dict.pop('_rest', None)
         return cookie_dict
 
     elif isinstance(cookie, dict):

@@ -11,7 +11,6 @@ from threading import Thread
 from time import perf_counter, sleep
 
 from .._base.base import BasePage
-from .._base.chromium_driver import ChromiumDriver
 from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
@@ -95,7 +94,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
-        self._driver = ChromiumDriver(tab_id=tab_id, tab_type='page', address=self.address)
+        self._driver = self.browser._get_driver(tab_id)
         self._alert = Alert()
         self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
         self._driver.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
@@ -140,10 +139,7 @@ class ChromiumBase(BasePage):
         self._is_reading = False
 
     def _onFrameDetached(self, **kwargs):
-        try:
-            self.browser._frames.pop(kwargs['frameId'])
-        except KeyError:
-            pass
+        self.browser._frames.pop(kwargs['frameId'], None)
 
     def _onFrameAttached(self, **kwargs):
         self.browser._frames[kwargs['frameId']] = self.tab_id

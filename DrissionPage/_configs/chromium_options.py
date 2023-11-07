@@ -209,7 +209,7 @@ class ChromiumOptions(object):
         :param arg: 设置项名称
         :return: 当前对象
         """
-        self._prefs.pop(arg)
+        self._prefs.pop(arg, None)
         return self
 
     def remove_pref_from_file(self, arg):

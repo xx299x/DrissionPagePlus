@@ -161,8 +161,7 @@ class SessionOptions(object):
             return self
 
         attr = attr.lower()
-        if attr in self._headers:
-            self._headers.pop(attr)
+        self._headers.pop(attr, None)
 
         return self
 

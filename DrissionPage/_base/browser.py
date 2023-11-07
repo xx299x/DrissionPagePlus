@@ -5,7 +5,7 @@
 """
 from time import sleep
 
-from .chromium_driver import BrowserDriver
+from .chromium_driver import BrowserDriver, ChromiumDriver
 from .._units.download_manager import BrowserDownloadManager
 
 
@@ -38,6 +38,8 @@ class Browser(object):
         self._driver = BrowserDriver(browser_id, 'browser', address)
         self.id = browser_id
         self._frames = {}
+        self._drivers = {}
+        # self._drivers = {t: ChromiumDriver(t, 'page', address) for t in self.tabs}
         self._connected = False
 
         self._process_id = None
@@ -49,13 +51,27 @@ class Browser(object):
 
         self.run_cdp('Target.setDiscoverTargets', discover=True)
         self._driver.set_listener('Target.targetDestroyed', self._onTargetDestroyed)
+        self._driver.set_listener('Target.targetCreated', self._onTargetCreated)
+
+    def _get_driver(self, tab_id):
+        """获取对应tab id的ChromiumDriver
+        :param tab_id: 标签页id
+        :return: ChromiumDriver对象
+        """
+        return self._drivers.pop(tab_id, ChromiumDriver(tab_id, 'page', self.address))
+
+    def _onTargetCreated(self, **kwargs):
+        """标签页创建时执行"""
+        if kwargs['targetInfo']['type'] == 'page' and not kwargs['targetInfo']['url'].startswith('devtools://'):
+            self._drivers[kwargs['targetInfo']['targetId']] = ChromiumDriver(kwargs['targetInfo']['targetId'], 'page', self.address)
 
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
         tab_id = kwargs['targetId']
         self._dl_mgr.clear_tab_info(tab_id)
-        for item in [(k, i) for k, i in self._frames.items() if i == tab_id]:
-            self._frames.pop(item[0])
+        for key in [k for k, i in self._frames.items() if i == tab_id]:
+            self._frames.pop(key, None)
+        self._drivers.pop(tab_id, None)
 
     def connect_to_page(self):
         """执行与page相关的逻辑"""
@@ -150,4 +166,4 @@ class Browser(object):
                     break
                 sleep(.2)
 
-        Browser.BROWSERS.pop(self.id)
+        Browser.BROWSERS.pop(self.id, None)

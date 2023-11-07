@@ -101,7 +101,7 @@ class BrowserDownloadManager(object):
         mission.final_path = final_path
         if mission.tab_id in self._tab_missions and mission.id in self._tab_missions[mission.tab_id]:
             self._tab_missions[mission.tab_id].remove(mission.id)
-        self._missions.pop(mission.id)
+        self._missions.pop(mission.id, None)
         mission._is_done = True
 
     def cancel(self, mission):
@@ -127,18 +127,9 @@ class BrowserDownloadManager(object):
         :param tab_id: 标签页id
         :return: None
         """
-        try:
-            self._tab_missions.pop(tab_id)
-        except KeyError:
-            pass
-        try:
-            self._flags.pop(tab_id)
-        except KeyError:
-            pass
-        try:
-            TabDownloadSettings.TABS.pop(tab_id)
-        except KeyError:
-            pass
+        self._tab_missions.pop(tab_id, None)
+        self._flags.pop(tab_id, None)
+        TabDownloadSettings.TABS.pop(tab_id, None)
 
     def _onDownloadWillBegin(self, **kwargs):
         """用于获取弹出新标签页触发的下载任务"""
