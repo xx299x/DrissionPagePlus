@@ -17,7 +17,7 @@ from .._base.browser import Browser
 from .._elements.chromium_element import ChromiumElement
 from .._elements.session_element import SessionElement
 from .._units.setter import TabSetter, WebPageTabSetter
-from .._units.waiter import ChromiumTabWaiter
+from .._units.waiter import TabWaiter
 
 
 class ChromiumTab(ChromiumBase):
@@ -41,7 +41,7 @@ class ChromiumTab(ChromiumBase):
     def set(self) -> TabSetter: ...
 
     @property
-    def wait(self) -> ChromiumTabWaiter: ...
+    def wait(self) -> TabWaiter: ...
 
 
 class WebPageTab(SessionPage, ChromiumTab):

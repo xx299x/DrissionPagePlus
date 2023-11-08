@@ -8,10 +8,10 @@ from re import search, findall
 from threading import Thread
 from time import sleep, perf_counter
 
-from requests import get
-
 from .._elements.chromium_element import ChromiumElement
-from .._pages.chromium_base import ChromiumBase, ChromiumPageScroll
+from .._pages.chromium_base import ChromiumBase
+from .._units.ids import FrameIds
+from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
 from ..errors import ContextLossError, ElementLossError, GetDocumentError
@@ -40,7 +40,7 @@ class ChromiumFrame(ChromiumBase):
         self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
         self._states = None
-        self._ids = ChromiumFrameIds(self)
+        self._ids = FrameIds(self)
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -329,7 +329,7 @@ class ChromiumFrame(ChromiumBase):
     @property
     def scroll(self):
         """返回用于等待的对象"""
-        return ChromiumFrameScroll(self)
+        return FrameScroller(self)
 
     @property
     def set(self):
@@ -658,47 +658,3 @@ class ChromiumFrame(ChromiumBase):
         while self.is_alive:
             sleep(1)
         self.driver.stop()
-
-
-class ChromiumFrameIds(object):
-    def __init__(self, frame):
-        self._frame = frame
-
-    @property
-    def tab_id(self):
-        """返回当前标签页id"""
-        return self._frame._tab_id
-
-    @property
-    def backend_id(self):
-        """返回cdp中的node id"""
-        return self._frame._backend_id
-
-    @property
-    def obj_id(self):
-        """返回frame元素的object id"""
-        return self._frame.frame_ele.ids.obj_id
-
-    @property
-    def node_id(self):
-        """返回cdp中的node id"""
-        return self._frame.frame_ele.ids.node_id
-
-
-class ChromiumFrameScroll(ChromiumPageScroll):
-    def __init__(self, frame):
-        """
-        :param frame: ChromiumFrame对象
-        """
-        self._driver = frame.doc_ele
-        self.t1 = self.t2 = 'this.documentElement'
-        self._wait_complete = False
-
-    def to_see(self, loc_or_ele, center=None):
-        """滚动页面直到元素可见
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
-        :return: None
-        """
-        ele = loc_or_ele if isinstance(loc_or_ele, ChromiumElement) else self._driver._ele(loc_or_ele)
-        self._to_see(ele, center)

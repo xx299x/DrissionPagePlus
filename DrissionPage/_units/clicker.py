@@ -3,11 +3,11 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from time import perf_counter
+from time import perf_counter, sleep
 
 from .._commons.constants import Settings
 from .._commons.web import offset_scroll
-from ..errors import NoRectError, CanNotClickError
+from ..errors import CanNotClickError, CDPError, NoRectError
 
 
 class Clicker(object):
@@ -26,39 +26,65 @@ class Clicker(object):
         """
         return self.left(by_js, timeout)
 
-    def left(self, by_js=False, timeout=1):
+    def left(self, by_js=False, timeout=2):
         """点击元素，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
         :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
         :return: 是否点击成功
         """
         if not by_js:  # 模拟点击
-            try:
-                self._ele.scroll.to_see()
-                can_click = False
-
-                timeout = self._ele.page.timeout if timeout is None else timeout
-                if timeout == 0:
-                    if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+            can_click = False
+            timeout = self._ele.page.timeout if timeout is None else timeout
+            rect = None
+            if timeout == 0:
+                try:
+                    self._ele.scroll.to_see()
+                    if self._ele.states.is_enabled and self._ele.states.is_displayed:
+                        rect = self._ele.locations.viewport_rect
                         can_click = True
-                else:
-                    end_time = perf_counter() + timeout
+                except NoRectError:
+                    if by_js is False:
+                        raise
+
+            else:
+                rect = self._ele.states.has_rect
+                end_time = perf_counter() + timeout
+                while not rect and perf_counter() < end_time:
+                    rect = self._ele.states.has_rect
+                    sleep(.001)
+
+                self._ele.wait.stop_moving(timeout=end_time - perf_counter())
+                if rect:
+                    self._ele.scroll.to_see()
+                    rect = self._ele.locations.rect
                     while perf_counter() < end_time:
-                        if self._ele.states.is_in_viewport and self._ele.states.is_enabled and self._ele.states.is_displayed:
+                        if self._ele.states.is_enabled and self._ele.states.is_displayed:
                             can_click = True
                             break
+                        sleep(.001)
 
-                if not self._ele.states.is_in_viewport:
-                    by_js = True
+                elif by_js is False:
+                    raise NoRectError
 
-                elif can_click and (by_js is False or not self._ele.states.is_covered):
-                    client_x, client_y = self._ele.locations.viewport_midpoint if self._ele.tag == 'input' \
-                        else self._ele.locations.viewport_click_point
-                    self._click(client_x, client_y)
-                    return True
-
-            except NoRectError:
+            if can_click and not self._ele.states.is_in_viewport:
                 by_js = True
+
+            elif can_click and (by_js is False or not self._ele.states.is_covered):
+                x = int(rect[1][0] - (rect[1][0] - rect[0][0]) / 2)
+                y = rect[0][0] + 3
+                try:
+                    r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
+                                               ignorePointerEventsNone=True)
+                    if r['backendNodeId'] != self._ele.ids.backend_id:
+                        vx, vy = self._ele.locations.viewport_midpoint
+                    else:
+                        vx, vy = self._ele.locations.viewport_click_point
+
+                except CDPError:
+                    vx, vy = self._ele.locations.viewport_midpoint
+
+                self._click(vx, vy)
+                return True
 
         if by_js is not False:
             self._ele.run_js('this.click();')

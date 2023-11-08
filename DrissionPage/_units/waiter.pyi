@@ -13,7 +13,7 @@ from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 
 
-class ChromiumBaseWaiter(object):
+class BaseWaiter(object):
     def __init__(self, page: ChromiumBase):
         self._driver: ChromiumBase = ...
 
@@ -54,12 +54,12 @@ class ChromiumBaseWaiter(object):
                 raise_err: bool = None) -> bool: ...
 
 
-class ChromiumTabWaiter(ChromiumBaseWaiter):
+class TabWaiter(BaseWaiter):
 
     def downloads_done(self, timeout: float = None, cancel_if_timeout: bool = True) -> bool: ...
 
 
-class ChromiumPageWaiter(ChromiumTabWaiter):
+class PageWaiter(TabWaiter):
     _driver: ChromiumPage = ...
 
     def new_tab(self, timeout: float = None, raise_err: bool = None) -> Union[str, bool]: ...
@@ -67,7 +67,7 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
     def all_downloads_done(self, timeout: float = None, cancel_if_timeout: bool = True) -> bool: ...
 
 
-class ChromiumElementWaiter(object):
+class ElementWaiter(object):
     def __init__(self,
                  page: ChromiumBase,
                  ele: ChromiumElement):
@@ -97,5 +97,5 @@ class ChromiumElementWaiter(object):
     def _wait_state(self, attr: str, mode: bool = False, timeout: float = None, raise_err: bool = None) -> bool: ...
 
 
-class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
+class FrameWaiter(BaseWaiter, ElementWaiter):
     def __init__(self, frame: ChromiumFrame): ...

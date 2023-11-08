@@ -14,8 +14,8 @@ from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_base import ChromiumBase, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
-from .._units.tab_rect import ChromiumTabRect
-from .._units.waiter import ChromiumPageWaiter
+from .._units.tab_rect import TabRect
+from .._units.waiter import PageWaiter
 from ..errors import BrowserConnectError
 
 
@@ -127,14 +127,14 @@ class ChromiumPage(ChromiumBase):
     @property
     def rect(self):
         if self._rect is None:
-            self._rect = ChromiumTabRect(self)
+            self._rect = TabRect(self)
         return self._rect
 
     @property
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumPageWaiter(self)
+            self._wait = PageWaiter(self)
         return self._wait
 
     def get_tab(self, tab_id=None):

@@ -10,8 +10,8 @@ from .._commons.web import set_session_cookies, set_browser_cookies
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
 from .._units.setter import TabSetter, WebPageTabSetter
-from .._units.tab_rect import ChromiumTabRect
-from .._units.waiter import ChromiumTabWaiter
+from .._units.tab_rect import TabRect
+from .._units.waiter import TabWaiter
 
 
 class ChromiumTab(ChromiumBase):
@@ -48,7 +48,7 @@ class ChromiumTab(ChromiumBase):
     def rect(self):
         """返回获取窗口坐标和大小的对象"""
         if self._rect is None:
-            self._rect = ChromiumTabRect(self)
+            self._rect = TabRect(self)
         return self._rect
 
     @property
@@ -62,7 +62,7 @@ class ChromiumTab(ChromiumBase):
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumTabWaiter(self)
+            self._wait = TabWaiter(self)
         return self._wait
 
 

@@ -11,7 +11,7 @@ from time import sleep, perf_counter
 from .._commons.tools import get_usable_path
 
 
-class BrowserDownloadManager(object):
+class DownloadManager(object):
 
     def __init__(self, browser):
         """
