@@ -5,7 +5,7 @@ from .._commons.constants import Settings
 from ..errors import WaitTimeoutError, NoRectError
 
 
-class ChromiumBaseWaiter(object):
+class BaseWaiter(object):
     def __init__(self, page_or_ele):
         """
         :param page_or_ele: 页面对象或元素对象
@@ -190,7 +190,7 @@ class ChromiumBaseWaiter(object):
                 return False
 
 
-class ChromiumTabWaiter(ChromiumBaseWaiter):
+class TabWaiter(BaseWaiter):
 
     def downloads_done(self, timeout=None, cancel_if_timeout=True):
         """等待所有浏览器下载任务结束
@@ -219,7 +219,7 @@ class ChromiumTabWaiter(ChromiumBaseWaiter):
                 return True
 
 
-class ChromiumPageWaiter(ChromiumTabWaiter):
+class PageWaiter(TabWaiter):
     def __init__(self, page):
         super().__init__(page)
         # self._listener = None
@@ -270,7 +270,7 @@ class ChromiumPageWaiter(ChromiumTabWaiter):
                 return True
 
 
-class ChromiumElementWaiter(object):
+class ElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
     def __init__(self, page, ele):
@@ -417,10 +417,10 @@ class ChromiumElementWaiter(object):
             return False
 
 
-class FrameWaiter(ChromiumBaseWaiter, ChromiumElementWaiter):
+class FrameWaiter(BaseWaiter, ElementWaiter):
     def __init__(self, frame):
         """
         :param frame: ChromiumFrame对象
         """
         super().__init__(frame)
-        super(ChromiumBaseWaiter, self).__init__(frame, frame.frame_ele)
+        super(BaseWaiter, self).__init__(frame, frame.frame_ele)

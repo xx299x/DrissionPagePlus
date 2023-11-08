@@ -7,7 +7,7 @@ from .._commons.web import location_in_viewport
 from ..errors import CDPError, NoRectError
 
 
-class ChromiumElementStates(object):
+class ElementStates(object):
     def __init__(self, ele):
         """
         :param ele: ChromiumElement

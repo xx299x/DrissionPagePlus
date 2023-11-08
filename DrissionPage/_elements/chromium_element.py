@@ -15,11 +15,13 @@ from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
-from .._units.element_states import ChromiumElementStates, ShadowRootStates
+from .._units.element_states import ElementStates, ShadowRootStates
+from .._units.ids import Ids, ElementIds
 from .._units.locations import Locations
+from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
-from .._units.waiter import ChromiumElementWaiter
+from .._units.waiter import ElementWaiter
 from ..errors import (ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError,
                       CDPError, NoResourceError, AlertExistsError)
 
@@ -64,7 +66,7 @@ class ChromiumElement(DrissionElement):
         else:
             raise ElementLossError
 
-        self._ids = ChromiumElementIds(self)
+        self._ids = ElementIds(self)
         doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
 
@@ -141,7 +143,7 @@ class ChromiumElement(DrissionElement):
     def states(self):
         """返回用于获取元素状态的对象"""
         if self._states is None:
-            self._states = ChromiumElementStates(self)
+            self._states = ElementStates(self)
         return self._states
 
     @property
@@ -181,7 +183,7 @@ class ChromiumElement(DrissionElement):
     def scroll(self):
         """用于滚动滚动条的对象"""
         if self._scroll is None:
-            self._scroll = ChromiumElementScroll(self)
+            self._scroll = ElementScroller(self)
         return self._scroll
 
     @property
@@ -195,7 +197,7 @@ class ChromiumElement(DrissionElement):
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumElementWaiter(self.page, self)
+            self._wait = ElementWaiter(self.page, self)
         return self._wait
 
     @property
@@ -1081,33 +1083,6 @@ class ChromiumShadowRoot(BaseElement):
         return r['backendNodeId']
 
 
-class Ids(object):
-    def __init__(self, ele):
-        self._ele = ele
-
-    @property
-    def node_id(self):
-        """返回元素cdp中的node id"""
-        return self._ele._node_id
-
-    @property
-    def obj_id(self):
-        """返回元素js中的object id"""
-        return self._ele._obj_id
-
-    @property
-    def backend_id(self):
-        """返回backend id"""
-        return self._ele._backend_id
-
-
-class ChromiumElementIds(Ids):
-    @property
-    def doc_id(self):
-        """返回所在document的object id"""
-        return self._ele._doc_id
-
-
 def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
     """在chromium元素中查找
     :param ele: ChromiumElement对象
@@ -1437,116 +1412,6 @@ def send_key(ele, modifier, key):
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'
         ele.page.run_cdp('Input.dispatchKeyEvent', **data)
-
-
-class ChromiumScroll(object):
-    """用于滚动的对象"""
-
-    def __init__(self, ele):
-        """
-        :param ele: 元素对象
-        """
-        self._driver = ele
-        self.t1 = self.t2 = 'this'
-        self._wait_complete = False
-
-    def _run_js(self, js):
-        js = js.format(self.t1, self.t2, self.t2)
-        self._driver.run_js(js)
-        self._wait_scrolled()
-
-    def to_top(self):
-        """滚动到顶端，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft, 0);')
-
-    def to_bottom(self):
-        """滚动到底端，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft, {}.scrollHeight);')
-
-    def to_half(self):
-        """滚动到垂直中间位置，水平位置不变"""
-        self._run_js('{}.scrollTo({}.scrollLeft, {}.scrollHeight/2);')
-
-    def to_rightmost(self):
-        """滚动到最右边，垂直位置不变"""
-        self._run_js('{}.scrollTo({}.scrollWidth, {}.scrollTop);')
-
-    def to_leftmost(self):
-        """滚动到最左边，垂直位置不变"""
-        self._run_js('{}.scrollTo(0, {}.scrollTop);')
-
-    def to_location(self, x, y):
-        """滚动到指定位置
-        :param x: 水平距离
-        :param y: 垂直距离
-        :return: None
-        """
-        self._run_js(f'{{}}.scrollTo({x}, {y});')
-
-    def up(self, pixel=300):
-        """向上滚动若干像素，水平位置不变
-        :param pixel: 滚动的像素
-        :return: None
-        """
-        pixel = -pixel
-        self._run_js(f'{{}}.scrollBy(0, {pixel});')
-
-    def down(self, pixel=300):
-        """向下滚动若干像素，水平位置不变
-        :param pixel: 滚动的像素
-        :return: None
-        """
-        self._run_js(f'{{}}.scrollBy(0, {pixel});')
-
-    def left(self, pixel=300):
-        """向左滚动若干像素，垂直位置不变
-        :param pixel: 滚动的像素
-        :return: None
-        """
-        pixel = -pixel
-        self._run_js(f'{{}}.scrollBy({pixel}, 0);')
-
-    def right(self, pixel=300):
-        """向右滚动若干像素，垂直位置不变
-        :param pixel: 滚动的像素
-        :return: None
-        """
-        self._run_js(f'{{}}.scrollBy({pixel}, 0);')
-
-    def _wait_scrolled(self):
-        if not self._wait_complete:
-            return
-
-        page = self._driver.page if isinstance(self._driver, ChromiumElement) else self._driver
-        r = page.run_cdp('Page.getLayoutMetrics')
-        x = r['layoutViewport']['pageX']
-        y = r['layoutViewport']['pageY']
-
-        end_time = perf_counter() + self._driver.page.timeout
-        while perf_counter() < end_time:
-            sleep(.1)
-            r = page.run_cdp('Page.getLayoutMetrics')
-            x1 = r['layoutViewport']['pageX']
-            y1 = r['layoutViewport']['pageY']
-
-            if x == x1 and y == y1:
-                break
-
-            x = x1
-            y = y1
-
-
-class ChromiumElementScroll(ChromiumScroll):
-    def to_see(self, center=None):
-        """滚动页面直到元素可见
-        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
-        :return: None
-        """
-        self._driver.page.scroll.to_see(self._driver, center=center)
-
-    def to_center(self):
-        """元素尽量滚动到视口中间"""
-        self._driver.page.scroll.to_see(self._driver, center=True)
 
 
 class Pseudo(object):

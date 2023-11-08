@@ -10,18 +10,19 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 
+from .._units.scroller import PageScroller
 from .._base.base import BasePage
 from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
 from .._commons.web import location_in_viewport
-from .._elements.chromium_element import ChromiumScroll, ChromiumElement, run_js, make_chromium_ele
+from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_ele
 from .._elements.session_element import make_session_ele
 from .._units.action_chains import ActionChains
 from .._units.network_listener import NetworkListener
 from .._units.screencast import Screencast
 from .._units.setter import ChromiumBaseSetter
-from .._units.waiter import ChromiumBaseWaiter
+from .._units.waiter import BaseWaiter
 from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, AlertExistsError,
                       GetDocumentError)
 
@@ -115,7 +116,6 @@ class ChromiumBase(BasePage):
         self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
         self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
-
 
     def _get_document(self):
         if self._is_reading:
@@ -326,7 +326,7 @@ class ChromiumBase(BasePage):
         """返回用于滚动滚动条的对象"""
         self.wait.load_complete()
         if self._scroll is None:
-            self._scroll = ChromiumPageScroll(self)
+            self._scroll = PageScroller(self)
         return self._scroll
 
     @property
@@ -343,7 +343,7 @@ class ChromiumBase(BasePage):
     def wait(self):
         """返回用于等待的对象"""
         if self._wait is None:
-            self._wait = ChromiumBaseWaiter(self)
+            self._wait = BaseWaiter(self)
         return self._wait
 
     @property
@@ -969,46 +969,6 @@ class ChromiumBase(BasePage):
         with open(path, 'wb') as f:
             f.write(png)
         return str(path.absolute())
-
-
-class ChromiumPageScroll(ChromiumScroll):
-    def __init__(self, page):
-        """
-        :param page: 页面对象
-        """
-        super().__init__(page)
-        self.t1 = 'window'
-        self.t2 = 'document.documentElement'
-
-    def to_see(self, loc_or_ele, center=None):
-        """滚动页面直到元素可见
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
-        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
-        :return: None
-        """
-        ele = self._driver._ele(loc_or_ele)
-        self._to_see(ele, center)
-
-    def _to_see(self, ele, center):
-        """执行滚动页面直到元素可见
-        :param ele: 元素对象
-        :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
-        :return: None
-        """
-        txt = 'true' if center else 'false'
-        ele.run_js(f'this.scrollIntoViewIfNeeded({txt});')
-        if center or (center is not False and ele.states.is_covered):
-            ele.run_js('''function getWindowScrollTop() {var scroll_top = 0;
-                    if (document.documentElement && document.documentElement.scrollTop) {
-                      scroll_top = document.documentElement.scrollTop;
-                    } else if (document.body) {scroll_top = document.body.scrollTop;}
-                    return scroll_top;}
-            const { top, height } = this.getBoundingClientRect();
-                    const elCenter = top + height / 2;
-                    const center = window.innerHeight / 2;
-                    window.scrollTo({top: getWindowScrollTop() - (center - elCenter),
-                    behavior: 'instant'});''')
-        self._wait_scrolled()
 
 
 class Timeout(object):

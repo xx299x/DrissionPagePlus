@@ -6,7 +6,7 @@
 from time import sleep
 
 from .chromium_driver import BrowserDriver, ChromiumDriver
-from .._units.download_manager import BrowserDownloadManager
+from .._units.download_manager import DownloadManager
 
 
 class Browser(object):
@@ -77,7 +77,7 @@ class Browser(object):
     def connect_to_page(self):
         """执行与page相关的逻辑"""
         if not self._connected:
-            self._dl_mgr = BrowserDownloadManager(self)
+            self._dl_mgr = DownloadManager(self)
             self._connected = True
 
     def run_cdp(self, cmd, **cmd_args):

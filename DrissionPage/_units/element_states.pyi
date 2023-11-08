@@ -8,7 +8,7 @@ from typing import Union, Tuple, List
 from .._elements.chromium_element import ChromiumShadowRoot, ChromiumElement
 
 
-class ChromiumElementStates(object):
+class ElementStates(object):
     def __init__(self, ele: ChromiumElement):
         self._ele: ChromiumElement = ...
 

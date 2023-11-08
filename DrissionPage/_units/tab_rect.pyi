@@ -9,7 +9,7 @@ from .._pages.chromium_page import ChromiumPage
 from .._pages.chromium_tab import ChromiumTab
 
 
-class ChromiumTabRect(object):
+class TabRect(object):
     def __init__(self, page: Union[ChromiumPage, ChromiumTab]):
         self._page: Union[ChromiumPage, ChromiumTab] = ...
 
