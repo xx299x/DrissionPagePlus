@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from typing import Union, Tuple, List, Any, Optional
+from typing import Union, Tuple, List, Any
 
 from .._base.base import DrissionElement, BaseElement
 from .._commons.constants import NoneElement
@@ -15,6 +15,7 @@ from .._pages.chromium_page import ChromiumPage
 from .._pages.web_page import WebPage
 from .._units.clicker import Clicker
 from .._units.element_states import ShadowRootStates, ChromiumElementStates
+from .._units.locations import Locations
 from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
 from .._units.waiter import ChromiumElementWaiter
@@ -361,48 +362,6 @@ def send_enter(ele: ChromiumElement) -> None: ...
 
 
 def send_key(ele: ChromiumElement, modifier: int, key: str) -> None: ...
-
-
-class Locations(object):
-    def __init__(self, ele: ChromiumElement):
-        self._ele: ChromiumElement = ...
-
-    @property
-    def location(self) -> Tuple[int, int]: ...
-
-    @property
-    def midpoint(self) -> Tuple[int, int]: ...
-
-    @property
-    def click_point(self) -> Tuple[int, int]: ...
-
-    @property
-    def viewport_location(self) -> Tuple[int, int]: ...
-
-    @property
-    def viewport_midpoint(self) -> Tuple[int, int]: ...
-
-    @property
-    def viewport_click_point(self) -> Tuple[int, int]: ...
-
-    @property
-    def screen_location(self) -> Tuple[int, int]: ...
-
-    @property
-    def screen_midpoint(self) -> Tuple[int, int]: ...
-
-    @property
-    def screen_click_point(self) -> Tuple[int, int]: ...
-
-    @property
-    def rect(self) -> list: ...
-
-    @property
-    def viewport_rect(self) -> list: ...
-
-    def _get_viewport_rect(self, quad: str) -> Union[list, None]: ...
-
-    def _get_page_coord(self, x: int, y: int) -> Tuple[int, int]: ...
 
 
 class ChromiumScroll(object):

@@ -1,5 +1,9 @@
 # -*- coding:utf-8 -*-
-from typing import Union, Tuple
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
+from typing import Union, Tuple, List
 
 from .._elements.chromium_element import ChromiumShadowRoot, ChromiumElement
 
@@ -33,7 +37,7 @@ class ChromiumElementStates(object):
     def is_covered(self) -> bool: ...
 
     @property
-    def has_rect(self) -> Union[bool, Tuple[int, int]]: ...
+    def has_rect(self) -> Union[bool, List[Tuple[float, float]]]: ...
 
 
 class ShadowRootStates(object):

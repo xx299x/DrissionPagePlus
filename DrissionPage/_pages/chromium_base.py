@@ -103,6 +103,11 @@ class ChromiumBase(BasePage):
         self._driver.call_method('Page.enable')
         self._driver.call_method('Emulation.setFocusEmulationEnabled', enabled=True)
 
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
+        self._frame_id = r['frameTree']['frame']['id']
+
         self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
         self._driver.set_listener('Page.frameNavigated', self._onFrameNavigated)
         self._driver.set_listener('Page.domContentEventFired', self._onDomContentEventFired)
@@ -111,10 +116,6 @@ class ChromiumBase(BasePage):
         self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
         self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
 
-        r = self.run_cdp('Page.getFrameTree')
-        for i in findall(r"'id': '(.*?)'", str(r)):
-            self.browser._frames[i] = self.tab_id
-        self._frame_id = r['frameTree']['frame']['id']
 
     def _get_document(self):
         if self._is_reading:

@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from .._commons.web import location_in_viewport
 from ..errors import CDPError, NoRectError
 
@@ -71,9 +75,9 @@ class ChromiumElementStates(object):
 
     @property
     def has_rect(self):
-        """返回元素是否拥有位置和大小，没有返回False，有返回大小元组"""
+        """返回元素是否拥有位置和大小，没有返回False，有返回四个角在页面中坐标组成的列表"""
         try:
-            return self._ele.size
+            return self._ele.locations.rect
         except NoRectError:
             return False
 
