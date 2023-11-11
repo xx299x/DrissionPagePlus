@@ -85,7 +85,6 @@ class ChromiumPage(ChromiumBase):
     def _page_init(self):
         """浏览器相关设置"""
         self._rect = None
-        self._main_tab = self.tab_id
         self._browser.connect_to_page()
 
     @property
@@ -102,10 +101,6 @@ class ChromiumPage(ChromiumBase):
     def tabs(self):
         """返回所有标签页id组成的列表"""
         return self.browser.tabs
-
-    @property
-    def main_tab(self):
-        return self._main_tab
 
     @property
     def latest_tab(self):
@@ -154,75 +149,31 @@ class ChromiumPage(ChromiumBase):
         """
         return self._browser.find_tabs(title, url, tab_type, single)
 
-    def _new_tab(self, url=None, switch_to=False):
-        """新建一个标签页,该标签页在最后面
+    def new_tab(self, url=None, new_window=False, background=False, new_context=False):
+        """新建一个标签页
         :param url: 新标签页跳转到的网址
-        :param switch_to: 新建标签页后是否把焦点移过去
-        :return: 新标签页的id
+        :param new_window: 是否在新窗口打开标签页
+        :param background: 是否不激活新标签页，如new_window为True则无效
+        :param new_context: 是否创建新的上下文
+        :return: 新标签页对象
         """
-        if switch_to:
-            tid = self.run_cdp('Target.createTarget', url='')['targetId']
-            self._to_tab(tid, read_doc=False)
-            if url:
-                self.get(url)
+        bid = None
+        if new_context:
+            bid = self.browser.run_cdp('Target.createBrowserContext', **kwargs)['browserContextId']
 
-        elif url:
-            tid = self.run_cdp('Target.createTarget', url=url)['targetId']
+        kwargs = {'url': ''}
+        if new_window:
+            kwargs['newWindow'] = True
+        if background:
+            kwargs['background'] = True
+        if bid:
+            kwargs['browserContextId'] = bid
 
-        else:
-            tid = self.run_cdp('Target.createTarget', url='')['targetId']
-
-        return tid
-
-    def new_tab(self, url=None, switch_to=False):
-        """新建一个标签页,该标签页在最后面
-        :param url: 新标签页跳转到的网址
-        :param switch_to: 新建标签页后是否把焦点移过去
-        :return: switch_to为False时返回新标签页对象，否则返回当前对象，
-        """
-        tid = self._new_tab(url, switch_to)
-        return self if switch_to else ChromiumTab(self, tid)
-
-    def to_main_tab(self):
-        """跳转到主标签页"""
-        self.to_tab(self._main_tab)
-
-    def to_tab(self, tab_or_id=None, activate=True):
-        """跳转到标签页
-        :param tab_or_id: 标签页对象或id，默认跳转到main_tab
-        :param activate: 切换后是否变为活动状态
-        :return: None
-        """
-        self._to_tab(tab_or_id, activate)
-
-    def _to_tab(self, tab_or_id=None, activate=True, read_doc=True):
-        """跳转到标签页
-        :param tab_or_id: 标签页对象或id，默认跳转到main_tab
-        :param activate: 切换后是否变为活动状态
-        :param read_doc: 切换后是否读取文档
-        :return: None
-        """
-        tabs = self.tabs
-        if not tab_or_id:
-            tab_id = self._main_tab
-        elif isinstance(tab_or_id, ChromiumTab):
-            tab_id = tab_or_id.tab_id
-        else:
-            tab_id = tab_or_id
-
-        if tab_id not in tabs:
-            tab_id = self.latest_tab
-
-        if activate:
-            self.browser.activate_tab(tab_id)
-
-        if tab_id == self.tab_id:
-            return
-
-        self.driver.stop()
-        self._driver_init(tab_id)
-        if read_doc and self.ready_state in ('complete', None):
-            self._get_document()
+        tid = self.run_cdp('Target.createTarget', **kwargs)['targetId']
+        tab = ChromiumTab(self, tab_id=tid)
+        if url:
+            tab.get(url)
+        return tab
 
     def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
@@ -250,19 +201,11 @@ class ChromiumPage(ChromiumBase):
             self.quit()
             return
 
-        if self.tab_id in tabs:
-            self.driver.stop()
-
         for tab in tabs:
             self.browser.close_tab(tab)
             sleep(.2)
         while self.tabs_count != end_len:
             sleep(.1)
-
-        if self._main_tab in tabs:
-            self._main_tab = self.tabs[0]
-
-        self.to_tab()
 
     def close_other_tabs(self, tabs_or_ids=None):
         """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
