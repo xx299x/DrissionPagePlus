@@ -5,7 +5,6 @@
 """
 from copy import copy
 from re import search, findall
-from threading import Thread
 from time import sleep, perf_counter
 
 from .._elements.chromium_element import ChromiumElement
@@ -35,31 +34,28 @@ class ChromiumFrame(ChromiumBase):
 
         self.address = page.address
         node = page.run_cdp('DOM.describeNode', backendNodeId=ele.ids.backend_id)['node']
-        self.frame_id = node['frameId']
         self._tab_id = page.tab_id
         self._backend_id = ele.ids.backend_id
         self._frame_ele = ele
         self._states = None
         self._ids = FrameIds(self)
+        self._is_init_get_doc = True
 
+        self._frame_id = node['frameId']
         if self._is_inner_frame():
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
             super().__init__(page.address, page.tab_id, page.timeout)
-            self._frame_id = self.frame_id
         else:
             self._is_diff_domain = True
-            super().__init__(page.address, self.frame_id, page.timeout)
+            delattr(self, '_frame_id')
+            super().__init__(page.address, node['frameId'], page.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
         end_time = perf_counter() + 5
         while perf_counter() < end_time and self.url == 'about:blank':
             sleep(.1)
-
-        t = Thread(target=self._check_alive)
-        t.daemon = True
-        t.start()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -77,11 +73,12 @@ class ChromiumFrame(ChromiumBase):
 
     def _d_set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
-        self._timeouts = copy(self._target_page.timeouts)
-        self.retry_times = self._target_page.retry_times
-        self.retry_interval = self._target_page.retry_interval
-        self._page_load_strategy = self._target_page.page_load_strategy
-        self._download_path = self._target_page.download_path
+        if not hasattr(self, '_timeouts'):
+            self._timeouts = copy(self._target_page.timeouts)
+            self.retry_times = self._target_page.retry_times
+            self.retry_interval = self._target_page.retry_interval
+            self._page_load_strategy = self._target_page.page_load_strategy if not self._is_diff_domain else 'normal'
+            self._download_path = self._target_page.download_path
 
     def _driver_init(self, tab_id, is_init=True):
         """避免出现服务器500错误
@@ -93,65 +90,90 @@ class ChromiumFrame(ChromiumBase):
         except:
             self.browser.driver.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
-        self.driver.set_listener('Inspector.detached', self._onInspectorDetached)
+        self._driver.set_listener('Inspector.detached', self._onInspectorDetached)
 
     def _reload(self):
         """重新获取document"""
+        self._is_loading = True
         debug = self._debug
         d_debug = self.driver._debug
-        old_driver = self.driver
+        self._is_init_get_doc = False
+        self._doc_got = False
         if debug:
-            print('重新获取document')
+            print(f'{self._frame_id} reload 开始')
 
-        self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
-        node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele.ids.backend_id)['node']
+        try:
+            self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
+        except ElementLossError:
+            return
+        node = self._target_page.run_cdp('DOM.describeNode',
+                                         backendNodeId=self._frame_ele.ids.backend_id)['node']
 
-        end_time = perf_counter() + self.timeout
-        while perf_counter() < end_time:
-            try:
-                if self._is_inner_frame():
-                    self._is_diff_domain = False
-                    self.doc_ele = ChromiumElement(self._target_page,
-                                                   backend_id=node['contentDocument']['backendNodeId'])
-                    super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
-                    self._frame_id = self.frame_id
-                    self._debug = debug
-                    self.driver._debug = d_debug
-                else:
-                    self._is_diff_domain = True
-                    self._driver.stop()
-                    super().__init__(self.address, self.frame_id, self._target_page.timeout)
+        self._driver.stop()
+
+        if self._is_inner_frame():
+            self._is_diff_domain = False
+            self.doc_ele = ChromiumElement(self._target_page,
+                                           backend_id=node['contentDocument']['backendNodeId'])
+            self._frame_id = node['frameId']
+            super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
+            self._debug = debug
+            self.driver._debug = d_debug
+
+        else:
+            self._is_diff_domain = True
+            super().__init__(self.address, node['frameId'], self._target_page.timeout)
+            end_time = perf_counter() + self.timeouts.page_load
+            while perf_counter() < end_time:
+                try:
                     obj_id = super().run_js('document;', as_expr=True)['objectId']
                     self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-                    self._debug = debug
-                    self.driver._debug = d_debug
+                    break
+                except Exception as e:
+                    sleep(.1)
+                    if self._debug:
+                        print(f'获取doc失败，重试 {e}')
+            else:
+                raise GetDocumentError
+            self._debug = debug
+            self.driver._debug = d_debug
+
+        self._is_loading = False
+
+        if self._debug:
+            print(f'{self._frame_id} reload 完毕')
+
+    def _get_document(self):
+        if self._is_reading:
+            return
+        self._is_reading = True
+        end_time = perf_counter() + 10
+        while perf_counter() < end_time:
+            try:
+                b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
+                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
                 break
             except:
-                pass
-
-            sleep(.1)
-
+                continue
         else:
             raise GetDocumentError
 
-        old_driver.stop()
-        self.wait.load_complete()
+        r = self.run_cdp('Page.getFrameTree')
+        for i in findall(r"'id': '(.*?)'", str(r)):
+            self.browser._frames[i] = self.tab_id
 
-    def _check_ok(self):
-        """用于应付同域异域之间跳转导致元素丢失问题"""
-        if self._driver._stopped.is_set():
-            self._reload()
-
-        try:
-            self._target_page.run_cdp('DOM.describeNode', nodeId=self.ids.node_id)
-        except ElementLossError:
-            self._reload()
-            # sleep(2)
+        if self._is_init_get_doc:  # 阻止reload时标识
+            self._is_loading = False
+        self._is_reading = False
 
     def _get_new_document(self):
         """刷新cdp使用的document数据"""
         if self._is_reading:
             return
+
+        if self._debug:
+            print('>>> get new doc')
+
         self._is_reading = True
         end_time = perf_counter() + 10
         while perf_counter() < end_time:
@@ -179,18 +201,65 @@ class ChromiumFrame(ChromiumBase):
         self._is_loading = False
         self._is_reading = False
 
+        if self._debug:
+            print('>>> new doc got')
+
+    def _onLoadEventFired(self, **kwargs):
+        """在页面刷新、变化后重新读取页面内容"""
+        if self._debug:
+            print(f'{self._frame_id}触发在frame的LoadEventFired')
+            print('在frame的LoadEventFired变成complete')
+
+        self._ready_state = 'complete'
+        self._get_new_document()
+        self._doc_got = True
+
+        if self._debug:
+            print(f'{self._frame_id}执行frame的LoadEventFired完毕')
+
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后触发"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self.frame_id:
-            self._ready_state = 'complete'
+        if kwargs['frameId'] == self._frame_id and self._doc_got is False:
             if self._debug:
-                print(f'FrameStoppedLoading {kwargs}')
+                print(f'{self._frame_id}触发frame的FrameStoppedLoading')
+                print('在frame的FrameStoppedLoading变成complete')
+
+            self._ready_state = 'complete'
             self._get_new_document()
 
+            if self._debug:
+                print(f'{self._frame_id}执行frame的FrameStoppedLoading完毕')
+
     def _onInspectorDetached(self, **kwargs):
-        self._is_loading = True
+        """异域转同域或退出"""
+        if self._debug:
+            print(f'{self._frame_id}触发InspectorDetached')
+
+        try:
+            self._frame_ele.attrs
+        except ElementLossError:
+            self._driver.stop()
         self._reload()
+
+        if self._debug:
+            print(f'{self._frame_id}执行InspectorDetached完毕')
+
+    def _onFrameDetached(self, **kwargs):
+        """同域变异域"""
+        self.browser._frames.pop(kwargs['frameId'], None)
+        if kwargs['frameId'] == self._frame_id:
+            if self._debug:
+                print(f'{self._frame_id}触发FrameDetached')
+
+            try:
+                self._frame_ele.attrs
+            except ElementLossError:
+                self._driver.stop()
+            self._reload()
+
+            if self._debug:
+                print(f'{self._frame_id}执行FrameDetached完毕')
 
     @property
     def page(self):
@@ -208,19 +277,16 @@ class ChromiumFrame(ChromiumBase):
     @property
     def tag(self):
         """返回元素tag"""
-        self._check_ok()
         return self.frame_ele.tag
 
     @property
     def url(self):
         """返回frame当前访问的url"""
-        self._check_ok()
         return self.doc_ele.run_js('return this.location.href;')
 
     @property
     def html(self):
         """返回元素outerHTML文本"""
-        self._check_ok()
         tag = self.tag
         out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele.ids.backend_id)[
             'outerHTML']
@@ -230,32 +296,27 @@ class ChromiumFrame(ChromiumBase):
     @property
     def inner_html(self):
         """返回元素innerHTML文本"""
-        self._check_ok()
         return self.doc_ele.run_js('return this.documentElement.outerHTML;')
 
     @property
     def title(self):
         """返回页面title"""
-        self._check_ok()
         r = self._ele('t:title', raise_err=False)
         return r.text if r else None
 
     @property
     def cookies(self):
         """以dict格式返回cookies"""
-        self._check_ok()
         return super().cookies if self._is_diff_domain else self.doc_ele.run_js('return this.cookie;')
 
     @property
     def attrs(self):
         """返回frame元素所有attribute属性"""
-        self._check_ok()
         return self.frame_ele.attrs
 
     @property
     def frame_size(self):
         """返回frame内页面尺寸，格式：(长, 高)"""
-        self._check_ok()
         w = self.doc_ele.run_js('return this.body.scrollWidth')
         h = self.doc_ele.run_js('return this.body.scrollHeight')
         return w, h
@@ -263,19 +324,16 @@ class ChromiumFrame(ChromiumBase):
     @property
     def size(self):
         """返回frame元素大小"""
-        self._check_ok()
         return self.frame_ele.size
 
     @property
     def active_ele(self):
         """返回当前焦点所在元素"""
-        self._check_ok()
         return self.doc_ele.run_js('return this.activeElement;')
 
     @property
     def location(self):
         """返回frame元素左上角的绝对坐标"""
-        self._check_ok()
         return self.frame_ele.location
 
     @property
@@ -286,13 +344,11 @@ class ChromiumFrame(ChromiumBase):
     @property
     def xpath(self):
         """返回frame的xpath绝对路径"""
-        self._check_ok()
         return self.frame_ele.xpath
 
     @property
     def css_path(self):
         """返回frame的css selector绝对路径"""
-        self._check_ok()
         return self.frame_ele.css_path
 
     @property
@@ -318,8 +374,6 @@ class ChromiumFrame(ChromiumBase):
                         pass
 
                 sleep(.1)
-
-            # raise RuntimeError('获取document失败。')
 
     @property
     def is_alive(self):
@@ -361,7 +415,6 @@ class ChromiumFrame(ChromiumBase):
 
     def refresh(self):
         """刷新frame页面"""
-        self._check_ok()
         self.doc_ele.run_js('this.location.reload();')
 
     def attr(self, attr):
@@ -369,7 +422,6 @@ class ChromiumFrame(ChromiumBase):
         :param attr: 属性名
         :return: 属性值文本，没有该属性返回None
         """
-        self._check_ok()
         return self.frame_ele.attr(attr)
 
     def remove_attr(self, attr):
@@ -377,7 +429,6 @@ class ChromiumFrame(ChromiumBase):
         :param attr: 属性名
         :return: None
         """
-        self._check_ok()
         self.frame_ele.remove_attr(attr)
 
     def run_js(self, script, *args, as_expr=False):
@@ -387,7 +438,6 @@ class ChromiumFrame(ChromiumBase):
         :param as_expr: 是否作为表达式运行，为True时args无效
         :return: 运行的结果
         """
-        self._check_ok()
         if script.startswith('this.scrollIntoView'):
             return self.frame_ele.run_js(script, *args, as_expr=as_expr)
         else:
@@ -399,7 +449,6 @@ class ChromiumFrame(ChromiumBase):
         :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        self._check_ok()
         return self.frame_ele.parent(level_or_loc, index)
 
     def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
@@ -410,7 +459,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        self._check_ok()
         return self.frame_ele.prev(filter_loc, index, timeout, ele_only=ele_only)
 
     def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
@@ -421,7 +469,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        self._check_ok()
         return self.frame_ele.next(filter_loc, index, timeout, ele_only=ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
@@ -433,7 +480,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        self._check_ok()
         return self.frame_ele.before(filter_loc, index, timeout, ele_only=ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
@@ -445,7 +491,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        self._check_ok()
         return self.frame_ele.after(filter_loc, index, timeout, ele_only=ele_only)
 
     def prevs(self, filter_loc='', timeout=0, ele_only=True):
@@ -455,7 +500,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        self._check_ok()
         return self.frame_ele.prevs(filter_loc, timeout, ele_only=ele_only)
 
     def nexts(self, filter_loc='', timeout=0, ele_only=True):
@@ -465,7 +509,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        self._check_ok()
         return self.frame_ele.nexts(filter_loc, timeout, ele_only=ele_only)
 
     def befores(self, filter_loc='', timeout=None, ele_only=True):
@@ -476,7 +519,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        self._check_ok()
         return self.frame_ele.befores(filter_loc, timeout, ele_only=ele_only)
 
     def afters(self, filter_loc='', timeout=None, ele_only=True):
@@ -487,7 +529,6 @@ class ChromiumFrame(ChromiumBase):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        self._check_ok()
         return self.frame_ele.afters(filter_loc, timeout, ele_only=ele_only)
 
     def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None):
@@ -586,75 +627,14 @@ class ChromiumFrame(ChromiumBase):
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
         """
-        self._check_ok()
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
 
         self.wait.load_complete()
 
-        return self.doc_ele._ele(loc_or_ele, timeout, raise_err=raise_err) \
-            if single else self.doc_ele.eles(loc_or_ele, timeout)
-
-    def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
-        """尝试连接，重试若干次
-        :param to_url: 要访问的url
-        :param times: 重试次数
-        :param interval: 重试间隔（秒）
-        :param show_errmsg: 是否抛出异常
-        :param timeout: 连接超时时间
-        :return: 是否成功，返回None表示不确定
-        """
-        self._check_ok()
-        err = None
-        timeout = timeout if timeout is not None else self.timeouts.page_load
-
-        for t in range(times + 1):
-            err = None
-            end_time = perf_counter() + timeout
-            try:
-                result = self.run_cdp('Page.navigate', url=to_url, _timeout=timeout)
-                if 'errorText' in result:
-                    err = ConnectionError(result['errorText'])
-            except TimeoutError:
-                err = TimeoutError('页面连接超时。')
-
-            if err:
-                sleep(interval)
-                if self._debug or show_errmsg:
-                    print(f'重试{t + 1} {to_url}')
-                self.stop_loading()
-                continue
-
-            if self.page_load_strategy == 'none':
-                return True
-
-            yu = end_time - perf_counter()
-            ok = self._wait_loaded(1 if yu <= 0 else yu)
-            if not ok:
-                err = TimeoutError('页面连接超时。')
-                sleep(interval)
-                if self._debug or show_errmsg:
-                    print(f'重试{t + 1} {to_url}')
-                self.stop_loading()
-                continue
-
-            if not err:
-                break
-
-        if err:
-            if show_errmsg:
-                raise err if err is not None else ConnectionError('连接异常。')
-            return False
-
-        self._check_ok()
-        return True
+        return self.doc_ele._ele(loc_or_ele, timeout,
+                                 raise_err=raise_err) if single else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
-        return self.frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])
-
-    def _check_alive(self):
-        """检测iframe是否有效线程方法"""
-        while self.is_alive:
-            sleep(1)
-        self.driver.stop()
+        return self._frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])

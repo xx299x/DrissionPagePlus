@@ -97,6 +97,7 @@ class ChromiumDriver(object):
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""
         while not self._stopped.is_set():
+            print('收')
             try:
                 # self._ws.settimeout(1)
                 msg_json = self._ws.recv()
@@ -110,7 +111,7 @@ class ChromiumDriver(object):
             if self._debug:
                 if self._debug is True or 'id' in msg or (isinstance(self._debug, str)
                                                           and msg.get('method', '').startswith(self._debug)):
-                    print(f'<收 {msg_json}')
+                    print(f'<收 {self.id} {msg_json}')
                 elif isinstance(self._debug, (list, tuple, set)):
                     for m in self._debug:
                         if msg.get('method', '').startswith(m):
@@ -139,11 +140,11 @@ class ChromiumDriver(object):
 
             function = self.event_handlers.get(event['method'])
             if function:
-                # if self._debug:
-                #     print(f'开始执行 {function.__name__}')
+                if self._debug:
+                    print(f'开始执行 {function.__name__}')
                 function(**event['params'])
-                # if self._debug:
-                #     print(f'执行 {function.__name__}完毕')
+                if self._debug:
+                    print(f'执行 {function.__name__}完毕')
 
             self.event_queue.task_done()
 
@@ -186,6 +187,20 @@ class ChromiumDriver(object):
         if self._ws:
             self._ws.close()
             self._ws = None
+
+        while not self.event_queue.empty():
+            event = self.event_queue.get_nowait()
+            function = self.event_handlers.get(event['method'])
+            if function:
+                if self._debug:
+                    print(f'开始执行 {function.__name__}')
+                try:
+                    function(**event['params'])
+                except:
+                    pass
+                if self._debug:
+                    print(f'执行 {function.__name__}完毕')
+
         self.event_handlers.clear()
         self.method_results.clear()
         self.event_queue.queue.clear()

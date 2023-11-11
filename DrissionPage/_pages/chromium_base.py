@@ -46,6 +46,8 @@ class ChromiumBase(BasePage):
         self._listener = None
         self._has_alert = False
         self._ready_state = None
+        if self._debug:
+            print('在__init__变成None')
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
 
         self._download_path = str(Path('.').absolute())
@@ -88,6 +90,8 @@ class ChromiumBase(BasePage):
         if self.ready_state == 'complete' and self._ready_state is None:
             self._get_document()
             self._ready_state = 'complete'
+            if self._debug:
+                print(f'{self._frame_id}在connect_browser变成complete')
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -107,7 +111,8 @@ class ChromiumBase(BasePage):
         r = self.run_cdp('Page.getFrameTree')
         for i in findall(r"'id': '(.*?)'", str(r)):
             self.browser._frames[i] = self.tab_id
-        self._frame_id = r['frameTree']['frame']['id']
+        if not hasattr(self, '_frame_id'):
+            self._frame_id = r['frameTree']['frame']['id']
 
         self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
         self._driver.set_listener('Page.frameNavigated', self._onFrameNavigated)
@@ -149,6 +154,10 @@ class ChromiumBase(BasePage):
         """页面开始加载时执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._frame_id:
+            if self._debug:
+                print(f'{self._frame_id}触发FrameStartedLoading')
+                print('在FrameStartedLoading变成loading')
+
             self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
@@ -156,42 +165,63 @@ class ChromiumBase(BasePage):
                 t = Thread(target=self._wait_to_stop)
                 t.daemon = True
                 t.start()
+
             if self._debug:
-                print(f'frameStartedLoading {kwargs}')
+                print(f'{self._frame_id}执行FrameStartedLoading完毕')
 
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时执行"""
         if kwargs['frame']['id'] == self._frame_id:
+            if self._debug:
+                print(f'{self._frame_id}触发FrameNavigated')
+                print('在FrameNavigated变成loading')
+
             self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
+
             if self._debug:
-                print(f'FrameNavigated {kwargs}')
+                print(f'>>> FrameNavigated {kwargs}')
 
     def _onDomContentEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
+        if self._debug:
+            print(f'{self._frame_id}触发DomContentEventFired')
+            print('在DomContentEventFired变成interactive')
+
         self._ready_state = 'interactive'
         if self.page_load_strategy == 'eager':
             self.run_cdp('Page.stopLoading')
+
         if self._debug:
-            print(f'DomContentEventFired {kwargs}')
+            print(f'{self._frame_id}执行DomContentEventFired完毕')
 
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        self._ready_state = 'complete'
         if self._debug:
-            print(f'LoadEventFired {kwargs}')
+            print(f'{self._frame_id}触发LoadEventFired')
+            print('在LoadEventFired变成complete')
+
+        self._ready_state = 'complete'
         self._get_document()
         self._doc_got = True
+
+        if self._debug:
+            print(f'{self._frame_id}执行LoadEventFired完毕')
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._frame_id and self._doc_got is False:
-            self._ready_state = 'complete'
             if self._debug:
-                print(f'FrameStoppedLoading {kwargs}')
+                print(f'{self._frame_id}触发FrameStoppedLoading')
+                print('在FrameStoppedLoading变成complete')
+
+            self._ready_state = 'complete'
             self._get_document()
+
+            if self._debug:
+                print(f'{self._frame_id}执行FrameStoppedLoading完毕')
 
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""
@@ -836,7 +866,10 @@ class ChromiumBase(BasePage):
 
             sleep(.1)
 
-        self.stop_loading()
+        try:
+            self.stop_loading()
+        except CDPError:
+            pass
         return False
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
@@ -854,7 +887,7 @@ class ChromiumBase(BasePage):
             err = None
             end_time = perf_counter() + timeout
             try:
-                result = self.run_cdp('Page.navigate', url=to_url, _timeout=timeout)
+                result = self.run_cdp('Page.navigate', frameId=self._frame_id, url=to_url, _timeout=timeout)
                 if 'errorText' in result:
                     err = ConnectionError(result['errorText'])
             except TimeoutError:
@@ -877,7 +910,6 @@ class ChromiumBase(BasePage):
                 sleep(interval)
                 if self._debug or show_errmsg:
                     print(f'重试{t + 1} {to_url}')
-                self.stop_loading()
                 continue
 
             if not err:
