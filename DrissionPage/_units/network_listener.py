@@ -190,6 +190,7 @@ class NetworkListener(object):
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
+        p = None
         if not self._targets:
             if not self._method or kwargs['request']['method'] in self._method:
                 rid = kwargs['requestId']
@@ -197,7 +198,6 @@ class NetworkListener(object):
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
-                return
 
         else:
             rid = kwargs['requestId']
@@ -208,11 +208,14 @@ class NetworkListener(object):
                     p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                     p._raw_request = kwargs
                     if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                        p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)[
-                            'postData']
+                        p._raw_post_data = self._driver.call_method('Network.getRequestPostData',
+                                                                    requestId=rid)['postData']
                     break
 
+        self._extra_info_ids.setdefault(kwargs['requestId'], {})['obj'] = p if p else False
+
     def _requestWillBeSentExtraInfo(self, **kwargs):
+        """接收到请求额外信息时的回调函数"""
         self._extra_info_ids.setdefault(kwargs['requestId'], {})['request'] = kwargs
 
     def _response_received(self, **kwargs):
@@ -223,9 +226,18 @@ class NetworkListener(object):
             request._resource_type = kwargs['type']
 
     def _responseReceivedExtraInfo(self, **kwargs):
-        r = self._extra_info_ids.get(kwargs['requestId'])
+        """接收到返回额外信息时的回调函数"""
+        r = self._extra_info_ids.get(kwargs['requestId'], None)
         if r:
-            r['response'] = kwargs
+            obj = r.get('obj', None)
+            if obj is False:
+                self._extra_info_ids.pop(kwargs['requestId'], None)
+            elif isinstance(obj, DataPacket):
+                obj._requestExtraInfo = r['request']
+                obj._responseExtraInfo = kwargs
+                self._extra_info_ids.pop(kwargs['requestId'], None)
+            else:
+                r['response'] = kwargs
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
@@ -240,15 +252,21 @@ class NetworkListener(object):
                 dp._raw_body = ''
                 dp._base64_body = False
 
-            ei = self._extra_info_ids.get(r_id, None)
-            if ei:
-                dp._requestExtraInfo = ei.get('request', None)
-                dp._responseExtraInfo = ei.get('response', None)
-
-            self._caught.put(dp)
+        r = self._extra_info_ids.get(kwargs['requestId'], None)
+        if r:
+            obj = r.get('obj', None)
+            if obj is False or (isinstance(obj, DataPacket) and not self._extra_info_ids.get('request')):
+                self._extra_info_ids.pop(kwargs['requestId'], None)
+            elif isinstance(obj, DataPacket) and self._extra_info_ids.get('response'):
+                response = r.get('response')
+                obj._requestExtraInfo = r['request']
+                obj._responseExtraInfo = response
+                self._extra_info_ids.pop(kwargs['requestId'], None)
 
         self._request_ids.pop(r_id, None)
-        self._extra_info_ids.pop(r_id, None)
+
+        if dp:
+            self._caught.put(dp)
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
@@ -257,14 +275,23 @@ class NetworkListener(object):
         if dp:
             dp.errorText = kwargs['errorText']
             dp._resource_type = kwargs['type']
-            ei = self._extra_info_ids.get(r_id, None)
-            if ei:
-                dp._requestExtraInfo = ei.get('request', None)
-                dp._responseExtraInfo = ei.get('response', None)
-            self._caught.put(dp)
+
+        r = self._extra_info_ids.get(kwargs['requestId'], None)
+        if r:
+            obj = r.get('obj', None)
+            if obj is False and r.get('response'):
+                self._extra_info_ids.pop(kwargs['requestId'], None)
+            elif isinstance(obj, DataPacket):
+                response = r.get('response')
+                if response:
+                    obj._requestExtraInfo = r['request']
+                    obj._responseExtraInfo = response
+                    self._extra_info_ids.pop(kwargs['requestId'], None)
 
         self._request_ids.pop(r_id, None)
-        self._extra_info_ids.pop(r_id, None)
+
+        if dp:
+            self._caught.put(dp)
 
 
 class DataPacket(object):
@@ -297,6 +324,14 @@ class DataPacket(object):
         return f'<DataPacket target={t} url="{self.url}">'
 
     @property
+    def _request_extra_info(self):
+        return self._requestExtraInfo
+
+    @property
+    def _response_extra_info(self):
+        return self._responseExtraInfo
+
+    @property
     def url(self):
         return self.request.url
 
@@ -315,23 +350,45 @@ class DataPacket(object):
     @property
     def request(self):
         if self._request is None:
-            self._request = Request(self._raw_request['request'], self._raw_post_data, self._requestExtraInfo)
+            self._request = Request(self, self._raw_request['request'], self._raw_post_data)
         return self._request
 
     @property
     def response(self):
         if self._response is None:
-            self._response = Response(self._raw_response, self._raw_body, self._base64_body, self._responseExtraInfo)
+            self._response = Response(self, self._raw_response, self._raw_body, self._base64_body)
         return self._response
+
+    def wait_extra_info(self, timeout=None):
+        """等待额外的信息加载完成
+        :param timeout: 超时时间，None为无限等待
+        :return: 是否等待成功
+        """
+        if self._raw_request['redirectHasExtraInfo'] is False:
+            return True
+
+        if timeout is None:
+            while self._responseExtraInfo is None:
+                sleep(.1)
+            return True
+
+        else:
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
+                if self._responseExtraInfo is not None:
+                    return True
+                sleep(.1)
+            else:
+                return False
 
 
 class Request(object):
-    def __init__(self, raw_request, post_data, extra_info):
+    def __init__(self, data_packet, raw_request, post_data):
+        self._data_packet = data_packet
         self._request = raw_request
         self._raw_post_data = post_data
         self._postData = None
         self._headers = None
-        self.extra_info = RequestExtraInfo(extra_info or {})
 
     def __getattr__(self, item):
         return self._request.get(item, None)
@@ -359,15 +416,19 @@ class Request(object):
                 self._postData = postData
         return self._postData
 
+    @property
+    def extra_info(self):
+        return RequestExtraInfo(self._data_packet._request_extra_info or {})
+
 
 class Response(object):
-    def __init__(self, raw_response, raw_body, base64_body, extra_info):
+    def __init__(self, data_packet, raw_response, raw_body, base64_body):
+        self._data_packet = data_packet
         self._response = raw_response
         self._raw_body = raw_body
         self._is_base64_body = base64_body
         self._body = None
         self._headers = None
-        self.extra_info = ResponseExtraInfo(extra_info or {})
 
     def __getattr__(self, item):
         return self._response.get(item, None)
@@ -399,10 +460,19 @@ class Response(object):
 
         return self._body
 
+    @property
+    def extra_info(self):
+        return ResponseExtraInfo(self._data_packet._response_extra_info or {})
+
 
 class ExtraInfo(object):
     def __init__(self, extra_info):
         self._extra_info = extra_info
+
+    @property
+    def all_info(self):
+        """以dict形式返回所有额外信息"""
+        return self._extra_info
 
     def __getattr__(self, item):
         return self._extra_info.get(item, None)

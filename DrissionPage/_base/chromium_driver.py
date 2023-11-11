@@ -97,7 +97,6 @@ class ChromiumDriver(object):
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""
         while not self._stopped.is_set():
-            print('收')
             try:
                 # self._ws.settimeout(1)
                 msg_json = self._ws.recv()
