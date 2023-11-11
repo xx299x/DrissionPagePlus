@@ -3,9 +3,10 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from time import sleep
+from time import sleep, perf_counter
 
 from .chromium_driver import BrowserDriver, ChromiumDriver
+from .._commons.tools import stop_process_on_port
 from .._units.download_manager import DownloadManager
 
 
@@ -151,8 +152,12 @@ class Browser(object):
         """
         return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
 
-    def quit(self):
-        """关闭浏览器"""
+    def quit(self, timeout=5, force=True):
+        """关闭浏览器
+        :param timeout: 等待浏览器关闭超时时间
+        :param force: 关闭超时是否强制终止进程
+        :return: None
+        """
         self.run_cdp('Browser.close')
         self.driver.stop()
 
@@ -161,11 +166,18 @@ class Browser(object):
             from platform import system
             txt = f'tasklist | findstr {self.process_id}' if system().lower() == 'windows' \
                 else f'ps -ef | grep  {self.process_id}'
-            while True:
+            end_time = perf_counter() + timeout
+            while perf_counter() < end_time:
                 p = popen(txt)
                 if f'  {self.process_id} ' not in p.read():
-                    break
+                    return
                 sleep(.2)
+
+        if force:
+            ip, port = self.address.split(':')
+            if ip not in ('127.0.0.1', 'localhost'):
+                return
+            stop_process_on_port(port)
 
     def _on_quit(self):
         Browser.BROWSERS.pop(self.id, None)

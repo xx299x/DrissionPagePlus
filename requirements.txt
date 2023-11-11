@@ -6,3 +6,4 @@ FlowViewer>=0.3.0
 websocket-client
 click
 tldextract
+psutil

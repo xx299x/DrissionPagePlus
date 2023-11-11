@@ -26,7 +26,8 @@ setup(
         'FlowViewer>=0.3.0',
         'websocket-client',
         'click',
-        'tldextract'
+        'tldextract',
+        'psutil'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",

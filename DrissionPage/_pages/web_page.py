@@ -296,13 +296,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """
         return tab_id if isinstance(tab_id, WebPageTab) else WebPageTab(self, tab_id or self.tab_id)
 
-    def new_tab(self, url=None, switch_to=False):
-        """新建一个标签页,该标签页在最后面
+    def new_tab(self, url=None, new_window=False, background=False, new_context=False):
+        """新建一个标签页
         :param url: 新标签页跳转到的网址
-        :param switch_to: 新建标签页后是否把焦点移过去
-        :return: switch_to为False时返回新标签页对象，否则返回当前对象，
+        :param new_window: 是否在新窗口打开标签页
+        :param background: 是否不激活新标签页，如new_window为True则无效
+        :param new_context: 是否创建新的上下文
+        :return: 新标签页对象
         """
-        return self if switch_to else WebPageTab(self, self._new_tab(url, switch_to))
+        tab = WebPageTab(self, tab_id=self._new_tab(new_window, background, new_context))
+        if url:
+            tab.get(url)
+        return tab
 
     def close_driver(self):
         """关闭driver及浏览器"""
@@ -340,14 +345,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
                                                            relative=relative)
 
-    def quit(self):
-        """关闭浏览器，关闭session"""
+    def quit(self, timeout=5, force=True):
+        """关闭浏览器和Session
+        :param timeout: 等待浏览器关闭超时时间
+        :param force: 关闭超时是否强制终止进程
+        :return: None
+        """
         if self._has_session:
             self._session.close()
             self._session = None
             self._response = None
             self._has_session = None
         if self._has_driver:
-            super(SessionPage, self).quit()
+            super(SessionPage, self).quit(timeout, force)
             self._driver = None
             self._has_driver = None

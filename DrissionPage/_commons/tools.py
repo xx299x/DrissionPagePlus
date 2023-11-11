@@ -9,6 +9,8 @@ from re import search, sub
 from shutil import rmtree
 from time import perf_counter, sleep
 
+from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
+
 
 def get_usable_path(path, is_file=True, parents=True):
     """检查文件或文件夹是否有重名，并返回可以使用的路径
@@ -216,3 +218,23 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
         raise TimeoutError('等待超时')
     else:
         return False
+
+
+def stop_process_on_port(port):
+    """强制关闭某个端口内的进程
+    :param port: 端口号
+    :return: None
+    """
+    for proc in process_iter(['pid', 'connections']):
+        try:
+            connections = proc.connections()
+        except AccessDenied:
+            continue
+        for conn in connections:
+            if conn.laddr.port == int(port):
+                try:
+                    proc.terminate()
+                except (NoSuchProcess, AccessDenied, ZombieProcess):
+                    pass
+                except Exception as e:
+                    print(f"{proc.pid} {port}: {e}")

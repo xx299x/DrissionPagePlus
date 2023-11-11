@@ -157,9 +157,21 @@ class ChromiumPage(ChromiumBase):
         :param new_context: 是否创建新的上下文
         :return: 新标签页对象
         """
+        tab = ChromiumTab(self, tab_id=self._new_tab(new_window, background, new_context))
+        if url:
+            tab.get(url)
+        return tab
+
+    def _new_tab(self, new_window=False, background=False, new_context=False):
+        """新建一个标签页
+        :param new_window: 是否在新窗口打开标签页
+        :param background: 是否不激活新标签页，如new_window为True则无效
+        :param new_context: 是否创建新的上下文
+        :return: 新标签页对象
+        """
         bid = None
         if new_context:
-            bid = self.browser.run_cdp('Target.createBrowserContext', **kwargs)['browserContextId']
+            bid = self.browser.run_cdp('Target.createBrowserContext')['browserContextId']
 
         kwargs = {'url': ''}
         if new_window:
@@ -169,11 +181,7 @@ class ChromiumPage(ChromiumBase):
         if bid:
             kwargs['browserContextId'] = bid
 
-        tid = self.run_cdp('Target.createTarget', **kwargs)['targetId']
-        tab = ChromiumTab(self, tab_id=tid)
-        if url:
-            tab.get(url)
-        return tab
+        return self.run_cdp('Target.createTarget', **kwargs)['targetId']
 
     def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
@@ -214,9 +222,13 @@ class ChromiumPage(ChromiumBase):
         """
         self.close_tabs(tabs_or_ids, True)
 
-    def quit(self):
-        """关闭浏览器"""
-        self.browser.quit()
+    def quit(self, timeout=5, force=True):
+        """关闭浏览器
+        :param timeout: 等待浏览器关闭超时时间
+        :param force: 关闭超时是否强制终止进程
+        :return: None
+        """
+        self.browser.quit(timeout, force)
 
 
 def get_rename(original, rename):
