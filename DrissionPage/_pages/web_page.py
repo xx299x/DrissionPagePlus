@@ -314,7 +314,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._has_driver:
             self.change_mode('s')
             try:
-                self.driver.call_method('Browser.close')
+                self.driver.run('Browser.close')
             except Exception:
                 pass
             self._driver.stop()

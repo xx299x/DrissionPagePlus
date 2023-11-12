@@ -78,7 +78,7 @@ class NetworkListener(object):
             return
 
         self._driver = ChromiumDriver(self._page.tab_id, 'page', self._page.address)
-        self._driver.call_method('Network.enable')
+        self._driver.run('Network.enable')
 
         self.listening = True
         self._request_ids = {}
@@ -158,10 +158,10 @@ class NetworkListener(object):
         :return: None
         """
         if self.listening:
-            self._driver.set_listener('Network.requestWillBeSent', None)
-            self._driver.set_listener('Network.responseReceived', None)
-            self._driver.set_listener('Network.loadingFinished', None)
-            self._driver.set_listener('Network.loadingFailed', None)
+            self._driver.set_callback('Network.requestWillBeSent', None)
+            self._driver.set_callback('Network.responseReceived', None)
+            self._driver.set_callback('Network.loadingFinished', None)
+            self._driver.set_callback('Network.loadingFailed', None)
             self.listening = False
         if clear:
             self.clear()
@@ -181,12 +181,12 @@ class NetworkListener(object):
 
     def _set_callback(self):
         """设置监听请求的回调函数"""
-        self._driver.set_listener('Network.requestWillBeSent', self._requestWillBeSent)
-        self._driver.set_listener('Network.requestWillBeSentExtraInfo', self._requestWillBeSentExtraInfo)
-        self._driver.set_listener('Network.responseReceived', self._response_received)
-        self._driver.set_listener('Network.responseReceivedExtraInfo', self._responseReceivedExtraInfo)
-        self._driver.set_listener('Network.loadingFinished', self._loading_finished)
-        self._driver.set_listener('Network.loadingFailed', self._loading_failed)
+        self._driver.set_callback('Network.requestWillBeSent', self._requestWillBeSent)
+        self._driver.set_callback('Network.requestWillBeSentExtraInfo', self._requestWillBeSentExtraInfo)
+        self._driver.set_callback('Network.responseReceived', self._response_received)
+        self._driver.set_callback('Network.responseReceivedExtraInfo', self._responseReceivedExtraInfo)
+        self._driver.set_callback('Network.loadingFinished', self._loading_finished)
+        self._driver.set_callback('Network.loadingFailed', self._loading_failed)
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
@@ -197,7 +197,7 @@ class NetworkListener(object):
                 p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                    p._raw_post_data = self._driver.call_method('Network.getRequestPostData', requestId=rid)['postData']
+                    p._raw_post_data = self._driver.run('Network.getRequestPostData', requestId=rid)['postData']
 
         else:
             rid = kwargs['requestId']
@@ -208,8 +208,8 @@ class NetworkListener(object):
                     p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                     p._raw_request = kwargs
                     if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                        p._raw_post_data = self._driver.call_method('Network.getRequestPostData',
-                                                                    requestId=rid)['postData']
+                        p._raw_post_data = self._driver.run('Network.getRequestPostData',
+                                                            requestId=rid)['postData']
                     break
 
         self._extra_info_ids.setdefault(kwargs['requestId'], {})['obj'] = p if p else False
@@ -244,7 +244,7 @@ class NetworkListener(object):
         r_id = kwargs['requestId']
         dp = self._request_ids.get(r_id)
         if dp:
-            r = self._driver.call_method('Network.getResponseBody', requestId=r_id)
+            r = self._driver.run('Network.getResponseBody', requestId=r_id)
             if 'body' in r:
                 dp._raw_body = r['body']
                 dp._base64_body = r['base64Encoded']
@@ -364,9 +364,6 @@ class DataPacket(object):
         :param timeout: 超时时间，None为无限等待
         :return: 是否等待成功
         """
-        if self._raw_request['redirectHasExtraInfo'] is False:
-            return True
-
         if timeout is None:
             while self._responseExtraInfo is None:
                 sleep(.1)

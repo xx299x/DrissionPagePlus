@@ -100,13 +100,17 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         self._driver = self.browser._get_driver(tab_id)
-        self._alert = Alert()
-        self._driver.set_listener('Page.javascriptDialogOpening', self._on_alert_open)
-        self._driver.set_listener('Page.javascriptDialogClosed', self._on_alert_close)
+        if self._driver.run('Target.getTargetInfo',
+                            targetId=self._target_id)['targetInfo']['url'] == 'chrome://privacy-sandbox-dialog/notice':
+            self._driver = close_privacy_dialog(self)
 
-        self._driver.call_method('DOM.enable')
-        self._driver.call_method('Page.enable')
-        self._driver.call_method('Emulation.setFocusEmulationEnabled', enabled=True)
+        self._alert = Alert()
+        self._driver.set_callback('Page.javascriptDialogOpening', self._on_alert_open)
+        self._driver.set_callback('Page.javascriptDialogClosed', self._on_alert_close)
+
+        self._driver.run('DOM.enable')
+        self._driver.run('Page.enable')
+        self._driver.run('Emulation.setFocusEmulationEnabled', enabled=True)
 
         r = self.run_cdp('Page.getFrameTree')
         for i in findall(r"'id': '(.*?)'", str(r)):
@@ -114,13 +118,13 @@ class ChromiumBase(BasePage):
         if not hasattr(self, '_frame_id'):
             self._frame_id = r['frameTree']['frame']['id']
 
-        self._driver.set_listener('Page.frameStartedLoading', self._onFrameStartedLoading)
-        self._driver.set_listener('Page.frameNavigated', self._onFrameNavigated)
-        self._driver.set_listener('Page.domContentEventFired', self._onDomContentEventFired)
-        self._driver.set_listener('Page.loadEventFired', self._onLoadEventFired)
-        self._driver.set_listener('Page.frameStoppedLoading', self._onFrameStoppedLoading)
-        self._driver.set_listener('Page.frameAttached', self._onFrameAttached)
-        self._driver.set_listener('Page.frameDetached', self._onFrameDetached)
+        self._driver.set_callback('Page.frameStartedLoading', self._onFrameStartedLoading)
+        self._driver.set_callback('Page.frameNavigated', self._onFrameNavigated)
+        self._driver.set_callback('Page.domContentEventFired', self._onDomContentEventFired)
+        self._driver.set_callback('Page.loadEventFired', self._onLoadEventFired)
+        self._driver.set_callback('Page.frameStoppedLoading', self._onFrameStoppedLoading)
+        self._driver.set_callback('Page.frameAttached', self._onFrameAttached)
+        self._driver.set_callback('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self):
         if self._is_reading:
@@ -231,7 +235,7 @@ class ChromiumBase(BasePage):
             files = self._upload_list if kwargs['mode'] == 'selectMultiple' else self._upload_list[:1]
             self.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=kwargs['backendNodeId'])
 
-            self.driver.set_listener('Page.fileChooserOpened', None)
+            self.driver.set_callback('Page.fileChooserOpened', None)
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
@@ -416,7 +420,7 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        r = self.driver.call_method(cmd, **cmd_args)
+        r = self.driver.run(cmd, **cmd_args)
         if ERROR not in r:
             return r
 
@@ -822,9 +826,9 @@ class ChromiumBase(BasePage):
 
         res_text = self._alert.text
         if self._alert.type == 'prompt':
-            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept, promptText=send)
+            self.driver.run('Page.handleJavaScriptDialog', accept=accept, promptText=send)
         else:
-            self.driver.call_method('Page.handleJavaScriptDialog', accept=accept)
+            self.driver.run('Page.handleJavaScriptDialog', accept=accept)
         return res_text
 
     def _on_alert_close(self, **kwargs):
@@ -1032,3 +1036,35 @@ class Alert(object):
         self.defaultPrompt = None
         self.response_accept = None
         self.response_text = None
+
+
+def close_privacy_dialog(page):
+    """关闭隐私声明弹窗
+    :param page: ChromiumBase对象
+    :return: ChromiumDriver对象
+    """
+    tid = page.tab_id
+    page._driver.run('Runtime.enable')
+    page._driver.run('DOM.enable')
+    page._driver.run('DOM.getDocument')
+    sid = page._driver.run('DOM.performSearch', query='//*[name()="privacy-sandbox-notice-dialog-app"]',
+                           includeUserAgentShadowDOM=True)['searchId']
+    r = page._driver.run('DOM.getSearchResults', searchId=sid, fromIndex=0, toIndex=1)['nodeIds'][0]
+    while True:
+        try:
+            r = page._driver.run('DOM.describeNode', nodeId=r)['node']['shadowRoots'][0]['backendNodeId']
+            break
+        except KeyError:
+            pass
+    page._driver.run('DOM.discardSearchResults', searchId=sid)
+    r = page._driver.run('DOM.resolveNode', backendNodeId=r)['object']['objectId']
+    r = page._driver.run('Runtime.callFunctionOn', objectId=r,
+                         functionDeclaration='function()'
+                                             '{return this.getElementById("ackButton");}')['result']['objectId']
+    page._driver.run('Runtime.callFunctionOn', objectId=r, functionDeclaration='function(){return this.click();}')
+    while True:
+        new_tid = page.browser.tabs[0]
+        if new_tid != tid:
+            break
+        sleep(.1)
+    return page.browser._get_driver(new_tid)

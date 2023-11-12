@@ -102,7 +102,7 @@ class ChromiumBaseSetter(object):
         :return: None
         """
         if not self._page._upload_list:
-            self._page.driver.set_listener('Page.fileChooserOpened', self._page._onFileChooserOpened)
+            self._page.driver.set_callback('Page.fileChooserOpened', self._page._onFileChooserOpened)
             self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
 
         if isinstance(files, str):
@@ -164,12 +164,6 @@ class TabSetter(ChromiumBaseSetter):
 
 
 class ChromiumPageSetter(TabSetter):
-    def main_tab(self, tab_id=None):
-        """设置主tab
-        :param tab_id: 标签页id，不传入则设置当前tab
-        :return: None
-        """
-        self._page._main_tab = tab_id or self._page.tab_id
 
     def tab_to_front(self, tab_or_id=None):
         """激活标签页使其处于最前面

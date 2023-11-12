@@ -27,8 +27,8 @@ class DownloadManager(object):
         self._tab_missions = {}  # {tab_id: DownloadMission}
         self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
-        self._browser.driver.set_listener('Browser.downloadProgress', self._onDownloadProgress)
-        self._browser.driver.set_listener('Browser.downloadWillBegin', self._onDownloadWillBegin)
+        self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
+        self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
         self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
                               behavior='allowAndName', eventsEnabled=True)
 

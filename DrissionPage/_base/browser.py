@@ -51,8 +51,8 @@ class Browser(object):
                 break
 
         self.run_cdp('Target.setDiscoverTargets', discover=True)
-        self._driver.set_listener('Target.targetDestroyed', self._onTargetDestroyed)
-        self._driver.set_listener('Target.targetCreated', self._onTargetCreated)
+        self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)
+        self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
 
     def _get_driver(self, tab_id):
         """获取对应tab id的ChromiumDriver
@@ -70,7 +70,8 @@ class Browser(object):
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
         tab_id = kwargs['targetId']
-        self._dl_mgr.clear_tab_info(tab_id)
+        if hasattr(self, '_dl_mgr'):
+            self._dl_mgr.clear_tab_info(tab_id)
         for key in [k for k, i in self._frames.items() if i == tab_id]:
             self._frames.pop(key, None)
         self._drivers.pop(tab_id, None)
@@ -87,7 +88,7 @@ class Browser(object):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        return self._driver.call_method(cmd, **cmd_args)
+        return self._driver.run(cmd, **cmd_args)
 
     @property
     def driver(self):

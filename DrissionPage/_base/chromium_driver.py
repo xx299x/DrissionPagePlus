@@ -139,15 +139,15 @@ class ChromiumDriver(object):
 
             function = self.event_handlers.get(event['method'])
             if function:
-                if self._debug:
-                    print(f'开始执行 {function.__name__}')
+                # if self._debug:
+                #     print(f'开始执行 {function.__name__}')
                 function(**event['params'])
-                if self._debug:
-                    print(f'执行 {function.__name__}完毕')
+                # if self._debug:
+                #     print(f'执行 {function.__name__}完毕')
 
             self.event_queue.task_done()
 
-    def call_method(self, _method, **kwargs):
+    def run(self, _method, **kwargs):
         """执行cdp方法
         :param _method: cdp方法名
         :param args: cdp参数
@@ -205,7 +205,7 @@ class ChromiumDriver(object):
         self.event_queue.queue.clear()
         return True
 
-    def set_listener(self, event, callback):
+    def set_callback(self, event, callback):
         """绑定cdp event和回调方法
         :param event: cdp event
         :param callback: 绑定到cdp event的回调方法

@@ -35,7 +35,7 @@ class Screencast(object):
             raise ValueError('save_path必须设置。')
         clean_folder(self._path)
         if self._mode.startswith('frugal'):
-            self._page.driver.set_listener('Page.screencastFrame', self._onScreencastFrame)
+            self._page.driver.set_callback('Page.screencastFrame', self._onScreencastFrame)
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
 
         elif not self._mode.startswith('js'):
@@ -92,7 +92,7 @@ class Screencast(object):
             return path
 
         if self._mode.startswith('frugal'):
-            self._page.driver.set_listener('Page.screencastFrame', None)
+            self._page.driver.set_callback('Page.screencastFrame', None)
             self._page.run_cdp('Page.stopScreencast')
         else:
             self._enable = False

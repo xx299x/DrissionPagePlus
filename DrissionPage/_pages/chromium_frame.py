@@ -90,7 +90,7 @@ class ChromiumFrame(ChromiumBase):
         except:
             self.browser.driver.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
-        self._driver.set_listener('Inspector.detached', self._onInspectorDetached)
+        self._driver.set_callback('Inspector.detached', self._onInspectorDetached)
 
     def _reload(self):
         """重新获取document"""
