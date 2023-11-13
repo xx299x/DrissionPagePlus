@@ -17,19 +17,21 @@ class Clicker(object):
         """
         self._ele = ele
 
-    def __call__(self, by_js=False, timeout=1):
+    def __call__(self, by_js=False, timeout=2, wait_stop=True):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
-        :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
+        :param timeout: 模拟点击的超时时间，等待元素可见、可用、进入视口
+        :param wait_stop: 是否等待元素运动结束再执行点击
         :return: 是否点击成功
         """
-        return self.left(by_js, timeout)
+        return self.left(by_js, timeout, wait_stop)
 
-    def left(self, by_js=False, timeout=2):
+    def left(self, by_js=False, timeout=2, wait_stop=True):
         """点击元素，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
-        :param timeout: 模拟点击的超时时间，等待元素可见、不被遮挡、进入视口
+        :param timeout: 模拟点击的超时时间，等待元素可见、可用、进入视口
+        :param wait_stop: 是否等待元素运动结束再执行点击
         :return: 是否点击成功
         """
         if not by_js:  # 模拟点击
@@ -53,7 +55,8 @@ class Clicker(object):
                     rect = self._ele.states.has_rect
                     sleep(.001)
 
-                self._ele.wait.stop_moving(timeout=end_time - perf_counter())
+                if wait_stop:
+                    self._ele.wait.stop_moving(timeout=end_time - perf_counter())
                 if rect:
                     self._ele.scroll.to_see()
                     rect = self._ele.locations.rect

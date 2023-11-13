@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from time import sleep
+from time import sleep, perf_counter
 
 from .._commons.keys import modifierBit, keyDescriptionForString
 from .._commons.web import location_in_viewport
@@ -22,12 +22,13 @@ class ActionChains:
         self.curr_x = 0  # 视口坐标
         self.curr_y = 0
 
-    def move_to(self, ele_or_loc, offset_x=0, offset_y=0):
+    def move_to(self, ele_or_loc, offset_x=0, offset_y=0, duration=.5):
         """鼠标移动到元素中点，或页面上的某个绝对坐标。可设置偏移量
         当带偏移量时，偏移量相对于元素左上角坐标
         :param ele_or_loc: 元素对象、绝对坐标或文本定位符，坐标为tuple(int, int)形式
         :param offset_x: 偏移量x
         :param offset_y: 偏移量y
+        :param duration: 拖动用时，传入0即瞬间到达
         :return: self
         """
         is_loc = False
@@ -50,7 +51,7 @@ class ActionChains:
             clientHeight = self.page.run_js('return document.body.clientHeight;')
             self.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
 
-        # # 这样设计为了应付那些不随滚动条滚动的元素
+        # 这样设计为了应付那些不随滚动条滚动的元素
         if is_loc:
             cx, cy = location_to_client(self.page, lx, ly)
         else:
@@ -59,21 +60,35 @@ class ActionChains:
             cx = x + offset_x
             cy = y + offset_y
 
-        self._dr.run('Input.dispatchMouseEvent', type='mouseMoved', x=cx, y=cy, modifiers=self.modifier)
-        self.curr_x = cx
-        self.curr_y = cy
+        ox = cx - self.curr_x
+        oy = cy - self.curr_y
+        self.move(ox, oy, duration)
         return self
 
-    def move(self, offset_x=0, offset_y=0):
+    def move(self, offset_x=0, offset_y=0, duration=.5):
         """鼠标相对当前位置移动若干位置
         :param offset_x: 偏移量x
         :param offset_y: 偏移量y
+        :param duration: 拖动用时，传入0即瞬间到达
         :return: self
         """
-        self.curr_x += offset_x
-        self.curr_y += offset_y
-        self._dr.run('Input.dispatchMouseEvent', type='mouseMoved', x=self.curr_x, y=self.curr_y,
-                     modifiers=self.modifier)
+        duration = .02 if duration < .02 else duration
+        num = int(duration * 50)
+
+        points = [(self.curr_x + i * (offset_x / num),
+                   self.curr_y + i * (offset_y / num)) for i in range(1, num)]
+        points.append((self.curr_x + offset_x, self.curr_y + offset_y))
+
+        for x, y in points:
+            t = perf_counter()
+            self.curr_x = x
+            self.curr_y = y
+            self._dr.run('Input.dispatchMouseEvent', type='mouseMoved', x=self.curr_x, y=self.curr_y,
+                         modifiers=self.modifier)
+            ss = .02 - perf_counter() + t
+            if ss > 0:
+                sleep(ss)
+
         return self
 
     def click(self, on_ele=None):
@@ -122,7 +137,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele)
+            self.move_to(on_ele, duration=0)
         self._release('left')
         return self
 
@@ -140,7 +155,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele)
+            self.move_to(on_ele, duration=0)
         self._release('right')
         return self
 
@@ -158,7 +173,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele)
+            self.move_to(on_ele, duration=0)
         self._release('middle')
         return self
 
@@ -170,7 +185,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele)
+            self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mousePressed', button=button, clickCount=count,
                      x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
@@ -192,7 +207,7 @@ class ActionChains:
         :return: self
         """
         if on_ele:
-            self.move_to(on_ele)
+            self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mouseWheel', x=self.curr_x, y=self.curr_y,
                      deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier)
         return self

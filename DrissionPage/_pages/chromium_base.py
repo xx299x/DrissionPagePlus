@@ -84,7 +84,13 @@ class ChromiumBase(BasePage):
         self._scroll = None
 
         if not tab_id:
-            tab_id = self.browser.tabs[0]
+            tabs = self.browser.driver.get(f'http://{self.address}/json').json()
+            tabs = [(i['id'], i['url']) for i in tabs if i['type'] == 'page' and not i['url'].startswith('devtools://')]
+            if tabs[0][1] == 'chrome://privacy-sandbox-dialog/notice' and len(tabs) > 1:
+                tab_id = tabs[1][0]
+                close_privacy_dialog(self, tabs[0][0])
+            else:
+                tab_id = tabs[0][0]
 
         self._driver_init(tab_id)
         if self.ready_state == 'complete' and self._ready_state is None:
@@ -100,9 +106,6 @@ class ChromiumBase(BasePage):
         """
         self._is_loading = True
         self._driver = self.browser._get_driver(tab_id)
-        if self._driver.run('Target.getTargetInfo',
-                            targetId=self._target_id)['targetInfo']['url'] == 'chrome://privacy-sandbox-dialog/notice':
-            self._driver = close_privacy_dialog(self)
 
         self._alert = Alert()
         self._driver.set_callback('Page.javascriptDialogOpening', self._on_alert_open)
@@ -1038,33 +1041,33 @@ class Alert(object):
         self.response_text = None
 
 
-def close_privacy_dialog(page):
+def close_privacy_dialog(page, tid):
     """关闭隐私声明弹窗
     :param page: ChromiumBase对象
+    :param tid: tab id
     :return: ChromiumDriver对象
     """
-    tid = page.tab_id
-    page._driver.run('Runtime.enable')
-    page._driver.run('DOM.enable')
-    page._driver.run('DOM.getDocument')
-    sid = page._driver.run('DOM.performSearch', query='//*[name()="privacy-sandbox-notice-dialog-app"]',
-                           includeUserAgentShadowDOM=True)['searchId']
-    r = page._driver.run('DOM.getSearchResults', searchId=sid, fromIndex=0, toIndex=1)['nodeIds'][0]
-    while True:
-        try:
-            r = page._driver.run('DOM.describeNode', nodeId=r)['node']['shadowRoots'][0]['backendNodeId']
-            break
-        except KeyError:
-            pass
-    page._driver.run('DOM.discardSearchResults', searchId=sid)
-    r = page._driver.run('DOM.resolveNode', backendNodeId=r)['object']['objectId']
-    r = page._driver.run('Runtime.callFunctionOn', objectId=r,
-                         functionDeclaration='function()'
-                                             '{return this.getElementById("ackButton");}')['result']['objectId']
-    page._driver.run('Runtime.callFunctionOn', objectId=r, functionDeclaration='function(){return this.click();}')
-    while True:
-        new_tid = page.browser.tabs[0]
-        if new_tid != tid:
-            break
-        sleep(.1)
-    return page.browser._get_driver(new_tid)
+    try:
+        driver = page.browser._get_driver(tid)
+        driver.run('Runtime.enable')
+        driver.run('DOM.enable')
+        driver.run('DOM.getDocument')
+        sid = driver.run('DOM.performSearch', query='//*[name()="privacy-sandbox-notice-dialog-app"]',
+                         includeUserAgentShadowDOM=True)['searchId']
+        r = driver.run('DOM.getSearchResults', searchId=sid, fromIndex=0, toIndex=1)['nodeIds'][0]
+        end_time = perf_counter() + 3
+        while perf_counter() < end_time:
+            try:
+                r = driver.run('DOM.describeNode', nodeId=r)['node']['shadowRoots'][0]['backendNodeId']
+                break
+            except KeyError:
+                pass
+        driver.run('DOM.discardSearchResults', searchId=sid)
+        r = driver.run('DOM.resolveNode', backendNodeId=r)['object']['objectId']
+        r = driver.run('Runtime.callFunctionOn', objectId=r,
+                       functionDeclaration='function(){return this.getElementById("ackButton");}')['result']['objectId']
+        driver.run('Runtime.callFunctionOn', objectId=r, functionDeclaration='function(){return this.click();}')
+        driver.close()
+
+    except:
+        pass

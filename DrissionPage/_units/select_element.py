@@ -241,4 +241,4 @@ class SelectElement(object):
 
     def _dispatch_change(self):
         """触发修改动作"""
-        self._ele.run_js('this.dispatchEvent(new UIEvent("change"));')
+        self._ele.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')

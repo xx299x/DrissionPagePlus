@@ -666,41 +666,15 @@ class ChromiumElement(DrissionElement):
     def drag_to(self, ele_or_loc, duration=.5):
         """拖拽当前元素，目标为另一个元素或坐标元组(x, y)
         :param ele_or_loc: 另一个元素或坐标元组，坐标为元素中点的坐标
-        :param duration: 拖动用时，传入0即瞬间到j达
+        :param duration: 拖动用时，传入0即瞬间到达
         :return: None
         """
-        # x, y：目标点坐标
         if isinstance(ele_or_loc, ChromiumElement):
-            target_x, target_y = ele_or_loc.locations.midpoint
-        elif isinstance(ele_or_loc, (list, tuple)):
-            target_x, target_y = ele_or_loc
-        else:
+            ele_or_loc = ele_or_loc.locations.midpoint
+        elif not isinstance(ele_or_loc, (list, tuple)):
             raise TypeError('需要ChromiumElement对象或坐标。')
 
-        current_x, current_y = self.locations.midpoint
-        width = target_x - current_x
-        height = target_y - current_y
-
-        duration = .02 if duration < .02 else duration
-        num = int(duration * 50)
-
-        # 将要经过的点存入列表
-        points = [(int(current_x + i * (width / num)), int(current_y + i * (height / num))) for i in range(1, num)]
-        points.append((target_x, target_y))
-
-        from .._units.action_chains import ActionChains
-        actions = ActionChains(self.page)
-        actions.hold(self)
-
-        # 逐个访问要经过的点
-        for x, y in points:
-            t = perf_counter()
-            actions.move(x - current_x, y - current_y)
-            current_x, current_y = x, y
-            ss = .02 - perf_counter() + t
-            if ss > 0:
-                sleep(ss)
-        actions.release()
+        self.page.actions.hold(self).move_to(ele_or_loc, duration=duration).release()
 
     def _get_obj_id(self, node_id=None, backend_id=None):
         """根据传入node id或backend id获取js中的object id
