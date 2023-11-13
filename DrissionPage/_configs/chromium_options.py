@@ -21,6 +21,7 @@ class ChromiumOptions(object):
         self._user_data_path = None
         self._user = 'Default'
         self._prefs_to_del = []
+        self._headless = None
 
         if read_file is not False:
             ini_path = str(ini_path) if ini_path else None

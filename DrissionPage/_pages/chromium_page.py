@@ -63,13 +63,23 @@ class ChromiumPage(ChromiumBase):
 
     def _run_browser(self):
         """连接浏览器"""
-        connect_browser(self._driver_options)
+        is_exist = connect_browser(self._driver_options)
         ws = get(f'http://{self._driver_options.debugger_address}/json/version',
                  headers={'Connection': 'close'})
         if not ws:
             raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如有，须开放127.0.0.1地址。')
         ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
         self._browser = Browser(self._driver_options.debugger_address, ws, self)
+
+        print(is_exist, self._driver_options._headless, self._browser.run_cdp('Browser.getVersion')['userAgent'])
+        if (is_exist and self._driver_options._headless is False and
+                'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
+            print('aaa')
+            self._browser.quit(3)
+            connect_browser(self._driver_options)
+            ws = get(f'http://{self._driver_options.debugger_address}/json/version', headers={'Connection': 'close'})
+            ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
+            self._browser = Browser(self._driver_options.debugger_address, ws, self)
 
     def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""

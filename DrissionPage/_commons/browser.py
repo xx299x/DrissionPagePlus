@@ -19,7 +19,7 @@ from .tools import port_is_using
 def connect_browser(option):
     """连接或启动浏览器
     :param option: ChromiumOptions对象
-    :return: None
+    :return: 返回是否接管的浏览器
     """
     debugger_address = option.debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
     chrome_path = option.browser_path
@@ -27,13 +27,18 @@ def connect_browser(option):
     ip, port = debugger_address.split(':')
     if ip != '127.0.0.1' or port_is_using(ip, port) or option.is_existing_only:
         test_connect(ip, port)
-        return
+        option._headless = False
+        for i in option.arguments:
+            if i.startswith('--headless') and not i.endswith('=false'):
+                option._headless = True
+                break
+        return True
 
     # ----------创建浏览器进程----------
     args = get_launch_args(option)
     set_prefs(option)
     try:
-        debugger = _run_browser(port, chrome_path, args)
+        _run_browser(port, chrome_path, args)
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
@@ -43,10 +48,10 @@ def connect_browser(option):
         if not chrome_path:
             raise FileNotFoundError('无法找到chrome路径，请手动配置。')
 
-        debugger = _run_browser(port, chrome_path, args)
+        _run_browser(port, chrome_path, args)
 
     test_connect(ip, port)
-    return chrome_path, debugger
+    return False
 
 
 def get_launch_args(opt):
@@ -71,7 +76,6 @@ def get_launch_args(opt):
         elif i.startswith('--headless'):
             if i == '--headless=false':
                 headless = False
-                continue
             elif i == '--headless':
                 i = '--headless=new'
                 headless = True
@@ -89,13 +93,15 @@ def get_launch_args(opt):
     if not remote_allow:
         result.add('--remote-allow-origins=*')
 
-    if headless is not None and system().lower() == 'linux':
+    if headless is None and system().lower() == 'linux':
         from os import popen
         r = popen('systemctl list-units | grep graphical.target')
         if 'graphical.target' not in r.read():
+            headless = True
             result.add('--headless=new')
 
     result = list(result)
+    opt._headless = headless
 
     # ----------处理插件extensions-------------
     ext = opt.extensions
