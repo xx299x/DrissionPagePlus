@@ -71,10 +71,8 @@ class ChromiumPage(ChromiumBase):
         ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
         self._browser = Browser(self._driver_options.debugger_address, ws, self)
 
-        print(is_exist, self._driver_options._headless, self._browser.run_cdp('Browser.getVersion')['userAgent'])
         if (is_exist and self._driver_options._headless is False and
                 'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
-            print('aaa')
             self._browser.quit(3)
             connect_browser(self._driver_options)
             ws = get(f'http://{self._driver_options.debugger_address}/json/version', headers={'Connection': 'close'})

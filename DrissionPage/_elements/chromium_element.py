@@ -369,14 +369,11 @@ class ChromiumElement(DrissionElement):
         :param prop: 属性名
         :return: 属性值文本
         """
-        p = self.page.run_cdp('Runtime.getProperties', objectId=self._obj_id)['result']
-        for i in p:
-            if i['name'] == prop:
-                if 'value' not in i or 'value' not in i['value']:
-                    return None
-
-                value = i['value']['value']
-                return format_html(value) if isinstance(value, str) else value
+        try:
+            value = self.run_js(f'return this.{prop};')
+            return format_html(value) if isinstance(value, str) else value
+        except:
+            return None
 
     def run_js(self, script, *args, as_expr=False):
         """对本元素执行javascript代码

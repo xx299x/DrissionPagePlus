@@ -76,6 +76,7 @@ def get_launch_args(opt):
         elif i.startswith('--headless'):
             if i == '--headless=false':
                 headless = False
+                continue
             elif i == '--headless':
                 i = '--headless=new'
                 headless = True
