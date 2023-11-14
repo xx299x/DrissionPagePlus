@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from time import sleep
+from time import sleep, perf_counter
 
 from requests import get
 
@@ -214,7 +214,7 @@ class ChromiumPage(ChromiumBase):
         if others:
             tabs = all_tabs - tabs
 
-        end_len = len(all_tabs) - len(tabs)
+        end_len = len(set(all_tabs) - set(tabs))
         if end_len <= 0:
             self.quit()
             return
@@ -222,7 +222,8 @@ class ChromiumPage(ChromiumBase):
         for tab in tabs:
             self.browser.close_tab(tab)
             sleep(.2)
-        while self.tabs_count != end_len:
+        end_time = perf_counter() + 3
+        while self.tabs_count != end_len and perf_counter() < end_time:
             sleep(.1)
 
     def close_other_tabs(self, tabs_or_ids=None):

@@ -456,34 +456,38 @@ class ChromiumBase(BasePage):
         self.wait.load_complete()
         return self.run_cdp(cmd, **cmd_args)
 
-    def run_js(self, script, *args, as_expr=False):
+    def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
-        return run_js(self, script, as_expr, self.timeouts.script, args)
+        return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
 
-    def run_js_loaded(self, script, *args, as_expr=False):
+    def run_js_loaded(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码，执行前等待页面加载完毕
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
         self.wait.load_complete()
-        return run_js(self, script, as_expr, self.timeouts.script, args)
+        return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
 
-    def run_async_js(self, script, *args, as_expr=False):
+    def run_async_js(self, script, *args, as_expr=False, timeout=None):
         """以异步方式执行js代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: None
         """
         from threading import Thread
-        Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script, args)).start()
+        Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script if timeout is None else timeout,
+                                    args)).start()
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问url

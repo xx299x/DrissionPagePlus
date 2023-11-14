@@ -13,7 +13,7 @@ from .._units.ids import FrameIds
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLossError, ElementLossError, GetDocumentError
+from ..errors import ContextLossError, ElementLossError, GetDocumentError, TabClosedError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -67,7 +67,7 @@ class ChromiumFrame(ChromiumBase):
         return self.ele(loc_or_str, timeout)
 
     def __repr__(self):
-        attrs = self.frame_ele.attrs
+        attrs = self._frame_ele.attrs
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
@@ -238,7 +238,7 @@ class ChromiumFrame(ChromiumBase):
 
         try:
             self._frame_ele.attrs
-        except ElementLossError:
+        except (ElementLossError, TabClosedError):
             self._driver.stop()
         self._reload()
 
@@ -254,7 +254,7 @@ class ChromiumFrame(ChromiumBase):
 
             try:
                 self._frame_ele.attrs
-            except ElementLossError:
+            except (ElementLossError, TabClosedError):
                 self._driver.stop()
             self._reload()
 
@@ -431,17 +431,18 @@ class ChromiumFrame(ChromiumBase):
         """
         self.frame_ele.remove_attr(attr)
 
-    def run_js(self, script, *args, as_expr=False):
+    def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
         if script.startswith('this.scrollIntoView'):
-            return self.frame_ele.run_js(script, *args, as_expr=as_expr)
+            return self.frame_ele.run_js(script, args, as_expr=as_expr, timeout=timeout)
         else:
-            return self.doc_ele.run_js(script, *args, as_expr=as_expr)
+            return self.doc_ele.run_js(script, args, as_expr=as_expr, timeout=timeout)
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位

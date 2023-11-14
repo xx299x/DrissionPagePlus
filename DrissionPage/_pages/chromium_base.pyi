@@ -164,11 +164,11 @@ class ChromiumBase(BasePage):
     @property
     def has_alert(self) -> bool: ...
 
-    def run_js(self, script: str, *args: Any, as_expr: bool = False) -> Any: ...
+    def run_js(self, script: str, *args, as_expr: bool = False, timeout: float = None) -> Any: ...
 
-    def run_js_loaded(self, script: str, *args: Any, as_expr: bool = False) -> Any: ...
+    def run_js_loaded(self, script: str, *args, as_expr: bool = False, timeout: float = None) -> Any: ...
 
-    def run_async_js(self, script: str, *args: Any, as_expr: bool = False) -> None: ...
+    def run_async_js(self, script: str, *args, as_expr: bool = False, timeout: float = None) -> None: ...
 
     def get(self, url: str, show_errmsg: bool = False, retry: int = None,
             interval: float = None, timeout: float = None) -> Union[None, bool]: ...
@@ -215,23 +215,15 @@ class ChromiumBase(BasePage):
 
     def get_local_storage(self, item: str = None) -> Union[str, dict, None]: ...
 
-    def get_screenshot(self, path: [str, Path] = None, name: str = None,
-                       as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
-                       full_page: bool = False,
-                       left_top: Tuple[int, int] = None,
-                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
+    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
+                       as_base64: [bool, str] = None, full_page: bool = False,
+                       left_top: Tuple[int, int] = None, right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
 
-    def _get_screenshot(self, path: [str, Path] = None, name: str = None,
-                        as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
-                        full_page: bool = False,
-                        left_top: Tuple[int, int] = None,
-                        right_bottom: Tuple[int, int] = None,
-                        ele: ChromiumElement = None) -> Union[str, bytes]: ...
+    def _get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
+                        as_base64: [bool, str] = None, full_page: bool = False, left_top: Tuple[int, int] = None,
+                        right_bottom: Tuple[int, int] = None, ele: ChromiumElement = None) -> Union[str, bytes]: ...
 
-    def clear_cache(self,
-                    session_storage: bool = True,
-                    local_storage: bool = True,
-                    cache: bool = True,
+    def clear_cache(self, session_storage: bool = True, local_storage: bool = True, cache: bool = True,
                     cookies: bool = True) -> None: ...
 
     def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None) -> Union[str, False]: ...
@@ -240,11 +232,7 @@ class ChromiumBase(BasePage):
 
     def _on_alert_open(self, **kwargs): ...
 
-    def _d_connect(self,
-                   to_url: str,
-                   times: int = 0,
-                   interval: float = 1,
-                   show_errmsg: bool = False,
+    def _d_connect(self, to_url: str, times: int = 0, interval: float = 1, show_errmsg: bool = False,
                    timeout: float = None) -> Union[bool, None]: ...
 
 

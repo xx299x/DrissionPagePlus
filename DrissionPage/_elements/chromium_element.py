@@ -375,24 +375,27 @@ class ChromiumElement(DrissionElement):
         except:
             return None
 
-    def run_js(self, script, *args, as_expr=False):
+    def run_js(self, script, *args, as_expr=False, timeout=None):
         """对本元素执行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
-        return run_js(self, script, as_expr, self.page.timeouts.script, args)
+        return run_js(self, script, as_expr, self.page.timeouts.script if timeout is None else timeout, args)
 
-    def run_async_js(self, script, *args, as_expr=False):
+    def run_async_js(self, script, *args, as_expr=False, timeout=None):
         """以异步方式对本元素执行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: None
         """
         from threading import Thread
-        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args, True)).start()
+        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script if timeout is None else timeout,
+                                    args, True)).start()
 
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本
@@ -814,24 +817,27 @@ class ChromiumShadowRoot(BaseElement):
             self._states = ShadowRootStates(self)
         return self._states
 
-    def run_js(self, script, *args, as_expr=False):
+    def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
-        return run_js(self, script, as_expr, self.page.timeouts.script, args)
+        return run_js(self, script, as_expr, self.page.timeouts.script if timeout is None else timeout, args)
 
-    def run_async_js(self, script, *args, as_expr=False):
+    def run_async_js(self, script, *args, as_expr=False, timeout=None):
         """以异步方式执行js代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
+        :param timeout: js超时时间，为None则使用页面timeouts.script设置
         :return: None
         """
         from threading import Thread
-        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script, args)).start()
+        Thread(target=run_js, args=(self, script, as_expr,
+                                    self.page.timeouts.script if timeout is None else timeout, args)).start()
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
