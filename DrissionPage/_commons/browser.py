@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from json import load, dump
+from json import load, dump, JSONDecodeError
 from pathlib import Path
 from subprocess import Popen, DEVNULL
 from tempfile import gettempdir
@@ -105,7 +105,7 @@ def get_launch_args(opt):
     opt._headless = headless
 
     # ----------处理插件extensions-------------
-    ext = opt.extensions
+    ext = [str(Path(e).absolute()) for e in opt.extensions]
     if ext:
         ext = ','.join(set(ext))
         ext = f'--load-extension={ext}'
@@ -140,7 +140,10 @@ def set_prefs(opt):
             f.write('{}')
 
     with open(prefs_file, "r", encoding='utf-8') as f:
-        prefs_dict = load(f)
+        try:
+            prefs_dict = load(f)
+        except JSONDecodeError:
+            prefs_dict = {}
 
         for pref in prefs:
             value = prefs[pref]

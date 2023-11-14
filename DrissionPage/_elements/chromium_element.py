@@ -16,7 +16,7 @@ from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
 from .._units.element_states import ElementStates, ShadowRootStates
-from .._units.ids import Ids, ElementIds
+from .._units.ids import ShadowRootIds, ElementIds
 from .._units.locations import Locations
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
@@ -130,7 +130,7 @@ class ChromiumElement(DrissionElement):
     def size(self):
         """返回元素宽和高组成的元组"""
         border = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']['border']
-        return int(border[2] - border[0]), int(border[5] - border[1])
+        return border[2] - border[0], border[5] - border[1]
 
     @property
     def set(self):
@@ -772,7 +772,7 @@ class ChromiumShadowRoot(BaseElement):
             self._obj_id = obj_id
             self._node_id = self._get_node_id(obj_id)
             self._backend_id = self._get_backend_id(self._node_id)
-        self._ids = Ids(self)
+        self._ids = ShadowRootIds(self)
         self._states = None
 
     def __repr__(self):

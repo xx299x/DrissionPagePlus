@@ -9,7 +9,7 @@ from .._pages.chromium_frame import ChromiumFrame
 from .._elements.chromium_element import ChromiumElement, ChromiumShadowRoot
 
 
-class Ids(object):
+class ShadowRootIds(object):
     def __init__(self, ele: Union[ChromiumElement, ChromiumShadowRoot]):
         self._ele: Union[ChromiumElement, ChromiumShadowRoot] = ...
 
@@ -23,7 +23,7 @@ class Ids(object):
     def backend_id(self) -> str: ...
 
 
-class ElementIds(Ids):
+class ElementIds(ShadowRootIds):
     @property
     def doc_id(self) -> str: ...
 

@@ -129,6 +129,8 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def rect(self):
+        """返回保存窗口方位信息的对象"""
+        self.wait.load_complete()
         if self._rect is None:
             self._rect = TabRect(self)
         return self._rect

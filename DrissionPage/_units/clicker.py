@@ -73,7 +73,7 @@ class Clicker(object):
                 by_js = True
 
             elif can_click and (by_js is False or not self._ele.states.is_covered):
-                x = int(rect[1][0] - (rect[1][0] - rect[0][0]) / 2)
+                x = rect[1][0] - (rect[1][0] - rect[0][0]) / 2
                 y = rect[0][0] + 3
                 try:
                     r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,

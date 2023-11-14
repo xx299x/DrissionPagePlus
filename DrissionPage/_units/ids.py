@@ -5,7 +5,7 @@
 """
 
 
-class Ids(object):
+class ShadowRootIds(object):
     def __init__(self, ele):
         self._ele = ele
 
@@ -25,7 +25,7 @@ class Ids(object):
         return self._ele._backend_id
 
 
-class ElementIds(Ids):
+class ElementIds(ShadowRootIds):
     @property
     def doc_id(self):
         """返回所在document的object id"""

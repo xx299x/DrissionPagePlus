@@ -34,19 +34,19 @@ class Locations(object):
     def viewport_location(self):
         """返回元素左上角在视口中的坐标"""
         m = self._get_viewport_rect('border')
-        return int(m[0]), int(m[1])
+        return m[0], m[1]
 
     @property
     def viewport_midpoint(self):
         """返回元素中间点在视口中的坐标"""
         m = self._get_viewport_rect('border')
-        return int(m[0] + (m[2] - m[0]) // 2), int(m[3] + (m[5] - m[3]) // 2)
+        return m[0] + (m[2] - m[0]) // 2, m[3] + (m[5] - m[3]) // 2
 
     @property
     def viewport_click_point(self):
         """返回元素接受点击的点视口坐标"""
         m = self._get_viewport_rect('padding')
-        return int(self.viewport_midpoint[0]), int(m[1]) + 3
+        return self.viewport_midpoint[0], m[1] + 3
 
     @property
     def screen_location(self):
@@ -54,7 +54,7 @@ class Locations(object):
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_location
         pr = self._ele.page.run_js('return window.devicePixelRatio;')
-        return int((vx + ex) * pr), int((ey + vy) * pr)
+        return (vx + ex) * pr, (ey + vy) * pr
 
     @property
     def screen_midpoint(self):
@@ -62,7 +62,7 @@ class Locations(object):
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_midpoint
         pr = self._ele.page.run_js('return window.devicePixelRatio;')
-        return int((vx + ex) * pr), int((ey + vy) * pr)
+        return (vx + ex) * pr, (ey + vy) * pr
 
     @property
     def screen_click_point(self):
@@ -70,15 +70,15 @@ class Locations(object):
         vx, vy = self._ele.page.rect.viewport_location
         ex, ey = self.viewport_click_point
         pr = self._ele.page.run_js('return window.devicePixelRatio;')
-        return int((vx + ex) * pr), int((ey + vy) * pr)
+        return (vx + ex) * pr, (ey + vy) * pr
 
     @property
     def rect(self):
         """返回元素四个角坐标，顺序：坐上、右上、右下、左下，没有大小的元素抛出NoRectError"""
         vr = self._get_viewport_rect('border')
         r = self._ele.page.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
-        sx = int(r['pageX'])
-        sy = int(r['pageY'])
+        sx = r['pageX']
+        sy = r['pageY']
         return [(vr[0] + sx, vr[1] + sy), (vr[2] + sx, vr[3] + sy),
                 (vr[4] + sx, vr[5] + sy), (vr[6] + sx, vr[7] + sy)]
 
@@ -86,7 +86,7 @@ class Locations(object):
     def viewport_rect(self):
         """返回元素四个角视口坐标，顺序：坐上、右上、右下、左下，没有大小的元素抛出NoRectError"""
         r = self._get_viewport_rect('border')
-        return [(int(r[0]), int(r[1])), (int(r[2]), int(r[3])), (int(r[4]), int(r[5])), (int(r[6]), int(r[7]))]
+        return [(r[0], r[1]), (r[2], r[3]), (r[4], r[5]), (r[6], r[7])]
 
     def _get_viewport_rect(self, quad):
         """按照类型返回在可视窗口中的范围

@@ -6,12 +6,13 @@
 from typing import Tuple, Union
 
 from .._pages.chromium_page import ChromiumPage
-from .._pages.chromium_tab import ChromiumTab
+from .._pages.chromium_tab import ChromiumTab, WebPageTab
+from .._pages.web_page import WebPage
 
 
 class TabRect(object):
-    def __init__(self, page: Union[ChromiumPage, ChromiumTab]):
-        self._page: Union[ChromiumPage, ChromiumTab] = ...
+    def __init__(self, page: Union[ChromiumPage, ChromiumTab, WebPage, WebPageTab]):
+        self._page: Union[ChromiumPage, ChromiumTab, WebPage, WebPageTab] = ...
 
     @property
     def window_state(self) -> str: ...

@@ -15,7 +15,7 @@ from .._pages.chromium_page import ChromiumPage
 from .._pages.web_page import WebPage
 from .._units.clicker import Clicker
 from .._units.element_states import ShadowRootStates, ElementStates
-from .._units.ids import Ids, ElementIds
+from .._units.ids import ElementIds, ShadowRootIds
 from .._units.locations import Locations
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
@@ -25,9 +25,7 @@ from .._units.waiter import ElementWaiter
 
 class ChromiumElement(DrissionElement):
 
-    def __init__(self,
-                 page: ChromiumBase,
-                 node_id: str = None, obj_id: str = None, backend_id: str = None):
+    def __init__(self, page: ChromiumBase, node_id: str = None, obj_id: str = None, backend_id: str = None):
         self._tag: str = ...
         self.page: Union[ChromiumPage, WebPage] = ...
         self._node_id: str = ...
@@ -46,8 +44,7 @@ class ChromiumElement(DrissionElement):
 
     def __repr__(self) -> str: ...
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str],
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str],
                  timeout: float = None) -> Union[ChromiumElement, str, None]: ...
 
     @property
@@ -73,7 +70,7 @@ class ChromiumElement(DrissionElement):
     def ids(self) -> ElementIds: ...
 
     @property
-    def size(self) -> Tuple[int, int]: ...
+    def size(self) -> Tuple[float, float]: ...
 
     @property
     def set(self) -> ChromiumElementSetter: ...
@@ -82,7 +79,7 @@ class ChromiumElement(DrissionElement):
     def states(self) -> ElementStates: ...
 
     @property
-    def location(self) -> Tuple[int, int]: ...
+    def location(self) -> Tuple[float, float]: ...
 
     @property
     def locations(self) -> Locations: ...
@@ -167,12 +164,10 @@ class ChromiumElement(DrissionElement):
 
     def run_async_js(self, script: str, *args: Any, as_expr: bool = False) -> None: ...
 
-    def ele(self,
-            loc_or_str: Union[Tuple[str, str], str],
+    def ele(self, loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None) -> Union[ChromiumElement, str]: ...
 
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+    def eles(self, loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, str]]: ...
 
     def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, NoneElement]: ...
@@ -220,12 +215,9 @@ class ChromiumElement(DrissionElement):
 
 class ChromiumShadowRoot(BaseElement):
 
-    def __init__(self,
-                 parent_ele: ChromiumElement,
-                 obj_id: str = None,
-                 backend_id: str = None):
+    def __init__(self, parent_ele: ChromiumElement, obj_id: str = None, backend_id: str = None):
         self._obj_id: str = ...
-        self._ids: Ids = ...
+        self._ids: ShadowRootIds = ...
         self._node_id: str = ...
         self._backend_id: str = ...
         self.page: ChromiumPage = ...
@@ -234,12 +226,11 @@ class ChromiumShadowRoot(BaseElement):
 
     def __repr__(self) -> str: ...
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str],
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str],
                  timeout: float = None) -> ChromiumElement: ...
 
     @property
-    def ids(self) -> Ids: ...
+    def ids(self) -> ShadowRootIds: ...
 
     @property
     def states(self) -> ShadowRootStates: ...
@@ -279,12 +270,10 @@ class ChromiumShadowRoot(BaseElement):
 
     def afters(self, filter_loc: Union[tuple, str] = '') -> List[Union[ChromiumElement, str]]: ...
 
-    def ele(self,
-            loc_or_str: Union[Tuple[str, str], str],
+    def ele(self, loc_or_str: Union[Tuple[str, str], str],
             timeout: float = None) -> Union[ChromiumElement]: ...
 
-    def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+    def eles(self, loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
     def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, str, NoneElement]: ...
@@ -303,24 +292,16 @@ class ChromiumShadowRoot(BaseElement):
     def _get_backend_id(self, node_id: str) -> str: ...
 
 
-def find_in_chromium_ele(ele: ChromiumElement,
-                         loc: Union[str, Tuple[str, str]],
-                         single: bool = True,
-                         timeout: float = None,
-                         relative: bool = True) \
+def find_in_chromium_ele(ele: ChromiumElement, loc: Union[str, Tuple[str, str]],
+                         single: bool = True, timeout: float = None, relative: bool = True) \
         -> Union[ChromiumElement, str, NoneElement, List[Union[ChromiumElement, str]]]: ...
 
 
-def find_by_xpath(ele: ChromiumElement,
-                  xpath: str,
-                  single: bool,
-                  timeout: float,
+def find_by_xpath(ele: ChromiumElement, xpath: str, single: bool, timeout: float,
                   relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
-def find_by_css(ele: ChromiumElement,
-                selector: str,
-                single: bool,
+def find_by_css(ele: ChromiumElement, selector: str, single: bool,
                 timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
