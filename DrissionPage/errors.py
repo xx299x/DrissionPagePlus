@@ -32,8 +32,8 @@ class CDPError(BaseError):
     _info = '方法调用错误。'
 
 
-class TabClosedError(BaseError):
-    _info = '标签页已关闭。'
+class PageClosedError(BaseError):
+    _info = '页面已关闭。'
 
 
 class ElementNotFoundError(BaseError):

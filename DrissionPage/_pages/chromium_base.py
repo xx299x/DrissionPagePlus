@@ -23,7 +23,7 @@ from .._units.network_listener import NetworkListener
 from .._units.screencast import Screencast
 from .._units.setter import ChromiumBaseSetter
 from .._units.waiter import BaseWaiter
-from ..errors import (ContextLossError, ElementLossError, CDPError, TabClosedError, NoRectError, AlertExistsError,
+from ..errors import (ContextLossError, ElementLossError, CDPError, PageClosedError, NoRectError, AlertExistsError,
                       GetDocumentError)
 
 
@@ -46,8 +46,6 @@ class ChromiumBase(BasePage):
         self._listener = None
         self._has_alert = False
         self._ready_state = None
-        if self._debug:
-            print('在__init__变成None')
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
 
         self._download_path = str(Path('.').absolute())
@@ -130,6 +128,8 @@ class ChromiumBase(BasePage):
         self._driver.set_callback('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self):
+        if self._debug:
+            print('获取文档开始')
         if self._is_reading:
             return
         self._is_reading = True
@@ -150,6 +150,8 @@ class ChromiumBase(BasePage):
 
         self._is_loading = False
         self._is_reading = False
+        if self._debug:
+            print('获取文档结束')
 
     def _onFrameDetached(self, **kwargs):
         self.browser._frames.pop(kwargs['frameId'], None)
@@ -285,7 +287,7 @@ class ChromiumBase(BasePage):
         try:
             self.run_cdp('Page.getLayoutMetrics')
             return True
-        except TabClosedError:
+        except PageClosedError:
             return False
 
     @property
@@ -435,7 +437,7 @@ class ChromiumBase(BasePage):
                        'No node found for given backend id'):
             raise ElementLossError
         elif error == 'tab closed':
-            raise TabClosedError
+            raise PageClosedError
         elif error == 'timeout':
             raise TimeoutError
         elif error == 'alert exists.':
@@ -680,7 +682,7 @@ class ChromiumBase(BasePage):
             print('停止页面加载')
         try:
             self.run_cdp('Page.stopLoading')
-        except TabClosedError:
+        except PageClosedError:
             pass
         end_time = perf_counter() + self.timeouts.page_load
         while self._ready_state != 'complete' and perf_counter() < end_time:

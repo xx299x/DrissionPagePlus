@@ -14,7 +14,7 @@ from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLossError, ElementLossError, GetDocumentError, TabClosedError
+from ..errors import ContextLossError, ElementLossError, GetDocumentError, PageClosedError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -103,14 +103,21 @@ class ChromiumFrame(ChromiumBase):
         if debug:
             print(f'{self._frame_id} reload 开始')
 
+        self._driver.stop()
         try:
             self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
-        except ElementLossError:
+        except (ElementLossError, PageClosedError):
             return
-        node = self._target_page.run_cdp('DOM.describeNode',
-                                         backendNodeId=self._frame_ele.ids.backend_id)['node']
 
-        self._driver.stop()
+        end_time = perf_counter() + 2
+        while perf_counter() < end_time:
+            node = self._target_page.run_cdp('DOM.describeNode',
+                                             backendNodeId=self._frame_ele.ids.backend_id)['node']
+            if 'frameId' in node:
+                break
+
+        else:
+            return
 
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -237,10 +244,6 @@ class ChromiumFrame(ChromiumBase):
         if self._debug:
             print(f'{self._frame_id}触发InspectorDetached')
 
-        try:
-            self._frame_ele.attrs
-        except (ElementLossError, TabClosedError):
-            self._driver.stop()
         self._reload()
 
         if self._debug:
@@ -253,10 +256,6 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print(f'{self._frame_id}触发FrameDetached')
 
-            try:
-                self._frame_ele.attrs
-            except (ElementLossError, TabClosedError):
-                self._driver.stop()
             self._reload()
 
             if self._debug:
