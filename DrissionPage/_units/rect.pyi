@@ -5,6 +5,7 @@
 """
 from typing import Tuple, Union
 
+from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 from .._pages.chromium_tab import ChromiumTab, WebPageTab
 from .._pages.web_page import WebPage
@@ -41,3 +42,17 @@ class TabRect(object):
     def _get_page_rect(self) -> dict: ...
 
     def _get_window_rect(self) -> dict: ...
+
+
+class FrameRect(object):
+    def __init__(self, frame: ChromiumFrame):
+        self._frame: ChromiumFrame = ...
+
+    @property
+    def viewport_location(self) -> Tuple[float, float]: ...
+
+    @property
+    def page_size(self) -> Tuple[float, float]: ...
+
+    @property
+    def viewport_size(self) -> Tuple[float, float]: ...

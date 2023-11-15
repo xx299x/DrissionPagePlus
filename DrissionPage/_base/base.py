@@ -414,7 +414,7 @@ class BasePage(BaseParser):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        self._url = quote(url, safe='-_.~!*\'();:@&=+$,/?#[]')
+        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval

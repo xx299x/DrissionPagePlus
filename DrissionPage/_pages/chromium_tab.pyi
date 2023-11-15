@@ -7,7 +7,6 @@ from typing import Union, Tuple, Any, List, Optional
 
 from requests import Session, Response
 
-from .._units.tab_rect import ChromiumTabRect
 from .chromium_base import ChromiumBase
 from .chromium_frame import ChromiumFrame
 from .chromium_page import ChromiumPage
@@ -16,6 +15,7 @@ from .web_page import WebPage
 from .._base.browser import Browser
 from .._elements.chromium_element import ChromiumElement
 from .._elements.session_element import SessionElement
+from .._units.rect import TabRect
 from .._units.setter import TabSetter, WebPageTabSetter
 from .._units.waiter import TabWaiter
 
@@ -25,7 +25,7 @@ class ChromiumTab(ChromiumBase):
     def __init__(self, page: ChromiumPage, tab_id: str = None):
         self._page: ChromiumPage = ...
         self._browser: Browser = ...
-        self._rect: Optional[ChromiumTabRect] = ...
+        self._rect: Optional[TabRect] = ...
 
     def _d_set_runtime_settings(self) -> None: ...
 
@@ -35,7 +35,7 @@ class ChromiumTab(ChromiumBase):
     def page(self) -> ChromiumPage: ...
 
     @property
-    def rect(self) -> ChromiumTabRect: ...
+    def rect(self) -> TabRect: ...
 
     @property
     def set(self) -> TabSetter: ...

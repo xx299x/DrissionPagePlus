@@ -450,8 +450,7 @@ class ChromiumElement(DrissionElement):
         """
         if pseudo_ele:
             pseudo_ele = f', "{pseudo_ele}"' if pseudo_ele.startswith(':') else f', "::{pseudo_ele}"'
-        js = f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");'
-        return self.run_js(js)
+        return self.run_js(f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");')
 
     def get_src(self, timeout=None, base64_to_bytes=True):
         """返回元素src资源，base64的可转为bytes返回，其它返回str

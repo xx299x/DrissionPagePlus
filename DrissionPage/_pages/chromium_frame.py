@@ -10,6 +10,7 @@ from time import sleep, perf_counter
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._units.ids import FrameIds
+from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
@@ -315,7 +316,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.attrs
 
     @property
-    def frame_size(self):
+    def page_size(self):
         """返回frame内页面尺寸，格式：(长, 高)"""
         w = self.doc_ele.run_js('return this.body.scrollWidth')
         h = self.doc_ele.run_js('return this.body.scrollHeight')
@@ -325,6 +326,11 @@ class ChromiumFrame(ChromiumBase):
     def size(self):
         """返回frame元素大小"""
         return self.frame_ele.size
+
+    @property
+    def rect(self):
+        """返回获取坐标和大小的对象"""
+        return FrameRect(self)
 
     @property
     def active_ele(self):
@@ -440,9 +446,9 @@ class ChromiumFrame(ChromiumBase):
         :return: 运行的结果
         """
         if script.startswith('this.scrollIntoView'):
-            return self.frame_ele.run_js(script, args, as_expr=as_expr, timeout=timeout)
+            return self.frame_ele.run_js(script, *args, as_expr=as_expr, timeout=timeout)
         else:
-            return self.doc_ele.run_js(script, args, as_expr=as_expr, timeout=timeout)
+            return self.doc_ele.run_js(script, *args, as_expr=as_expr, timeout=timeout)
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位

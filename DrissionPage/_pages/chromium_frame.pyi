@@ -14,6 +14,7 @@ from .._elements.chromium_element import ChromiumElement
 from .._units.element_states import ElementStates
 from .._units.ids import FrameIds
 from .._units.locations import Locations
+from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.waiter import FrameWaiter
@@ -88,10 +89,13 @@ class ChromiumFrame(ChromiumBase):
     def attrs(self) -> dict: ...
 
     @property
-    def frame_size(self) -> Tuple[int, int]: ...
+    def page_size(self) -> Tuple[int, int]: ...
 
     @property
     def size(self) -> Tuple[int, int]: ...
+
+    @property
+    def rect(self) -> FrameRect: ...
 
     @property
     def active_ele(self) -> ChromiumElement: ...

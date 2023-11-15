@@ -110,7 +110,7 @@ class ChromiumDriver(object):
             if self._debug:
                 if self._debug is True or 'id' in msg or (isinstance(self._debug, str)
                                                           and msg.get('method', '').startswith(self._debug)):
-                    print(f'<收 {self.id} {msg_json}')
+                    print(f'<收 {msg_json}')
                 elif isinstance(self._debug, (list, tuple, set)):
                     for m in self._debug:
                         if msg.get('method', '').startswith(m):

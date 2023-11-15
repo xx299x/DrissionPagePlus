@@ -9,8 +9,8 @@ from .._base.base import BasePage
 from .._commons.web import set_session_cookies, set_browser_cookies
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
+from .._units.rect import TabRect
 from .._units.setter import TabSetter, WebPageTabSetter
-from .._units.tab_rect import TabRect
 from .._units.waiter import TabWaiter
 
 

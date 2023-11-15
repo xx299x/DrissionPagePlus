@@ -74,3 +74,25 @@ class TabRect(object):
     def _get_window_rect(self):
         """获取窗口范围信息"""
         return self._page.browser.get_window_bounds(self._page.tab_id)
+
+
+class FrameRect(object):
+    """异域iframe使用"""
+
+    def __init__(self, frame):
+        self._frame = frame
+
+    @property
+    def viewport_location(self):
+        """返回视口在屏幕中坐标，左上角为(0, 0)"""
+        return self._frame.frame_ele.locations.screen_location
+
+    @property
+    def page_size(self):
+        """返回页面总宽高，格式：(宽, 高)"""
+        return self._frame.page_size
+
+    @property
+    def viewport_size(self):
+        """返回视口宽高，不包括滚动条，格式：(宽, 高)"""
+        return self._frame.frame_ele.size

@@ -13,8 +13,8 @@ from .._commons.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_base import ChromiumBase, Timeout
 from .._pages.chromium_tab import ChromiumTab
+from .._units.rect import TabRect
 from .._units.setter import ChromiumPageSetter
-from .._units.tab_rect import TabRect
 from .._units.waiter import PageWaiter
 from ..errors import BrowserConnectError
 

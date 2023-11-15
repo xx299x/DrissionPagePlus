@@ -38,7 +38,7 @@ class ChromiumOptions(object):
             self._page_load_strategy = options.get('page_load_strategy', 'normal')
             self._proxy = om.proxies.get('http', None)
             self._system_user_path = options.get('system_user_path', False)
-            self._existing_only = options.get('existing_only', False)
+            self._existing_only = options.get('is_existing_only', False)
 
             user_path = user = False
             for arg in self._arguments:
@@ -446,7 +446,7 @@ class ChromiumOptions(object):
 
         # 设置chrome_options
         attrs = ('debugger_address', 'binary_location', 'arguments', 'extensions', 'user', 'page_load_strategy',
-                 'auto_port', 'system_user_path', 'is_existing_only')
+                 'auto_port', 'system_user_path', 'existing_only')
         for i in attrs:
             om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理
