@@ -357,31 +357,9 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.attrs
 
     @property
-    def page_size(self):
-        """返回frame内页面尺寸，格式：(长, 高)"""
-        w = self.doc_ele.run_js('return this.body.scrollWidth')
-        h = self.doc_ele.run_js('return this.body.scrollHeight')
-        return w, h
-
-    @property
-    def size(self):
-        """返回frame元素大小"""
-        return self.frame_ele.size
-
-    @property
     def active_ele(self):
         """返回当前焦点所在元素"""
         return self.doc_ele.run_js('return this.activeElement;')
-
-    @property
-    def location(self):
-        """返回frame元素左上角的绝对坐标"""
-        return self.frame_ele.location
-
-    @property
-    def locations(self):
-        """返回用于获取元素位置的对象"""
-        return self.frame_ele.locations
 
     @property
     def xpath(self):
@@ -597,8 +575,8 @@ class ChromiumFrame(ChromiumBase):
 
         self.frame_ele.scroll.to_see(center=True)
         self.scroll.to_see(ele, center=True)
-        cx, cy = ele.locations.viewport_location
-        w, h = ele.size
+        cx, cy = ele.rect.viewport_location
+        w, h = ele.rect.size
         img_data = f'data:image/{pic_type};base64,{self.frame_ele.get_screenshot(as_base64=True)}'
         body = self.tab('t:body')
         first_child = body('c::first-child')
@@ -652,3 +630,23 @@ class ChromiumFrame(ChromiumBase):
     def is_alive(self):
         """返回是否仍可用"""
         return self.states.is_alive
+
+    @property
+    def page_size(self):
+        """返回frame内页面尺寸，格式：(宽,, 高)"""
+        return self.rect.size
+
+    @property
+    def size(self):
+        """返回frame元素大小"""
+        return self.frame_ele.rect.size
+
+    @property
+    def location(self):
+        """返回frame元素左上角的绝对坐标"""
+        return self.frame_ele.rect.location
+
+    @property
+    def locations(self):
+        """返回用于获取元素位置的对象"""
+        return self.frame_ele.rect

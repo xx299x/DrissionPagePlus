@@ -16,7 +16,7 @@ from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
 from .._units.ids import ShadowRootIds, ElementIds
-from .._units.locations import Locations
+from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
@@ -39,7 +39,7 @@ class ChromiumElement(DrissionElement):
         super().__init__(page)
         self._select = None
         self._scroll = None
-        self._locations = None
+        self._rect = None
         self._set = None
         self._states = None
         self._pseudo = None
@@ -127,12 +127,6 @@ class ChromiumElement(DrissionElement):
         return self._ids
 
     @property
-    def size(self):
-        """返回元素宽和高组成的元组"""
-        border = self.page.run_cdp('DOM.getBoxModel', backendNodeId=self._backend_id)['model']['border']
-        return border[2] - border[0], border[5] - border[1]
-
-    @property
     def set(self):
         """返回用于设置元素属性的对象"""
         if self._set is None:
@@ -154,16 +148,11 @@ class ChromiumElement(DrissionElement):
         return self._pseudo
 
     @property
-    def location(self):
-        """返回元素左上角的绝对坐标"""
-        return self.locations.location
-
-    @property
-    def locations(self):
+    def rect(self):
         """返回用于获取元素位置的对象"""
-        if self._locations is None:
-            self._locations = Locations(self)
-        return self._locations
+        if self._rect is None:
+            self._rect = ElementRect(self)
+        return self._rect
 
     @property
     def shadow_root(self):
@@ -565,8 +554,8 @@ class ChromiumElement(DrissionElement):
         if scroll_to_center:
             self.scroll.to_see(center=True)
 
-        left, top = self.location
-        width, height = self.size
+        left, top = self.rect.location
+        width, height = self.rect.size
         left_top = (left, top)
         right_bottom = (left + width, top + height)
         if not name:
@@ -657,7 +646,7 @@ class ChromiumElement(DrissionElement):
         :param duration: 拖动用时，传入0即瞬间到j达
         :return: None
         """
-        curr_x, curr_y = self.locations.midpoint
+        curr_x, curr_y = self.rect.midpoint
         offset_x += curr_x
         offset_y += curr_y
         self.drag_to((offset_x, offset_y), duration)
@@ -669,7 +658,7 @@ class ChromiumElement(DrissionElement):
         :return: None
         """
         if isinstance(ele_or_loc, ChromiumElement):
-            ele_or_loc = ele_or_loc.locations.midpoint
+            ele_or_loc = ele_or_loc.rect.midpoint
         elif not isinstance(ele_or_loc, (list, tuple)):
             raise TypeError('需要ChromiumElement对象或坐标。')
 
@@ -753,6 +742,18 @@ class ChromiumElement(DrissionElement):
             files = files.split('\n')
         files = [str(Path(i).absolute()) for i in files]
         self.page.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=self._backend_id)
+
+    # -------------即将废弃-------------
+
+    @property
+    def location(self):
+        """返回元素左上角的绝对坐标"""
+        return self.rect.location
+
+    @property
+    def size(self):
+        """返回元素宽和高组成的元组"""
+        return self.rect.size
 
 
 class ChromiumShadowRoot(BaseElement):

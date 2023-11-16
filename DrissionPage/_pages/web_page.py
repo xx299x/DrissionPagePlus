@@ -50,6 +50,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super().__call__(loc_or_str)
 
     @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = WebPageSetter(self)
+        return self._set
+
+    @property
     def url(self):
         """返回当前url"""
         if self._mode == 'd':
@@ -133,13 +140,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: None
         """
         self.set.timeouts(implicit=second)
-
-    @property
-    def set(self):
-        """返回用于等待的对象"""
-        if self._set is None:
-            self._set = WebPageSetter(self)
-        return self._set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url

@@ -39,7 +39,7 @@ class ActionChains:
         elif isinstance(ele_or_loc, str) or 'ChromiumElement' in str(type(ele_or_loc)):
             ele_or_loc = self.page(ele_or_loc)
             self.page.scroll.to_see(ele_or_loc)
-            x, y = ele_or_loc.location if offset_x or offset_y else ele_or_loc.locations.midpoint
+            x, y = ele_or_loc.rect.location if offset_x or offset_y else ele_or_loc.rect.midpoint
             lx = x + offset_x
             ly = y + offset_y
         else:
@@ -55,8 +55,8 @@ class ActionChains:
         if is_loc:
             cx, cy = location_to_client(self.page, lx, ly)
         else:
-            x, y = ele_or_loc.locations.viewport_location if offset_x or offset_y \
-                else ele_or_loc.locations.viewport_midpoint
+            x, y = ele_or_loc.rect.viewport_location if offset_x or offset_y \
+                else ele_or_loc.rect.viewport_midpoint
             cx = x + offset_x
             cy = y + offset_y
 

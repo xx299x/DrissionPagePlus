@@ -12,4 +12,5 @@ from ._pages.web_page import WebPage
 from ._configs.chromium_options import ChromiumOptions
 from ._configs.session_options import SessionOptions
 
-__all__ = ['ChromiumPage', 'ChromiumOptions', 'SessionOptions', 'SessionPage', 'WebPage']
+__all__ = ['ChromiumPage', 'ChromiumOptions', 'SessionOptions', 'SessionPage', 'WebPage', '__version__']
+__version__ = '4.0.0b8'

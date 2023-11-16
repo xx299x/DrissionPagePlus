@@ -42,7 +42,7 @@ class Clicker(object):
                 try:
                     self._ele.scroll.to_see()
                     if self._ele.states.is_enabled and self._ele.states.is_displayed:
-                        rect = self._ele.locations.viewport_rect
+                        rect = self._ele.rect.viewport_corners
                         can_click = True
                 except NoRectError:
                     if by_js is False:
@@ -59,7 +59,7 @@ class Clicker(object):
                     self._ele.wait.stop_moving(timeout=end_time - perf_counter())
                 if rect:
                     self._ele.scroll.to_see()
-                    rect = self._ele.locations.rect
+                    rect = self._ele.rect.corners
                     while perf_counter() < end_time:
                         if self._ele.states.is_enabled and self._ele.states.is_displayed:
                             can_click = True
@@ -79,12 +79,12 @@ class Clicker(object):
                     r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
                                                ignorePointerEventsNone=True)
                     if r['backendNodeId'] != self._ele.ids.backend_id:
-                        vx, vy = self._ele.locations.viewport_midpoint
+                        vx, vy = self._ele.rect.viewport_midpoint
                     else:
-                        vx, vy = self._ele.locations.viewport_click_point
+                        vx, vy = self._ele.rect.viewport_click_point
 
                 except CDPError:
-                    vx, vy = self._ele.locations.viewport_midpoint
+                    vx, vy = self._ele.rect.viewport_midpoint
 
                 self._click(vx, vy)
                 return True
@@ -99,13 +99,13 @@ class Clicker(object):
     def right(self):
         """右键单击"""
         self._ele.page.scroll.to_see(self._ele)
-        x, y = self._ele.locations.viewport_click_point
+        x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'right')
 
     def middle(self):
         """中键单击"""
         self._ele.page.scroll.to_see(self._ele)
-        x, y = self._ele.locations.viewport_click_point
+        x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'middle')
 
     def at(self, offset_x=None, offset_y=None, button='left', count=1):
@@ -118,7 +118,7 @@ class Clicker(object):
         """
         self._ele.page.scroll.to_see(self._ele)
         if offset_x is None and offset_y is None:
-            w, h = self._ele.size
+            w, h = self._ele.rect.size
             offset_x = w // 2
             offset_y = h // 2
         x, y = offset_scroll(self._ele, offset_x, offset_y)

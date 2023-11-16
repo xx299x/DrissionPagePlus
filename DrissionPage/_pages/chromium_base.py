@@ -10,6 +10,7 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 
+from .._units.rect import TabRect
 from .._base.base import BasePage
 from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
@@ -48,6 +49,7 @@ class ChromiumBase(BasePage):
         self._states = None
         self._has_alert = False
         self._ready_state = None
+        self._rect = None
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
 
         self._download_path = str(Path('.').absolute())
@@ -317,6 +319,14 @@ class ChromiumBase(BasePage):
         return self._scroll
 
     @property
+    def rect(self):
+        """返回获取窗口坐标和大小的对象"""
+        # self.wait.load_complete()
+        if self._rect is None:
+            self._rect = TabRect(self)
+        return self._rect
+
+    @property
     def timeouts(self):
         """返回timeouts设置"""
         return self._timeouts
@@ -372,12 +382,6 @@ class ChromiumBase(BasePage):
     def _target_id(self):
         """返回当前标签页id"""
         return self.driver.id if not self.driver._stopped.is_set() else ''
-
-    @property
-    def size(self):
-        """返回页面总宽高，格式：(宽, 高)"""
-        r = self.run_cdp_loaded('Page.getLayoutMetrics')['contentSize']
-        return r['width'], r['height']
 
     @property
     def active_ele(self):
@@ -973,7 +977,7 @@ class ChromiumBase(BasePage):
             pic_type = path.suffix.lower()
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
-        width, height = self.size
+        width, height = self.rect.size
         if full_page:
             vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
             png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
@@ -1029,6 +1033,11 @@ class ChromiumBase(BasePage):
     @property
     def ready_state(self):
         return self._ready_state
+
+    @property
+    def size(self):
+        """返回页面总宽高，格式：(宽, 高)"""
+        return self.rect.size
 
 
 class Timeout(object):

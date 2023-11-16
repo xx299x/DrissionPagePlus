@@ -376,7 +376,7 @@ class ElementWaiter(object):
         while perf_counter() < end_time:
             try:
                 size = self._ele.states.has_rect
-                location = self._ele.location
+                location = self._ele.rect.location
                 break
             except NoRectError:
                 pass
@@ -385,10 +385,10 @@ class ElementWaiter(object):
 
         while perf_counter() < end_time:
             sleep(gap)
-            if self._ele.size == size and location == self._ele.location:
+            if self._ele.rect.size == size and location == self._ele.rect.location:
                 return True
-            size = self._ele.size
-            location = self._ele.location
+            size = self._ele.rect.size
+            location = self._ele.rect.location
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
             raise WaitTimeoutError('等待元素停止运动失败。')

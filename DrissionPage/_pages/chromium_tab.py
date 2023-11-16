@@ -9,7 +9,6 @@ from .._base.base import BasePage
 from .._commons.web import set_session_cookies, set_browser_cookies
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
-from .._units.rect import TabRect
 from .._units.setter import TabSetter, WebPageTabSetter
 from .._units.waiter import TabWaiter
 
@@ -43,13 +42,6 @@ class ChromiumTab(ChromiumBase):
     def page(self):
         """返回总体page对象"""
         return self._page
-
-    @property
-    def rect(self):
-        """返回获取窗口坐标和大小的对象"""
-        if self._rect is None:
-            self._rect = TabRect(self)
-        return self._rect
 
     @property
     def set(self):

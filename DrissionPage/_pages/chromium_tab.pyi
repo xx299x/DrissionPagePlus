@@ -35,9 +35,6 @@ class ChromiumTab(ChromiumBase):
     def page(self) -> ChromiumPage: ...
 
     @property
-    def rect(self) -> TabRect: ...
-
-    @property
     def set(self) -> TabSetter: ...
 
     @property
