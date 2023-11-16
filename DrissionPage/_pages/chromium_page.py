@@ -87,13 +87,39 @@ class ChromiumPage(ChromiumBase):
                                  implicit=self._driver_options.timeouts['implicit'])
         if self._driver_options.timeouts['implicit'] is not None:
             self._timeout = self._driver_options.timeouts['implicit']
-        self._page_load_strategy = self._driver_options.page_load_strategy
+        self._load_mode = self._driver_options.load_mode
         self._download_path = str(Path(self._driver_options.download_path).absolute())
 
     def _page_init(self):
         """浏览器相关设置"""
         self._rect = None
         self._browser.connect_to_page()
+
+    # ----------挂件----------
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumPageSetter(self)
+        return self._set
+
+    @property
+    def rect(self):
+        """返回保存窗口方位信息的对象"""
+        self.wait.load_complete()
+        if self._rect is None:
+            self._rect = TabRect(self)
+        return self._rect
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = PageWaiter(self)
+        return self._wait
+
+    # ----------挂件----------
 
     @property
     def browser(self):
@@ -119,28 +145,6 @@ class ChromiumPage(ChromiumBase):
     def process_id(self):
         """返回浏览器进程id"""
         return self.browser.process_id
-
-    @property
-    def set(self):
-        """返回用于等待的对象"""
-        if self._set is None:
-            self._set = ChromiumPageSetter(self)
-        return self._set
-
-    @property
-    def rect(self):
-        """返回保存窗口方位信息的对象"""
-        self.wait.load_complete()
-        if self._rect is None:
-            self._rect = TabRect(self)
-        return self._rect
-
-    @property
-    def wait(self):
-        """返回用于等待的对象"""
-        if self._wait is None:
-            self._wait = PageWaiter(self)
-        return self._wait
 
     def get_tab(self, tab_id=None):
         """获取一个标签页对象

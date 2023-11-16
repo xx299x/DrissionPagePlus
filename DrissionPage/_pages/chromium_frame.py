@@ -13,6 +13,7 @@ from .._units.ids import FrameIds
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
+from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
 from ..errors import ContextLossError, ElementLossError, GetDocumentError, PageClosedError
 
@@ -57,6 +58,7 @@ class ChromiumFrame(ChromiumBase):
         end_time = perf_counter() + 5
         while perf_counter() < end_time and self.url == 'about:blank':
             sleep(.1)
+        self._rect = None
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -78,7 +80,7 @@ class ChromiumFrame(ChromiumBase):
             self._timeouts = copy(self._target_page.timeouts)
             self.retry_times = self._target_page.retry_times
             self.retry_interval = self._target_page.retry_interval
-            self._page_load_strategy = self._target_page.page_load_strategy if not self._is_diff_domain else 'normal'
+            self._load_mode = self._target_page._load_mode if not self._is_diff_domain else 'normal'
             self._download_path = self._target_page.download_path
 
     def _driver_init(self, tab_id, is_init=True):
@@ -261,6 +263,46 @@ class ChromiumFrame(ChromiumBase):
             if self._debug:
                 print(f'{self._frame_id}执行FrameDetached完毕')
 
+    # ----------挂件----------
+
+    @property
+    def scroll(self):
+        """返回用于等待的对象"""
+        self.wait.load_complete()
+        if self._scroll is None:
+            self._scroll = FrameScroller(self)
+        return self._scroll
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumFrameSetter(self)
+        return self._set
+
+    @property
+    def states(self):
+        """返回用于获取状态信息的对象"""
+        if self._states is None:
+            self._states = FrameStates(self)
+        return self._states
+
+    @property
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = FrameWaiter(self)
+        return self._wait
+
+    @property
+    def rect(self):
+        """返回获取坐标和大小的对象"""
+        if self._rect is None:
+            self._rect = FrameRect(self)
+        return self._rect
+
+    # ----------挂件----------
+
     @property
     def page(self):
         return self._page
@@ -327,11 +369,6 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.size
 
     @property
-    def rect(self):
-        """返回获取坐标和大小的对象"""
-        return FrameRect(self)
-
-    @property
     def active_ele(self):
         """返回当前焦点所在元素"""
         return self.doc_ele.run_js('return this.activeElement;')
@@ -357,59 +394,6 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.css_path
 
     @property
-    def ready_state(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
-        if self._is_diff_domain:
-            try:
-                return super().ready_state
-            except:
-                return 'complete'
-
-        else:
-            end_time = perf_counter() + 3
-            while self.is_alive and perf_counter() < end_time:
-                try:
-                    return self.doc_ele.run_js('return this.readyState;')
-                except ContextLossError:
-                    try:
-                        node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
-                        doc = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
-                        return doc.run_js('return this.readyState;')
-                    except:
-                        pass
-
-                sleep(.1)
-
-    @property
-    def is_alive(self):
-        """返回是否仍可用"""
-        return self.states.is_alive
-
-    @property
-    def scroll(self):
-        """返回用于等待的对象"""
-        return FrameScroller(self)
-
-    @property
-    def set(self):
-        """返回用于等待的对象"""
-        if self._set is None:
-            self._set = ChromiumFrameSetter(self)
-        return self._set
-
-    @property
-    def states(self):
-        """返回用于获取状态信息的对象"""
-        return self.frame_ele.states
-
-    @property
-    def wait(self):
-        """返回用于等待的对象"""
-        if self._wait is None:
-            self._wait = FrameWaiter(self)
-        return self._wait
-
-    @property
     def tab_id(self):
         """返回frame所在tab的id"""
         return self._tab_id
@@ -417,6 +401,23 @@ class ChromiumFrame(ChromiumBase):
     @property
     def download_path(self):
         return self._download_path
+
+    @property
+    def _js_ready_state(self):
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        if self._is_diff_domain:
+            return super()._js_ready_state
+
+        else:
+            try:
+                return self.doc_ele.run_js('return this.readyState;')
+            except ContextLossError:
+                try:
+                    node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
+                    doc = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
+                    return doc.run_js('return this.readyState;')
+                except:
+                    return None
 
     def refresh(self):
         """刷新frame页面"""
@@ -644,3 +645,10 @@ class ChromiumFrame(ChromiumBase):
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
         return self._frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])
+
+    # ----------------即将废弃-----------------
+
+    @property
+    def is_alive(self):
+        """返回是否仍可用"""
+        return self.states.is_alive

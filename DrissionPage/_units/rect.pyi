@@ -52,6 +52,9 @@ class FrameRect(object):
     def viewport_location(self) -> Tuple[float, float]: ...
 
     @property
+    def size(self) -> Tuple[float, float]: ...
+
+    @property
     def page_size(self) -> Tuple[float, float]: ...
 
     @property

@@ -5,8 +5,8 @@
 """
 from typing import Union
 
-from .._pages.chromium_frame import ChromiumFrame
 from .._elements.chromium_element import ChromiumElement, ChromiumShadowRoot
+from .._pages.chromium_frame import ChromiumFrame
 
 
 class ShadowRootIds(object):

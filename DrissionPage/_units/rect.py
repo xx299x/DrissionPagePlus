@@ -93,6 +93,11 @@ class FrameRect(object):
         return self._frame.page_size
 
     @property
+    def size(self):
+        """返回页面总宽高，格式：(宽, 高)"""
+        return self._frame.size
+
+    @property
     def viewport_size(self):
         """返回视口宽高，不包括滚动条，格式：(宽, 高)"""
         return self._frame.frame_ele.size

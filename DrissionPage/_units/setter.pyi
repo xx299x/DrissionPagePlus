@@ -11,8 +11,9 @@ from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 
+from .scroller import PageScroller
 from .._elements.chromium_element import ChromiumElement
-from .._pages.chromium_base import ChromiumBase, ChromiumPageScroll
+from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 from .._pages.chromium_tab import ChromiumTab
@@ -27,7 +28,7 @@ class ChromiumBaseSetter(object):
         self._page: ChromiumBase = ...
 
     @property
-    def load_strategy(self) -> PageLoadStrategy: ...
+    def load_mode(self) -> LoadMode: ...
 
     @property
     def scroll(self) -> PageScrollSetter: ...
@@ -163,7 +164,7 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
     def attr(self, attr: str, value: str) -> None: ...
 
 
-class PageLoadStrategy(object):
+class LoadMode(object):
     def __init__(self, page: ChromiumBase):
         self._page: ChromiumBase = ...
 
@@ -177,8 +178,8 @@ class PageLoadStrategy(object):
 
 
 class PageScrollSetter(object):
-    def __init__(self, scroll: ChromiumPageScroll):
-        self._scroll: ChromiumPageScroll = ...
+    def __init__(self, scroll: PageScroller):
+        self._scroll: PageScroller = ...
 
     def wait_complete(self, on_off: bool = True): ...
 

@@ -31,11 +31,11 @@ class ChromiumOptions(object):
 
             self._download_path = om.paths.get('download_path', '')
             self._arguments = options.get('arguments', [])
-            self._binary_location = options.get('binary_location', '')
+            self._browser_path = options.get('browser_path', '')
             self._extensions = options.get('extensions', [])
-            self._prefs = options.get('experimental_options', {}).get('prefs', {})
+            self._prefs = options.get('prefs', {})
             self._debugger_address = options.get('debugger_address', None)
-            self._page_load_strategy = options.get('page_load_strategy', 'normal')
+            self._load_mode = options.get('load_mode', 'normal')
             self._proxy = om.proxies.get('http', None)
             self._system_user_path = options.get('system_user_path', False)
             self._existing_only = options.get('is_existing_only', False)
@@ -64,14 +64,14 @@ class ChromiumOptions(object):
             return
 
         self.ini_path = None
-        self._binary_location = "chrome"
+        self._browser_path = "chrome"
         self._arguments = []
         self._download_path = ''
         self._extensions = []
         self._prefs = {}
         self._timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
         self._debugger_address = '127.0.0.1:9222'
-        self._page_load_strategy = 'normal'
+        self._load_mode = 'normal'
         self._proxy = None
         self._auto_port = False
         self._system_user_path = False
@@ -85,7 +85,7 @@ class ChromiumOptions(object):
     @property
     def browser_path(self):
         """浏览器启动文件路径"""
-        return self._binary_location
+        return self._browser_path
 
     @property
     def user_data_path(self):
@@ -98,9 +98,9 @@ class ChromiumOptions(object):
         return self._user
 
     @property
-    def page_load_strategy(self):
+    def load_mode(self):
         """返回页面加载策略，'normal', 'eager', 'none'"""
-        return self._page_load_strategy
+        return self._load_mode
 
     @property
     def timeouts(self):
@@ -246,7 +246,7 @@ class ChromiumOptions(object):
         self._user = user
         return self
 
-    def set_headless(self, on_off=True):
+    def headless(self, on_off=True):
         """设置是否隐藏浏览器界面
         :param on_off: 开或关
         :return: 当前对象
@@ -254,7 +254,7 @@ class ChromiumOptions(object):
         on_off = 'new' if on_off else 'false'
         return self.set_argument('--headless', on_off)
 
-    def set_no_imgs(self, on_off=True):
+    def no_imgs(self, on_off=True):
         """设置是否加载图片
         :param on_off: 开或关
         :return: 当前对象
@@ -262,7 +262,7 @@ class ChromiumOptions(object):
         on_off = None if on_off else False
         return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
 
-    def set_no_js(self, on_off=True):
+    def no_js(self, on_off=True):
         """设置是否禁用js
         :param on_off: 开或关
         :return: 当前对象
@@ -270,13 +270,21 @@ class ChromiumOptions(object):
         on_off = None if on_off else False
         return self.set_argument('--disable-javascript', on_off)
 
-    def set_mute(self, on_off=True):
+    def mute(self, on_off=True):
         """设置是否静音
         :param on_off: 开或关
         :return: 当前对象
         """
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
+
+    def ignore_certificate_errors(self, on_off=True):
+        """设置是否忽略证书错误
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = None if on_off else False
+        return self.set_argument('--ignore-certificate-errors', on_off)
 
     def set_user_agent(self, user_agent):
         """设置user agent
@@ -293,8 +301,8 @@ class ChromiumOptions(object):
         self._proxy = proxy
         return self.set_argument('--proxy-server', proxy)
 
-    def set_page_load_strategy(self, value):
-        """设置page_load_strategy，可接收 'normal', 'eager', 'none'
+    def set_load_mode(self, value):
+        """设置load_mode，可接收 'normal', 'eager', 'none'
         normal：默认情况下使用, 等待所有资源下载完成
         eager：DOM访问已准备就绪, 但其他资源 (如图像) 可能仍在加载中
         none：完全不阻塞
@@ -302,8 +310,8 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         if value not in ('normal', 'eager', 'none'):
-            raise ValueError("只能选择'normal', 'eager', 'none'。")
-        self._page_load_strategy = value.lower()
+            raise ValueError("只能选择 'normal', 'eager', 'none'。")
+        self._load_mode = value.lower()
         return self
 
     def set_paths(self, browser_path=None, local_port=None, debugger_address=None, download_path=None,
@@ -360,7 +368,7 @@ class ChromiumOptions(object):
         :param path: 浏览器路径
         :return: 当前对象
         """
-        self._binary_location = str(path)
+        self._browser_path = str(path)
         self._auto_port = False
         return self
 
@@ -445,7 +453,7 @@ class ChromiumOptions(object):
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
         # 设置chrome_options
-        attrs = ('debugger_address', 'binary_location', 'arguments', 'extensions', 'user', 'page_load_strategy',
+        attrs = ('debugger_address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',
                  'auto_port', 'system_user_path', 'existing_only')
         for i in attrs:
             om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
@@ -459,9 +467,7 @@ class ChromiumOptions(object):
         om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
         om.set_item('timeouts', 'script', self._timeouts['script'])
         # 设置prefs
-        eo = om.chrome_options.get('experimental_options', {})
-        eo['prefs'] = self._prefs
-        om.set_item('chrome_options', 'experimental_options', eo)
+        om.set_item('chrome_options', 'prefs', self._prefs)
 
         path = str(path)
         om.save(path)
@@ -471,6 +477,43 @@ class ChromiumOptions(object):
     def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
+
+    # ---------------即将废弃--------------
+
+    def set_page_load_strategy(self, value):
+        return self.set_load_mode(value)
+
+    def set_headless(self, on_off=True):
+        """设置是否隐藏浏览器界面
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = 'new' if on_off else 'false'
+        return self.set_argument('--headless', on_off)
+
+    def set_no_imgs(self, on_off=True):
+        """设置是否加载图片
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = None if on_off else False
+        return self.set_argument('--blink-settings=imagesEnabled=false', on_off)
+
+    def set_no_js(self, on_off=True):
+        """设置是否禁用js
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = None if on_off else False
+        return self.set_argument('--disable-javascript', on_off)
+
+    def set_mute(self, on_off=True):
+        """设置是否静音
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = None if on_off else False
+        return self.set_argument('--mute-audio', on_off)
 
 
 class PortFinder(object):

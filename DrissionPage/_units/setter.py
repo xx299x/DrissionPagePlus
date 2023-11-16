@@ -16,9 +16,9 @@ class ChromiumBaseSetter(object):
         self._page = page
 
     @property
-    def load_strategy(self):
+    def load_mode(self):
         """返回用于设置页面加载策略的对象"""
-        return PageLoadStrategy(self._page)
+        return LoadMode(self._page)
 
     @property
     def scroll(self):
@@ -116,6 +116,13 @@ class ChromiumBaseSetter(object):
         """
         self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
+
+    # --------------即将废弃---------------
+
+    @property
+    def load_strategy(self):
+        """返回用于设置页面加载策略的对象"""
+        return LoadMode(self._page)
 
 
 class TabSetter(ChromiumBaseSetter):
@@ -432,11 +439,10 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
         :param value: 属性值
         :return: None
         """
-        self._page._check_ok()
         self._page.frame_ele.set.attr(attr, value)
 
 
-class PageLoadStrategy(object):
+class LoadMode(object):
     """用于设置页面加载策略的类"""
 
     def __init__(self, page):
@@ -452,19 +458,19 @@ class PageLoadStrategy(object):
         """
         if value.lower() not in ('normal', 'eager', 'none'):
             raise ValueError("只能选择 'normal', 'eager', 'none'。")
-        self._page._page_load_strategy = value
+        self._page._load_mode = value
 
     def normal(self):
         """设置页面加载策略为normal"""
-        self._page._page_load_strategy = 'normal'
+        self._page._load_mode = 'normal'
 
     def eager(self):
         """设置页面加载策略为eager"""
-        self._page._page_load_strategy = 'eager'
+        self._page._load_mode = 'eager'
 
     def none(self):
         """设置页面加载策略为none"""
-        self._page._page_load_strategy = 'none'
+        self._page._load_mode = 'none'
 
 
 class PageScrollSetter(object):

@@ -180,7 +180,7 @@ class BaseWaiter(object):
                 timeout = self._driver.timeout
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
-                if self._driver.is_loading == start:
+                if self._driver._is_loading == start:
                     return True
                 sleep(gap)
 

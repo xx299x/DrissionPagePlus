@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from .._commons.web import location_in_viewport
-from ..errors import CDPError, NoRectError
+from ..errors import CDPError, NoRectError, PageClosedError, ElementLossError
 
 
 class ElementStates(object):
@@ -40,7 +40,7 @@ class ElementStates(object):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            d = self._ele.attrs
+            self._ele.attrs
             return True
         except Exception:
             return False
@@ -102,3 +102,54 @@ class ShadowRootStates(object):
             return True
         except Exception:
             return False
+
+
+class PageStates(object):
+    """Page对象、Tab对象使用"""
+
+    def __init__(self, page):
+        """
+        :param page: ChromiumBase对象
+        """
+        self._page = page
+
+    @property
+    def is_loading(self):
+        """返回页面是否在加载状态"""
+        return self._page._is_loading
+
+    @property
+    def is_alive(self):
+        """返回页面对象是否仍然可用"""
+        try:
+            self._page.run_cdp('Page.getLayoutMetrics')
+            return True
+        except PageClosedError:
+            return False
+
+    @property
+    def ready_state(self):
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        return self._page._ready_state
+
+
+class FrameStates(object):
+    def __init__(self, frame):
+        """
+        :param frame: ChromiumFrame对象
+        """
+        self._frame = frame
+
+    @property
+    def is_alive(self):
+        """返回frame元素是否可用，且里面仍挂载有frame"""
+        try:
+            node = self._frame._target_page.run_cdp('DOM.describeNode',
+                                                    backendNodeId=self._frame._frame_ele.ids.backend_id)['node']
+        except (ElementLossError, PageClosedError):
+            return False
+        return 'frameId' in node
+
+    @property
+    def ready_state(self):
+        return self._frame._ready_state

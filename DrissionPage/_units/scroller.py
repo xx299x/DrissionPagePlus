@@ -157,9 +157,8 @@ class FrameScroller(PageScroller):
         """
         :param frame: ChromiumFrame对象
         """
-        self._driver = frame.doc_ele
+        super().__init__(frame.doc_ele)
         self.t1 = self.t2 = 'this.documentElement'
-        self._wait_complete = False
 
     def to_see(self, loc_or_ele, center=None):
         """滚动页面直到元素可见

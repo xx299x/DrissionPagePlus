@@ -14,12 +14,12 @@ from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 from .._pages.web_page import WebPage
 from .._units.clicker import Clicker
-from .._units.element_states import ShadowRootStates, ElementStates
 from .._units.ids import ElementIds, ShadowRootIds
 from .._units.locations import Locations
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
+from .._units.states import ShadowRootStates, ElementStates
 from .._units.waiter import ElementWaiter
 
 

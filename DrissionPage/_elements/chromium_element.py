@@ -15,12 +15,12 @@ from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
-from .._units.element_states import ElementStates, ShadowRootStates
 from .._units.ids import ShadowRootIds, ElementIds
 from .._units.locations import Locations
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
+from .._units.states import ElementStates, ShadowRootStates
 from .._units.waiter import ElementWaiter
 from ..errors import (ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError,
                       CDPError, NoResourceError, AlertExistsError)

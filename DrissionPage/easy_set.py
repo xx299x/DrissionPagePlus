@@ -52,7 +52,7 @@ def set_paths(browser_path=None,
         return str(path) if path else ''
 
     if browser_path is not None:
-        om.set_item('chrome_options', 'binary_location', format_path(browser_path))
+        om.set_item('chrome_options', 'browser_path', format_path(browser_path))
 
     if local_port is not None:
         om.set_item('chrome_options', 'debugger_address', f'127.0.0.1:{local_port}')
@@ -185,7 +185,7 @@ def get_chrome_path(ini_path=None,
     # -----------从ini文件中获取--------------
     if ini_path and from_ini:
         try:
-            path = OptionsManager(ini_path).chrome_options['binary_location']
+            path = OptionsManager(ini_path).chrome_options['browser_path']
         except KeyError:
             path = None
     else:

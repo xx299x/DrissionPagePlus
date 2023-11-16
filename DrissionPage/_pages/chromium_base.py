@@ -10,7 +10,6 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 
-from .._units.scroller import PageScroller
 from .._base.base import BasePage
 from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
@@ -21,7 +20,9 @@ from .._elements.session_element import make_session_ele
 from .._units.action_chains import ActionChains
 from .._units.network_listener import NetworkListener
 from .._units.screencast import Screencast
+from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
+from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
 from ..errors import (ContextLossError, ElementLossError, CDPError, PageClosedError, NoRectError, AlertExistsError,
                       GetDocumentError)
@@ -44,6 +45,7 @@ class ChromiumBase(BasePage):
         self._screencast = None
         self._actions = None
         self._listener = None
+        self._states = None
         self._has_alert = False
         self._ready_state = None
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
@@ -69,7 +71,7 @@ class ChromiumBase(BasePage):
 
     def _d_set_runtime_settings(self):
         self._timeouts = Timeout(self)
-        self._page_load_strategy = 'normal'
+        self._load_mode = 'normal'
 
     def _connect_browser(self, tab_id=None):
         """连接浏览器，在第一次时运行
@@ -91,7 +93,7 @@ class ChromiumBase(BasePage):
                 tab_id = tabs[0][0]
 
         self._driver_init(tab_id)
-        if self.ready_state == 'complete' and self._ready_state is None:
+        if self._js_ready_state == 'complete' and self._ready_state is None:
             self._get_document()
             self._ready_state = 'complete'
             if self._debug:
@@ -170,7 +172,7 @@ class ChromiumBase(BasePage):
             self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
-            if self.page_load_strategy == 'eager':
+            if self._load_mode == 'eager':
                 t = Thread(target=self._wait_to_stop)
                 t.daemon = True
                 t.start()
@@ -199,7 +201,7 @@ class ChromiumBase(BasePage):
             print('在DomContentEventFired变成interactive')
 
         self._ready_state = 'interactive'
-        if self.page_load_strategy == 'eager':
+        if self._load_mode == 'eager':
             self.run_cdp('Page.stopLoading')
 
         if self._debug:
@@ -261,9 +263,65 @@ class ChromiumBase(BasePage):
         if self._ready_state in ('interactive', 'complete') and self._is_loading:
             self.stop_loading()
 
+    # ----------挂件----------
+
     @property
-    def main(self):
-        return self._page
+    def wait(self):
+        """返回用于等待的对象"""
+        if self._wait is None:
+            self._wait = BaseWaiter(self)
+        return self._wait
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = ChromiumBaseSetter(self)
+        return self._set
+
+    @property
+    def screencast(self):
+        """返回用于录屏的对象"""
+        if self._screencast is None:
+            self._screencast = Screencast(self)
+        return self._screencast
+
+    @property
+    def actions(self):
+        """返回用于执行动作链的对象"""
+        if self._actions is None:
+            self._actions = ActionChains(self)
+        self.wait.load_complete()
+        return self._actions
+
+    @property
+    def listen(self):
+        """返回用于聆听数据包的对象"""
+        if self._listener is None:
+            self._listener = NetworkListener(self)
+        return self._listener
+
+    @property
+    def states(self):
+        """返回用于获取状态信息的对象"""
+        if self._states is None:
+            self._states = PageStates(self)
+        return self._states
+
+    @property
+    def scroll(self):
+        """返回用于滚动滚动条的对象"""
+        self.wait.load_complete()
+        if self._scroll is None:
+            self._scroll = PageScroller(self)
+        return self._scroll
+
+    @property
+    def timeouts(self):
+        """返回timeouts设置"""
+        return self._timeouts
+
+    # ----------挂件----------
 
     @property
     def browser(self):
@@ -275,20 +333,6 @@ class ChromiumBase(BasePage):
         if self._driver is None:
             raise RuntimeError('浏览器已关闭或链接已断开。')
         return self._driver
-
-    @property
-    def is_loading(self):
-        """返回页面是否正在加载状态"""
-        return self._is_loading
-
-    @property
-    def is_alive(self):
-        """返回页面对象是否仍然可用"""
-        try:
-            self.run_cdp('Page.getLayoutMetrics')
-            return True
-        except PageClosedError:
-            return False
 
     @property
     def title(self):
@@ -330,16 +374,6 @@ class ChromiumBase(BasePage):
         return self.driver.id if not self.driver._stopped.is_set() else ''
 
     @property
-    def ready_state(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'，'timeout' 表示可能有弹出框"""
-        try:
-            return self.run_cdp('Runtime.evaluate', expression='document.readyState;', _timeout=3)['result']['value']
-        except ContextLossError:
-            return None
-        except TimeoutError:
-            return 'timeout'
-
-    @property
     def size(self):
         """返回页面总宽高，格式：(宽, 高)"""
         r = self.run_cdp_loaded('Page.getLayoutMetrics')['contentSize']
@@ -351,9 +385,9 @@ class ChromiumBase(BasePage):
         return self.run_js_loaded('return document.activeElement;')
 
     @property
-    def page_load_strategy(self):
+    def load_mode(self):
         """返回页面加载策略，有3种：'none'、'normal'、'eager'"""
-        return self._page_load_strategy
+        return self._load_mode
 
     @property
     def user_agent(self):
@@ -361,63 +395,25 @@ class ChromiumBase(BasePage):
         return self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
 
     @property
-    def scroll(self):
-        """返回用于滚动滚动条的对象"""
-        self.wait.load_complete()
-        if self._scroll is None:
-            self._scroll = PageScroller(self)
-        return self._scroll
-
-    @property
-    def timeouts(self):
-        """返回timeouts设置"""
-        return self._timeouts
-
-    @property
     def upload_list(self):
         """返回等待上传文件列表"""
         return self._upload_list
 
     @property
-    def wait(self):
-        """返回用于等待的对象"""
-        if self._wait is None:
-            self._wait = BaseWaiter(self)
-        return self._wait
-
-    @property
-    def set(self):
-        """返回用于等待的对象"""
-        if self._set is None:
-            self._set = ChromiumBaseSetter(self)
-        return self._set
-
-    @property
-    def screencast(self):
-        """返回用于录屏的对象"""
-        if self._screencast is None:
-            self._screencast = Screencast(self)
-        return self._screencast
-
-    @property
-    def actions(self):
-        """返回用于执行动作链的对象"""
-        if self._actions is None:
-            self._actions = ActionChains(self)
-        self.wait.load_complete()
-        return self._actions
-
-    @property
-    def listen(self):
-        """返回用于聆听数据包的对象"""
-        if self._listener is None:
-            self._listener = NetworkListener(self)
-        return self._listener
-
-    @property
     def has_alert(self):
         """返回是否存在提示框"""
         return self._has_alert
+
+    @property
+    def _js_ready_state(self):
+        """返回js获取的ready state信息"""
+        try:
+            return self.run_cdp('Runtime.evaluate', expression='document.readyState;',
+                                _timeout=3)['result']['value']
+        except ContextLossError:
+            return None
+        except TimeoutError:
+            return 'timeout'
 
     def run_cdp(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句
@@ -865,7 +861,7 @@ class ChromiumBase(BasePage):
         :param timeout: 超时时间
         :return: 是否成功，超时返回False
         """
-        if self.page_load_strategy == 'none':
+        if self._load_mode == 'none':
             return True
 
         timeout = timeout if timeout is not None else self.timeouts.page_load
@@ -873,8 +869,8 @@ class ChromiumBase(BasePage):
         while perf_counter() < end_time:
             if self._ready_state == 'complete':
                 return True
-            elif self.page_load_strategy == 'eager' and self._ready_state in ('interactive',
-                                                                              'complete') and not self._is_loading:
+            elif self._load_mode == 'eager' and self._ready_state in ('interactive',
+                                                                      'complete') and not self._is_loading:
                 return True
 
             sleep(.1)
@@ -913,7 +909,7 @@ class ChromiumBase(BasePage):
                 self.stop_loading()
                 continue
 
-            if self.page_load_strategy == 'none':
+            if self._load_mode == 'none':
                 return True
 
             yu = end_time - perf_counter()
@@ -1014,6 +1010,25 @@ class ChromiumBase(BasePage):
         with open(path, 'wb') as f:
             f.write(png)
         return str(path.absolute())
+
+    # --------------------即将废弃---------------------
+
+    @property
+    def page_load_strategy(self):
+        return self._load_mode
+
+    @property
+    def is_alive(self):
+        return self.states.is_alive
+
+    @property
+    def is_loading(self):
+        """返回页面是否正在加载状态"""
+        return self._is_loading
+
+    @property
+    def ready_state(self):
+        return self._ready_state
 
 
 class Timeout(object):

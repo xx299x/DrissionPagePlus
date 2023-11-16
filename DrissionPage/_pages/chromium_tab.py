@@ -32,7 +32,7 @@ class ChromiumTab(ChromiumBase):
         self._timeouts = copy(self.page.timeouts)
         self.retry_times = self.page.retry_times
         self.retry_interval = self.page.retry_interval
-        self._page_load_strategy = self.page.page_load_strategy
+        self._load_mode = self.page._load_mode
         self._download_path = self.page.download_path
 
     def close(self):
@@ -89,6 +89,13 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
             return super(SessionPage, self).__call__(loc_or_str, timeout)
         elif self._mode == 's':
             return super().__call__(loc_or_str)
+
+    @property
+    def set(self):
+        """返回用于等待的对象"""
+        if self._set is None:
+            self._set = WebPageTabSetter(self)
+        return self._set
 
     @property
     def url(self):
@@ -174,13 +181,6 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         :return: None
         """
         self.set.timeouts(implicit=second)
-
-    @property
-    def set(self):
-        """返回用于等待的对象"""
-        if self._set is None:
-            self._set = WebPageTabSetter(self)
-        return self._set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url
