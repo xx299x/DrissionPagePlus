@@ -50,6 +50,9 @@ class ChromiumBase(BasePage):
         self._has_alert = False
         self._ready_state = None
         self._rect = None
+        self._wait = None
+        self._scroll = None
+        self._upload_list = None
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
 
         self._download_path = str(Path('.').absolute())
@@ -81,9 +84,6 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_reading = False
-        self._upload_list = None
-        self._wait = None
-        self._scroll = None
 
         if not tab_id:
             tabs = self.browser.driver.get(f'http://{self.address}/json').json()
@@ -697,7 +697,7 @@ class ChromiumBase(BasePage):
             return
         ele = self._ele(loc_or_ele, raise_err=False)
         if ele:
-            self.run_cdp('DOM.removeNode', nodeId=ele.ids.node_id)
+            self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
 
     def get_frame(self, loc_ind_ele, timeout=None):
         """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从1开始

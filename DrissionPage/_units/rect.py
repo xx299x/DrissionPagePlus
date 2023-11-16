@@ -99,7 +99,7 @@ class ElementRect(object):
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标
         """
-        return self._ele.page.run_cdp('DOM.getBoxModel', backendNodeId=self._ele.ids.backend_id)['model'][quad]
+        return self._ele.page.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id)['model'][quad]
 
     def _get_page_coord(self, x, y):
         """根据视口坐标获取绝对坐标"""

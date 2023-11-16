@@ -15,7 +15,6 @@ from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
-from .._units.ids import ShadowRootIds, ElementIds
 from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller
 from .._units.select_element import SelectElement
@@ -66,7 +65,6 @@ class ChromiumElement(DrissionElement):
         else:
             raise ElementLossError
 
-        self._ids = ElementIds(self)
         doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
 
@@ -121,10 +119,6 @@ class ChromiumElement(DrissionElement):
         return self.prop('innerText')
 
     # -----------------d模式独有属性-------------------
-    @property
-    def ids(self):
-        """返回获取内置id的对象"""
-        return self._ids
 
     @property
     def set(self):
@@ -775,7 +769,6 @@ class ChromiumShadowRoot(BaseElement):
             self._obj_id = obj_id
             self._node_id = self._get_node_id(obj_id)
             self._backend_id = self._get_backend_id(self._node_id)
-        self._ids = ShadowRootIds(self)
         self._states = None
 
     def __repr__(self):
@@ -804,11 +797,6 @@ class ChromiumShadowRoot(BaseElement):
     def inner_html(self):
         """返回内部的html文本"""
         return self.run_js('return this.innerHTML;')
-
-    @property
-    def ids(self):
-        """返回获取内置id的对象"""
-        return self._ids
 
     @property
     def states(self):
@@ -1104,7 +1092,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     type_txt = '9' if single else '7'
     node_txt = 'this.contentDocument' if ele.tag in FRAME_ELEMENT and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
-    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                 returnByValue=False, awaitPromise=True, userGesture=True)
     if r['result']['type'] == 'string':
         return r['result']['value']
@@ -1112,7 +1100,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     if 'exceptionDetails' in r:
         if 'The result is not a node set' in r['result']['description']:
             js = make_js_for_find_ele_by_xpath(xpath, '1', node_txt)
-            r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+            r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                         returnByValue=False, awaitPromise=True, userGesture=True)
             return r['result']['value']
         else:
@@ -1121,7 +1109,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     end_time = perf_counter() + timeout
     while (r['result']['subtype'] == 'null'
            or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
-        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                     returnByValue=False, awaitPromise=True, userGesture=True)
 
     if single:
@@ -1150,13 +1138,13 @@ def find_by_css(ele, selector, single, timeout):
     find_all = '' if single else 'All'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
-    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+    r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                 returnByValue=False, awaitPromise=True, userGesture=True)
 
     end_time = perf_counter() + timeout
     while ('exceptionDetails' in r or r['result']['subtype'] == 'null' or
            r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
-        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele.ids.obj_id,
+        r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                     returnByValue=False, awaitPromise=True, userGesture=True)
 
     if 'exceptionDetails' in r:
@@ -1259,7 +1247,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     """
     if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRoot)):
         page = page_or_ele.page
-        obj_id = page_or_ele.ids.obj_id
+        obj_id = page_or_ele._obj_id
         is_page = False
     else:
         page = page_or_ele
@@ -1345,7 +1333,7 @@ def parse_js_result(page, ele, result):
 def convert_argument(arg):
     """把参数转换成js能够接收的形式"""
     if isinstance(arg, ChromiumElement):
-        return {'objectId': arg.ids.obj_id}
+        return {'objectId': arg._obj_id}
 
     elif isinstance(arg, (int, float, str, bool)):
         return {'value': arg}

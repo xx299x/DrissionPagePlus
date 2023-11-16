@@ -78,7 +78,7 @@ class Clicker(object):
                 try:
                     r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
                                                ignorePointerEventsNone=True)
-                    if r['backendNodeId'] != self._ele.ids.backend_id:
+                    if r['backendNodeId'] != self._ele._backend_id:
                         vx, vy = self._ele.rect.viewport_midpoint
                     else:
                         vx, vy = self._ele.rect.viewport_click_point
