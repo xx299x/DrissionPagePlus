@@ -40,9 +40,6 @@ class ChromiumPage(ChromiumBase):
     def tabs(self) -> List[str]: ...
 
     @property
-    def rect(self) -> TabRect: ...
-
-    @property
     def wait(self) -> PageWaiter: ...
 
     @property

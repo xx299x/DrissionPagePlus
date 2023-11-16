@@ -13,7 +13,6 @@ from .._commons.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_base import ChromiumBase, Timeout
 from .._pages.chromium_tab import ChromiumTab
-from .._units.rect import TabRect
 from .._units.setter import ChromiumPageSetter
 from .._units.waiter import PageWaiter
 from ..errors import BrowserConnectError
@@ -103,14 +102,6 @@ class ChromiumPage(ChromiumBase):
         if self._set is None:
             self._set = ChromiumPageSetter(self)
         return self._set
-
-    @property
-    def rect(self):
-        """返回保存窗口方位信息的对象"""
-        self.wait.load_complete()
-        if self._rect is None:
-            self._rect = TabRect(self)
-        return self._rect
 
     @property
     def wait(self):
