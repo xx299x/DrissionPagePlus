@@ -68,7 +68,7 @@ class ElementStates(object):
         except CDPError:
             return False
 
-        if r.get('backendNodeId') != self._ele.ids.backend_id:
+        if r.get('backendNodeId') != self._ele._backend_id:
             return True
 
         return False
@@ -98,7 +98,7 @@ class ShadowRootStates(object):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            self._ele.page.run_cdp('DOM.describeNode', backendNodeId=self._ele.ids.backend_id)
+            self._ele.page.run_cdp('DOM.describeNode', backendNodeId=self._ele._backend_id)
             return True
         except Exception:
             return False
@@ -145,7 +145,7 @@ class FrameStates(object):
         """返回frame元素是否可用，且里面仍挂载有frame"""
         try:
             node = self._frame._target_page.run_cdp('DOM.describeNode',
-                                                    backendNodeId=self._frame._frame_ele.ids.backend_id)['node']
+                                                    backendNodeId=self._frame._frame_ele._backend_id)['node']
         except (ElementLossError, PageClosedError):
             return False
         return 'frameId' in node

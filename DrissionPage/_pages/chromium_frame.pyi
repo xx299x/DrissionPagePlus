@@ -12,7 +12,6 @@ from .chromium_tab import ChromiumTab
 from .web_page import WebPage
 from .._elements.chromium_element import ChromiumElement
 from .._units.states import FrameStates
-from .._units.ids import FrameIds
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
@@ -32,12 +31,10 @@ class ChromiumFrame(ChromiumBase):
         self._is_diff_domain: bool = ...
         self.doc_ele: ChromiumElement = ...
         self._states: FrameStates = ...
-        self._ids: FrameIds = ...
         self._is_init_get_doc: bool = ...
         self._rect: FrameRect = ...
 
-    def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str],
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str],
                  timeout: float = None) -> Union[ChromiumElement, str]: ...
 
     def _check_alive(self) -> None: ...
@@ -60,9 +57,6 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def page(self) -> Union[ChromiumPage, WebPage]: ...
-
-    @property
-    def ids(self) -> FrameIds: ...
 
     @property
     def frame_ele(self) -> ChromiumElement: ...
@@ -90,6 +84,12 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def rect(self) -> FrameRect: ...
+
+    @property
+    def _obj_id(self) -> str: ...
+
+    @property
+    def _node_id(self) -> str: ...
 
     @property
     def active_ele(self) -> ChromiumElement: ...
@@ -128,52 +128,36 @@ class ChromiumFrame(ChromiumBase):
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[ChromiumElement, None]: ...
 
-    def prev(self, filter_loc: Union[tuple, str, int] = '',
-             index: int = 1,
-             timeout: float = 0,
-             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
+    def prev(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+             timeout: float = 0, ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def next(self, filter_loc: Union[tuple, str, int] = '',
-             index: int = 1,
-             timeout: float = 0,
-             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
+    def next(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+             timeout: float = 0, ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def before(self, filter_loc: Union[tuple, str, int] = '',
-               index: int = 1,
-               timeout: float = None,
-               ele_only: bool = True) -> Union[ChromiumElement, str]: ...
+    def before(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+               timeout: float = None, ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def after(self, filter_loc: Union[tuple, str, int] = '',
-              index: int = 1,
-              timeout: float = None,
-              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
+    def after(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+              timeout: float = None, ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
-    def prevs(self, filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+    def prevs(self, filter_loc: Union[tuple, str] = '', timeout: float = 0,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
-    def nexts(self, filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+    def nexts(self, filter_loc: Union[tuple, str] = '', timeout: float = 0,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
-    def befores(self, filter_loc: Union[tuple, str] = '',
-                timeout: float = None,
+    def befores(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
                 ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
-    def afters(self, filter_loc: Union[tuple, str] = '',
-               timeout: float = None,
+    def afters(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
                ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
-    def get_screenshot(self, path: [str, Path] = None, name: str = None,
-                       as_bytes: [bool, str] = None,
+    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
                        as_base64: [bool, str] = None) -> Union[str, bytes]: ...
 
-    def _get_screenshot(self, path: [str, Path] = None, name: str = None,
-                        as_bytes: [bool, str] = None, as_base64: [bool, str] = None,
-                        full_page: bool = False,
-                        left_top: Tuple[int, int] = None,
-                        right_bottom: Tuple[int, int] = None,
-                        ele: ChromiumElement = None) -> Union[str, bytes]: ...
+    def _get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
+                        as_base64: [bool, str] = None, full_page: bool = False, left_top: Tuple[int, int] = None,
+                        right_bottom: Tuple[int, int] = None, ele: ChromiumElement = None) -> Union[str, bytes]: ...
 
     def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \

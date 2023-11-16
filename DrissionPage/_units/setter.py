@@ -413,7 +413,7 @@ class ChromiumElementSetter(object):
         :param value: 属性值
         :return: None
         """
-        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele.ids.node_id, name=attr, value=str(value))
+        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=attr, value=str(value))
 
     def prop(self, prop, value):
         """设置元素property属性
@@ -508,14 +508,14 @@ class WindowSetter(object):
         self._page = page
         self._window_id = self._get_info()['windowId']
 
-    def maximized(self):
+    def max(self):
         """窗口最大化"""
         s = self._get_info()['bounds']['windowState']
         if s in ('fullscreen', 'minimized'):
             self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'maximized'})
 
-    def minimized(self):
+    def mini(self):
         """窗口最小化"""
         s = self._get_info()['bounds']['windowState']
         if s == 'fullscreen':
@@ -574,6 +574,16 @@ class WindowSetter(object):
         :return: None
         """
         self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+
+    # ------------即将废除----------
+
+    def maximized(self):
+        """窗口最大化"""
+        self.max()
+
+    def minimized(self):
+        """窗口最小化"""
+        self.mini()
 
 
 class PageWindowSetter(WindowSetter):

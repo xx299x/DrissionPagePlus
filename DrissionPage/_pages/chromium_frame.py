@@ -9,7 +9,6 @@ from time import sleep, perf_counter
 
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
-from .._units.ids import FrameIds
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
@@ -35,12 +34,11 @@ class ChromiumFrame(ChromiumBase):
             self.tab = page.tab if 'ChromiumFrame' in page_type else page
 
         self.address = page.address
-        node = page.run_cdp('DOM.describeNode', backendNodeId=ele.ids.backend_id)['node']
+        node = page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
         self._tab_id = page.tab_id
-        self._backend_id = ele.ids.backend_id
+        self._backend_id = ele._backend_id
         self._frame_ele = ele
         self._states = None
-        self._ids = FrameIds(self)
         self._is_init_get_doc = True
 
         self._frame_id = node['frameId']
@@ -114,7 +112,7 @@ class ChromiumFrame(ChromiumBase):
         end_time = perf_counter() + 2
         while perf_counter() < end_time:
             node = self._target_page.run_cdp('DOM.describeNode',
-                                             backendNodeId=self._frame_ele.ids.backend_id)['node']
+                                             backendNodeId=self._frame_ele._backend_id)['node']
             if 'frameId' in node:
                 break
 
@@ -189,7 +187,7 @@ class ChromiumFrame(ChromiumBase):
         while perf_counter() < end_time:
             try:
                 if self._is_diff_domain is False:
-                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self.ids.backend_id)['node']
+                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
                     self.doc_ele = ChromiumElement(self._target_page,
                                                    backend_id=node['contentDocument']['backendNodeId'])
 
@@ -304,12 +302,18 @@ class ChromiumFrame(ChromiumBase):
     # ----------挂件----------
 
     @property
-    def page(self):
-        return self._page
+    def _obj_id(self):
+        """返回frame元素的object id"""
+        return self.frame_ele._obj_id
 
     @property
-    def ids(self):
-        return self._ids
+    def _node_id(self):
+        """返回cdp中的node id"""
+        return self.frame_ele._node_id
+
+    @property
+    def page(self):
+        return self._page
 
     @property
     def frame_ele(self):
@@ -330,7 +334,7 @@ class ChromiumFrame(ChromiumBase):
     def html(self):
         """返回元素outerHTML文本"""
         tag = self.tag
-        out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele.ids.backend_id)[
+        out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele._backend_id)[
             'outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
@@ -391,7 +395,7 @@ class ChromiumFrame(ChromiumBase):
                 return self.doc_ele.run_js('return this.readyState;')
             except ContextLossError:
                 try:
-                    node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele.ids.backend_id)['node']
+                    node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele._backend_id)['node']
                     doc = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
                     return doc.run_js('return this.readyState;')
                 except:
