@@ -7,6 +7,7 @@ from copy import copy
 
 from .._base.base import BasePage
 from .._commons.web import set_session_cookies, set_browser_cookies
+from .._configs.session_options import SessionOptions
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
 from .._units.setter import TabSetter, WebPageTabSetter
@@ -67,7 +68,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         self._mode = 'd'
         self._has_driver = True
         self._has_session = True
-        super().__init__(session_or_options=copy(page.session))
+        super().__init__(session_or_options=SessionOptions(read_file=False).from_session(copy(page.session)))
         super(SessionPage, self).__init__(page=page, tab_id=tab_id)
 
     def __call__(self, loc_or_str, timeout=None):

@@ -30,16 +30,15 @@ class SessionPage(BasePage):
         self._response = None
         self._session = None
         self._set = None
-        self._s_set_start_options(session_or_options, None)
+        self._s_set_start_options(session_or_options)
         self._s_set_runtime_settings()
         self._create_session()
         if timeout is not None:
             self.timeout = timeout
 
-    def _s_set_start_options(self, session_or_options, none):
+    def _s_set_start_options(self, session_or_options):
         """启动配置
         :param session_or_options: Session、SessionOptions
-        :param none: 用于后代继承
         :return: None
         """
         if not session_or_options or isinstance(session_or_options, SessionOptions):
