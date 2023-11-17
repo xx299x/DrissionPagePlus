@@ -8,8 +8,8 @@ from .by import By
 
 
 def get_loc(loc, translate_css=False):
-    """接收selenium定位元组或本库定位语法，转换为标准定位元组，可翻译css selector为xpath
-    :param loc: selenium定位元组或本库定位语法
+    """接收本库定位语法或selenium定位元组，转换为标准定位元组，可翻译css selector为xpath
+    :param loc: 本库定位语法或selenium定位元组
     :param translate_css: 是否翻译css selector为xpath
     :return: DrissionPage定位元组
     """

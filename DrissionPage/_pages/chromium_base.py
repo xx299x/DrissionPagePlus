@@ -501,11 +501,8 @@ class ChromiumBase(BasePage):
         :return: 目标url是否可用
         """
         retry, interval = self._before_connect(url, retry, interval)
-        self._url_available = self._d_connect(self._url,
-                                              times=retry,
-                                              interval=interval,
-                                              show_errmsg=show_errmsg,
-                                              timeout=timeout)
+        self._url_available = self._d_connect(self._url, times=retry, interval=interval,
+                                              show_errmsg=show_errmsg, timeout=timeout)
         return self._url_available
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):

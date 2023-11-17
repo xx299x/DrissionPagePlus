@@ -299,8 +299,8 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
             return
 
         if copy_user_agent:
-            selenium_user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self.session.headers.update({"User-Agent": selenium_user_agent})
+            user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
+            self.session.headers.update({"User-Agent": user_agent})
 
         set_session_cookies(self.session, super(SessionPage, self).get_cookies())
 
