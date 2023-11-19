@@ -21,6 +21,7 @@ class ChromiumOptions(object):
         self._user_data_path = None
         self._user = 'Default'
         self._prefs_to_del = []
+        self.clear_file_flags = False
         self._headless = None
 
         if read_file is not False:
@@ -34,6 +35,7 @@ class ChromiumOptions(object):
             self._browser_path = options.get('browser_path', '')
             self._extensions = options.get('extensions', [])
             self._prefs = options.get('prefs', {})
+            self._flags = options.get('flags', {})
             self._debugger_address = options.get('debugger_address', None)
             self._load_mode = options.get('load_mode', 'normal')
             self._proxy = om.proxies.get('http', None)
@@ -69,6 +71,7 @@ class ChromiumOptions(object):
         self._download_path = ''
         self._extensions = []
         self._prefs = {}
+        self._flags = {}
         self._timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
         self._debugger_address = '127.0.0.1:9222'
         self._load_mode = 'normal'
@@ -136,6 +139,11 @@ class ChromiumOptions(object):
     def preferences(self):
         """返回用户首选项配置"""
         return self._prefs
+
+    @property
+    def flags(self):
+        """返回实验项配置"""
+        return self._flags
 
     @property
     def system_user_path(self):
@@ -219,6 +227,23 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         self._prefs_to_del.append(arg)
+        return self
+
+    def set_flag(self, flag, value=None):
+        """设置实验项
+        :param flag: 设置项名称
+        :param value: 设置项的值，为False则删除该项
+        :return: 当前对象
+        """
+        if value is False:
+            self._flags.pop(flag, None)
+        else:
+            self._flags[flag] = value
+        return self
+
+    def clear_flags_in_file(self):
+        """删除浏览器设置文件中已设置的实验项"""
+        self.clear_file_flags = True
         return self
 
     def set_timeouts(self, implicit=None, pageLoad=None, script=None):
@@ -454,7 +479,7 @@ class ChromiumOptions(object):
 
         # 设置chrome_options
         attrs = ('debugger_address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',
-                 'auto_port', 'system_user_path', 'existing_only')
+                 'auto_port', 'system_user_path', 'existing_only', 'flags')
         for i in attrs:
             om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理

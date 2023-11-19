@@ -37,6 +37,7 @@ def connect_browser(option):
     # ----------创建浏览器进程----------
     args = get_launch_args(option)
     set_prefs(option)
+    set_flags(option)
     try:
         _run_browser(port, chrome_path, args)
 
@@ -89,6 +90,7 @@ def get_launch_args(opt):
         port = opt.debugger_address.split(':')[-1] if opt.debugger_address else '0'
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
+        opt.set_user_data_path(path)
         result.add(f'--user-data-dir={path}')
 
     if not remote_allow:
@@ -119,15 +121,13 @@ def set_prefs(opt):
     :param opt: ChromiumOptions
     :return: None
     """
+    if not opt.user_data_path or (not opt.preferences and not opt._prefs_to_del):
+        return
     prefs = opt.preferences
     del_list = opt._prefs_to_del
 
-    if not opt.user_data_path:
-        return
-
-    args = opt.arguments
     user = 'Default'
-    for arg in args:
+    for arg in opt.arguments:
         if arg.startswith('--profile-directory'):
             user = arg.split('=')[-1].strip()
             break
@@ -156,6 +156,42 @@ def set_prefs(opt):
 
     with open(prefs_file, 'w', encoding='utf-8') as f:
         dump(prefs_dict, f)
+
+
+def set_flags(opt):
+    """处理启动配置中的prefs项，目前只能对已存在文件夹配置
+    :param opt: ChromiumOptions
+    :return: None
+    """
+    if not opt.user_data_path or (not opt.clear_file_flags and not opt.flags):
+        return
+
+    state_file = Path(opt.user_data_path) / 'Local State'
+
+    if not state_file.exists():
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(state_file, 'w') as f:
+            f.write('{}')
+
+    with open(state_file, "r", encoding='utf-8') as f:
+        try:
+            states_dict = load(f)
+        except JSONDecodeError:
+            states_dict = {}
+        flags_list = [] if opt.clear_file_flags else states_dict.setdefault(
+            'browser', {}).setdefault('enabled_labs_experiments', [])
+        flags_dict = {}
+        for i in flags_list:
+            f = str(i).split('@', 1)
+            flags_dict[f[0]] = None if len(f) == 1 else f[1]
+
+        for k, i in opt.flags.items():
+            flags_dict[k] = i
+
+        states_dict['browser']['enabled_labs_experiments'] = [f'{k}@{i}' if i else k for k, i in flags_dict.items()]
+
+    with open(state_file, 'w', encoding='utf-8') as f:
+        dump(states_dict, f)
 
 
 def test_connect(ip, port, timeout=30):

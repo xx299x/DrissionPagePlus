@@ -10,7 +10,6 @@ from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 
-from .._units.rect import TabRect
 from .._base.base import BasePage
 from .._commons.constants import ERROR, NoneElement
 from .._commons.locator import get_loc
@@ -20,6 +19,7 @@ from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_
 from .._elements.session_element import make_session_ele
 from .._units.action_chains import ActionChains
 from .._units.network_listener import NetworkListener
+from .._units.rect import TabRect
 from .._units.screencast import Screencast
 from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
@@ -88,9 +88,20 @@ class ChromiumBase(BasePage):
         if not tab_id:
             tabs = self.browser.driver.get(f'http://{self.address}/json').json()
             tabs = [(i['id'], i['url']) for i in tabs if i['type'] == 'page' and not i['url'].startswith('devtools://')]
-            if tabs[0][1] == 'chrome://privacy-sandbox-dialog/notice' and len(tabs) > 1:
-                tab_id = tabs[1][0]
-                close_privacy_dialog(self, tabs[0][0])
+            dialog = None
+            if len(tabs) > 1:
+                for k, t in enumerate(tabs):
+                    if t[1] == 'chrome://privacy-sandbox-dialog/notice':
+                        dialog = k
+                    elif not tab_id:
+                        tab_id = t[0]
+
+                    if tab_id and dialog is not None:
+                        break
+
+                if dialog is not None:
+                    close_privacy_dialog(self, tabs[dialog][0])
+
             else:
                 tab_id = tabs[0][0]
 
