@@ -8,7 +8,7 @@ from typing import Union, Tuple, List
 
 from DownloadKit import DownloadKit
 
-from .._commons.constants import NoneElement
+from .._elements.none_element import NoneElement
 
 
 class BaseParser(object):
@@ -27,7 +27,8 @@ class BaseParser(object):
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]): ...
 
-    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True,
+             raise_err: bool = None, method: str = None): ...
 
     @abstractmethod
     def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
@@ -43,7 +44,7 @@ class BaseElement(BaseParser):
     def tag(self) -> str: ...
 
     def _ele(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None, single: bool = True,
-             relative: bool = False, raise_err: bool = None): ...
+             relative: bool = False, raise_err: bool = None, method: str = None): ...
 
     @abstractmethod
     def _find_elements(self, loc_or_str, timeout: float = None, single: bool = True, relative: bool = False,
@@ -208,7 +209,8 @@ class BasePage(BaseParser):
             retry: int = None,
             interval: float = None): ...
 
-    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True,
+             raise_err: bool = None, method: str = None): ...
 
     @abstractmethod
     def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...

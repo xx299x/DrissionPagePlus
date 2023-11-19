@@ -10,9 +10,10 @@ from urllib.parse import quote
 
 from DownloadKit import DownloadKit
 
-from .._commons.constants import Settings, NoneElement
+from .._commons.constants import Settings
 from .._commons.locator import get_loc
 from .._commons.web import format_html
+from .._elements.none_element import NoneElement
 from ..errors import ElementNotFoundError
 
 
@@ -23,7 +24,7 @@ class BaseParser(object):
         return self.ele(loc_or_str)
 
     def ele(self, loc_or_ele, timeout=None):
-        return self._ele(loc_or_ele, timeout, True)
+        return self._ele(loc_or_ele, timeout, True, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         return self._ele(loc_or_str, timeout, False)
@@ -39,7 +40,7 @@ class BaseParser(object):
     def s_eles(self, loc_or_str):
         pass
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None, method=None):
         pass
 
     @abstractmethod
@@ -67,12 +68,16 @@ class BaseElement(BaseParser):
     def nexts(self):
         pass
 
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
+    def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None, method=None):
         r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
-        if not single or raise_err is False:
+        if not single:
             return r
-        if not r and (Settings.raise_when_ele_not_found or raise_err is True):
-            raise ElementNotFoundError
+        if isinstance(r, NoneElement):
+            if Settings.raise_when_ele_not_found or raise_err is True:
+                raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_str})
+            else:
+                r.method = method
+                r.args = {'loc_or_str': loc_or_str}
         return r
 
     @abstractmethod
@@ -136,7 +141,7 @@ class DrissionElement(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self._ele(loc, timeout=0, relative=True, raise_err=False)
+        return self._ele(loc, timeout=0, relative=True, raise_err=False, method='parent()')
 
     def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
@@ -152,17 +157,19 @@ class DrissionElement(BaseElement):
         nodes = self.children(filter_loc=filter_loc, timeout=timeout, ele_only=ele_only)
         if not nodes:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError
+                raise ElementNotFoundError(None, 'child()',
+                                           {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
             else:
-                return NoneElement()
+                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
         try:
             return nodes[index - 1]
         except IndexError:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError
+                raise ElementNotFoundError(None, 'child()',
+                                           {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
             else:
-                return NoneElement()
+                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -179,9 +186,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[-1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'prev()',
+                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement()
+            return NoneElement('prev()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -198,9 +206,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[0]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'next()',
+                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement()
+            return NoneElement('next()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -217,9 +226,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[-1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'before()',
+                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement()
+            return NoneElement('before()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -236,9 +246,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[0]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'after()',
+                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement()
+            return NoneElement('after()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def children(self, filter_loc='', timeout=None, ele_only=True):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
@@ -372,7 +383,7 @@ class BasePage(BaseParser):
     @property
     def title(self):
         """返回网页title"""
-        ele = self._ele('xpath://title', raise_err=False)
+        ele = self._ele('xpath://title', raise_err=False, method='title')
         return ele.text if ele else None
 
     @property
@@ -430,7 +441,7 @@ class BasePage(BaseParser):
 
     @property
     def user_agent(self):
-        pass
+        return
 
     @abstractmethod
     def get_cookies(self, as_dict=False, all_info=False):
@@ -440,16 +451,20 @@ class BasePage(BaseParser):
     def get(self, url, show_errmsg=False, retry=None, interval=None):
         pass
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None, method=None):
         if not loc_or_ele:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
 
         r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
 
-        if not single or raise_err is False:
+        if not single:
             return r
-        if not r and (Settings.raise_when_ele_not_found is True or raise_err is True):
-            raise ElementNotFoundError
+        if isinstance(r, NoneElement):
+            if Settings.raise_when_ele_not_found or raise_err is True:
+                raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
+            else:
+                r.method = method
+                r.args = {'loc_or_str': loc_or_ele}
         return r
 
     @abstractmethod

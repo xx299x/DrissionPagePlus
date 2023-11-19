@@ -7,6 +7,12 @@ from re import split
 from .by import By
 
 
+def is_loc(text):
+    """返回text是否定位符"""
+    return text.startswith(('.', '#', '@', 't:', 't=', 'tag:', 'tag=', 'tx:', 'tx=', 'tx^', 'tx$', 'text:', 'text=',
+                            'text^', 'text$', 'xpath:', 'xpath=', 'x:', 'x=', 'css:', 'css=', 'c:', 'c='))
+
+
 def get_loc(loc, translate_css=False):
     """接收本库定位语法或selenium定位元组，转换为标准定位元组，可翻译css selector为xpath
     :param loc: 本库定位语法或selenium定位元组

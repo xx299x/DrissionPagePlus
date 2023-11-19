@@ -6,6 +6,9 @@
 from typing import Union
 
 
+def is_loc(text:str) -> bool: ...
+
+
 def get_loc(loc: Union[tuple, str], translate_css: bool = False) -> tuple: ...
 
 

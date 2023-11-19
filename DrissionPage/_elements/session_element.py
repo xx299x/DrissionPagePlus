@@ -9,8 +9,8 @@ from re import match, DOTALL
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
+from .none_element import NoneElement
 from .._base.base import DrissionElement, BasePage, BaseElement
-from .._commons.constants import NoneElement
 from .._commons.locator import get_loc
 from .._commons.web import get_ele_txt, make_absolute_link
 
@@ -221,7 +221,7 @@ class SessionElement(DrissionElement):
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str)
+        return self._ele(loc_or_str, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
@@ -236,7 +236,7 @@ class SessionElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str)
+        return self._ele(loc_or_str, method='s_ele()')
 
     def s_eles(self, loc_or_str):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本

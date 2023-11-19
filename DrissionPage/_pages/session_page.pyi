@@ -9,8 +9,8 @@ from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 
 from .._base.base import BasePage
-from .._commons.constants import NoneElement
 from .._configs.session_options import SessionOptions
+from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.setter import SessionPageSetter
 

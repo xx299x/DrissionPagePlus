@@ -9,11 +9,24 @@ class BaseError(Exception):
     _info = None
 
     def __init__(self, ErrorInfo=None):
-        super().__init__(self)  # 初始化父类
         self._info = ErrorInfo or self._info
 
     def __str__(self):
         return self._info
+
+
+class ElementNotFoundError(BaseError):
+    _info = '\n没有找到元素。'
+
+    def __init__(self, ErrorInfo=None, method=None, arguments=None):
+        super().__init__(ErrorInfo=ErrorInfo)
+        self.method = method
+        self.arguments = arguments
+
+    def __str__(self):
+        method = f'\nmethod: {self.method}' if self.method else ''
+        arguments = f'\nargs: {self.arguments}' if self.arguments else ''
+        return f'{self._info}{method}{arguments}'
 
 
 class AlertExistsError(BaseError):
@@ -34,10 +47,6 @@ class CDPError(BaseError):
 
 class PageClosedError(BaseError):
     _info = '页面已关闭。'
-
-
-class ElementNotFoundError(BaseError):
-    _info = '没有找到元素。'
 
 
 class JavaScriptError(BaseError):

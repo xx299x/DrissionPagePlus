@@ -6,17 +6,17 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Optional
 
-from .._units.rect import TabRect
 from .._base.base import BasePage
 from .._base.browser import Browser
 from .._base.chromium_driver import ChromiumDriver
-from .._commons.constants import NoneElement
 from .._elements.chromium_element import ChromiumElement
+from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 from .._units.action_chains import ActionChains
 from .._units.network_listener import NetworkListener
+from .._units.rect import TabRect
 from .._units.screencast import Screencast
 from .._units.scroller import Scroller, PageScroller
 from .._units.setter import ChromiumBaseSetter

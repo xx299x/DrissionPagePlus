@@ -7,9 +7,10 @@ from os.path import basename, sep
 from pathlib import Path
 from time import perf_counter, sleep
 
+from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
-from .._commons.constants import FRAME_ELEMENT, NoneElement, Settings
+from .._commons.constants import FRAME_ELEMENT, Settings
 from .._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
@@ -386,7 +387,7 @@ class ChromiumElement(DrissionElement):
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本
         """
-        return self._ele(loc_or_str, timeout)
+        return self._ele(loc_or_str, timeout, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
@@ -402,8 +403,16 @@ class ChromiumElement(DrissionElement):
         :return: SessionElement对象或属性、文本
         """
         if self.tag in FRAME_ELEMENT:
-            return make_session_ele(self.inner_html, loc_or_str)
-        return make_session_ele(self, loc_or_str)
+            r = make_session_ele(self.inner_html, loc_or_str)
+        else:
+            r = make_session_ele(self, loc_or_str)
+        if isinstance(r, NoneElement):
+            if Settings.raise_when_ele_not_found:
+                raise ElementNotFoundError(None, 's_ele()', {'loc_or_str': loc_or_str})
+            else:
+                r.method = 's_ele()'
+                r.args = {'loc_or_str': loc_or_str}
+        return r
 
     def s_eles(self, loc_or_str=None):
         """查找所有符合条件的元素，以SessionElement列表形式返回
@@ -847,7 +856,7 @@ class ChromiumShadowRoot(BaseElement):
         else:
             raise TypeError('level_or_loc参数只能是tuple、int或str。')
 
-        return self.parent_ele._ele(loc, timeout=0, relative=True, raise_err=False)
+        return self.parent_ele._ele(loc, timeout=0, relative=True, raise_err=False, method='parent()')
 
     def child(self, filter_loc='', index=1):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
@@ -858,17 +867,17 @@ class ChromiumShadowRoot(BaseElement):
         nodes = self.children(filter_loc=filter_loc)
         if not nodes:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError
+                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
             else:
-                return NoneElement()
+                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index})
 
         try:
             return nodes[index - 1]
         except IndexError:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError
+                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
             else:
-                return NoneElement()
+                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index})
 
     def next(self, filter_loc='', index=1):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -880,9 +889,9 @@ class ChromiumShadowRoot(BaseElement):
         if nodes:
             return nodes[index - 1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement()
+            return NoneElement('next()', {'filter_loc': filter_loc, 'index': index})
 
     def before(self, filter_loc='', index=1):
         """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -895,9 +904,9 @@ class ChromiumShadowRoot(BaseElement):
         if nodes:
             return nodes[index - 1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement()
+            return NoneElement('before()', {'filter_loc': filter_loc, 'index': index})
 
     def after(self, filter_loc='', index=1):
         """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -910,9 +919,9 @@ class ChromiumShadowRoot(BaseElement):
         if nodes:
             return nodes[index - 1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError
+            raise ElementNotFoundError(None, 'after()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement()
+            return NoneElement('after()', {'filter_loc': filter_loc, 'index': index})
 
     def children(self, filter_loc=''):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
@@ -974,7 +983,7 @@ class ChromiumShadowRoot(BaseElement):
         :param timeout: 查找元素超时时间，默认与元素所在页面等待时间一致
         :return: ChromiumElement对象
         """
-        return self._ele(loc_or_str, timeout)
+        return self._ele(loc_or_str, timeout, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素
@@ -989,7 +998,11 @@ class ChromiumShadowRoot(BaseElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        return make_session_ele(self, loc_or_str)
+        r = make_session_ele(self, loc_or_str)
+        if isinstance(r, NoneElement):
+            r.method = 's_ele()'
+            r.args = {'loc_or_str': loc_or_str}
+        return r
 
     def s_eles(self, loc_or_str):
         """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高

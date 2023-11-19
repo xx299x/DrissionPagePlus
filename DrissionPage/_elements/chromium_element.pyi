@@ -6,8 +6,8 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any
 
+from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
-from .._commons.constants import NoneElement
 from .._elements.session_element import SessionElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame

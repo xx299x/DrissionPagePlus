@@ -7,8 +7,8 @@ from typing import Union, List, Tuple
 
 from lxml.html import HtmlElement
 
+from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
-from .._commons.constants import NoneElement
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame

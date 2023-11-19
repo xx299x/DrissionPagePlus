@@ -137,7 +137,7 @@ class SessionPage(BasePage):
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_ele)
+        return self._ele(loc_or_ele, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本
@@ -152,7 +152,7 @@ class SessionPage(BasePage):
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele)
+        return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele, method='s_ele()')
 
     def s_eles(self, loc_or_str):
         """返回页面中符合条件的所有元素、属性或节点文本
