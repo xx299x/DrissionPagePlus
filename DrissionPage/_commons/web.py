@@ -112,16 +112,16 @@ def offset_scroll(ele, offset_x, offset_y):
     :param offset_y: 偏移量y
     :return: 视口中的坐标
     """
-    loc_x, loc_y = ele.location
-    cp_x, cp_y = ele.locations.click_point
+    loc_x, loc_y = ele.rect.location
+    cp_x, cp_y = ele.rect.click_point
     lx = loc_x + offset_x if offset_x else cp_x
     ly = loc_y + offset_y if offset_y else cp_y
     if not location_in_viewport(ele.page, lx, ly):
         clientWidth = ele.page.run_js('return document.body.clientWidth;')
         clientHeight = ele.page.run_js('return document.body.clientHeight;')
         ele.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
-    cl_x, cl_y = ele.locations.viewport_location
-    ccp_x, ccp_y = ele.locations.viewport_click_point
+    cl_x, cl_y = ele.rect.viewport_location
+    ccp_x, ccp_y = ele.rect.viewport_click_point
     cx = cl_x + offset_x if offset_x else ccp_x
     cy = cl_y + offset_y if offset_y else ccp_y
     return cx, cy
@@ -136,6 +136,7 @@ def make_absolute_link(link, page=None):
     if not link:
         return link
 
+    link = link.strip()
     parsed = urlparse(link)._asdict()
 
     # 是相对路径，与页面url拼接并返回

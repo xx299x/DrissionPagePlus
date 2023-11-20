@@ -190,7 +190,7 @@ class NetworkListener(object):
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
-        if kwargs['frameId'] != self._page._frame_id:
+        if kwargs.get('frameId', self._page._frame_id) != self._page._frame_id:
             return
         p = None
         if not self._targets:
@@ -222,7 +222,7 @@ class NetworkListener(object):
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        if kwargs['frameId'] != self._page._frame_id:
+        if kwargs.get('frameId', self._page._frame_id) != self._page._frame_id:
             return
         request = self._request_ids.get(kwargs['requestId'], None)
         if request:
