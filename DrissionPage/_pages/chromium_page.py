@@ -87,11 +87,11 @@ class ChromiumPage(ChromiumBase):
         if self._driver_options.timeouts['implicit'] is not None:
             self._timeout = self._driver_options.timeouts['implicit']
         self._load_mode = self._driver_options.load_mode
-        self._download_path = str(Path(self._driver_options.download_path).absolute())
+        self._download_path = None if self._driver_options.download_path is None \
+            else str(Path(self._driver_options.download_path).absolute())
 
     def _page_init(self):
         """浏览器相关设置"""
-        self._rect = None
         self._browser.connect_to_page()
 
     # ----------挂件----------

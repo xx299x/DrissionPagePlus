@@ -30,7 +30,7 @@ class ChromiumOptions(object):
             self.ini_path = om.ini_path
             options = om.chrome_options
 
-            self._download_path = om.paths.get('download_path', '')
+            self._download_path = om.paths.get('download_path', None) or None
             self._arguments = options.get('arguments', [])
             self._browser_path = options.get('browser_path', '')
             self._extensions = options.get('extensions', [])
@@ -68,7 +68,7 @@ class ChromiumOptions(object):
         self.ini_path = None
         self._browser_path = "chrome"
         self._arguments = []
-        self._download_path = ''
+        self._download_path = None
         self._extensions = []
         self._prefs = {}
         self._flags = {}

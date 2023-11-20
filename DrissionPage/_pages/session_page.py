@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from re import search
 from time import sleep
 from urllib.parse import urlparse
@@ -51,7 +52,8 @@ class SessionPage(BasePage):
     def _s_set_runtime_settings(self):
         """设置运行时用到的属性"""
         self._timeout = self._session_options.timeout
-        self._download_path = self._session_options.download_path
+        self._download_path = None if self._session_options.download_path is None \
+            else str(Path(self._session_options.download_path).absolute())
 
     def _create_session(self):
         """创建内建Session对象"""
@@ -277,7 +279,7 @@ class SessionPage(BasePage):
                 elif mode == 'post':
                     r = self.session.post(url, data=data, **kwargs)
 
-                if r:
+                if r and r.content:
                     return set_charset(r), 'Success'
 
             except Exception as e:

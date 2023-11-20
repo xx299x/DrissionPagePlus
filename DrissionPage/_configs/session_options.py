@@ -21,7 +21,7 @@ class SessionOptions(object):
         :param ini_path: ini文件路径
         """
         self.ini_path = None
-        self._download_path = ''
+        self._download_path = None
         self._timeout = 10
         self._del_set = set()  # 记录要从ini文件删除的参数
 
@@ -75,7 +75,7 @@ class SessionOptions(object):
 
         self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
         self._timeout = om.timeouts.get('implicit', 10)
-        self._download_path = om.paths.get('download_path', '')
+        self._download_path = om.paths.get('download_path', None) or None
 
     # ===========须独立处理的项开始============
     @property
@@ -83,13 +83,12 @@ class SessionOptions(object):
         """返回默认下载路径属性信息"""
         return self._download_path
 
-    def set_paths(self, download_path=None):
+    def set_download_path(self, path=None):
         """设置默认下载路径
-        :param download_path: 下载路径
+        :param path: 下载路径
         :return: 返回当前对象
         """
-        if download_path is not None:
-            self._download_path = str(download_path)
+        self._download_path = str(path)
         return self
 
     @property
@@ -416,6 +415,17 @@ class SessionOptions(object):
         self._stream = session.stream
         self._trust_env = session.trust_env
         self._max_redirects = session.max_redirects
+        return self
+
+    # --------------即将废弃---------------
+
+    def set_paths(self, download_path=None):
+        """设置默认下载路径
+        :param download_path: 下载路径
+        :return: 返回当前对象
+        """
+        if download_path is not None:
+            self._download_path = str(download_path)
         return self
 
 

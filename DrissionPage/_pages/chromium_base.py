@@ -5,7 +5,6 @@
 """
 from json import loads, JSONDecodeError
 from os.path import sep
-from pathlib import Path
 from re import findall
 from threading import Thread
 from time import perf_counter, sleep
@@ -55,22 +54,20 @@ class ChromiumBase(BasePage):
         self._scroll = None
         self._upload_list = None
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
-
-        self._download_path = str(Path('.').absolute())
+        self._download_path = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
 
-        self._d_set_start_options(address, None)
+        self._d_set_start_options(address)
         self._d_set_runtime_settings()
         self._connect_browser(tab_id)
         if timeout is not None:
             self.timeout = timeout
 
-    def _d_set_start_options(self, address, none):
+    def _d_set_start_options(self, address):
         """设置浏览器启动属性
         :param address: 'ip:port'
-        :param none: 用于后代继承
         :return: None
         """
         self.address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')

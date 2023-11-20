@@ -4,7 +4,6 @@
 @Contact :   g1879@qq.com
 """
 from abc import abstractmethod
-from pathlib import Path
 from re import sub
 from urllib.parse import quote
 
@@ -378,7 +377,7 @@ class BasePage(BaseParser):
         self.retry_times = 3
         self.retry_interval = 2
         self._DownloadKit = None
-        self._download_path = str(Path('.').absolute())
+        self._download_path = None
 
     @property
     def title(self):

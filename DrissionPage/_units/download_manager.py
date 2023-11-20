@@ -27,10 +27,17 @@ class DownloadManager(object):
         self._tab_missions = {}  # {tab_id: DownloadMission}
         self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
-        self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
-        self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
-        self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
-                              behavior='allowAndName', eventsEnabled=True)
+        if self._page.download_path:
+            self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
+            self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
+            r = self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
+                                      behavior='allowAndName', eventsEnabled=True)
+            if 'error' in r:
+                print('浏览器版本太低无法使用下载管理功能。')
+            self._running = True
+
+        else:
+            self._running = False
 
     @property
     def missions(self):
@@ -40,13 +47,18 @@ class DownloadManager(object):
     def set_path(self, tab_id, path):
         """设置某个tab的下载路径
         :param tab_id: tab id
-        :param path: 下载路径
+        :param path: 下载路径（绝对路径str）
         :return: None
         """
-        TabDownloadSettings(tab_id).path = str(Path(path).absolute())
-        if tab_id == self._page.tab_id:
-            self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=str(Path(path).absolute()),
-                                  behavior='allowAndName', eventsEnabled=True)
+        TabDownloadSettings(tab_id).path = path
+        if tab_id == self._page.tab_id or not self._running:
+            self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
+            self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
+            r = self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=path,
+                                      behavior='allowAndName', eventsEnabled=True)
+            if 'error' in r:
+                print('浏览器版本太低无法使用下载管理功能。')
+        self._running = True
 
     def set_rename(self, tab_id, rename=None, suffix=None):
         """设置某个tab的重命名文件名

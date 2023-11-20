@@ -139,7 +139,8 @@ class TabSetter(ChromiumBaseSetter):
         :param path: 下载路径
         :return: None
         """
-        self._page._download_path = str(Path(path).absolute())
+        path = str(Path(path).absolute())
+        self._page._download_path = path
         self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
@@ -209,7 +210,8 @@ class SessionPageSetter(object):
         :param path: 下载路径
         :return: None
         """
-        self._page._download_path = str(Path(path).absolute())
+        path = str(Path(path).absolute())
+        self._page._download_path = path
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
