@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from .._commons.constants import Settings
-from errors import ElementNotFoundError
+from ..errors import ElementNotFoundError
 
 
 class NoneElement(object):
