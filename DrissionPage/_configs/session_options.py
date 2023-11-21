@@ -378,32 +378,30 @@ class SessionOptions(object):
         return session_options_to_dict(self)
 
     def make_session(self):
-        """根据内在的配置生成Session对象"""
+        """根据内在的配置生成Session对象，ua从对象中分离"""
         s = Session()
+        h = CaseInsensitiveDict(self.headers) if self.headers else CaseInsensitiveDict()
 
-        if self.headers:
-            s.headers = CaseInsensitiveDict(self.headers)
         if self.cookies:
             set_session_cookies(s, self.cookies)
         if self.adapters:
             for url, adapter in self.adapters:
                 s.mount(url, adapter)
 
-        attrs = ['auth', 'proxies', 'hooks', 'params', 'verify',
-                 'cert', 'stream', 'trust_env', 'max_redirects']
-        for i in attrs:
+        for i in ['auth', 'proxies', 'hooks', 'params', 'verify', 'cert', 'stream', 'trust_env', 'max_redirects']:
             attr = self.__getattribute__(i)
             if attr:
                 s.__setattr__(i, attr)
 
-        return s
+        return s, h
 
-    def from_session(self, session):
+    def from_session(self, session, headers=None):
         """从Session对象中读取配置
         :param session: Session对象
+        :param headers: headers
         :return: 当前对象
         """
-        self._headers = session.headers
+        self._headers = CaseInsensitiveDict(**session.headers, **headers) if headers else session.headers
         self._cookies = session.cookies
         self._auth = session.auth
         self._proxies = session.proxies

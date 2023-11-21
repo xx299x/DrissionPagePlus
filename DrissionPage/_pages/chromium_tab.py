@@ -68,7 +68,8 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         self._mode = 'd'
         self._has_driver = True
         self._has_session = True
-        super().__init__(session_or_options=SessionOptions(read_file=False).from_session(copy(page.session)))
+        super().__init__(session_or_options=SessionOptions(read_file=False).from_session(copy(page.session),
+                                                                                         page._headers))
         super(SessionPage, self).__init__(page=page, tab_id=tab_id)
 
     def __call__(self, loc_or_str, timeout=None):
@@ -110,6 +111,14 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
             return super().title
         elif self._mode == 'd':
             return super(SessionPage, self).title
+
+    @property
+    def raw_data(self):
+        """返回页码原始数据数据"""
+        if self._mode == 's':
+            return super().raw_data
+        elif self._mode == 'd':
+            return super(SessionPage, self).html if self._has_driver else ''
 
     @property
     def html(self):

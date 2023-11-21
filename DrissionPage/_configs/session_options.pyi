@@ -4,12 +4,13 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from typing import Any, Union, Tuple
+from typing import Any, Union, Tuple, Optional
 
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
 
 
 class SessionOptions(object):
@@ -113,9 +114,9 @@ class SessionOptions(object):
 
     def as_dict(self) -> dict: ...
 
-    def make_session(self) -> Session: ...
+    def make_session(self) -> Tuple[Session, Optional[CaseInsensitiveDict]]: ...
 
-    def from_session(self, session: Session) -> SessionOptions: ...
+    def from_session(self, session: Session, headers: CaseInsensitiveDict = None) -> SessionOptions: ...
 
 
 def session_options_to_dict(options: Union[dict, SessionOptions, None]) -> Union[dict, None]: ...

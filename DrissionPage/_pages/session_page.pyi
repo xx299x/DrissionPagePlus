@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Any, Union, Tuple, List
+from typing import Any, Union, Tuple, List, Optional
 
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
@@ -19,6 +19,7 @@ class SessionPage(BasePage):
     def __init__(self,
                  session_or_options: Union[Session, SessionOptions] = None,
                  timeout: float = None):
+        self._headers: Optional[CaseInsensitiveDict] = ...
         self._session: Session = ...
         self._session_options: SessionOptions = ...
         self._url: str = ...
@@ -48,6 +49,9 @@ class SessionPage(BasePage):
 
     @property
     def _session_url(self) -> str: ...
+
+    @property
+    def raw_data(self) -> Union[str, bytes]: ...
 
     @property
     def html(self) -> str: ...

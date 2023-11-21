@@ -78,6 +78,14 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return super(SessionPage, self).title
 
     @property
+    def raw_data(self):
+        """返回页码原始数据数据"""
+        if self._mode == 's':
+            return super().raw_data
+        elif self._mode == 'd':
+            return super(SessionPage, self).html if self._has_driver else ''
+
+    @property
     def html(self):
         """返回页面html文本"""
         if self._mode == 's':

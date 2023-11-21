@@ -28,6 +28,7 @@ class SessionPage(BasePage):
         :param timeout: 连接超时时间，为None时从ini文件读取
         """
         super(SessionPage, SessionPage).__init__(self)
+        self._headers = None
         self._response = None
         self._session = None
         self._set = None
@@ -58,7 +59,7 @@ class SessionPage(BasePage):
     def _create_session(self):
         """创建内建Session对象"""
         if not self._session:
-            self._session = self._session_options.make_session()
+            self._session, self._headers = self._session_options.make_session()
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -87,6 +88,11 @@ class SessionPage(BasePage):
         return self._url
 
     @property
+    def raw_data(self):
+        """返回页面原始数据"""
+        return self.response.content if self.response else b''
+
+    @property
     def html(self):
         """返回页面的html文本"""
         return self.response.text if self.response else ''
@@ -102,7 +108,7 @@ class SessionPage(BasePage):
     @property
     def user_agent(self):
         """返回user agent"""
-        return self.session.headers.get('user-agent', '')
+        return self._headers.get('user-agent', '')
 
     @property
     def session(self):
@@ -268,6 +274,8 @@ class SessionPage(BasePage):
 
         if not check_headers(kwargs, self.session.headers, 'timeout'):
             kwargs['timeout'] = self.timeout
+
+        kwargs['headers'] = {**self._headers, **kwargs['headers']}
 
         r = err = None
         retry = retry if retry is not None else self.retry_times

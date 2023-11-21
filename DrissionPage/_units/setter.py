@@ -244,7 +244,7 @@ class SessionPageSetter(object):
         :param headers: dict形式的headers
         :return: None
         """
-        self._page.session.headers = CaseInsensitiveDict(headers)
+        self._page._headers = CaseInsensitiveDict(headers)
 
     def header(self, attr, value):
         """设置headers中一个项
@@ -252,14 +252,14 @@ class SessionPageSetter(object):
         :param value: 设置值
         :return: None
         """
-        self._page.session.headers[attr.lower()] = value
+        self._page._headers[attr] = value
 
     def user_agent(self, ua):
         """设置user agent
         :param ua: user agent
         :return: None
         """
-        self._page.session.headers['user-agent'] = ua
+        self._page._headers['user-agent'] = ua
 
     def proxies(self, http=None, https=None):
         """设置proxies参数

@@ -66,6 +66,9 @@ class WebPageTab(SessionPage, ChromiumTab):
     def title(self) -> str: ...
 
     @property
+    def raw_data(self) -> Union[str, bytes]: ...
+
+    @property
     def html(self) -> str: ...
 
     @property
