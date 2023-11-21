@@ -411,10 +411,11 @@ class SessionOptions(object):
         self._params = session.params
         self._verify = session.verify
         self._cert = session.cert
-        self._adapters = session.adapters
         self._stream = session.stream
         self._trust_env = session.trust_env
         self._max_redirects = session.max_redirects
+        if session.adapters:
+            self._adapters = [(k, i) for k, i in session.adapters.items()]
         return self
 
     # --------------即将废弃---------------
