@@ -87,12 +87,12 @@ class NetworkListener(object):
 
         self._set_callback()
 
-    def wait(self, count=1, timeout=None, fix_count=True):
+    def wait(self, count=1, timeout=None, fit_count=True):
         """等待符合要求的数据包到达指定数量
         :param count: 需要捕捉的数据包数量
         :param timeout: 超时时间，为None无限等待
-        :param fix_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
-        :return: count为1时返回数据包对象，大于1时返回列表，超时且fix_count为True时返回False
+        :param fit_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
+        :return: count为1时返回数据包对象，大于1时返回列表，超时且fit_count为True时返回False
         """
         if not self.listening:
             raise RuntimeError('监听未启动或已暂停。')
@@ -112,7 +112,7 @@ class NetworkListener(object):
                     break
 
         if fail:
-            if fix_count or not self._caught.qsize():
+            if fit_count or not self._caught.qsize():
                 return False
             else:
                 return [self._caught.get_nowait() for _ in range(self._caught.qsize())]
