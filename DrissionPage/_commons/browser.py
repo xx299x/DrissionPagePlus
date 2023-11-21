@@ -4,16 +4,19 @@
 @Contact :   g1879@qq.com
 """
 from json import load, dump, JSONDecodeError
+from os import popen
 from pathlib import Path
+from platform import system
+from re import search
 from subprocess import Popen, DEVNULL
 from tempfile import gettempdir
 from time import perf_counter, sleep
-from platform import system
 
 from requests import get as requests_get
 
-from ..errors import BrowserConnectError
 from .tools import port_is_using
+from .._configs.options_manage import OptionsManager
+from ..errors import BrowserConnectError
 
 
 def connect_browser(option):
@@ -43,7 +46,6 @@ def connect_browser(option):
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        from ..easy_set import get_chrome_path
         chrome_path = get_chrome_path(show_msg=False)
 
         if not chrome_path:
@@ -282,3 +284,91 @@ def _remove_arg_from_dict(target_dict: dict, arg: str) -> None:
         exec(src)
     except:
         pass
+
+
+def get_chrome_path(ini_path=None, show_msg=True, from_ini=True,
+                    from_regedit=True, from_system_path=True):
+    """从ini文件或系统变量中获取chrome.exe的路径
+    :param ini_path: ini文件路径
+    :param show_msg: 是否打印信息
+    :param from_ini: 是否从ini文件获取
+    :param from_regedit: 是否从注册表获取
+    :param from_system_path: 是否从系统路径获取
+    :return: chrome.exe路径
+    """
+    # -----------从ini文件中获取--------------
+    if ini_path and from_ini:
+        try:
+            path = OptionsManager(ini_path).chrome_options['browser_path']
+        except KeyError:
+            path = None
+    else:
+        path = None
+
+    if path and Path(path).is_file():
+        if show_msg:
+            print('ini文件中', end='')
+        return str(path)
+
+    from platform import system
+    sys = system().lower()
+    if sys in ('macos', 'darwin'):
+        return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+
+    elif sys == 'linux':
+        paths = ('/usr/bin/google-chrome', '/opt/google/chrome/google-chrome',
+                 '/user/lib/chromium-browser/chromium-browser')
+        for p in paths:
+            if Path(p).exists():
+                return p
+        return None
+
+    elif sys != 'windows':
+        return None
+
+    # -----------从注册表中获取--------------
+    if from_regedit:
+        import winreg
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                 r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                                 reserved=0, access=winreg.KEY_READ)
+            k = winreg.EnumValue(key, 0)
+            winreg.CloseKey(key)
+
+            if show_msg:
+                print('注册表中', end='')
+
+            return k[1]
+
+        except FileNotFoundError:
+            pass
+
+    # -----------从系统变量中获取--------------
+    if from_system_path:
+        try:
+            paths = popen('set path').read().lower()
+        except:
+            return None
+        r = search(r'[^;]*chrome[^;]*', paths)
+
+        if r:
+            path = Path(r.group(0)) if 'chrome.exe' in r.group(0) else Path(r.group(0)) / 'chrome.exe'
+
+            if path.exists():
+                if show_msg:
+                    print('系统变量中', end='')
+                return str(path)
+
+        paths = paths.split(';')
+
+        for path in paths:
+            path = Path(path) / 'chrome.exe'
+
+            try:
+                if path.exists():
+                    if show_msg:
+                        print('系统变量中', end='')
+                    return str(path)
+            except OSError:
+                pass

@@ -10,7 +10,7 @@ from time import perf_counter, sleep
 from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
-from .._commons.constants import FRAME_ELEMENT, Settings
+from .._commons.settings import Settings
 from .._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .._commons.locator import get_loc
 from .._commons.tools import get_usable_path
@@ -24,6 +24,8 @@ from .._units.states import ElementStates, ShadowRootStates
 from .._units.waiter import ElementWaiter
 from ..errors import (ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError,
                       CDPError, NoResourceError, AlertExistsError)
+
+__FRAME_ELEMENT__ = ('iframe', 'frame')
 
 
 class ChromiumElement(DrissionElement):
@@ -402,7 +404,7 @@ class ChromiumElement(DrissionElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        if self.tag in FRAME_ELEMENT:
+        if self.tag in __FRAME_ELEMENT__:
             r = make_session_ele(self.inner_html, loc_or_str)
         else:
             r = make_session_ele(self, loc_or_str)
@@ -419,7 +421,7 @@ class ChromiumElement(DrissionElement):
         :param loc_or_str: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
-        if self.tag in FRAME_ELEMENT:
+        if self.tag in __FRAME_ELEMENT__:
             return make_session_ele(self.inner_html, loc_or_str, single=False)
         return make_session_ele(self, loc_or_str, single=False)
 
@@ -1103,7 +1105,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
     :return: ChromiumElement或其组成的列表
     """
     type_txt = '9' if single else '7'
-    node_txt = 'this.contentDocument' if ele.tag in FRAME_ELEMENT and not relative else 'this'
+    node_txt = 'this.contentDocument' if ele.tag in __FRAME_ELEMENT__ and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                 returnByValue=False, awaitPromise=True, userGesture=True)
@@ -1200,7 +1202,7 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
         raise ElementLossError
 
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=backend_id)
-    if ele.tag in FRAME_ELEMENT:
+    if ele.tag in __FRAME_ELEMENT__:
         from .._pages.chromium_frame import ChromiumFrame
         ele = ChromiumFrame(page, ele)
 

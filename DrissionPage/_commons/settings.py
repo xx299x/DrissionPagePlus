@@ -3,8 +3,6 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-FRAME_ELEMENT = ('iframe', 'frame')
-ERROR = 'error'
 
 
 class Settings(object):

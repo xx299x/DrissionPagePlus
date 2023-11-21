@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from .._commons.constants import Settings
+from .._commons.settings import Settings
 from ..errors import ElementNotFoundError
 
 

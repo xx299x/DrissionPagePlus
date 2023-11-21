@@ -11,6 +11,8 @@ from time import perf_counter, sleep
 
 from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
+from .._configs.options_manage import OptionsManager
+
 
 def get_usable_path(path, is_file=True, parents=True):
     """检查文件或文件夹是否有重名，并返回可以使用的路径
@@ -238,3 +240,13 @@ def stop_process_on_port(port):
                     pass
                 except Exception as e:
                     print(f"{proc.pid} {port}: {e}")
+
+
+def configs_to_here(save_name=None):
+    """把默认ini文件复制到当前目录
+    :param save_name: 指定文件名，为None则命名为'dp_configs.ini'
+    :return: None
+    """
+    om = OptionsManager('default')
+    save_name = f'{save_name}.ini' if save_name is not None else 'dp_configs.ini'
+    om.save(save_name)

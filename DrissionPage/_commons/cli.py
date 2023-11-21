@@ -5,8 +5,9 @@
 """
 from click import command, option
 
+from .._commons.tools import configs_to_here as ch
+from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_page import ChromiumPage
-from ..easy_set import set_paths, configs_to_here as ch
 
 
 @command()
@@ -27,6 +28,23 @@ def main(set_browser_path, set_user_path, configs_to_here, launch_browser):
     if launch_browser >= 0:
         port = f'127.0.0.1:{launch_browser}' if launch_browser else None
         ChromiumPage(port)
+
+
+def set_paths(browser_path=None, user_data_path=None):
+    """快捷的路径设置函数
+    :param browser_path: 浏览器可执行文件路径
+    :param user_data_path: 用户数据路径
+    :return: None
+    """
+    co = ChromiumOptions()
+
+    if browser_path is not None:
+        co.set_browser_path(browser_path)
+
+    if user_data_path is not None:
+        co.set_user_data_path(user_data_path)
+
+    co.save()
 
 
 if __name__ == '__main__':

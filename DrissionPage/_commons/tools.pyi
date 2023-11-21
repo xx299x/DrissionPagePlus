@@ -39,3 +39,6 @@ def wait_until(page, condition: Union[FunctionType, str, tuple], timeout: float,
 
 
 def stop_process_on_port(port: Union[int, str]) -> None: ...
+
+
+def configs_to_here(file_name: Union[Path, str] = None) -> None: ...

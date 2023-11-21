@@ -10,7 +10,7 @@ from threading import Thread
 from time import perf_counter, sleep
 
 from .._base.base import BasePage
-from .._commons.constants import ERROR, Settings
+from .._commons.settings import Settings
 from .._commons.locator import get_loc, is_loc
 from .._commons.tools import get_usable_path
 from .._commons.web import location_in_viewport
@@ -27,6 +27,8 @@ from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
 from ..errors import (ContextLossError, ElementLossError, CDPError, PageClosedError, NoRectError, AlertExistsError,
                       GetDocumentError, ElementNotFoundError)
+
+__ERROR__ = 'error'
 
 
 class ChromiumBase(BasePage):
@@ -439,10 +441,10 @@ class ChromiumBase(BasePage):
         :return: 执行的结果
         """
         r = self.driver.run(cmd, **cmd_args)
-        if ERROR not in r:
+        if __ERROR__ not in r:
             return r
 
-        error = r[ERROR]
+        error = r[__ERROR__]
         if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
             raise ContextLossError
         elif error in ('Could not find node with given id', 'Could not find object with given id',
@@ -725,7 +727,7 @@ class ChromiumBase(BasePage):
         if isinstance(loc_ind_ele, str):
             if not is_loc(loc_ind_ele):
                 xpath = f'xpath://*[(name()="iframe" or name()="frame") and ' \
-                              f'(@name="{loc_ind_ele}" or @id="{loc_ind_ele}")]'
+                        f'(@name="{loc_ind_ele}" or @id="{loc_ind_ele}")]'
             else:
                 xpath = loc_ind_ele
             ele = self._ele(xpath, timeout=timeout)
