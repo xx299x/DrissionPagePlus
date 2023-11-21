@@ -211,9 +211,11 @@ class ChromiumBase(BasePage):
             print(f'{self._frame_id}触发DomContentEventFired')
             print('在DomContentEventFired变成interactive')
 
-        self._ready_state = 'interactive'
         if self._load_mode == 'eager':
             self.run_cdp('Page.stopLoading')
+        self._get_document()
+        self._doc_got = True
+        self._ready_state = 'interactive'
 
         if self._debug:
             print(f'{self._frame_id}执行DomContentEventFired完毕')
@@ -224,9 +226,10 @@ class ChromiumBase(BasePage):
             print(f'{self._frame_id}触发LoadEventFired')
             print('在LoadEventFired变成complete')
 
+        if self._doc_got is False:
+            self._get_document()
+            self._doc_got = True
         self._ready_state = 'complete'
-        self._get_document()
-        self._doc_got = True
 
         if self._debug:
             print(f'{self._frame_id}执行LoadEventFired完毕')
@@ -234,13 +237,14 @@ class ChromiumBase(BasePage):
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self._frame_id and self._doc_got is False:
+        if kwargs['frameId'] == self._frame_id:
             if self._debug:
                 print(f'{self._frame_id}触发FrameStoppedLoading')
                 print('在FrameStoppedLoading变成complete')
 
+            if self._doc_got is False:
+                self._get_document()
             self._ready_state = 'complete'
-            self._get_document()
 
             if self._debug:
                 print(f'{self._frame_id}执行FrameStoppedLoading完毕')

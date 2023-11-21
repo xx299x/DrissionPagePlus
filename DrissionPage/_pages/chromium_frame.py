@@ -34,13 +34,13 @@ class ChromiumFrame(ChromiumBase):
             self.tab = page.tab if 'ChromiumFrame' in page_type else page
 
         self.address = page.address
-        node = page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
         self._tab_id = page.tab_id
         self._backend_id = ele._backend_id
         self._frame_ele = ele
         self._states = None
-        self._is_init_get_doc = True
+        self._reloading = False
 
+        node = page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
         self._frame_id = node['frameId']
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -78,8 +78,8 @@ class ChromiumFrame(ChromiumBase):
             self._timeouts = copy(self._target_page.timeouts)
             self.retry_times = self._target_page.retry_times
             self.retry_interval = self._target_page.retry_interval
-            self._load_mode = self._target_page._load_mode if not self._is_diff_domain else 'normal'
             self._download_path = self._target_page.download_path
+        self._load_mode = self._target_page._load_mode if not self._is_diff_domain else 'normal'
 
     def _driver_init(self, tab_id, is_init=True):
         """避免出现服务器500错误
@@ -98,7 +98,7 @@ class ChromiumFrame(ChromiumBase):
         self._is_loading = True
         debug = self._debug
         d_debug = self.driver._debug
-        self._is_init_get_doc = False
+        self._reloading = True
         self._doc_got = False
         if debug:
             print(f'{self._frame_id} reload 开始')
@@ -147,34 +147,12 @@ class ChromiumFrame(ChromiumBase):
             self.driver._debug = d_debug
 
         self._is_loading = False
+        self._reloading = False
 
         if self._debug:
             print(f'{self._frame_id} reload 完毕')
 
     def _get_document(self):
-        if self._is_reading:
-            return
-        self._is_reading = True
-        end_time = perf_counter() + 10
-        while perf_counter() < end_time:
-            try:
-                b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id)['object']['objectId']
-                break
-            except:
-                continue
-        else:
-            raise GetDocumentError
-
-        r = self.run_cdp('Page.getFrameTree')
-        for i in findall(r"'id': '(.*?)'", str(r)):
-            self.browser._frames[i] = self.tab_id
-
-        if self._is_init_get_doc:  # 阻止reload时标识
-            self._is_loading = False
-        self._is_reading = False
-
-    def _get_new_document(self):
         """刷新cdp使用的document数据"""
         if self._is_reading:
             return
@@ -195,7 +173,10 @@ class ChromiumFrame(ChromiumBase):
                     b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
                     self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
+                self._root_id = self.doc_ele._obj_id
+
                 break
+
             except:
                 continue
 
@@ -206,38 +187,12 @@ class ChromiumFrame(ChromiumBase):
         for i in findall(r"'id': '(.*?)'", str(r)):
             self.browser._frames[i] = self.tab_id
 
-        self._is_loading = False
+        if not self._reloading:  # 阻止reload时标识
+            self._is_loading = False
         self._is_reading = False
 
         if self._debug:
             print('>>> new doc got')
-
-    def _onLoadEventFired(self, **kwargs):
-        """在页面刷新、变化后重新读取页面内容"""
-        if self._debug:
-            print(f'{self._frame_id}触发在frame的LoadEventFired')
-            print('在frame的LoadEventFired变成complete')
-
-        self._ready_state = 'complete'
-        self._get_new_document()
-        self._doc_got = True
-
-        if self._debug:
-            print(f'{self._frame_id}执行frame的LoadEventFired完毕')
-
-    def _onFrameStoppedLoading(self, **kwargs):
-        """页面加载完成后触发"""
-        self.browser._frames[kwargs['frameId']] = self.tab_id
-        if kwargs['frameId'] == self._frame_id and self._doc_got is False:
-            if self._debug:
-                print(f'{self._frame_id}触发frame的FrameStoppedLoading')
-                print('在frame的FrameStoppedLoading变成complete')
-
-            self._ready_state = 'complete'
-            self._get_new_document()
-
-            if self._debug:
-                print(f'{self._frame_id}执行frame的FrameStoppedLoading完毕')
 
     def _onInspectorDetached(self, **kwargs):
         """异域转同域或退出"""
@@ -334,8 +289,7 @@ class ChromiumFrame(ChromiumBase):
     def html(self):
         """返回元素outerHTML文本"""
         tag = self.tag
-        out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele._backend_id)[
-            'outerHTML']
+        out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele._backend_id)['outerHTML']
         sign = search(rf'<{tag}.*?>', out_html).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 

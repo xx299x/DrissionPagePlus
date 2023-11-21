@@ -58,7 +58,7 @@ class BaseWaiter(object):
         """
         ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
         if ele:
-            return True
+            return ele
         if raise_err is True or Settings.raise_when_wait_failed is True:
             raise WaitTimeoutError('等待元素加载失败。')
         else:
