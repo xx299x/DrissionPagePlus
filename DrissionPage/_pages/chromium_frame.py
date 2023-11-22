@@ -14,7 +14,7 @@ from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLossError, ElementLossError, GetDocumentError, PageClosedError
+from ..errors import ContextLostError, ElementLostError, GetDocumentError, PageClosedError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -106,17 +106,17 @@ class ChromiumFrame(ChromiumBase):
         self._driver.stop()
         try:
             self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
-        except (ElementLossError, PageClosedError):
-            return
+            end_time = perf_counter() + 2
+            while perf_counter() < end_time:
+                node = self._target_page.run_cdp('DOM.describeNode',
+                                                 backendNodeId=self._frame_ele._backend_id)['node']
+                if 'frameId' in node:
+                    break
 
-        end_time = perf_counter() + 2
-        while perf_counter() < end_time:
-            node = self._target_page.run_cdp('DOM.describeNode',
-                                             backendNodeId=self._frame_ele._backend_id)['node']
-            if 'frameId' in node:
-                break
+            else:
+                return
 
-        else:
+        except (ElementLostError, PageClosedError):
             return
 
         if self._is_inner_frame():
@@ -347,7 +347,7 @@ class ChromiumFrame(ChromiumBase):
         else:
             try:
                 return self.doc_ele.run_js('return this.readyState;')
-            except ContextLossError:
+            except ContextLostError:
                 try:
                     node = self.run_cdp('DOM.describeNode', backendNodeId=self.frame_ele._backend_id)['node']
                     doc = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])

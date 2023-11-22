@@ -33,11 +33,11 @@ class AlertExistsError(BaseError):
     _info = '存在未处理的提示框。'
 
 
-class ContextLossError(BaseError):
+class ContextLostError(BaseError):
     _info = '页面被刷新，请操作前尝试等待页面刷新或加载完成。'
 
 
-class ElementLossError(BaseError):
+class ElementLostError(BaseError):
     _info = '元素对象因刷新已失效。'
 
 

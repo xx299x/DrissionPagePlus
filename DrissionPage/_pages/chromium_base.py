@@ -25,7 +25,7 @@ from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
-from ..errors import (ContextLossError, ElementLossError, CDPError, PageClosedError, NoRectError, AlertExistsError,
+from ..errors import (ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError,
                       GetDocumentError, ElementNotFoundError)
 
 __ERROR__ = 'error'
@@ -429,7 +429,7 @@ class ChromiumBase(BasePage):
         try:
             return self.run_cdp('Runtime.evaluate', expression='document.readyState;',
                                 _timeout=3)['result']['value']
-        except ContextLossError:
+        except ContextLostError:
             return None
         except TimeoutError:
             return 'timeout'
@@ -446,11 +446,11 @@ class ChromiumBase(BasePage):
 
         error = r[__ERROR__]
         if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
-            raise ContextLossError
+            raise ContextLostError
         elif error in ('Could not find node with given id', 'Could not find object with given id',
                        'No node with given id found', 'Node with given id does not belong to the document',
                        'No node found for given backend id'):
-            raise ElementLossError
+            raise ElementLostError
         elif error == 'tab closed':
             raise PageClosedError
         elif error == 'timeout':
@@ -600,7 +600,7 @@ class ChromiumBase(BasePage):
         try:
             search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
-        except ContextLossError:
+        except ContextLostError:
             search_result = None
             count = 0
 
@@ -626,13 +626,13 @@ class ChromiumBase(BasePage):
                         r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
                         break
 
-                except ElementLossError:
+                except ElementLostError:
                     ok = False
 
             try:
                 search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
                 count = search_result['resultCount']
-            except ContextLossError:
+            except ContextLostError:
                 pass
 
             if perf_counter() >= end_time:
@@ -1099,7 +1099,7 @@ def close_privacy_dialog(page, tid):
     """关闭隐私声明弹窗
     :param page: ChromiumBase对象
     :param tid: tab id
-    :return: ChromiumDriver对象
+    :return: None
     """
     try:
         driver = page.browser._get_driver(tid)

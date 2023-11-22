@@ -332,6 +332,13 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
 
+    def close(self):
+        """关闭当前标签页"""
+        self.page.close_tabs(self.tab_id)
+        self._session.close()
+        if self._response is not None:
+            self._response.close()
+
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串

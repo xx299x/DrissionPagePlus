@@ -220,6 +220,12 @@ class SessionPage(BasePage):
         """
         return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
 
+    def close(self):
+        """关闭Session对象"""
+        self._session.close()
+        if self._response is not None:
+            self._response.close()
+
     def _s_connect(self, url, mode, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
         """执行get或post连接
         :param url: 目标url

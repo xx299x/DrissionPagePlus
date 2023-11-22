@@ -334,9 +334,20 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         if self._has_session:
             self.change_mode('d')
             self._session.close()
+            if self._response is not None:
+                self._response.close()
             self._session = None
             self._response = None
             self._has_session = None
+
+    def close(self):
+        """关闭标签页"""
+        if self._has_driver:
+            self.close_tabs(self.tab_id)
+        if self._session:
+            self._session.close()
+            if self._response is not None:
+                self._response.close()
 
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个

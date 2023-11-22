@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from .._commons.web import location_in_viewport
-from ..errors import CDPError, NoRectError, PageClosedError, ElementLossError
+from ..errors import CDPError, NoRectError, PageClosedError, ElementLostError
 
 
 class ElementStates(object):
@@ -146,7 +146,7 @@ class FrameStates(object):
         try:
             node = self._frame._target_page.run_cdp('DOM.describeNode',
                                                     backendNodeId=self._frame._frame_ele._backend_id)['node']
-        except (ElementLossError, PageClosedError):
+        except (ElementLostError, PageClosedError):
             return False
         return 'frameId' in node
 

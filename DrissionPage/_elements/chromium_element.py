@@ -22,7 +22,7 @@ from .._units.select_element import SelectElement
 from .._units.setter import ChromiumElementSetter
 from .._units.states import ElementStates, ShadowRootStates
 from .._units.waiter import ElementWaiter
-from ..errors import (ContextLossError, ElementLossError, JavaScriptError, ElementNotFoundError,
+from ..errors import (ContextLostError, ElementLostError, JavaScriptError, ElementNotFoundError,
                       CDPError, NoResourceError, AlertExistsError)
 
 __FRAME_ELEMENT__ = ('iframe', 'frame')
@@ -66,7 +66,7 @@ class ChromiumElement(DrissionElement):
             self._node_id = self._get_node_id(obj_id=self._obj_id)
             self._backend_id = backend_id
         else:
-            raise ElementLossError
+            raise ElementLostError
 
         doc = self.run_js('return this.ownerDocument;')
         self._doc_id = doc['objectId'] if doc else None
@@ -1199,7 +1199,7 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
         node_id = node['node']['nodeId']
 
     else:
-        raise ElementLossError
+        raise ElementLostError
 
     ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=backend_id)
     if ele.tag in __FRAME_ELEMENT__:
@@ -1285,11 +1285,11 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
                                arguments=[convert_argument(arg) for arg in args], returnByValue=False,
                                awaitPromise=True, userGesture=True, _timeout=timeout)
 
-    except ContextLossError:
+    except ContextLostError:
         if is_page:
-            raise ContextLossError('页面已被刷新，请尝试等待页面加载完成再执行操作。')
+            raise ContextLostError('页面已被刷新，请尝试等待页面加载完成再执行操作。')
         else:
-            raise ElementLossError('原来获取到的元素对象已不在页面内。')
+            raise ElementLostError('原来获取到的元素对象已不在页面内。')
 
     if res is None and page.driver.has_alert:  # 存在alert的情况
         return None

@@ -140,6 +140,8 @@ class WebPageTab(SessionPage, ChromiumTab):
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...
 
+    def close(self) -> None: ...
+
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,
