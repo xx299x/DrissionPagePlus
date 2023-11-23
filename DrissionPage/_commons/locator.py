@@ -16,7 +16,7 @@ def is_loc(text):
 def get_loc(loc, translate_css=False, css_mode=False):
     """接收本库定位语法或selenium定位元组，转换为标准定位元组，可翻译css selector为xpath
     :param loc: 本库定位语法或selenium定位元组
-    :param translate_css: 是否翻译css selector为xpath
+    :param translate_css: 是否翻译css selector为xpath，用于相对定位
     :param css_mode: 是否尽量用css selector方式
     :return: DrissionPage定位元组
     """
@@ -24,7 +24,7 @@ def get_loc(loc, translate_css=False, css_mode=False):
         loc = translate_css_loc(loc) if css_mode else translate_loc(loc)
 
     elif isinstance(loc, str):
-        loc = str_to_css_loc(loc) if css_mode else str_to_loc(loc)
+        loc = str_to_css_loc(loc) if css_mode else str_to_xpath_loc(loc)
 
     else:
         raise TypeError('loc参数只能是tuple或str。')
@@ -41,7 +41,7 @@ def get_loc(loc, translate_css=False, css_mode=False):
     return loc
 
 
-def str_to_loc(loc):
+def str_to_xpath_loc(loc):
     """处理元素查找语句
     :param loc: 查找语法字符串
     :return: 匹配符元组
@@ -68,15 +68,24 @@ def str_to_loc(loc):
 
     # ------------------------------------------------------------------
     # 多属性查找
-    if loc.startswith('@@') and loc != '@@':
-        loc_str = _make_multi_xpath_str('*', loc)
+    if loc.startswith('@!') and loc != '@!':
+        r = split(r'(@!|@&|@\|)', loc)
+        if '@&' in r and '@|' in r:
+            raise ValueError('@&和@|不能同时出现在一个定位语句中。')
+        elif '@&' in r:
+            loc_str = _make_multi_xpath_str('*', loc)[1]
+        else:  # @|
+            loc_str = _make_multi_xpath_str('*', loc, False)[1]
+
+    elif loc.startswith('@&') and loc != '@&':
+        loc_str = _make_multi_xpath_str('*', loc)[1]
 
     elif loc.startswith('@|') and loc != '@|':
-        loc_str = _make_multi_xpath_str('*', loc, False)
+        loc_str = _make_multi_xpath_str('*', loc, False)[1]
 
     # 单属性查找
     elif loc.startswith('@') and loc != '@':
-        loc_str = _make_single_xpath_str('*', loc)
+        loc_str = _make_single_xpath_str('*', loc)[1]
 
     # 根据tag name查找
     elif loc.startswith(('tag:', 'tag=')) and loc not in ('tag:', 'tag='):
@@ -84,12 +93,12 @@ def str_to_loc(loc):
         if at_ind == -1:
             loc_str = f'//*[name()="{loc[4:]}"]'
         else:
-            if loc[at_ind:].startswith('@@'):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
+            if loc[at_ind:].startswith(('@&', '@!')):
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
             elif loc[at_ind:].startswith('@|'):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)[1]
             else:
-                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
+                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
 
     # 根据文本查找
     elif loc.startswith('text='):
@@ -133,7 +142,6 @@ def str_to_css_loc(loc):
     :param loc: 查找语法字符串
     :return: 匹配符元组
     """
-    return str_to_loc(loc)
     loc_by = 'css selector'
 
     if loc.startswith('.'):
@@ -156,15 +164,24 @@ def str_to_css_loc(loc):
 
     # ------------------------------------------------------------------
     # 多属性查找
-    if loc.startswith('@@') and loc != '@@':
-        loc_str = _make_multi_xpath_str('*', loc)
+    if loc.startswith('@!') and loc != '@!':
+        r = split(r'(@!|@&|@\|)', loc)
+        if '@&' in r and '@|' in r:
+            raise ValueError('@&和@|不能同时出现在一个定位语句中。')
+        elif '@&' in r:
+            loc_by, loc_str = _make_multi_css_str('*', loc)
+        else:  # @|
+            loc_by, loc_str = _make_multi_css_str('*', loc, False)
+
+    elif loc.startswith('@&') and loc != '@&':
+        loc_by, loc_str = _make_multi_css_str('*', loc)
 
     elif loc.startswith('@|') and loc != '@|':
-        loc_str = _make_multi_xpath_str('*', loc, False)
+        loc_by, loc_str = _make_multi_css_str('*', loc, False)
 
     # 单属性查找
     elif loc.startswith('@') and loc != '@':
-        loc_str = _make_single_xpath_str('*', loc)
+        loc_by, loc_str = _make_single_css_str('*', loc)
 
     # 根据tag name查找
     elif loc.startswith(('tag:', 'tag=')) and loc not in ('tag:', 'tag='):
@@ -172,12 +189,12 @@ def str_to_css_loc(loc):
         if at_ind == -1:
             loc_str = loc[4:]
         else:
-            if loc[at_ind:].startswith('@@'):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
+            if loc[at_ind:].startswith(('@&', '@!')):
+                loc_by, loc_str = _make_multi_css_str(loc[4:at_ind], loc[at_ind:])
             elif loc[at_ind:].startswith('@|'):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)
+                loc_by, loc_str = _make_multi_css_str(loc[4:at_ind], loc[at_ind:], False)
             else:
-                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
+                loc_by, loc_str = _make_single_css_str(loc[4:at_ind], loc[at_ind:])
 
     # 根据文本查找
     elif loc.startswith('text='):
@@ -222,8 +239,8 @@ def str_to_css_loc(loc):
     return loc_by, loc_str
 
 
-def _make_single_xpath_str(tag: str, text: str) -> str:
-    """生成xpath语句
+def _make_single_xpath_str(tag: str, text: str) -> tuple:
+    """生成单属性xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
     :return: xpath字符串
@@ -238,16 +255,13 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
         r = split(r'([:=$^])', text, maxsplit=1)
         len_r = len(r)
         len_r0 = len(r[0])
-        if len_r != 3 and len_r0 > 1:
-            arg_str = 'normalize-space(text())' if r[0] in ('@text()', '@tx()') else f'{r[0]}'
-
-        elif len_r == 3 and len_r0 > 1:
+        if len_r == 3 and len_r0 > 1:
             symbol = r[1]
             if symbol == '=':  # 精确查找
                 arg = '.' if r[0] in ('@text()', '@tx()') else r[0]
                 arg_str = f'{arg}={_make_search_str(r[2])}'
 
-            elif symbol == '^':  # 开头开头
+            elif symbol == '^':  # 匹配开头
                 if r[0] in ('@text()', '@tx()'):
                     txt_str = f'/text()[starts-with(., {_make_search_str(r[2])})]/..'
                     arg_str = ''
@@ -273,13 +287,16 @@ def _make_single_xpath_str(tag: str, text: str) -> str:
             else:
                 raise ValueError(f'符号不正确：{symbol}')
 
+        elif len_r != 3 and len_r0 > 1:
+            arg_str = 'normalize-space(text())' if r[0] in ('@text()', '@tx()') else f'{r[0]}'
+
     if arg_str:
         arg_list.append(arg_str)
     arg_str = ' and '.join(arg_list)
-    return f'//*[{arg_str}]{txt_str}' if arg_str else f'//*{txt_str}'
+    return 'xpath', f'//*[{arg_str}]{txt_str}' if arg_str else f'//*{txt_str}'
 
 
-def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> str:
+def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> tuple:
     """生成多属性查找的xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
@@ -287,10 +304,12 @@ def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> str:
     :return: xpath字符串
     """
     arg_list = []
-    args = text.split('@@') if _and else text.split('@|')
+    args = split(r'(@!|@&)', text)[1:] if _and else split(r'(@!|@\|)', text)[1:]
+    if (_and and '@|' in args) or (not _and and '@&' in args):
+        raise ValueError('@&和@|不能同时出现在一个定位语句中。')
 
-    for arg in args[1:]:
-        r = split(r'([:=$^])', arg, maxsplit=1)
+    for k in range(0, len(args) - 1, 2):
+        r = split(r'([:=$^])', args[k + 1], maxsplit=1)
         arg_str = ''
         len_r = len(r)
 
@@ -298,8 +317,7 @@ def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> str:
             arg_str = 'not(@*)'
 
         else:
-            r[0], ignore = (r[0][1:], True) if r[0][0] == '-' else (r[0], None)  # 是否去除某个属性
-
+            ignore = True if args[k] == '@!' else False  # 是否去除某个属性
             if len_r != 3:  # 只有属性名没有属性内容，查询是否存在该属性
                 arg_str = 'normalize-space(text())' if r[0] in ('text()', 'tx()') else f'@{r[0]}'
 
@@ -333,7 +351,7 @@ def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> str:
         condition = f' and ({arg_str})' if arg_str else ''
         arg_str = f'name()="{tag}"{condition}'
 
-    return f'//*[{arg_str}]' if arg_str else f'//*'
+    return 'xpath', f'//*[{arg_str}]' if arg_str else f'//*'
 
 
 def _make_search_str(search_str: str) -> str:
@@ -351,6 +369,65 @@ def _make_search_str(search_str: str) -> str:
 
     search_str += ',"")'
     return search_str
+
+
+def _make_multi_css_str(tag: str, text: str, _and: bool = True) -> tuple:
+    """生成多属性查找的css selector语句
+    :param tag: 标签名
+    :param text: 待处理的字符串
+    :param _and: 是否与方式
+    :return: css selector字符串
+    """
+    arg_list = []
+    args = split(r'(@!|@&)', text)[1:] if _and else split(r'(@!|@\|)', text)[1:]
+    if (_and and '@|' in args) or (not _and and '@&' in args):
+        raise ValueError('@&和@|不能同时出现在一个定位语句中。')
+
+    for k in range(0, len(args)-1, 2):
+        r = split(r'([:=$^])', args[k+1], maxsplit=1)
+        if not r[0] or r[0].startswith(('text()', 'tx()')):
+            return _make_multi_xpath_str(tag, text, _and)
+
+        arg_str = ''
+        len_r = len(r)
+        ignore = True if args[k] == '@!' else False  # 是否去除某个属性
+        if len_r != 3:  # 只有属性名没有属性内容，查询是否存在该属性
+            arg_str = f'[{r[0]}]'
+
+        elif len_r == 3:  # 属性名和内容都有
+            d = {'=': '', '^': '^', '$': '$', ':': '*'}
+            arg_str = f'[{r[0]}{d[r[1]]}={css_trans(r[2])}]'
+
+        if arg_str and ignore:
+            arg_str = f':not({arg_str})'
+
+        if arg_str:
+            arg_list.append(arg_str)
+
+    if _and:
+        return 'css selector', f'{tag}{"".join(arg_list)}'
+
+    return 'css selector', f'{tag}{("," + tag).join(arg_list)}'
+
+
+def _make_single_css_str(tag: str, text: str) -> tuple:
+    """生成单属性css selector语句
+    :param tag: 标签名
+    :param text: 待处理的字符串
+    :return: css selector字符串
+    """
+    if text == '@' or text.startswith(('@text()', '@tx()')):
+        return _make_single_xpath_str(tag, text)
+
+    r = split(r'([:=$^])', text, maxsplit=1)
+    if len(r) == 3:
+        d = {'=': '', '^': '^', '$': '$', ':': '*'}
+        arg_str = f'[{r[0][1:]}{d[r[1]]}={css_trans(r[2])}]'
+
+    else:
+        arg_str = f'[{css_trans(r[0][1:])}]'
+
+    return 'css selector', f'{tag}{arg_str}'
 
 
 def translate_loc(loc):

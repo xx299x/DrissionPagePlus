@@ -1029,7 +1029,7 @@ class ChromiumShadowRoot(BaseElement):
         result = None
         timeout = timeout if timeout is not None else self.page.timeout
         end_time = perf_counter() + timeout
-        while not result and perf_counter() <= end_time:
+        while perf_counter() <= end_time:
             if loc[0] == 'css selector':
                 if single:
                     nod_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=loc[1])['nodeId']
@@ -1056,6 +1056,10 @@ class ChromiumShadowRoot(BaseElement):
                         node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
                         if node_id:
                             result.append(make_chromium_ele(self.page, node_id=node_id))
+
+            if result:
+                break
+            sleep(.1)
 
         return result
 

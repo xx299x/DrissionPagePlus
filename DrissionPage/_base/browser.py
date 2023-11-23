@@ -173,12 +173,12 @@ class Browser(object):
             end_time = perf_counter() + timeout
             while perf_counter() < end_time:
                 p = popen(txt)
+                sleep(.1)
                 try:
                     if f'  {self.process_id} ' not in p.read():
                         return
                 except TypeError:
-                    return
-                sleep(.2)
+                    pass
 
         if force:
             ip, port = self.address.split(':')
