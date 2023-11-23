@@ -13,17 +13,18 @@ def is_loc(text):
                             'text^', 'text$', 'xpath:', 'xpath=', 'x:', 'x=', 'css:', 'css=', 'c:', 'c='))
 
 
-def get_loc(loc, translate_css=False):
+def get_loc(loc, translate_css=False, css_mode=False):
     """接收本库定位语法或selenium定位元组，转换为标准定位元组，可翻译css selector为xpath
     :param loc: 本库定位语法或selenium定位元组
     :param translate_css: 是否翻译css selector为xpath
+    :param css_mode: 是否尽量用css selector方式
     :return: DrissionPage定位元组
     """
     if isinstance(loc, tuple):
-        loc = translate_loc(loc)
+        loc = translate_css_loc(loc) if css_mode else translate_loc(loc)
 
     elif isinstance(loc, str):
-        loc = str_to_loc(loc)
+        loc = str_to_css_loc(loc) if css_mode else str_to_loc(loc)
 
     else:
         raise TypeError('loc参数只能是tuple或str。')
@@ -123,6 +124,100 @@ def str_to_loc(loc):
         loc_str = f'//*/text()[contains(., {_make_search_str(loc)})]/..'
     else:
         loc_str = '//*'
+
+    return loc_by, loc_str
+
+
+def str_to_css_loc(loc):
+    """处理元素查找语句
+    :param loc: 查找语法字符串
+    :return: 匹配符元组
+    """
+    return str_to_loc(loc)
+    loc_by = 'css selector'
+
+    if loc.startswith('.'):
+        if loc.startswith(('.=', '.:', '.^', '.$')):
+            loc = loc.replace('.', '@class', 1)
+        else:
+            loc = loc.replace('.', '@class=', 1)
+
+    elif loc.startswith('#'):
+        if loc.startswith(('#=', '#:', '#^', '#$')):
+            loc = loc.replace('#', '@id', 1)
+        else:
+            loc = loc.replace('#', '@id=', 1)
+
+    elif loc.startswith(('t:', 't=')):
+        loc = f'tag:{loc[2:]}'
+
+    elif loc.startswith(('tx:', 'tx=', 'tx^', 'tx$')):
+        loc = f'text{loc[2:]}'
+
+    # ------------------------------------------------------------------
+    # 多属性查找
+    if loc.startswith('@@') and loc != '@@':
+        loc_str = _make_multi_xpath_str('*', loc)
+
+    elif loc.startswith('@|') and loc != '@|':
+        loc_str = _make_multi_xpath_str('*', loc, False)
+
+    # 单属性查找
+    elif loc.startswith('@') and loc != '@':
+        loc_str = _make_single_xpath_str('*', loc)
+
+    # 根据tag name查找
+    elif loc.startswith(('tag:', 'tag=')) and loc not in ('tag:', 'tag='):
+        at_ind = loc.find('@')
+        if at_ind == -1:
+            loc_str = loc[4:]
+        else:
+            if loc[at_ind:].startswith('@@'):
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])
+            elif loc[at_ind:].startswith('@|'):
+                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)
+            else:
+                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])
+
+    # 根据文本查找
+    elif loc.startswith('text='):
+        loc_by = 'xpath'
+        loc_str = f'//*[text()={_make_search_str(loc[5:])}]'
+
+    elif loc.startswith('text:') and loc != 'text:':
+        loc_by = 'xpath'
+        loc_str = f'//*/text()[contains(., {_make_search_str(loc[5:])})]/..'
+
+    elif loc.startswith('text^') and loc != 'text^':
+        loc_by = 'xpath'
+        loc_str = f'//*/text()[starts-with(., {_make_search_str(loc[5:])})]/..'
+
+    elif loc.startswith('text$') and loc != 'text$':
+        loc_by = 'xpath'
+        loc_str = f'//*/text()[substring(., string-length(.) - string-length({_make_search_str(loc[5:])}) +1) = ' \
+                  f'{_make_search_str(loc[5:])}]/..'
+
+    # 用xpath查找
+    elif loc.startswith(('xpath:', 'xpath=')) and loc not in ('xpath:', 'xpath='):
+        loc_by = 'xpath'
+        loc_str = loc[6:]
+    elif loc.startswith(('x:', 'x=')) and loc not in ('x:', 'x='):
+        loc_by = 'xpath'
+        loc_str = loc[2:]
+
+    # 用css selector查找
+    elif loc.startswith(('css:', 'css=')) and loc not in ('css:', 'css='):
+        loc_str = loc[4:]
+    elif loc.startswith(('c:', 'c=')) and loc not in ('c:', 'c='):
+        loc_str = loc[2:]
+
+    # 根据文本模糊查找
+    elif loc:
+        loc_by = 'xpath'
+        loc_str = f'//*/text()[contains(., {_make_search_str(loc)})]/..'
+
+    else:
+        loc_str = '*'
 
     return loc_by, loc_str
 
@@ -298,3 +393,56 @@ def translate_loc(loc):
         raise ValueError('无法识别的定位符。')
 
     return loc_by, loc_str
+
+
+def translate_css_loc(loc):
+    """把By类型的loc元组转换为css selector或xpath类型的
+    :param loc: By类型的loc元组
+    :return: css selector或xpath类型的loc元组
+    """
+    if len(loc) != 2:
+        raise ValueError('定位符长度必须为2。')
+
+    loc_by = By.CSS_SELECTOR
+    loc_0 = loc[0].lower()
+    if loc_0 == By.XPATH:
+        loc_by = By.XPATH
+        loc_str = loc[1]
+
+    elif loc_0 == By.CSS_SELECTOR:
+        loc_by = loc_0
+        loc_str = loc[1]
+
+    elif loc_0 == By.ID:
+        loc_str = f'#{css_trans(loc[1])}'
+
+    elif loc_0 == By.CLASS_NAME:
+        loc_str = f'.{css_trans(loc[1])}'
+
+    elif loc_0 == By.PARTIAL_LINK_TEXT:
+        loc_by = By.XPATH
+        loc_str = f'//a[text()="{css_trans(loc[1])}"]'
+
+    elif loc_0 == By.NAME:
+        loc_str = f'*[@name={css_trans(loc[1])}]'
+
+    elif loc_0 == By.TAG_NAME:
+        loc_str = loc[1]
+
+    elif loc_0 == By.PARTIAL_LINK_TEXT:
+        loc_by = By.XPATH
+        loc_str = f'//a[contains(text(),"{loc[1]}")]'
+
+    else:
+        raise ValueError('无法识别的定位符。')
+
+    if loc_by == By.CSS_SELECTOR:
+        pass
+
+    return loc_by, loc_str
+
+
+def css_trans(txt):
+    c = ('!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@',
+         '[', '\\', ']', '^', '`', ',', '{', '|', '}', '~', ' ')
+    return ''.join([fr'\{i}' if i in c else i for i in txt])

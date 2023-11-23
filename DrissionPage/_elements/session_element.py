@@ -267,14 +267,14 @@ class SessionElement(DrissionElement):
         while ele:
             if mode == 'css':
                 brothers = len(ele.eles(f'xpath:./preceding-sibling::*'))
-                path_str = f'>:nth-child({brothers + 1}){path_str}'
+                path_str = f'>{ele.tag}:nth-child({brothers + 1}){path_str}'
             else:
                 brothers = len(ele.eles(f'xpath:./preceding-sibling::{ele.tag}'))
                 path_str = f'/{ele.tag}[{brothers + 1}]{path_str}' if brothers > 0 else f'/{ele.tag}{path_str}'
 
             ele = ele.parent()
 
-        return f':root{path_str[1:]}' if mode == 'css' else path_str
+        return f'{path_str[1:]}' if mode == 'css' else path_str
 
 
 def make_session_ele(html_or_ele, loc=None, single=True):

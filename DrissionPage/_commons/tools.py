@@ -3,8 +3,8 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from platform import system
 from pathlib import Path
+from platform import system
 from re import search, sub
 from shutil import rmtree
 from time import perf_counter, sleep
@@ -12,6 +12,7 @@ from time import perf_counter, sleep
 from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
 from .._configs.options_manage import OptionsManager
+from ..errors import ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError
 
 
 def get_usable_path(path, is_file=True, parents=True):
@@ -250,3 +251,29 @@ def configs_to_here(save_name=None):
     om = OptionsManager('default')
     save_name = f'{save_name}.ini' if save_name is not None else 'dp_configs.ini'
     om.save(save_name)
+
+
+def raise_error(r):
+    """抛出error对应报错
+    :param r: 包含error的dict
+    :return: None
+    """
+    error = r['error']
+    if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
+        raise ContextLostError
+    elif error in ('Could not find node with given id', 'Could not find object with given id',
+                   'No node with given id found', 'Node with given id does not belong to the document',
+                   'No node found for given backend id'):
+        raise ElementLostError
+    elif error == 'tab closed':
+        raise PageClosedError
+    elif error == 'timeout':
+        raise TimeoutError
+    elif error == 'alert exists.':
+        raise AlertExistsError
+    elif error in ('Node does not have a layout object', 'Could not compute box model.'):
+        raise NoRectError
+    elif r['type'] == 'call_method_error':
+        raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
+    else:
+        raise RuntimeError(r)

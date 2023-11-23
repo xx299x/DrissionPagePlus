@@ -10,9 +10,9 @@ from threading import Thread
 from time import perf_counter, sleep
 
 from .._base.base import BasePage
-from .._commons.settings import Settings
 from .._commons.locator import get_loc, is_loc
-from .._commons.tools import get_usable_path
+from .._commons.settings import Settings
+from .._commons.tools import get_usable_path, raise_error
 from .._commons.web import location_in_viewport
 from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_ele
 from .._elements.none_element import NoneElement
@@ -25,8 +25,8 @@ from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
-from ..errors import (ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError,
-                      GetDocumentError, ElementNotFoundError)
+from ..errors import (ContextLostError, ElementLostError, CDPError, PageClosedError, GetDocumentError,
+                      ElementNotFoundError)
 
 __ERROR__ = 'error'
 
@@ -441,28 +441,7 @@ class ChromiumBase(BasePage):
         :return: 执行的结果
         """
         r = self.driver.run(cmd, **cmd_args)
-        if __ERROR__ not in r:
-            return r
-
-        error = r[__ERROR__]
-        if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
-            raise ContextLostError
-        elif error in ('Could not find node with given id', 'Could not find object with given id',
-                       'No node with given id found', 'Node with given id does not belong to the document',
-                       'No node found for given backend id'):
-            raise ElementLostError
-        elif error == 'tab closed':
-            raise PageClosedError
-        elif error == 'timeout':
-            raise TimeoutError
-        elif error == 'alert exists.':
-            raise AlertExistsError
-        elif error in ('Node does not have a layout object', 'Could not compute box model.'):
-            raise NoRectError
-        elif r['type'] == 'call_method_error':
-            raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
-        else:
-            raise RuntimeError(r)
+        return r if __ERROR__ not in r else raise_error(r)
 
     def run_cdp_loaded(self, cmd, **cmd_args):
         """执行Chrome DevTools Protocol语句，执行前等待页面加载完毕

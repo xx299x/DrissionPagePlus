@@ -10,9 +10,9 @@ from time import perf_counter, sleep
 from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
-from .._commons.settings import Settings
 from .._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
 from .._commons.locator import get_loc
+from .._commons.settings import Settings
 from .._commons.tools import get_usable_path
 from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
@@ -711,7 +711,7 @@ class ChromiumElement(DrissionElement):
         elif mode == 'css':
             txt1 = ''
             txt3 = ''
-            txt4 = '''path = '>' + ":nth-child(" + nth + ")" + path;'''
+            txt4 = '''path = '>' + el.tagName + ":nth-child(" + nth + ")" + path;'''
             txt5 = '''return path.substr(1);'''
 
         else:
@@ -736,7 +736,7 @@ class ChromiumElement(DrissionElement):
         return e(this);}
         '''
         t = self.run_js(js)
-        return f':root{t}' if mode == 'css' else t
+        return f'{t}' if mode == 'css' else t
 
     def _set_file_input(self, files):
         """对上传控件写入路径
@@ -1022,31 +1022,42 @@ class ChromiumShadowRoot(BaseElement):
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或其组成的列表
         """
-        loc = get_loc(loc_or_str)
+        loc = get_loc(loc_or_str, css_mode=False)
         if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
             loc = loc[0], loc[1][5:]
 
+        result = None
         timeout = timeout if timeout is not None else self.page.timeout
         end_time = perf_counter() + timeout
-        eles = make_session_ele(self.html).eles(loc)
-        while not eles and perf_counter() <= end_time:
-            eles = make_session_ele(self.html).eles(loc)
+        while not result and perf_counter() <= end_time:
+            if loc[0] == 'css selector':
+                if single:
+                    nod_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=loc[1])['nodeId']
+                    result = make_chromium_ele(self.page, node_id=nod_id) if nod_id else NoneElement()
 
-        if not eles:
-            return NoneElement() if single else eles
+                else:
+                    nod_ids = self.page.run_cdp('DOM.querySelectorAll', nodeId=self._node_id, selector=loc[1])['nodeId']
+                    result = [make_chromium_ele(self.page, node_id=n) for n in nod_ids]
 
-        css_paths = [i.css_path[47:] for i in eles]
-        if single:
-            node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css_paths[0])['nodeId']
-            return make_chromium_ele(self.page, node_id=node_id) if node_id else NoneElement()
+            else:
+                eles = make_session_ele(self.html).eles(loc)
+                if not eles:
+                    result = NoneElement() if single else eles
+                    continue
 
-        else:
-            results = []
-            for i in css_paths:
-                node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
-                if node_id:
-                    results.append(make_chromium_ele(self.page, node_id=node_id))
-            return results
+                css = [i.css_path[61:] for i in eles]
+                if single:
+                    node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css[0])['nodeId']
+                    result = make_chromium_ele(self.page, node_id=node_id) if node_id else NoneElement()
+
+                else:
+                    result = []
+                    for i in css:
+                        node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
+                        if node_id:
+                            result.append(make_chromium_ele(self.page, node_id=node_id))
+
+        return result
 
     def _get_node_id(self, obj_id):
         """返回元素node id"""

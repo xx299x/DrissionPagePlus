@@ -6,8 +6,10 @@
 from time import sleep, perf_counter
 
 from .chromium_driver import BrowserDriver, ChromiumDriver
-from .._commons.tools import stop_process_on_port
+from .._commons.tools import stop_process_on_port, raise_error
 from .._units.download_manager import DownloadManager
+
+__ERROR__ = 'error'
 
 
 class Browser(object):
@@ -88,7 +90,8 @@ class Browser(object):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        return self._driver.run(cmd, **cmd_args)
+        r = self._driver.run(cmd, **cmd_args)
+        return r if __ERROR__ not in r else raise_error(r)
 
     @property
     def driver(self):
