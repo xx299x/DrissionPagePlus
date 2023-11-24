@@ -65,7 +65,6 @@ def get_launch_args(opt):
     # ----------处理arguments-----------
     result = set()
     has_user_path = False
-    remote_allow = False
     headless = None
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
@@ -74,8 +73,6 @@ def get_launch_args(opt):
             result.add(f'--user-data-dir={Path(i[16:]).absolute()}')
             has_user_path = True
             continue
-        elif i.startswith('--remote-allow-origins='):
-            remote_allow = True
         elif i.startswith('--headless'):
             if i == '--headless=false':
                 headless = False
@@ -94,9 +91,6 @@ def get_launch_args(opt):
         path.mkdir(parents=True, exist_ok=True)
         opt.set_user_data_path(path)
         result.add(f'--user-data-dir={path}')
-
-    if not remote_allow:
-        result.add('--remote-allow-origins=*')
 
     if headless is None and system().lower() == 'linux':
         from os import popen
@@ -215,7 +209,7 @@ def test_connect(ip, port, timeout=30):
             sleep(.2)
 
     raise BrowserConnectError(f'\n{ip}:{port}浏览器无法链接。\n请确认：\n1、该端口为浏览器\n'
-                              f'2、已添加--remote-allow-origins=*和--remote-debugging-port={port}启动项\n'
+                              f'2、已添加--remote-debugging-port={port}启动项\n'
                               f'3、用户文件夹没有和已打开的浏览器冲突\n'
                               f'4、如为无界面系统，请添加--headless=new参数\n'
                               f'5、如果是Linux系统，可能还要添加--no-sandbox启动参数\n'

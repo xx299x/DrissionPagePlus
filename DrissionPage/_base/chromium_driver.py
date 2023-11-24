@@ -9,8 +9,8 @@ from threading import Thread, Event
 from time import perf_counter
 
 from requests import get
-from websocket import WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
-    create_connection
+from websocket import (WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
+                       create_connection)
 
 
 class ChromiumDriver(object):
@@ -172,7 +172,8 @@ class ChromiumDriver(object):
     def start(self):
         """启动连接"""
         self._stopped.clear()
-        self._ws = create_connection(self._websocket_url, enable_multithread=True)
+        self._ws = create_connection(self._websocket_url, enable_multithread=True,
+                                     suppress_origin=True)
         self._recv_th.start()
         self._handle_event_th.start()
         return True
