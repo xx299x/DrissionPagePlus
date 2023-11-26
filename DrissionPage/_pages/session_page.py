@@ -55,6 +55,8 @@ class SessionPage(BasePage):
         self._timeout = self._session_options.timeout
         self._download_path = None if self._session_options.download_path is None \
             else str(Path(self._session_options.download_path).absolute())
+        self.retry_times = self._session_options.retry_times
+        self.retry_interval = self._session_options.retry_interval
 
     def _create_session(self):
         """创建内建Session对象"""

@@ -68,20 +68,8 @@ def str_to_xpath_loc(loc):
 
     # ------------------------------------------------------------------
     # 多属性查找
-    if loc.startswith('@!') and loc != '@!':
-        r = split(r'(@!|@&|@\|)', loc)
-        if '@&' in r and '@|' in r:
-            raise ValueError('@&和@|不能同时出现在一个定位语句中。')
-        elif '@&' in r:
-            loc_str = _make_multi_xpath_str('*', loc)[1]
-        else:  # @|
-            loc_str = _make_multi_xpath_str('*', loc, False)[1]
-
-    elif loc.startswith('@&') and loc != '@&':
+    if loc.startswith(('@@', '@|', '@!')) and loc not in ('@@', '@|', '@!'):
         loc_str = _make_multi_xpath_str('*', loc)[1]
-
-    elif loc.startswith('@|') and loc != '@|':
-        loc_str = _make_multi_xpath_str('*', loc, False)[1]
 
     # 单属性查找
     elif loc.startswith('@') and loc != '@':
@@ -92,24 +80,18 @@ def str_to_xpath_loc(loc):
         at_ind = loc.find('@')
         if at_ind == -1:
             loc_str = f'//*[name()="{loc[4:]}"]'
+        elif loc[at_ind:].startswith(('@@', '@|', '@!')):
+            loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
         else:
-            if loc[at_ind:].startswith(('@&', '@!')):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
-            elif loc[at_ind:].startswith('@|'):
-                loc_str = _make_multi_xpath_str(loc[4:at_ind], loc[at_ind:], False)[1]
-            else:
-                loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
+            loc_str = _make_single_xpath_str(loc[4:at_ind], loc[at_ind:])[1]
 
     # 根据文本查找
     elif loc.startswith('text='):
         loc_str = f'//*[text()={_make_search_str(loc[5:])}]'
-
     elif loc.startswith('text:') and loc != 'text:':
         loc_str = f'//*/text()[contains(., {_make_search_str(loc[5:])})]/..'
-
     elif loc.startswith('text^') and loc != 'text^':
         loc_str = f'//*/text()[starts-with(., {_make_search_str(loc[5:])})]/..'
-
     elif loc.startswith('text$') and loc != 'text$':
         loc_str = f'//*/text()[substring(., string-length(.) - string-length({_make_search_str(loc[5:])}) +1) = ' \
                   f'{_make_search_str(loc[5:])}]/..'
@@ -164,20 +146,8 @@ def str_to_css_loc(loc):
 
     # ------------------------------------------------------------------
     # 多属性查找
-    if loc.startswith('@!') and loc != '@!':
-        r = split(r'(@!|@&|@\|)', loc)
-        if '@&' in r and '@|' in r:
-            raise ValueError('@&和@|不能同时出现在一个定位语句中。')
-        elif '@&' in r:
-            loc_by, loc_str = _make_multi_css_str('*', loc)
-        else:  # @|
-            loc_by, loc_str = _make_multi_css_str('*', loc, False)
-
-    elif loc.startswith('@&') and loc != '@&':
-        loc_by, loc_str = _make_multi_css_str('*', loc)
-
-    elif loc.startswith('@|') and loc != '@|':
-        loc_by, loc_str = _make_multi_css_str('*', loc, False)
+    if loc.startswith(('@@', '@|', '@!')) and loc not in ('@@', '@|', '@!'):
+        loc_str = _make_multi_css_str('*', loc)[1]
 
     # 单属性查找
     elif loc.startswith('@') and loc != '@':
@@ -188,39 +158,14 @@ def str_to_css_loc(loc):
         at_ind = loc.find('@')
         if at_ind == -1:
             loc_str = loc[4:]
+        elif loc[at_ind:].startswith(('@@', '@|', '@!')):
+            loc_by, loc_str = _make_multi_css_str(loc[4:at_ind], loc[at_ind:])
         else:
-            if loc[at_ind:].startswith(('@&', '@!')):
-                loc_by, loc_str = _make_multi_css_str(loc[4:at_ind], loc[at_ind:])
-            elif loc[at_ind:].startswith('@|'):
-                loc_by, loc_str = _make_multi_css_str(loc[4:at_ind], loc[at_ind:], False)
-            else:
-                loc_by, loc_str = _make_single_css_str(loc[4:at_ind], loc[at_ind:])
+            loc_by, loc_str = _make_single_css_str(loc[4:at_ind], loc[at_ind:])
 
     # 根据文本查找
-    elif loc.startswith('text='):
-        loc_by = 'xpath'
-        loc_str = f'//*[text()={_make_search_str(loc[5:])}]'
-
-    elif loc.startswith('text:') and loc != 'text:':
-        loc_by = 'xpath'
-        loc_str = f'//*/text()[contains(., {_make_search_str(loc[5:])})]/..'
-
-    elif loc.startswith('text^') and loc != 'text^':
-        loc_by = 'xpath'
-        loc_str = f'//*/text()[starts-with(., {_make_search_str(loc[5:])})]/..'
-
-    elif loc.startswith('text$') and loc != 'text$':
-        loc_by = 'xpath'
-        loc_str = f'//*/text()[substring(., string-length(.) - string-length({_make_search_str(loc[5:])}) +1) = ' \
-                  f'{_make_search_str(loc[5:])}]/..'
-
-    # 用xpath查找
-    elif loc.startswith(('xpath:', 'xpath=')) and loc not in ('xpath:', 'xpath='):
-        loc_by = 'xpath'
-        loc_str = loc[6:]
-    elif loc.startswith(('x:', 'x=')) and loc not in ('x:', 'x='):
-        loc_by = 'xpath'
-        loc_str = loc[2:]
+    elif loc.startswith(('text=', 'text:', 'text^', 'text$', 'xpath=', 'xpath:', 'x:', 'x=')):
+        loc_by, loc_str = str_to_xpath_loc(loc)
 
     # 用css selector查找
     elif loc.startswith(('css:', 'css=')) and loc not in ('css:', 'css='):
@@ -230,8 +175,7 @@ def str_to_css_loc(loc):
 
     # 根据文本模糊查找
     elif loc:
-        loc_by = 'xpath'
-        loc_str = f'//*/text()[contains(., {_make_search_str(loc)})]/..'
+        loc_by, loc_str = str_to_xpath_loc(loc)
 
     else:
         loc_str = '*'
@@ -296,17 +240,20 @@ def _make_single_xpath_str(tag: str, text: str) -> tuple:
     return 'xpath', f'//*[{arg_str}]{txt_str}' if arg_str else f'//*{txt_str}'
 
 
-def _make_multi_xpath_str(tag: str, text: str, _and: bool = True) -> tuple:
+def _make_multi_xpath_str(tag: str, text: str) -> tuple:
     """生成多属性查找的xpath语句
     :param tag: 标签名
     :param text: 待处理的字符串
-    :param _and: 是否与方式
     :return: xpath字符串
     """
     arg_list = []
-    args = split(r'(@!|@&)', text)[1:] if _and else split(r'(@!|@\|)', text)[1:]
-    if (_and and '@|' in args) or (not _and and '@&' in args):
-        raise ValueError('@&和@|不能同时出现在一个定位语句中。')
+    args = split(r'(@!|@@|@\|)', text)[1:]
+    if '@@' in args and '@|' in args:
+        raise ValueError('@@和@|不能同时出现在一个定位语句中。')
+    elif '@@' in args:
+        _and = True
+    else:  # @|
+        _and = False
 
     for k in range(0, len(args) - 1, 2):
         r = split(r'([:=$^])', args[k + 1], maxsplit=1)
@@ -371,22 +318,25 @@ def _make_search_str(search_str: str) -> str:
     return search_str
 
 
-def _make_multi_css_str(tag: str, text: str, _and: bool = True) -> tuple:
+def _make_multi_css_str(tag: str, text: str) -> tuple:
     """生成多属性查找的css selector语句
     :param tag: 标签名
     :param text: 待处理的字符串
-    :param _and: 是否与方式
     :return: css selector字符串
     """
     arg_list = []
-    args = split(r'(@!|@&)', text)[1:] if _and else split(r'(@!|@\|)', text)[1:]
-    if (_and and '@|' in args) or (not _and and '@&' in args):
-        raise ValueError('@&和@|不能同时出现在一个定位语句中。')
+    args = split(r'(@!|@@|@\|)', text)[1:]
+    if '@@' in args and '@|' in args:
+        raise ValueError('@@和@|不能同时出现在一个定位语句中。')
+    elif '@@' in args:
+        _and = True
+    else:  # @|
+        _and = False
 
-    for k in range(0, len(args)-1, 2):
-        r = split(r'([:=$^])', args[k+1], maxsplit=1)
+    for k in range(0, len(args) - 1, 2):
+        r = split(r'([:=$^])', args[k + 1], maxsplit=1)
         if not r[0] or r[0].startswith(('text()', 'tx()')):
-            return _make_multi_xpath_str(tag, text, _and)
+            return _make_multi_xpath_str(tag, text)
 
         arg_str = ''
         len_r = len(r)

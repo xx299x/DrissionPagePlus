@@ -37,6 +37,8 @@ class SessionOptions(object):
         self._stream = None
         self._trust_env = None
         self._max_redirects = None
+        self._retry_times = 3
+        self._retry_interval = 2
 
         if read_file is False:
             return
@@ -44,38 +46,42 @@ class SessionOptions(object):
         ini_path = str(ini_path) if ini_path else None
         om = OptionsManager(ini_path)
         self.ini_path = om.ini_path
-        options_dict = om.session_options
 
-        if options_dict.get('headers', None) is not None:
-            self.set_headers(options_dict['headers'])
+        options = om.session_options
+        if options.get('headers', None) is not None:
+            self.set_headers(options['headers'])
 
-        if options_dict.get('cookies', None) is not None:
-            self.set_cookies(options_dict['cookies'])
+        if options.get('cookies', None) is not None:
+            self.set_cookies(options['cookies'])
 
-        if options_dict.get('auth', None) is not None:
-            self._auth = options_dict['auth']
+        if options.get('auth', None) is not None:
+            self._auth = options['auth']
 
-        if options_dict.get('params', None) is not None:
-            self._params = options_dict['params']
+        if options.get('params', None) is not None:
+            self._params = options['params']
 
-        if options_dict.get('verify', None) is not None:
-            self._verify = options_dict['verify']
+        if options.get('verify', None) is not None:
+            self._verify = options['verify']
 
-        if options_dict.get('cert', None) is not None:
-            self._cert = options_dict['cert']
+        if options.get('cert', None) is not None:
+            self._cert = options['cert']
 
-        if options_dict.get('stream', None) is not None:
-            self._stream = options_dict['stream']
+        if options.get('stream', None) is not None:
+            self._stream = options['stream']
 
-        if options_dict.get('trust_env', None) is not None:
-            self._trust_env = options_dict['trust_env']
+        if options.get('trust_env', None) is not None:
+            self._trust_env = options['trust_env']
 
-        if options_dict.get('max_redirects', None) is not None:
-            self._max_redirects = options_dict['max_redirects']
+        if options.get('max_redirects', None) is not None:
+            self._max_redirects = options['max_redirects']
 
         self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
         self._timeout = om.timeouts.get('implicit', 10)
         self._download_path = om.paths.get('download_path', None) or None
+
+        others = om.others
+        self._retry_times = others.get('retry_times', 3)
+        self._retry_interval = others.get('retry_interval', 2)
 
     # ===========须独立处理的项开始============
     @property
@@ -118,6 +124,28 @@ class SessionOptions(object):
         :return: 返回当前对象
         """
         self._sets('proxies', {'http': http, 'https': https})
+        return self
+
+    @property
+    def retry_times(self):
+        """返回连接失败时的重试次数"""
+        return self._retry_times
+
+    @property
+    def retry_interval(self):
+        """返回连接失败时的重试间隔（秒）"""
+        return self._retry_interval
+
+    def set_retry(self, times=None, interval=None):
+        """设置连接失败时的重试操作
+        :param times: 重试次数
+        :param interval: 重试间隔
+        :return: 当前对象
+        """
+        if times is not None:
+            self._retry_times = times
+        if interval is not None:
+            self._retry_interval = interval
         return self
 
     # ===========须独立处理的项结束============
@@ -350,10 +378,12 @@ class SessionOptions(object):
             if i not in ('download_path', 'timeout', 'proxies'):
                 om.set_item('session_options', i, options[i])
 
-        om.set_item('paths', 'download_path', self.download_path)
+        om.set_item('paths', 'download_path', self.download_path or '')
         om.set_item('timeouts', 'implicit', self.timeout)
         om.set_item('proxies', 'http', self.proxies.get('http', None))
         om.set_item('proxies', 'https', self.proxies.get('https', None))
+        om.set_item('others', 'retry_times', self.retry_times)
+        om.set_item('others', 'retry_interval', self.retry_interval)
 
         for i in self._del_set:
             if i == 'download_path':

@@ -293,7 +293,7 @@ def get_chrome_path(ini_path=None, show_msg=True, from_ini=True,
     # -----------从ini文件中获取--------------
     if ini_path and from_ini:
         try:
-            path = OptionsManager(ini_path).chrome_options['browser_path']
+            path = OptionsManager(ini_path).chromium_options['browser_path']
         except KeyError:
             path = None
     else:

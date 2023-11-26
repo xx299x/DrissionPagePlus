@@ -42,53 +42,54 @@ class ChromiumPage(ChromiumBase):
         :return: 返回浏览器地址
         """
         if not addr_or_opts:
-            self._driver_options = ChromiumOptions(addr_or_opts)
+            self._chromium_options = ChromiumOptions(addr_or_opts)
 
         elif isinstance(addr_or_opts, ChromiumOptions):
-            self._driver_options = addr_or_opts
+            self._chromium_options = addr_or_opts
 
         elif isinstance(addr_or_opts, str):
-            self._driver_options = ChromiumOptions()
-            self._driver_options.set_debugger_address(addr_or_opts)
+            self._chromium_options = ChromiumOptions()
+            self._chromium_options.set_debugger_address(addr_or_opts)
 
         elif isinstance(addr_or_opts, int):
-            self._driver_options = ChromiumOptions()
-            self._driver_options.set_local_port(addr_or_opts)
+            self._chromium_options = ChromiumOptions()
+            self._chromium_options.set_local_port(addr_or_opts)
 
         else:
             raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
 
-        return self._driver_options.debugger_address
+        return self._chromium_options.debugger_address
 
     def _run_browser(self):
         """连接浏览器"""
-        is_exist = connect_browser(self._driver_options)
-        ws = get(f'http://{self._driver_options.debugger_address}/json/version',
+        is_exist = connect_browser(self._chromium_options)
+        ws = get(f'http://{self._chromium_options.debugger_address}/json/version',
                  headers={'Connection': 'close'})
         if not ws:
             raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如有，须开放127.0.0.1地址。')
         ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-        self._browser = Browser(self._driver_options.debugger_address, ws, self)
+        self._browser = Browser(self._chromium_options.debugger_address, ws, self)
 
-        if (is_exist and self._driver_options._headless is False and
+        if (is_exist and self._chromium_options._headless is False and
                 'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
             self._browser.quit(3)
-            connect_browser(self._driver_options)
-            ws = get(f'http://{self._driver_options.debugger_address}/json/version', headers={'Connection': 'close'})
+            connect_browser(self._chromium_options)
+            ws = get(f'http://{self._chromium_options.debugger_address}/json/version', headers={'Connection': 'close'})
             ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-            self._browser = Browser(self._driver_options.debugger_address, ws, self)
+            self._browser = Browser(self._chromium_options.debugger_address, ws, self)
 
     def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""
-        self._timeouts = Timeout(self,
-                                 page_load=self._driver_options.timeouts['pageLoad'],
-                                 script=self._driver_options.timeouts['script'],
-                                 implicit=self._driver_options.timeouts['implicit'])
-        if self._driver_options.timeouts['implicit'] is not None:
-            self._timeout = self._driver_options.timeouts['implicit']
-        self._load_mode = self._driver_options.load_mode
-        self._download_path = None if self._driver_options.download_path is None \
-            else str(Path(self._driver_options.download_path).absolute())
+        self._timeouts = Timeout(self, page_load=self._chromium_options.timeouts['pageLoad'],
+                                 script=self._chromium_options.timeouts['script'],
+                                 implicit=self._chromium_options.timeouts['implicit'])
+        if self._chromium_options.timeouts['implicit'] is not None:
+            self._timeout = self._chromium_options.timeouts['implicit']
+        self._load_mode = self._chromium_options.load_mode
+        self._download_path = None if self._chromium_options.download_path is None \
+            else str(Path(self._chromium_options.download_path).absolute())
+        self.retry_times = self._chromium_options.retry_times
+        self.retry_interval = self._chromium_options.retry_interval
 
     def _page_init(self):
         """浏览器相关设置"""

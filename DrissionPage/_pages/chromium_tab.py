@@ -274,7 +274,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         # s模式转d模式
         if self._mode == 'd':
             if self._driver is None:
-                self._connect_browser(self.page._driver_options)
+                self._connect_browser(self.page._chromium_options)
 
             self._url = None if not self._has_driver else super(SessionPage, self).url
             self._has_driver = True

@@ -28,8 +28,8 @@ class ChromiumOptions(object):
             ini_path = str(ini_path) if ini_path else None
             om = OptionsManager(ini_path)
             self.ini_path = om.ini_path
-            options = om.chrome_options
 
+            options = om.chromium_options
             self._download_path = om.paths.get('download_path', None) or None
             self._arguments = options.get('arguments', [])
             self._browser_path = options.get('browser_path', '')
@@ -63,6 +63,11 @@ class ChromiumOptions(object):
                 port, path = PortFinder().get_port()
                 self._debugger_address = f'127.0.0.1:{port}'
                 self.set_argument('--user-data-dir', path)
+
+            others = om.others
+            self._retry_times = others.get('retry_times', 3)
+            self._retry_interval = others.get('retry_interval', 2)
+
             return
 
         self.ini_path = None
@@ -79,6 +84,8 @@ class ChromiumOptions(object):
         self._auto_port = False
         self._system_user_path = False
         self._existing_only = False
+        self._retry_times = 3
+        self._retry_interval = 2
 
     @property
     def download_path(self):
@@ -154,6 +161,28 @@ class ChromiumOptions(object):
     def is_existing_only(self):
         """返回是否只接管现有浏览器方式"""
         return self._existing_only
+
+    @property
+    def retry_times(self):
+        """返回连接失败时的重试次数"""
+        return self._retry_times
+
+    @property
+    def retry_interval(self):
+        """返回连接失败时的重试间隔（秒）"""
+        return self._retry_interval
+
+    def set_retry(self, times=None, interval=None):
+        """设置连接失败时的重试操作
+        :param times: 重试次数
+        :param interval: 重试间隔
+        :return: 当前对象
+        """
+        if times is not None:
+            self._retry_times = times
+        if interval is not None:
+            self._retry_interval = interval
+        return self
 
     def set_argument(self, arg, value=None):
         """设置浏览器配置的argument属性
@@ -477,22 +506,25 @@ class ChromiumOptions(object):
         else:
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
-        # 设置chrome_options
+        # 设置chromium_options
         attrs = ('debugger_address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',
                  'auto_port', 'system_user_path', 'existing_only', 'flags')
         for i in attrs:
-            om.set_item('chrome_options', i, self.__getattribute__(f'_{i}'))
+            om.set_item('chromium_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理
         om.set_item('proxies', 'http', self._proxy)
         om.set_item('proxies', 'https', self._proxy)
         # 设置路径
-        om.set_item('paths', 'download_path', self._download_path)
+        om.set_item('paths', 'download_path', self._download_path or '')
         # 设置timeout
         om.set_item('timeouts', 'implicit', self._timeouts['implicit'])
         om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
         om.set_item('timeouts', 'script', self._timeouts['script'])
+        # 设置重试
+        om.set_item('others', 'retry_times', self.retry_times)
+        om.set_item('others', 'retry_interval', self.retry_interval)
         # 设置prefs
-        om.set_item('chrome_options', 'prefs', self._prefs)
+        om.set_item('chromium_options', 'prefs', self._prefs)
 
         path = str(path)
         om.save(path)
