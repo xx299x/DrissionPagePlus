@@ -138,12 +138,21 @@ class ChromiumPage(ChromiumBase):
         """返回浏览器进程id"""
         return self.browser.process_id
 
-    def get_tab(self, tab_id=None):
+    def get_tab(self, id_or_num=None):
         """获取一个标签页对象
-        :param tab_id: 要获取的标签页id，为None时获取当前tab
+        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号不是视觉排列顺序，而是激活顺序
         :return: 标签页对象
         """
-        return tab_id if isinstance(tab_id, ChromiumTab) else ChromiumTab(self, tab_id or self.tab_id)
+        if isinstance(id_or_num, str):
+            return ChromiumTab(self, id_or_num)
+        elif isinstance(id_or_num, int):
+            return ChromiumTab(self, self.tabs[id_or_num])
+        elif id_or_num is None:
+            return ChromiumTab(self, self.tab_id)
+        elif isinstance(id_or_num, ChromiumTab):
+            return id_or_num
+        else:
+            raise TypeError(f'id_or_num需传入tab id或序号，非{id_or_num}。')
 
     def find_tabs(self, title=None, url=None, tab_type=None, single=True):
         """查找符合条件的tab，返回它们的id组成的列表

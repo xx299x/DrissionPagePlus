@@ -36,7 +36,7 @@ class SelectElement(object):
     @property
     def options(self):
         """返回所有选项元素组成的列表"""
-        return self._ele.eles('xpath://option')
+        return [i for i in self._ele.eles('xpath://option') if not isinstance(i, int)]
 
     @property
     def selected_option(self):
