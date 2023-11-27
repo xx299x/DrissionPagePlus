@@ -199,7 +199,8 @@ class NetworkListener(object):
                 p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                    p._raw_post_data = self._driver.run('Network.getRequestPostData', requestId=rid)['postData']
+                    p._raw_post_data = self._driver.run('Network.getRequestPostData',
+                                                        requestId=rid).get('postData', None)
 
         else:
             rid = kwargs['requestId']

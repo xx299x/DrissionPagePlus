@@ -162,10 +162,8 @@ class ChromiumDriver(object):
         if result is None:
             return {'error': 'tab closed', 'type': 'tab_closed'}
         if 'result' not in result and 'error' in result:
-            return {'error': result['error']['message'],
-                    'type': result.get('type', 'call_method_error'),
-                    'method': _method,
-                    'args': kwargs}
+            return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
+                    'method': _method, 'args': kwargs}
 
         return result['result']
 

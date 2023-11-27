@@ -26,8 +26,8 @@ class OptionsManager(object):
             self.ini_path = str(path)
 
         if not Path(self.ini_path).exists():
-            raise FileNotFoundError('\nini文件不存在。\n如果是打包使用，请查看打包注意事项\nhttps://g1879.gitee.io/drission'
-                                    'pagedocs/advance/packaging/')
+            input('\nini文件不存在。\n如果是打包使用，请查看打包注意事项\nhttps://g1879.gitee.io/drission'
+                  'pagedocs/advance/packaging/')
         self._conf = RawConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 

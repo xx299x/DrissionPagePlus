@@ -108,8 +108,7 @@ class ChromiumFrame(ChromiumBase):
             self._frame_ele = ChromiumElement(self._target_page, backend_id=self._backend_id)
             end_time = perf_counter() + 2
             while perf_counter() < end_time:
-                node = self._target_page.run_cdp('DOM.describeNode',
-                                                 backendNodeId=self._frame_ele._backend_id)['node']
+                node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele._backend_id)['node']
                 if 'frameId' in node:
                     break
 
@@ -121,8 +120,7 @@ class ChromiumFrame(ChromiumBase):
 
         if self._is_inner_frame():
             self._is_diff_domain = False
-            self.doc_ele = ChromiumElement(self._target_page,
-                                           backend_id=node['contentDocument']['backendNodeId'])
+            self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
             self._frame_id = node['frameId']
             super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
             self._debug = debug
@@ -152,47 +150,46 @@ class ChromiumFrame(ChromiumBase):
         if self._debug:
             print(f'{self._frame_id} reload 完毕')
 
-    def _get_document(self):
-        """刷新cdp使用的document数据"""
+    def _get_document(self, timeout=10):
+        """刷新cdp使用的document数据
+        :param timeout: 超时时间
+        :return: 是否获取成功
+        """
         if self._is_reading:
             return
 
         if self._debug:
-            print('>>> get new doc')
+            print('获取文档开始')
 
         self._is_reading = True
-        end_time = perf_counter() + 10
-        while perf_counter() < end_time:
-            try:
-                if self._is_diff_domain is False:
-                    node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
-                    self.doc_ele = ChromiumElement(self._target_page,
-                                                   backend_id=node['contentDocument']['backendNodeId'])
+        try:
+            if self._is_diff_domain is False:
+                node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
+                self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
 
-                else:
-                    b_id = self.run_cdp('DOM.getDocument')['root']['backendNodeId']
-                    self.doc_ele = ChromiumElement(self, backend_id=b_id)
+            else:
+                timeout = timeout if timeout >= .5 else .5
+                b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
+                self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
-                self._root_id = self.doc_ele._obj_id
+            self._root_id = self.doc_ele._obj_id
 
-                break
+            r = self.run_cdp('Page.getFrameTree')
+            for i in findall(r"'id': '(.*?)'", str(r)):
+                self.browser._frames[i] = self.tab_id
+                if self._debug:
+                    print('获取文档结束')
+                return True
 
-            except:
-                continue
+        except:
+            if self._debug:
+                print('获取文档失败')
+            return False
 
-        else:
-            raise GetDocumentError
-
-        r = self.run_cdp('Page.getFrameTree')
-        for i in findall(r"'id': '(.*?)'", str(r)):
-            self.browser._frames[i] = self.tab_id
-
-        if not self._reloading:  # 阻止reload时标识
-            self._is_loading = False
-        self._is_reading = False
-
-        if self._debug:
-            print('>>> new doc got')
+        finally:
+            if not self._reloading:  # 阻止reload时标识
+                self._is_loading = False
+            self._is_reading = False
 
     def _onInspectorDetached(self, **kwargs):
         """异域转同域或退出"""
