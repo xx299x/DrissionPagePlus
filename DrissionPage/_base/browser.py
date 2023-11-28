@@ -156,14 +156,21 @@ class Browser(object):
         """
         return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
 
-    def quit(self, timeout=5, force=True):
+    def quit(self, timeout=5, force=False):
         """关闭浏览器
         :param timeout: 等待浏览器关闭超时时间
-        :param force: 关闭超时是否强制终止进程
+        :param force: 是否立刻强制终止进程
         :return: None
         """
         self.run_cdp('Browser.close')
         self.driver.stop()
+
+        if force:
+            ip, port = self.address.split(':')
+            if ip not in ('127.0.0.1', 'localhost'):
+                return
+            stop_process_on_port(port)
+            return
 
         if self.process_id:
             from os import popen
@@ -179,12 +186,6 @@ class Browser(object):
                         return
                 except TypeError:
                     pass
-
-        if force:
-            ip, port = self.address.split(':')
-            if ip not in ('127.0.0.1', 'localhost'):
-                return
-            stop_process_on_port(port)
 
     def _on_quit(self):
         Browser.BROWSERS.pop(self.id, None)

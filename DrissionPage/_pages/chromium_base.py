@@ -165,7 +165,6 @@ class ChromiumBase(BasePage):
             return True
 
         except:
-            print('获取文档失败')
             if self._debug:
                 print('获取文档失败')
             return False

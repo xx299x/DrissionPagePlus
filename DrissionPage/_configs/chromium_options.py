@@ -40,7 +40,7 @@ class ChromiumOptions(object):
             self._load_mode = options.get('load_mode', 'normal')
             self._proxy = om.proxies.get('http', None)
             self._system_user_path = options.get('system_user_path', False)
-            self._existing_only = options.get('is_existing_only', False)
+            self._existing_only = options.get('existing_only', False)
 
             user_path = user = False
             for arg in self._arguments:

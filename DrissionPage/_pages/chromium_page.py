@@ -27,8 +27,7 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间
         """
-        if not addr_or_opts and addr_driver_opts:
-            addr_or_opts = addr_driver_opts
+        addr_or_opts = addr_or_opts or addr_driver_opts
         self._page = self
         address = self._handle_options(addr_or_opts)
         self._run_browser()

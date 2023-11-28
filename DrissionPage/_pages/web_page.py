@@ -22,8 +22,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param chromium_options: ChromiumDriver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
-        if not chromium_options and driver_or_options:
-            chromium_options = driver_or_options
+        chromium_options = chromium_options or driver_or_options
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
