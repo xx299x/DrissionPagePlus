@@ -38,7 +38,7 @@ class ContextLostError(BaseError):
 
 
 class ElementLostError(BaseError):
-    _info = '元素对象因刷新已失效。'
+    _info = '元素对象已失效。可能是页面整体刷新，或js局部刷新把元素替换或去除了。'
 
 
 class CDPError(BaseError):

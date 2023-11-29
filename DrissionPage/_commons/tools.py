@@ -274,6 +274,7 @@ def raise_error(r):
     elif error in ('Node does not have a layout object', 'Could not compute box model.'):
         raise NoRectError
     elif r['type'] == 'call_method_error':
-        raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}')
+        raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}\n出现这个错误可能意味着程序有bug，'
+                       '请把错误信息和重现方法告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
     else:
         raise RuntimeError(r)
