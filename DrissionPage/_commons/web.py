@@ -207,7 +207,7 @@ def cookies_to_tuple(cookies):
         cookies = tuple(cookie_to_dict(cookie) for cookie in cookies)
 
     elif isinstance(cookies, str):
-        cookies = tuple(cookie_to_dict(cookie.lstrip()) for cookie in cookies.split(";"))
+        cookies = tuple(cookie_to_dict(c.lstrip()) for c in cookies.rstrip(';,').split(',' if ',' in cookies else ';'))
 
     elif isinstance(cookies, dict):
         cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
