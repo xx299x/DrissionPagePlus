@@ -62,10 +62,13 @@ class ChromiumPage(ChromiumBase):
     def _run_browser(self):
         """连接浏览器"""
         is_exist = connect_browser(self._chromium_options)
-        ws = get(f'http://{self._chromium_options.debugger_address}/json/version',
-                 headers={'Connection': 'close'})
-        if not ws:
-            raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如有，须开放127.0.0.1地址。')
+        try:
+            ws = get(f'http://{self._chromium_options.debugger_address}/json/version', headers={'Connection': 'close'})
+            if not ws:
+                raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
+        except :
+            raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
+
         ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
         self._browser = Browser(self._chromium_options.debugger_address, ws, self)
 

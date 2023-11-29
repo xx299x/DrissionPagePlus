@@ -209,10 +209,10 @@ def test_connect(ip, port, timeout=30):
             sleep(.2)
 
     raise BrowserConnectError(f'\n{ip}:{port}浏览器无法链接。\n请确认：\n1、该端口为浏览器\n'
-                              f'2、已添加--remote-debugging-port={port}启动项\n'
+                              f'2、已添加\'--remote-debugging-port={port}\'启动项\n'
                               f'3、用户文件夹没有和已打开的浏览器冲突\n'
-                              f'4、如为无界面系统，请添加--headless=new参数\n'
-                              f'5、如果是Linux系统，可能还要添加--no-sandbox启动参数\n'
+                              f'4、如为无界面系统，请添加\'--headless=new\'参数\n'
+                              f'5、如果是Linux系统，可能还要添加\'--no-sandbox\'启动参数\n'
                               f'可使用ChromiumOptions设置端口和用户文件夹路径。')
 
 
