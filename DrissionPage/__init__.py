@@ -19,3 +19,5 @@ try:
     from .configs.driver_options import DriverOptions
 except ModuleNotFoundError:
     pass
+
+__version__ = '3.2.35'

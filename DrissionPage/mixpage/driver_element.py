@@ -15,10 +15,10 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import DrissionElement, BaseElement
-from DrissionPage.commons.locator import str_to_loc, get_loc
-from DrissionPage.commons.tools import get_usable_path
-from DrissionPage.commons.web import format_html, get_ele_txt
 from .session_element import make_session_ele
+from ..commons.locator import str_to_loc, get_loc
+from ..commons.tools import get_usable_path
+from ..commons.web import format_html, get_ele_txt
 
 
 class DriverElement(DrissionElement):

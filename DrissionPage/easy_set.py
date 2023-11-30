@@ -16,7 +16,7 @@ from .session_page import SessionPage
 
 try:
     from selenium import webdriver
-    from DrissionPage.mixpage.drission import Drission
+    from .mixpage.drission import Drission
     from .configs.driver_options import DriverOptions
 except ModuleNotFoundError:
     pass

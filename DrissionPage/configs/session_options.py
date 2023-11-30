@@ -8,8 +8,8 @@ from pathlib import Path
 from requests import Session
 from requests.structures import CaseInsensitiveDict
 
-from DrissionPage.commons.web import cookies_to_tuple, set_session_cookies
 from .options_manage import OptionsManager
+from ..commons.web import cookies_to_tuple, set_session_cookies
 
 
 class SessionOptions(object):

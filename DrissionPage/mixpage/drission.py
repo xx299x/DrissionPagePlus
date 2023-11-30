@@ -14,11 +14,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 from tldextract import extract
 
-from DrissionPage.commons.tools import get_pid_from_port, get_exe_from_port
-from DrissionPage.commons.browser import connect_browser
-from DrissionPage.commons.web import cookies_to_tuple
-from DrissionPage.configs.session_options import SessionOptions, session_options_to_dict
-from DrissionPage.configs.driver_options import DriverOptions
+from ..commons.browser import connect_browser
+from ..commons.tools import get_pid_from_port, get_exe_from_port
+from ..commons.web import cookies_to_tuple
+from ..configs.driver_options import DriverOptions
+from ..configs.session_options import SessionOptions, session_options_to_dict
 
 
 class Drission(object):
@@ -399,7 +399,7 @@ def create_driver(chrome_path, driver_path, options):
     # 若版本不对，获取对应 chromedriver 再试
     except (WebDriverException, SessionNotCreatedException):
         print('打开失败，尝试获取driver。\n')
-        from DrissionPage.easy_set import get_match_driver, get_chrome_path
+        from ..easy_set import get_match_driver, get_chrome_path
 
         if chrome_path == 'chrome':
             chrome_path = get_chrome_path(show_msg=False, from_ini=False)

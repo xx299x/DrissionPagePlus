@@ -13,9 +13,9 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .base import BasePage
-from DrissionPage.configs.session_options import SessionOptions
-from DrissionPage.commons.web import cookie_to_dict, set_session_cookies
 from .session_element import SessionElement, make_session_ele
+from ..commons.web import cookie_to_dict, set_session_cookies
+from ..configs.session_options import SessionOptions
 
 
 class SessionPage(BasePage):
