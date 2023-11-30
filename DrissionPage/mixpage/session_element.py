@@ -10,8 +10,8 @@ from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
 
 from .base import DrissionElement, BasePage, BaseElement
-from DrissionPage.commons.locator import get_loc
-from DrissionPage.commons.web import get_ele_txt, make_absolute_link
+from ..commons.locator import get_loc
+from ..commons.web import get_ele_txt, make_absolute_link
 
 
 class SessionElement(DrissionElement):

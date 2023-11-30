@@ -3,18 +3,18 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from json import load, dump
+from json import load, dump, JSONDecodeError
 from pathlib import Path
+from platform import system
 from subprocess import Popen, DEVNULL
 from tempfile import gettempdir
 from time import perf_counter, sleep
-from platform import system
 
 from requests import get as requests_get
 
-from DrissionPage.configs.chromium_options import ChromiumOptions
-from DrissionPage.errors import BrowserConnectError
 from .tools import port_is_using
+from ..configs.chromium_options import ChromiumOptions
+from ..errors import BrowserConnectError
 
 
 def connect_browser(option):
@@ -43,7 +43,7 @@ def connect_browser(option):
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        from DrissionPage.easy_set import get_chrome_path
+        from ..easy_set import get_chrome_path
         chrome_path = get_chrome_path(show_msg=False)
 
         if not chrome_path:
@@ -63,7 +63,6 @@ def get_launch_args(opt):
     # ----------处理arguments-----------
     result = set()
     has_user_path = False
-    remote_allow = False
     headless = False
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
@@ -72,8 +71,6 @@ def get_launch_args(opt):
             result.add(f'--user-data-dir={Path(i[16:]).absolute()}')
             has_user_path = True
             continue
-        elif i.startswith('--remote-allow-origins='):
-            remote_allow = True
         elif i.startswith('--headless'):
             headless = True
 
@@ -84,9 +81,6 @@ def get_launch_args(opt):
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
         result.add(f'--user-data-dir={path}')
-
-    if not remote_allow:
-        result.add('--remote-allow-origins=*')
 
     if not headless and system().lower() == 'linux':
         from os import popen
@@ -136,7 +130,10 @@ def set_prefs(opt):
             f.write('{}')
 
     with open(prefs_file, "r", encoding='utf-8') as f:
-        prefs_dict = load(f)
+        try:
+            prefs_dict = load(f)
+        except JSONDecodeError:
+            prefs_dict = {}
 
         for pref in prefs:
             value = prefs[pref]

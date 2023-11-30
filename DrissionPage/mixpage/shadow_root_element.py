@@ -9,9 +9,9 @@ from typing import Union
 from selenium.webdriver.remote.webelement import WebElement
 
 from .base import BaseElement
-from DrissionPage.commons.locator import get_loc
 from .driver_element import make_driver_ele
 from .session_element import make_session_ele, SessionElement
+from ..commons.locator import get_loc
 
 
 class ShadowRootElement(BaseElement):

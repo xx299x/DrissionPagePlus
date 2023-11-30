@@ -1815,7 +1815,7 @@ class ChromiumSelect(object):
     @property
     def options(self):
         """返回所有选项元素组成的列表"""
-        return self._ele.eles('xpath://option')
+        return [e for e in self._ele.eles('xpath://option') if isinstance(e, ChromiumElement)]
 
     @property
     def selected_option(self):
@@ -2020,7 +2020,7 @@ class ChromiumSelect(object):
 
     def _dispatch_change(self):
         """触发修改动作"""
-        self._ele.run_js('this.dispatchEvent(new UIEvent("change"));')
+        self._ele.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
 
 
 class ChromiumElementWaiter(object):

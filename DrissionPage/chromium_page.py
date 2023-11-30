@@ -131,7 +131,8 @@ class ChromiumPage(ChromiumBase):
     def tabs(self):
         """返回所有标签页id组成的列表"""
         j = self._control_session.get(f'http://{self.address}/json').json()  # 不要改用cdp
-        return [i['id'] for i in j if i['type'] == 'page']
+        return [i['id'] for i in j if i['type'] == 'page' and not i['url'].startswith('devtools://') and i[
+            'url'] != 'chrome://privacy-sandbox-dialog/notice']
 
     @property
     def main_tab(self):
