@@ -63,7 +63,6 @@ def get_launch_args(opt):
     # ----------处理arguments-----------
     result = set()
     has_user_path = False
-    remote_allow = False
     headless = False
     for i in opt.arguments:
         if i.startswith(('--load-extension=', '--remote-debugging-port=')):
@@ -72,8 +71,6 @@ def get_launch_args(opt):
             result.add(f'--user-data-dir={Path(i[16:]).absolute()}')
             has_user_path = True
             continue
-        elif i.startswith('--remote-allow-origins='):
-            remote_allow = True
         elif i.startswith('--headless'):
             headless = True
 
@@ -84,9 +81,6 @@ def get_launch_args(opt):
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
         result.add(f'--user-data-dir={path}')
-
-    if not remote_allow:
-        result.add('--remote-allow-origins=*')
 
     if not headless and system().lower() == 'linux':
         from os import popen

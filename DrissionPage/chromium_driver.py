@@ -200,7 +200,8 @@ class ChromiumDriver(object):
         self._started = True
         self.status = self._STARTED_
         self._stopped.clear()
-        self._ws = create_connection(self._websocket_url, enable_multithread=True)
+        self._ws = create_connection(self._websocket_url, enable_multithread=True,
+                                     suppress_origin=True)
         self._recv_th.start()
         self._handle_event_th.start()
         return True
