@@ -3,23 +3,28 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from .._commons.settings import Settings
 from ..errors import ElementNotFoundError
 
 
 class NoneElement(object):
-    def __init__(self, method=None, args=None):
+    def __init__(self, page=None, method=None, args=None):
+        if page:
+            self._none_ele_value = page._none_ele_value
+            self._none_ele_return_value = page._none_ele_return_value
+        else:
+            self._none_ele_value = None
+            self._none_ele_return_value = False
         self.method = method
         self.args = args
 
     def __call__(self, *args, **kwargs):
-        if Settings.NoneElement_value is None:
+        if not self._none_ele_return_value:
             raise ElementNotFoundError(None, self.method, self.args)
         else:
             return self
 
     def __getattr__(self, item):
-        if Settings.NoneElement_value is None:
+        if not self._none_ele_return_value:
             raise ElementNotFoundError(None, self.method, self.args)
         elif item in ('ele', 's_ele', 'parent', 'child', 'next', 'prev', 'before',
                       'after', 'get_frame', 'shadow_root', 'sr'):
@@ -27,7 +32,7 @@ class NoneElement(object):
         else:
             if item in ('size', 'link', 'css_path', 'xpath', 'comments', 'texts', 'tag', 'html', 'inner_html',
                         'attrs', 'text', 'raw_text'):
-                return Settings.NoneElement_value
+                return self._none_ele_value
             else:
                 raise ElementNotFoundError(None, self.method, self.args)
 

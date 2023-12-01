@@ -11,9 +11,23 @@ from .._commons.tools import show_or_hide_browser
 from .._commons.web import set_browser_cookies, set_session_cookies
 
 
-class ChromiumBaseSetter(object):
+class BasePageSetter(object):
     def __init__(self, page):
         self._page = page
+
+    def NoneElement_value(self, value=None, on_off=True):
+        """设置空元素是否返回设定值
+        :param value: 返回的设定值
+        :param on_off: 是否启用
+        :return: None
+        """
+        self._page._none_ele_return_value = on_off
+        self._page._none_ele_value = value
+
+
+class ChromiumBaseSetter(BasePageSetter):
+    def __init__(self, page):
+        super().__init__(page)
 
     @property
     def load_mode(self):
@@ -190,12 +204,12 @@ class ChromiumPageSetter(TabSetter):
         return PageWindowSetter(self._page)
 
 
-class SessionPageSetter(object):
+class SessionPageSetter(BasePageSetter):
     def __init__(self, page):
         """
         :param page: SessionPage对象
         """
-        self._page = page
+        super().__init__(page)
 
     def retry_times(self, times):
         """设置连接失败时重连次数"""

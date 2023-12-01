@@ -5,13 +5,14 @@
 """
 from http.cookiejar import Cookie
 from pathlib import Path
-from typing import Union, Tuple, Literal
+from typing import Union, Tuple, Literal, Any
 
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 from requests.cookies import RequestsCookieJar
 
 from .scroller import PageScroller
+from .._base.base import BasePage
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
@@ -23,7 +24,14 @@ from .._pages.web_page import WebPage
 FILE_EXISTS = Literal['skip', 'rename', 'overwrite', 's', 'r', 'o']
 
 
-class ChromiumBaseSetter(object):
+class BasePageSetter(object):
+    def __init__(self, page: BasePage):
+        self._page: BasePage = ...
+
+    def NoneElement_value(self, value: Any = None, on_off: bool = True) -> None: ...
+
+
+class ChromiumBaseSetter(BasePageSetter):
     def __init__(self, page):
         self._page: ChromiumBase = ...
 
@@ -80,7 +88,7 @@ class ChromiumPageSetter(TabSetter):
     def tab_to_front(self, tab_or_id: Union[str, ChromiumTab] = None) -> None: ...
 
 
-class SessionPageSetter(object):
+class SessionPageSetter(BasePageSetter):
     def __init__(self, page: SessionPage):
         self._page: SessionPage = ...
 

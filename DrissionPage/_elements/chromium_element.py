@@ -5,6 +5,7 @@
 """
 from os.path import basename, sep
 from pathlib import Path
+from re import search
 from time import perf_counter, sleep
 
 from .none_element import NoneElement
@@ -462,6 +463,14 @@ class ChromiumElement(DrissionElement):
                 sleep(.1)
 
         src = self.attr('src')
+        if src.lower().startswith('data:image'):
+            if base64_to_bytes:
+                from base64 import b64decode
+                return b64decode(src.split(',', 1)[-1])
+
+            else:
+                return src.split(',', 1)[-1]
+
         is_blob = src.startswith('blob')
         result = None
         end_time = perf_counter() + timeout
@@ -494,8 +503,7 @@ class ChromiumElement(DrissionElement):
                     continue
 
                 node = self.page.run_cdp('DOM.describeNode', backendNodeId=self._backend_id)['node']
-                frame = node.get('frameId', None)
-                frame = frame or self.page._target_id
+                frame = node.get('frameId', None) or self.page._frame_id
 
                 try:
                     result = self.page.run_cdp('Page.getResourceContent', frameId=frame, url=src)
@@ -532,6 +540,11 @@ class ChromiumElement(DrissionElement):
             raise NoResourceError
 
         path = path or '.'
+        if not name and self.tag == 'img':
+            src = self.attr('src')
+            if src.lower().startswith('data:image'):
+                r = search(r'data:image/(.*?);base64,', src)
+                name = f'img.{r.group(1)}' if r else None
         name = name or basename(self.prop('currentSrc'))
         path = get_usable_path(f'{path}{sep}{name}').absolute()
         write_type = 'wb' if isinstance(data, bytes) else 'w'
@@ -871,7 +884,7 @@ class ChromiumShadowRoot(BaseElement):
             if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
             else:
-                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index})
+                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
 
         try:
             return nodes[index - 1]
@@ -879,7 +892,7 @@ class ChromiumShadowRoot(BaseElement):
             if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
             else:
-                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index})
+                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
 
     def next(self, filter_loc='', index=1):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -893,7 +906,7 @@ class ChromiumShadowRoot(BaseElement):
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement('next()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'next()', {'filter_loc': filter_loc, 'index': index})
 
     def before(self, filter_loc='', index=1):
         """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -908,7 +921,7 @@ class ChromiumShadowRoot(BaseElement):
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement('before()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'before()', {'filter_loc': filter_loc, 'index': index})
 
     def after(self, filter_loc='', index=1):
         """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -923,7 +936,7 @@ class ChromiumShadowRoot(BaseElement):
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, 'after()', {'filter_loc': filter_loc, 'index': index})
         else:
-            return NoneElement('after()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'after()', {'filter_loc': filter_loc, 'index': index})
 
     def children(self, filter_loc=''):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
@@ -1033,7 +1046,7 @@ class ChromiumShadowRoot(BaseElement):
             if loc[0] == 'css selector':
                 if single:
                     nod_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=loc[1])['nodeId']
-                    result = make_chromium_ele(self.page, node_id=nod_id) if nod_id else NoneElement()
+                    result = make_chromium_ele(self.page, node_id=nod_id) if nod_id else NoneElement(self.page)
 
                 else:
                     nod_ids = self.page.run_cdp('DOM.querySelectorAll', nodeId=self._node_id, selector=loc[1])['nodeId']
@@ -1042,13 +1055,13 @@ class ChromiumShadowRoot(BaseElement):
             else:
                 eles = make_session_ele(self.html).eles(loc)
                 if not eles:
-                    result = NoneElement() if single else eles
+                    result = NoneElement(self.page) if single else eles
                     continue
 
                 css = [i.css_path[61:] for i in eles]
                 if single:
                     node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css[0])['nodeId']
-                    result = make_chromium_ele(self.page, node_id=node_id) if node_id else NoneElement()
+                    result = make_chromium_ele(self.page, node_id=node_id) if node_id else NoneElement(self.page)
 
                 else:
                     result = []
@@ -1143,7 +1156,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
                                     returnByValue=False, awaitPromise=True, userGesture=True)
 
     if single:
-        return NoneElement() if r['result']['subtype'] == 'null' \
+        return NoneElement(ele.page) if r['result']['subtype'] == 'null' \
             else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':
@@ -1181,7 +1194,7 @@ def find_by_css(ele, selector, single, timeout):
         raise SyntaxError(f'查询语句错误：\n{r}')
 
     if single:
-        return NoneElement() if r['result']['subtype'] == 'null' \
+        return NoneElement(ele.page) if r['result']['subtype'] == 'null' \
             else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
     if r['result']['description'] == 'NodeList(0)':

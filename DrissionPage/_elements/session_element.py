@@ -375,7 +375,7 @@ def make_session_ele(html_or_ele, loc=None, single=True):
             elif isinstance(ele, str):
                 return ele
             else:
-                return NoneElement()
+                return NoneElement(page)
 
         else:  # 返回全部
             return [SessionElement(e, page) if isinstance(e, HtmlElement) else e for e in ele if e != '\n']

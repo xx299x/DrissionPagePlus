@@ -156,19 +156,21 @@ class DrissionElement(BaseElement):
         nodes = self.children(filter_loc=filter_loc, timeout=timeout, ele_only=ele_only)
         if not nodes:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()',
-                                           {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc,
+                                                             'index': index, 'ele_only': ele_only})
             else:
-                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc,
+                                                          'index': index, 'ele_only': ele_only})
 
         try:
             return nodes[index - 1]
         except IndexError:
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()',
-                                           {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc,
+                                                             'index': index, 'ele_only': ele_only})
             else:
-                return NoneElement('child()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc,
+                                                          'index': index, 'ele_only': ele_only})
 
     def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -185,10 +187,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[-1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'prev()',
-                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            raise ElementNotFoundError(None, 'prev()', {'filter_loc': filter_loc,
+                                                        'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement('prev()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.page, 'prev()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -205,10 +207,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[0]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'next()',
-                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc,
+                                                        'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement('next()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.page, 'next()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -225,10 +227,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[-1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'before()',
-                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc,
+                                                          'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement('before()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.page, 'before()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -245,10 +247,10 @@ class DrissionElement(BaseElement):
         if nodes:
             return nodes[0]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'after()',
-                                       {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            raise ElementNotFoundError(None, 'after()', {'filter_loc': filter_loc,
+                                                         'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement('after()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.page, 'after()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def children(self, filter_loc='', timeout=None, ele_only=True):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
@@ -378,6 +380,8 @@ class BasePage(BaseParser):
         self.retry_interval = 2
         self._DownloadKit = None
         self._download_path = None
+        self._none_ele_return_value = False
+        self._none_ele_value = None
 
     @property
     def title(self):
