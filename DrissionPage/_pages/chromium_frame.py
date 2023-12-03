@@ -15,7 +15,7 @@ from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLostError, ElementLostError, GetDocumentError, PageClosedError
+from ..errors import ContextLostError, ElementLostError, GetDocumentError, PageClosedError, JavaScriptError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -54,10 +54,11 @@ class ChromiumFrame(ChromiumBase):
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
-        end_time = perf_counter() + 5
-        while perf_counter() < end_time and self.url == 'about:blank':
-            sleep(.1)
         self._rect = None
+        end_time = perf_counter() + 5
+        while perf_counter() < end_time:
+            if self.url is None or self.url == 'about:blank':
+                sleep(.1)
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -292,7 +293,10 @@ class ChromiumFrame(ChromiumBase):
     @property
     def url(self):
         """返回frame当前访问的url"""
-        return self.doc_ele.run_js('return this.location.href;')
+        try:
+            return self.doc_ele.run_js('return this.location.href;')
+        except JavaScriptError:
+            return None
 
     @property
     def html(self):

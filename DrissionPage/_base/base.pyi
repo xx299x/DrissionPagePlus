@@ -83,62 +83,39 @@ class DrissionElement(BaseElement):
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[DrissionElement, None]: ...
 
-    def child(self,
-              filter_loc: Union[tuple, str, int] = '',
-              index: int = 1,
-              timeout: float = None,
-              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def child(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+              timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def prev(self,
-             filter_loc: Union[tuple, str, int] = '',
-             index: int = 1,
-             timeout: float = 0,
-             ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def prev(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+             timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def next(self,
-             filter_loc: Union[tuple, str, int] = '',
-             index: int = 1,
-             timeout: float = 0,
-             ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def next(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+             timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def before(self,
-               filter_loc: Union[tuple, str, int] = '',
-               index: int = 1,
-               timeout: float = None,
-               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def before(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+               timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def after(self,
-              filter_loc: Union[tuple, str, int] = '',
-              index: int = 1,
-              timeout: float = None,
-              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def after(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
+              timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def children(self, filter_loc: Union[tuple, str] = '',
-                 timeout: float = None,
+    def children(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
                  ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def prevs(self, filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+    def prevs(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def nexts(self, filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+    def nexts(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def befores(self, filter_loc: Union[tuple, str] = '',
-                timeout: float = None,
+    def befores(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
                 ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def afters(self, filter_loc: Union[tuple, str] = '',
-               timeout: float = None,
+    def afters(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
                ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def _get_brothers(self, index: int = None,
-                      filter_loc: Union[tuple, str] = '',
-                      direction: str = 'following',
-                      brother: bool = True,
-                      timeout: float = 0.5,
-                      ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
+    def _get_brothers(self, index: int = None, filter_loc: Union[tuple, str] = '',
+                      direction: str = 'following', brother: bool = True,
+                      timeout: float = 0.5, ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -205,11 +182,7 @@ class BasePage(BaseParser):
     def get_cookies(self, as_dict: bool = False, all_info: bool = False) -> Union[list, dict]: ...
 
     @abstractmethod
-    def get(self,
-            url: str,
-            show_errmsg: bool = False,
-            retry: int = None,
-            interval: float = None): ...
+    def get(self, url: str, show_errmsg: bool = False, retry: int = None, interval: float = None): ...
 
     def _ele(self, loc_or_ele, timeout: float = None, single: bool = True,
              raise_err: bool = None, method: str = None): ...

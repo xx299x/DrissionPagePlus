@@ -172,7 +172,7 @@ class DrissionElement(BaseElement):
                 return NoneElement(self.page, 'child()', {'filter_loc': filter_loc,
                                                           'index': index, 'ele_only': ele_only})
 
-    def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
@@ -192,7 +192,7 @@ class DrissionElement(BaseElement):
         else:
             return NoneElement(self.page, 'prev()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
-    def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
@@ -271,7 +271,7 @@ class DrissionElement(BaseElement):
         nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
         return [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
-    def prevs(self, filter_loc='', timeout=0, ele_only=True):
+    def prevs(self, filter_loc='', timeout=None, ele_only=True):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
@@ -280,7 +280,7 @@ class DrissionElement(BaseElement):
         """
         return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=0, ele_only=True):
+    def nexts(self, filter_loc='', timeout=None, ele_only=True):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间

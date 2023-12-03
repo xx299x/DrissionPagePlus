@@ -25,6 +25,7 @@ class Listener(object):
         self._address = page.address
         self._target_id = page._target_id
         self._driver = None
+        self._running_requests = 0
 
         self._caught = None  # 临存捕捉到的数据
         self._request_ids = None  # 暂存须要拦截的请求id
@@ -86,6 +87,7 @@ class Listener(object):
         self._request_ids = {}
         self._extra_info_ids = {}
         self._caught = Queue(maxsize=0)
+        self._running_requests = 0
 
         self._set_callback()
 
@@ -180,6 +182,27 @@ class Listener(object):
         self._request_ids = {}
         self._extra_info_ids = {}
         self._caught.queue.clear()
+        self._running_requests = 0
+
+    def wait_silent(self, timeout=None):
+        """等待所有请求结束
+        :param timeout: 超时，为None时无限等待
+        :return: 返回是否等待成功
+        """
+        if not self.listening:
+            raise RuntimeError('监听未启动，用listen.start()启动。')
+        if timeout is None:
+            while self._running_requests > 0:
+                sleep(.1)
+            return True
+
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            if self._running_requests <= 0:
+                return True
+            sleep(.1)
+        else:
+            return False
 
     def _to_target(self, target_id, address, page):
         """切换监听的页面对象
@@ -212,6 +235,7 @@ class Listener(object):
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
+        self._running_requests += 1
         p = None
         if not self._targets:
             if not self._method or kwargs['request']['method'] in self._method:
@@ -236,6 +260,7 @@ class Listener(object):
 
     def _requestWillBeSentExtraInfo(self, **kwargs):
         """接收到请求额外信息时的回调函数"""
+        self._running_requests += 1
         self._extra_info_ids.setdefault(kwargs['requestId'], {})['request'] = kwargs
 
     def _response_received(self, **kwargs):
@@ -247,6 +272,7 @@ class Listener(object):
 
     def _responseReceivedExtraInfo(self, **kwargs):
         """接收到返回额外信息时的回调函数"""
+        self._running_requests -= 1
         r = self._extra_info_ids.get(kwargs['requestId'], None)
         if r:
             obj = r.get('obj', None)
@@ -261,6 +287,7 @@ class Listener(object):
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
+        self._running_requests -= 1
         rid = kwargs['requestId']
         packet = self._request_ids.get(rid)
         if packet:
@@ -295,6 +322,7 @@ class Listener(object):
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
+        self._running_requests -= 1
         r_id = kwargs['requestId']
         dp = self._request_ids.get(r_id, None)
         if dp:

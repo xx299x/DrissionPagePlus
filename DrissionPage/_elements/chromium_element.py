@@ -724,7 +724,7 @@ class ChromiumElement(DrissionElement):
         elif mode == 'css':
             txt1 = ''
             txt3 = ''
-            txt4 = '''path = '>' + el.tagName + ":nth-child(" + nth + ")" + path;'''
+            txt4 = '''path = '>' + el.tagName.toLowerCase() + ":nth-child(" + nth + ")" + path;'''
             txt5 = '''return path.substr(1);'''
 
         else:
@@ -1150,8 +1150,8 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
             raise SyntaxError(f'查询语句错误：\n{r}')
 
     end_time = perf_counter() + timeout
-    while (r['result']['subtype'] == 'null'
-           or r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
+    while ((r['result']['subtype'] == 'null' or r['result']['description'] in ('NodeList(0)', 'Array(0)'))
+           and perf_counter() < end_time):
         r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                     returnByValue=False, awaitPromise=True, userGesture=True)
 
