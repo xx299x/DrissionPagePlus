@@ -32,7 +32,7 @@ class ChromiumPage(ChromiumBase):
         address = self._handle_options(addr_or_opts)
         self._run_browser()
         super().__init__(address, tab_id)
-        self.set.timeouts(implicit=timeout)
+        self.set.timeouts(base=timeout)
         self._page_init()
 
     def _handle_options(self, addr_or_opts):
@@ -48,7 +48,7 @@ class ChromiumPage(ChromiumBase):
 
         elif isinstance(addr_or_opts, str):
             self._chromium_options = ChromiumOptions()
-            self._chromium_options.set_debugger_address(addr_or_opts)
+            self._chromium_options.set_address(addr_or_opts)
 
         elif isinstance(addr_or_opts, int):
             self._chromium_options = ChromiumOptions()
@@ -57,36 +57,36 @@ class ChromiumPage(ChromiumBase):
         else:
             raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
 
-        return self._chromium_options.debugger_address
+        return self._chromium_options.address
 
     def _run_browser(self):
         """连接浏览器"""
         is_exist = connect_browser(self._chromium_options)
         try:
-            ws = get(f'http://{self._chromium_options.debugger_address}/json/version', headers={'Connection': 'close'})
+            ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
             if not ws:
                 raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
         except :
             raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
 
         ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-        self._browser = Browser(self._chromium_options.debugger_address, ws, self)
+        self._browser = Browser(self._chromium_options.address, ws, self)
 
         if (is_exist and self._chromium_options._headless is False and
                 'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
             self._browser.quit(3)
             connect_browser(self._chromium_options)
-            ws = get(f'http://{self._chromium_options.debugger_address}/json/version', headers={'Connection': 'close'})
+            ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
             ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-            self._browser = Browser(self._chromium_options.debugger_address, ws, self)
+            self._browser = Browser(self._chromium_options.address, ws, self)
 
     def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""
         self._timeouts = Timeout(self, page_load=self._chromium_options.timeouts['pageLoad'],
                                  script=self._chromium_options.timeouts['script'],
-                                 implicit=self._chromium_options.timeouts['implicit'])
-        if self._chromium_options.timeouts['implicit'] is not None:
-            self._timeout = self._chromium_options.timeouts['implicit']
+                                 base=self._chromium_options.timeouts['base'])
+        if self._chromium_options.timeouts['base'] is not None:
+            self._timeout = self._chromium_options.timeouts['base']
         self._load_mode = self._chromium_options.load_mode
         self._download_path = None if self._chromium_options.download_path is None \
             else str(Path(self._chromium_options.download_path).absolute())

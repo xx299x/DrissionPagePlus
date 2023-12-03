@@ -76,7 +76,7 @@ class SessionOptions(object):
             self._max_redirects = options['max_redirects']
 
         self.set_proxies(om.proxies.get('http', None), om.proxies.get('https', None))
-        self._timeout = om.timeouts.get('implicit', 10)
+        self._timeout = om.timeouts.get('base', 10)
         self._download_path = om.paths.get('download_path', None) or None
 
         others = om.others
@@ -379,7 +379,7 @@ class SessionOptions(object):
                 om.set_item('session_options', i, options[i])
 
         om.set_item('paths', 'download_path', self.download_path or '')
-        om.set_item('timeouts', 'implicit', self.timeout)
+        om.set_item('timeouts', 'base', self.timeout)
         om.set_item('proxies', 'http', self.proxies.get('http', None))
         om.set_item('proxies', 'https', self.proxies.get('https', None))
         om.set_item('others', 'retry_times', self.retry_times)

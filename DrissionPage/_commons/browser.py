@@ -24,10 +24,10 @@ def connect_browser(option):
     :param option: ChromiumOptions对象
     :return: 返回是否接管的浏览器
     """
-    debugger_address = option.debugger_address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
+    address = option.address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
     chrome_path = option.browser_path
 
-    ip, port = debugger_address.split(':')
+    ip, port = address.split(':')
     if ip != '127.0.0.1' or port_is_using(ip, port) or option.is_existing_only:
         test_connect(ip, port)
         option._headless = False
@@ -86,7 +86,7 @@ def get_launch_args(opt):
         result.add(i)
 
     if not has_user_path and not opt.system_user_path:
-        port = opt.debugger_address.split(':')[-1] if opt.debugger_address else '0'
+        port = opt.address.split(':')[-1] if opt.address else '0'
         path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
         opt.set_user_data_path(path)

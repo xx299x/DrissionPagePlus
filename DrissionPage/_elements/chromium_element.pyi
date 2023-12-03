@@ -16,7 +16,7 @@ from .._pages.web_page import WebPage
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller
-from .._units.select_element import SelectElement
+from .._units.selector import SelectElement
 from .._units.setter import ChromiumElementSetter
 from .._units.states import ShadowRootStates, ElementStates
 from .._units.waiter import ElementWaiter

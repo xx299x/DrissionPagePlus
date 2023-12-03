@@ -9,6 +9,7 @@ from time import sleep, perf_counter
 
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
+from .._units.listener import FrameListener
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
@@ -122,12 +123,16 @@ class ChromiumFrame(ChromiumBase):
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
             self._frame_id = node['frameId']
+            if self._listener:
+                self._listener._to_target(self._target_page.tab_id, self.address, self)
             super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
             self._debug = debug
             self.driver._debug = d_debug
 
         else:
             self._is_diff_domain = True
+            if self._listener:
+                self._listener._to_target(node['frameId'], self.address, self)
             super().__init__(self.address, node['frameId'], self._target_page.timeout)
             end_time = perf_counter() + self.timeouts.page_load
             while perf_counter() < end_time:
@@ -250,6 +255,13 @@ class ChromiumFrame(ChromiumBase):
         if self._rect is None:
             self._rect = FrameRect(self)
         return self._rect
+
+    @property
+    def listen(self):
+        """返回用于聆听数据包的对象"""
+        if self._listener is None:
+            self._listener = FrameListener(self)
+        return self._listener
 
     # ----------挂件----------
 

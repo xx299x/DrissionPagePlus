@@ -17,8 +17,8 @@ from .._commons.web import location_in_viewport
 from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_ele
 from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
-from .._units.action_chains import ActionChains
-from .._units.network_listener import NetworkListener
+from .._units.actions import Actions
+from .._units.listener import Listener
 from .._units.rect import TabRect
 from .._units.screencast import Screencast
 from .._units.scroller import PageScroller
@@ -46,7 +46,6 @@ class ChromiumBase(BasePage):
         self._set = None
         self._screencast = None
         self._actions = None
-        self._listener = None
         self._states = None
         self._has_alert = False
         self._ready_state = None
@@ -57,6 +56,8 @@ class ChromiumBase(BasePage):
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
         self._download_path = None
         self._load_end_time = 0
+        if not hasattr(self, '_listener'):
+            self._listener = None
 
         if isinstance(address, int) or (isinstance(address, str) and address.isdigit()):
             address = f'127.0.0.1:{address}'
@@ -313,7 +314,7 @@ class ChromiumBase(BasePage):
     def actions(self):
         """返回用于执行动作链的对象"""
         if self._actions is None:
-            self._actions = ActionChains(self)
+            self._actions = Actions(self)
         self.wait.load_complete()
         return self._actions
 
@@ -321,7 +322,7 @@ class ChromiumBase(BasePage):
     def listen(self):
         """返回用于聆听数据包的对象"""
         if self._listener is None:
-            self._listener = NetworkListener(self)
+            self._listener = Listener(self)
         return self._listener
 
     @property
@@ -1054,20 +1055,21 @@ class ChromiumBase(BasePage):
 class Timeout(object):
     """用于保存d模式timeout信息的类"""
 
-    def __init__(self, page, implicit=None, page_load=None, script=None):
+    def __init__(self, page, base=None, page_load=None, script=None, implicit=None):
         """
         :param page: ChromiumBase页面
-        :param implicit: 默认超时时间
+        :param base: 默认超时时间
         :param page_load: 页面加载超时时间
         :param script: js超时时间
         """
         self._page = page
-        self.implicit = 10 if implicit is None else implicit
+        base = base if base is not None else implicit
+        self.base = 10 if base is None else base
         self.page_load = 30 if page_load is None else page_load
         self.script = 30 if script is None else script
 
     def __repr__(self):
-        return str({'implicit': self.implicit, 'page_load': self.page_load, 'script': self.script})
+        return str({'base': self.base, 'page_load': self.page_load, 'script': self.script})
 
 
 class Alert(object):

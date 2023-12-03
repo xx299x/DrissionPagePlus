@@ -174,7 +174,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
     @property
     def timeout(self):
         """返回通用timeout设置"""
-        return self.timeouts.implicit
+        return self.timeouts.base
 
     @timeout.setter
     def timeout(self, second):
@@ -182,7 +182,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         :param second: 秒数
         :return: None
         """
-        self.set.timeouts(implicit=second)
+        self.set.timeouts(base=second)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url

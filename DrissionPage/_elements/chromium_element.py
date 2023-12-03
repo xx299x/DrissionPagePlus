@@ -19,7 +19,7 @@ from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_f
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller
-from .._units.select_element import SelectElement
+from .._units.selector import SelectElement
 from .._units.setter import ChromiumElementSetter
 from .._units.states import ElementStates, ShadowRootStates
 from .._units.waiter import ElementWaiter

@@ -47,16 +47,17 @@ class ChromiumBaseSetter(BasePageSetter):
         """设置连接失败重连间隔"""
         self._page.retry_interval = interval
 
-    def timeouts(self, implicit=None, page_load=None, script=None):
+    def timeouts(self, base=None, page_load=None, script=None, implicit=None):
         """设置超时时间，单位为秒
-        :param implicit: 查找元素超时时间
+        :param base: 基本等待时间，除页面加载和脚本超时，其它等待默认使用
         :param page_load: 页面加载超时时间
         :param script: 脚本运行超时时间
         :return: None
         """
-        if implicit is not None:
-            self._page.timeouts.implicit = implicit
-            self._page._timeout = implicit
+        base = base if base is not None else implicit
+        if base is not None:
+            self._page.timeouts.base = base
+            self._page._timeout = base
 
         if page_load is not None:
             self._page.timeouts.page_load = page_load

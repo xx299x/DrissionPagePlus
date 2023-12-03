@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
+from re import search
 from shutil import rmtree
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
@@ -36,11 +37,12 @@ class ChromiumOptions(object):
             self._extensions = options.get('extensions', [])
             self._prefs = options.get('prefs', {})
             self._flags = options.get('flags', {})
-            self._debugger_address = options.get('debugger_address', None)
+            self._address = options.get('address', None)
             self._load_mode = options.get('load_mode', 'normal')
-            self._proxy = om.proxies.get('http', None)
             self._system_user_path = options.get('system_user_path', False)
             self._existing_only = options.get('existing_only', False)
+
+            self._proxy = om.proxies.get('http', None) or om.proxies.get('https', None)
 
             user_path = user = False
             for arg in self._arguments:
@@ -54,14 +56,14 @@ class ChromiumOptions(object):
                     break
 
             timeouts = om.timeouts
-            self._timeouts = {'implicit': timeouts['implicit'],
+            self._timeouts = {'base': timeouts['base'],
                               'pageLoad': timeouts['page_load'],
                               'script': timeouts['script']}
 
             self._auto_port = options.get('auto_port', False)
             if self._auto_port:
                 port, path = PortFinder().get_port()
-                self._debugger_address = f'127.0.0.1:{port}'
+                self._address = f'127.0.0.1:{port}'
                 self.set_argument('--user-data-dir', path)
 
             others = om.others
@@ -77,8 +79,8 @@ class ChromiumOptions(object):
         self._extensions = []
         self._prefs = {}
         self._flags = {}
-        self._timeouts = {'implicit': 10, 'pageLoad': 30, 'script': 30}
-        self._debugger_address = '127.0.0.1:9222'
+        self._timeouts = {'base': 10, 'pageLoad': 30, 'script': 30}
+        self._address = '127.0.0.1:9222'
         self._load_mode = 'normal'
         self._proxy = None
         self._auto_port = False
@@ -125,12 +127,17 @@ class ChromiumOptions(object):
     @property
     def debugger_address(self):
         """返回浏览器地址，ip:port"""
-        return self._debugger_address
+        return self._address
 
     @debugger_address.setter
     def debugger_address(self, address):
         """设置浏览器地址，格式ip:port"""
-        self.set_debugger_address(address)
+        self.set_address(address)
+
+    @property
+    def address(self):
+        """返回浏览器地址，ip:port"""
+        return self._address
 
     @property
     def arguments(self):
@@ -275,15 +282,16 @@ class ChromiumOptions(object):
         self.clear_file_flags = True
         return self
 
-    def set_timeouts(self, implicit=None, pageLoad=None, script=None):
+    def set_timeouts(self, base=None, pageLoad=None, script=None, implicit=None):
         """设置超时时间，单位为秒
-        :param implicit: 默认超时时间
+        :param base: 默认超时时间
         :param pageLoad: 页面加载超时时间
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
-        if implicit is not None:
-            self._timeouts['implicit'] = implicit
+        base = base if base is not None else implicit
+        if base is not None:
+            self._timeouts['base'] = base
         if pageLoad is not None:
             self._timeouts['pageLoad'] = pageLoad
         if script is not None:
@@ -352,6 +360,10 @@ class ChromiumOptions(object):
         :param proxy: 代理url和端口
         :return: 当前对象
         """
+        if search(r'.*?:.*?@.*?\..*', proxy):
+            print('你似乎在设置使用账号密码的代理，暂时不支持这种代理，可自行用插件实现需求。')
+        if not proxy.lower().startswith('socks'):
+            print('你似乎在设置使用socks代理，暂时不支持这种代理，可自行用插件实现需求。')
         self._proxy = proxy
         return self.set_argument('--proxy-server', proxy)
 
@@ -368,25 +380,26 @@ class ChromiumOptions(object):
         self._load_mode = value.lower()
         return self
 
-    def set_paths(self, browser_path=None, local_port=None, debugger_address=None, download_path=None,
-                  user_data_path=None, cache_path=None):
+    def set_paths(self, browser_path=None, local_port=None, address=None, download_path=None,
+                  user_data_path=None, cache_path=None, debugger_address=None):
         """快捷的路径设置函数
         :param browser_path: 浏览器可执行文件路径
         :param local_port: 本地端口号
-        :param debugger_address: 调试浏览器地址，例：127.0.0.1:9222
+        :param address: 调试浏览器地址，例：127.0.0.1:9222
         :param download_path: 下载文件路径
         :param user_data_path: 用户数据路径
         :param cache_path: 缓存路径
         :return: 当前对象
         """
+        address = address or debugger_address
         if browser_path is not None:
             self.set_browser_path(browser_path)
 
         if local_port is not None:
             self.set_local_port(local_port)
 
-        if debugger_address is not None:
-            self.set_debugger_address(debugger_address)
+        if address is not None:
+            self.set_address(address)
 
         if download_path is not None:
             self.set_download_path(download_path)
@@ -404,17 +417,17 @@ class ChromiumOptions(object):
         :param port: 端口号
         :return: 当前对象
         """
-        self._debugger_address = f'127.0.0.1:{port}'
+        self._address = f'127.0.0.1:{port}'
         self._auto_port = False
         return self
 
-    def set_debugger_address(self, address):
+    def set_address(self, address):
         """设置浏览器地址，格式'ip:port'
         :param address: 浏览器地址
         :return: 当前对象
         """
         address = address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
-        self._debugger_address = address
+        self._address = address
         return self
 
     def set_browser_path(self, path):
@@ -507,7 +520,7 @@ class ChromiumOptions(object):
             om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
 
         # 设置chromium_options
-        attrs = ('debugger_address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',
+        attrs = ('address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',
                  'auto_port', 'system_user_path', 'existing_only', 'flags')
         for i in attrs:
             om.set_item('chromium_options', i, self.__getattribute__(f'_{i}'))
@@ -517,7 +530,7 @@ class ChromiumOptions(object):
         # 设置路径
         om.set_item('paths', 'download_path', self._download_path or '')
         # 设置timeout
-        om.set_item('timeouts', 'implicit', self._timeouts['implicit'])
+        om.set_item('timeouts', 'base', self._timeouts['base'])
         om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
         om.set_item('timeouts', 'script', self._timeouts['script'])
         # 设置重试

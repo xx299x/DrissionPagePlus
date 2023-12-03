@@ -32,7 +32,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         super().__init__(session_or_options=session_or_options)
         if not chromium_options:
             chromium_options = ChromiumOptions(read_file=chromium_options)
-            chromium_options.set_timeouts(implicit=self._timeout).set_paths(download_path=self.download_path)
+            chromium_options.set_timeouts(base=self._timeout).set_paths(download_path=self.download_path)
         super(SessionPage, self).__init__(addr_or_opts=chromium_options, timeout=timeout)
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
@@ -138,7 +138,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def timeout(self):
         """返回通用timeout设置"""
-        return self.timeouts.implicit
+        return self.timeouts.base
 
     @timeout.setter
     def timeout(self, second):
@@ -146,7 +146,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param second: 秒数
         :return: None
         """
-        self.set.timeouts(implicit=second)
+        self.set.timeouts(base=second)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
         """跳转到一个url

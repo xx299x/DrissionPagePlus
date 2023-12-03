@@ -5,8 +5,8 @@
 """
 from typing import Union, List
 
-from .download_manager import DownloadMission
-from .network_listener import DataPacket
+from .downloader import DownloadMission
+from .listener import DataPacket
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
@@ -46,9 +46,6 @@ class BaseWaiter(object):
     def url_change(self, text: str, exclude: bool = False, timeout: float = None, raise_err: bool = None) -> bool: ...
 
     def title_change(self, text: str, exclude: bool = False, timeout: float = None, raise_err: bool = None) -> bool: ...
-
-    def data_packets(self, count: int = 1, timeout: float = None,
-                     fix_count: bool = True) -> Union[List[DataPacket], DataPacket, None]: ...
 
     def _change(self, arg: str, text: str, exclude: bool = False, timeout: float = None,
                 raise_err: bool = None) -> bool: ...

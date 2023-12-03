@@ -14,7 +14,7 @@ from requests.structures import CaseInsensitiveDict
 from .._base.chromium_driver import ChromiumDriver
 
 
-class NetworkListener(object):
+class Listener(object):
     """监听器基类"""
 
     def __init__(self, page):
@@ -22,6 +22,8 @@ class NetworkListener(object):
         :param page: ChromiumBase对象
         """
         self._page = page
+        self._address = page.address
+        self._target_id = page._target_id
         self._driver = None
 
         self._caught = None  # 临存捕捉到的数据
@@ -77,7 +79,7 @@ class NetworkListener(object):
         if self.listening:
             return
 
-        self._driver = ChromiumDriver(self._page.tab_id, 'page', self._page.address)
+        self._driver = ChromiumDriver(self._target_id, 'page', self._address)
         self._driver.run('Network.enable')
 
         self.listening = True
@@ -102,7 +104,7 @@ class NetworkListener(object):
             fail = False
 
         else:
-            end = perf_counter() + count
+            end = perf_counter() + timeout
             while True:
                 if perf_counter() > end:
                     fail = True
@@ -179,6 +181,26 @@ class NetworkListener(object):
         self._extra_info_ids = {}
         self._caught.queue.clear()
 
+    def _to_target(self, target_id, address, page):
+        """切换监听的页面对象
+        :param target_id: 新页面对象_target_id
+        :param address: 新页面对象address
+        :param page: 新页面对象
+        :return: None
+        """
+        self._target_id = target_id
+        self._address = address
+        self._page = page
+        debug = False
+        if self._driver:
+            debug = self._driver._debug
+            self._driver.stop()
+        if self.listening:
+            self._driver = ChromiumDriver(self._target_id, 'page', self._address)
+            self._driver._debug = debug
+            self._driver.run('Network.enable')
+            self._set_callback()
+
     def _set_callback(self):
         """设置监听请求的回调函数"""
         self._driver.set_callback('Network.requestWillBeSent', self._requestWillBeSent)
@@ -190,8 +212,6 @@ class NetworkListener(object):
 
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
-        if kwargs.get('frameId', self._page._frame_id) != self._page._frame_id:
-            return
         p = None
         if not self._targets:
             if not self._method or kwargs['request']['method'] in self._method:
@@ -210,9 +230,6 @@ class NetworkListener(object):
                         not self._method or kwargs['request']['method'] in self._method):
                     p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                     p._raw_request = kwargs
-                    if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
-                        p._raw_post_data = self._driver.run('Network.getRequestPostData',
-                                                            requestId=rid)['postData']
                     break
 
         self._extra_info_ids.setdefault(kwargs['requestId'], {})['obj'] = p if p else False
@@ -223,8 +240,6 @@ class NetworkListener(object):
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        if kwargs.get('frameId', self._page._frame_id) != self._page._frame_id:
-            return
         request = self._request_ids.get(kwargs['requestId'], None)
         if request:
             request._raw_response = kwargs['response']
@@ -238,7 +253,7 @@ class NetworkListener(object):
             if obj is False:
                 self._extra_info_ids.pop(kwargs['requestId'], None)
             elif isinstance(obj, DataPacket):
-                obj._requestExtraInfo = r['request']
+                obj._requestExtraInfo = r.get('request', None)
                 obj._responseExtraInfo = kwargs
                 self._extra_info_ids.pop(kwargs['requestId'], None)
             else:
@@ -246,16 +261,21 @@ class NetworkListener(object):
 
     def _loading_finished(self, **kwargs):
         """请求完成时处理方法"""
-        r_id = kwargs['requestId']
-        dp = self._request_ids.get(r_id)
-        if dp:
-            r = self._driver.run('Network.getResponseBody', requestId=r_id)
+        rid = kwargs['requestId']
+        packet = self._request_ids.get(rid)
+        if packet:
+            r = self._driver.run('Network.getResponseBody', requestId=rid)
             if 'body' in r:
-                dp._raw_body = r['body']
-                dp._base64_body = r['base64Encoded']
+                packet._raw_body = r['body']
+                packet._base64_body = r['base64Encoded']
             else:
-                dp._raw_body = ''
-                dp._base64_body = False
+                packet._raw_body = ''
+                packet._base64_body = False
+
+            if (packet._raw_request['request'].get('hasPostData', None)
+                    and not packet._raw_request['request'].get('postData', None)):
+                r = self._driver.run('Network.getRequestPostData', requestId=rid, _timeout=1)
+                packet._raw_post_data = r.get('postData', None)
 
         r = self._extra_info_ids.get(kwargs['requestId'], None)
         if r:
@@ -268,10 +288,10 @@ class NetworkListener(object):
                 obj._responseExtraInfo = response
                 self._extra_info_ids.pop(kwargs['requestId'], None)
 
-        self._request_ids.pop(r_id, None)
+        self._request_ids.pop(rid, None)
 
-        if dp:
-            self._caught.put(dp)
+        if packet:
+            self._caught.put(packet)
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
@@ -297,6 +317,20 @@ class NetworkListener(object):
 
         if dp:
             self._caught.put(dp)
+
+
+class FrameListener(Listener):
+    def _requestWillBeSent(self, **kwargs):
+        """接收到请求时的回调函数"""
+        if not self._page._is_diff_domain and kwargs.get('frameId', None) != self._page._frame_id:
+            return
+        super()._requestWillBeSent(**kwargs)
+
+    def _response_received(self, **kwargs):
+        """接收到返回信息时处理方法"""
+        if not self._page._is_diff_domain and kwargs.get('frameId', None) != self._page._frame_id:
+            return
+        super()._response_received(**kwargs)
 
 
 class DataPacket(object):

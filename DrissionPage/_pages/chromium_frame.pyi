@@ -11,10 +11,11 @@ from .chromium_page import ChromiumPage
 from .chromium_tab import ChromiumTab
 from .web_page import WebPage
 from .._elements.chromium_element import ChromiumElement
-from .._units.states import FrameStates
+from .._units.listener import FrameListener
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
+from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
 
 
@@ -33,6 +34,7 @@ class ChromiumFrame(ChromiumBase):
         self._states: FrameStates = ...
         self._reloading: bool = ...
         self._rect: FrameRect = ...
+        self._listener: FrameListener = ...
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str],
                  timeout: float = None) -> Union[ChromiumElement, str]: ...
@@ -82,6 +84,9 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def rect(self) -> FrameRect: ...
+
+    @property
+    def listen(self) -> FrameListener: ...
 
     @property
     def _obj_id(self) -> str: ...

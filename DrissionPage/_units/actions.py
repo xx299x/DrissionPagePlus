@@ -9,7 +9,7 @@ from .._commons.keys import modifierBit, keyDescriptionForString
 from .._commons.web import location_in_viewport
 
 
-class ActionChains:
+class Actions:
     """用于实现动作链的类"""
 
     def __init__(self, page):

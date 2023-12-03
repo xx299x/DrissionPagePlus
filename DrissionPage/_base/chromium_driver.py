@@ -9,7 +9,7 @@ from threading import Thread, Event
 from time import perf_counter
 
 from requests import get
-from websocket import (WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException, \
+from websocket import (WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException,
                        create_connection)
 
 
@@ -70,7 +70,7 @@ class ChromiumDriver(object):
         self.method_results[ws_id] = Queue()
         try:
             self._ws.send(message_json)
-        except OSError:
+        except (OSError, WebSocketConnectionClosedException):
             self.method_results.pop(ws_id, None)
             return None
 
@@ -190,14 +190,14 @@ class ChromiumDriver(object):
             event = self.event_queue.get_nowait()
             function = self.event_handlers.get(event['method'])
             if function:
-                if self._debug:
-                    print(f'开始执行 {function.__name__}')
+                # if self._debug:
+                #     print(f'开始执行 {function.__name__}')
                 try:
                     function(**event['params'])
                 except:
                     pass
-                if self._debug:
-                    print(f'执行 {function.__name__}完毕')
+                # if self._debug:
+                #     print(f'执行 {function.__name__}完毕')
 
         self.event_handlers.clear()
         self.method_results.clear()
