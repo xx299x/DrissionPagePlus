@@ -43,11 +43,11 @@ class Listener(object):
         """返回监听目标"""
         return self._targets
 
-    def set_targets(self, targets=True, is_regex=False, method=None):
+    def set_targets(self, targets=True, is_regex=False, method=('GET', 'POST')):
         """指定要等待的数据包
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
         :param is_regex: 设置的target是否正则表达式
-        :param method: 设置监听的请求类型，可用list等指定多个，为None时监听全部
+        :param method: 设置监听的请求类型，可指定多个，为None时监听全部
         :return: None
         """
         if targets is not None:
@@ -68,11 +68,11 @@ class Listener(object):
             else:
                 raise TypeError('method参数只能是str、list、tuple、set类型。')
 
-    def start(self, targets=None, is_regex=False, method=None):
+    def start(self, targets=None, is_regex=False, method=('GET', 'POST')):
         """拦截目标请求，每次拦截前清空结果
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
         :param is_regex: 设置的target是否正则表达式
-        :param method: 设置监听的请求类型，可用list等指定多个，为None时监听全部
+        :param method: 设置监听的请求类型，可指定多个，为None时监听全部
         :return: None
         """
         if targets or method:

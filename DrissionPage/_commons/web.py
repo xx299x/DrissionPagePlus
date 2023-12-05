@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from datetime import datetime
 from html import unescape
 from http.cookiejar import Cookie
 from re import sub
@@ -250,7 +251,19 @@ def set_browser_cookies(page, cookies):
             cookie['expires'] = int(cookie['expiry'])
             cookie.pop('expiry')
         if 'expires' in cookie:
-            cookie['expires'] = int(cookie['expires'])
+            if cookie['expires'].isdigit():
+                cookie['expires'] = int(cookie['expires'])
+
+            elif cookie['expires'].replace('.', '').isdigit():
+                cookie['expires'] = float(cookie['expires'])
+
+            else:
+                try:
+                    cookie['expires'] = datetime.strptime(cookie['expires'],
+                                                          '%a, %d %b %Y %H:%M:%S GMT').timestamp()
+                except ValueError:
+                    cookie['expires'] = datetime.strptime(cookie['expires'],
+                                                          '%a, %d %b %y %H:%M:%S GMT').timestamp()
         if cookie['value'] is None:
             cookie['value'] = ''
         if cookie['name'].startswith('__Secure-'):
