@@ -5,7 +5,7 @@
 """
 from time import sleep, perf_counter
 
-from .._commons.keys import modifierBit, keyDescriptionForString
+from .._commons.keys import modifierBit, keyDescriptionForString, input_text_or_keys
 from .._commons.web import location_in_viewport
 
 
@@ -267,7 +267,7 @@ class Actions:
         return self
 
     def type(self, text):
-        """输入文本
+        """用模拟键盘按键方式输入文本，可输入字符串，只能输入键盘上有的字符
         :param text: 要输入的文本，特殊字符和多个文本可用list或tuple传入
         :return: self
         """
@@ -276,6 +276,14 @@ class Actions:
                 self.key_down(character)
                 sleep(.05)
                 self.key_up(character)
+        return self
+
+    def input(self, text_or_keys):
+        """输入文本，也可输入组合键，组合键用tuple形式输入
+        :param text_or_keys: 文本值或按键组合
+        :return: self
+        """
+        input_text_or_keys(self.page, text_or_keys)
         return self
 
     def wait(self, second):

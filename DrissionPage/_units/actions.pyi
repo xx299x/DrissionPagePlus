@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Tuple
+from typing import Union, Tuple, Any
 
 from .._base.chromium_driver import ChromiumDriver
 from .._elements.chromium_element import ChromiumElement
@@ -65,6 +65,8 @@ class Actions:
     def key_up(self, key: str) -> Actions: ...
 
     def type(self, text: Union[str, list, tuple]) -> Actions: ...
+
+    def input(self, text_or_keys: Any) -> Actions: ...
 
     def wait(self, second: float) -> Actions: ...
 

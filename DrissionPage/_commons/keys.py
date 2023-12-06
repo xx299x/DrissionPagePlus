@@ -3,7 +3,6 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import List, Tuple, Dict
 
 
 class Keys:
@@ -339,10 +338,10 @@ modifierBit = {'\ue00a': 1,
                '\ue008': 8}
 
 
-def keys_to_typing(value) -> Tuple[int, str]:
+def keys_to_typing(value):
     """把要输入的内容连成字符串，去掉其中 ctrl 等键。
         返回的modifier表示是否有按下组合键"""
-    typing: List[str] = []
+    typing = []
     modifier = 0
     for val in value:
         if val in ('\ue009', '\ue008', '\ue00a', '\ue03d'):
@@ -359,7 +358,7 @@ def keys_to_typing(value) -> Tuple[int, str]:
     return modifier, ''.join(typing)
 
 
-def keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C901
+def keyDescriptionForString(_modifiers, keyString):  # noqa: C901
     shift = _modifiers & 8
     description = {'key': '',
                    'keyCode': 0,
@@ -367,7 +366,7 @@ def keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C
                    'text': '',
                    'location': 0}
 
-    definition: Dict = keyDefinitions.get(keyString)  # type: ignore
+    definition = keyDefinitions.get(keyString)  # type: ignore
     if not definition:
         raise ValueError(f'未知按键：{keyString}')
 
@@ -399,3 +398,49 @@ def keyDescriptionForString(_modifiers: int, keyString: str) -> Dict:  # noqa: C
         description['text'] = ''
 
     return description
+
+
+def send_key(page, modifier, key):
+    """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
+    if key not in keyDefinitions:
+        page.run_cdp('Input.insertText', text=key)
+
+    else:
+        description = keyDescriptionForString(modifier, key)
+        text = description['text']
+        data = {'type': 'keyDown' if text else 'rawKeyDown',
+                'modifiers': modifier,
+                'windowsVirtualKeyCode': description['keyCode'],
+                'code': description['code'],
+                'key': description['key'],
+                'text': text,
+                'autoRepeat': False,
+                'unmodifiedText': text,
+                'location': description['location'],
+                'isKeypad': description['location'] == 3}
+
+        page.run_cdp('Input.dispatchKeyEvent', **data)
+        data['type'] = 'keyUp'
+        page.run_cdp('Input.dispatchKeyEvent', **data)
+
+
+def input_text_or_keys(page, text_or_keys):
+    """输入文本，也可输入组合键，组合键用tuple形式输入
+    :param page: ChromiumBase对象
+    :param text_or_keys: 文本值或按键组合
+    :return: self
+    """
+    if not isinstance(text_or_keys, (tuple, list)):
+        text_or_keys = (str(text_or_keys),)
+    modifier, text_or_keys = keys_to_typing(text_or_keys)
+
+    if modifier != 0:  # 包含修饰符
+        for key in text_or_keys:
+            send_key(page, modifier, key)
+        return
+
+    if text_or_keys.endswith(('\n', '\ue007')):
+        page.run_cdp('Input.insertText', text=text_or_keys[:-1])
+        send_key(page, modifier, '\n')
+    else:
+        page.run_cdp('Input.insertText', text=text_or_keys)

@@ -11,7 +11,7 @@ from time import perf_counter, sleep
 from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
-from .._commons.keys import keys_to_typing, keyDescriptionForString, keyDefinitions
+from .._commons.keys import input_text_or_keys
 from .._commons.locator import get_loc
 from .._commons.settings import Settings
 from .._commons.tools import get_usable_path
@@ -605,21 +605,7 @@ class ChromiumElement(DrissionElement):
         else:
             self._input_focus()
 
-        # ------------处理字符-------------
-        if not isinstance(vals, (tuple, list)):
-            vals = (str(vals),)
-        modifier, vals = keys_to_typing(vals)
-
-        if modifier != 0:  # 包含修饰符
-            for key in vals:
-                send_key(self, modifier, key)
-            return
-
-        if vals.endswith(('\n', '\ue007')):
-            self.page.run_cdp('Input.insertText', text=vals[:-1])
-            send_key(self, modifier, '\n')
-        else:
-            self.page.run_cdp('Input.insertText', text=vals)
+        input_text_or_keys(self.page, vals)
 
     def clear(self, by_js=False):
         """清空元素文本
@@ -1386,40 +1372,6 @@ def convert_argument(arg):
         return {'unserializableValue': 'Infinity'}
     if arg == -inf:
         return {'unserializableValue': '-Infinity'}
-
-
-def send_enter(ele):
-    """发送回车"""
-    data = {'type': 'keyDown', 'modifiers': 0, 'windowsVirtualKeyCode': 13, 'code': 'Enter', 'key': 'Enter',
-            'text': '\r', 'autoRepeat': False, 'unmodifiedText': '\r', 'location': 0, 'isKeypad': False}
-
-    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
-    data['type'] = 'keyUp'
-    ele.page.run_cdp('Input.dispatchKeyEvent', **data)
-
-
-def send_key(ele, modifier, key):
-    """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
-    if key not in keyDefinitions:
-        ele.page.run_cdp('Input.insertText', text=key)
-
-    else:
-        description = keyDescriptionForString(modifier, key)
-        text = description['text']
-        data = {'type': 'keyDown' if text else 'rawKeyDown',
-                'modifiers': modifier,
-                'windowsVirtualKeyCode': description['keyCode'],
-                'code': description['code'],
-                'key': description['key'],
-                'text': text,
-                'autoRepeat': False,
-                'unmodifiedText': text,
-                'location': description['location'],
-                'isKeypad': description['location'] == 3}
-
-        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
-        data['type'] = 'keyUp'
-        ele.page.run_cdp('Input.dispatchKeyEvent', **data)
 
 
 class Pseudo(object):

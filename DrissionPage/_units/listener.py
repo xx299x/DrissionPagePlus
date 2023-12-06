@@ -77,17 +77,13 @@ class Listener(object):
         """
         if targets or method:
             self.set_targets(targets, is_regex, method)
+        self.clear()
+
         if self.listening:
             return
 
         self._driver = ChromiumDriver(self._target_id, 'page', self._address)
         self._driver.run('Network.enable')
-
-        self.listening = True
-        self._request_ids = {}
-        self._extra_info_ids = {}
-        self._caught = Queue(maxsize=0)
-        self._running_requests = 0
 
         self._set_callback()
 
@@ -181,7 +177,7 @@ class Listener(object):
         """清空结果"""
         self._request_ids = {}
         self._extra_info_ids = {}
-        self._caught.queue.clear()
+        self._caught = Queue(maxsize=0)
         self._running_requests = 0
 
     def wait_silent(self, timeout=None):
