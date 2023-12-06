@@ -128,10 +128,10 @@ def offset_scroll(ele, offset_x, offset_y):
     return cx, cy
 
 
-def make_absolute_link(link, page=None):
+def make_absolute_link(link, baseURI=None):
     """获取绝对url
     :param link: 超链接
-    :param page: 页面对象
+    :param baseURI: 页面或iframe的url
     :return: 绝对链接
     """
     if not link:
@@ -142,11 +142,11 @@ def make_absolute_link(link, page=None):
 
     # 是相对路径，与页面url拼接并返回
     if not parsed['netloc']:
-        return urljoin(page.url, link) if page else link
+        return urljoin(baseURI, link) if baseURI else link
 
     # 是绝对路径但缺少协议，从页面url获取协议并修复
-    if not parsed['scheme'] and page:
-        parsed['scheme'] = urlparse(page.url).scheme
+    if not parsed['scheme'] and baseURI:
+        parsed['scheme'] = urlparse(baseURI).scheme
         parsed = tuple(v for v in parsed.values())
         return urlunparse(parsed)
 

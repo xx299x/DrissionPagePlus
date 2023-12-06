@@ -324,10 +324,10 @@ class ChromiumElement(DrissionElement):
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
             else:
-                return make_absolute_link(link, self.page)
+                return make_absolute_link(link, self.prop('baseURI'))
 
         elif attr == 'src':
-            return make_absolute_link(attrs.get('src', None), self.page)
+            return make_absolute_link(attrs.get('src', None), self.prop('baseURI'))
 
         elif attr == 'text':
             return self.text
