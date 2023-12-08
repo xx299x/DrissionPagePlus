@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Thread
 from time import sleep, time
 
-from .._commons.tools import clean_folder
+from .._functions.tools import clean_folder
 
 
 class Screencast(object):

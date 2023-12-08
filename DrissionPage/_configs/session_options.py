@@ -9,7 +9,7 @@ from requests import Session
 from requests.structures import CaseInsensitiveDict
 
 from .options_manage import OptionsManager
-from .._commons.web import cookies_to_tuple, set_session_cookies
+from .._functions.web import cookies_to_tuple, set_session_cookies
 
 
 class SessionOptions(object):

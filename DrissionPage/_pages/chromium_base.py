@@ -11,10 +11,10 @@ from time import perf_counter, sleep
 from urllib.parse import quote
 
 from .._base.base import BasePage
-from .._commons.locator import get_loc, is_loc
-from .._commons.settings import Settings
-from .._commons.tools import get_usable_path, raise_error
-from .._commons.web import location_in_viewport
+from .._functions.locator import get_loc, is_loc
+from .._functions.settings import Settings
+from .._functions.tools import get_usable_path, raise_error
+from .._functions.web import location_in_viewport
 from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_ele
 from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele

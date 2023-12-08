@@ -11,8 +11,8 @@ from lxml.html import HtmlElement, fromstring
 
 from .none_element import NoneElement
 from .._base.base import DrissionElement, BasePage, BaseElement
-from .._commons.locator import get_loc
-from .._commons.web import get_ele_txt, make_absolute_link
+from .._functions.locator import get_loc
+from .._functions.web import get_ele_txt, make_absolute_link
 
 
 class SessionElement(DrissionElement):

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from time import sleep, perf_counter
 
-from .._commons.settings import Settings
+from .._functions.settings import Settings
 from ..errors import WaitTimeoutError, NoRectError
 
 

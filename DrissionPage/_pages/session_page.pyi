@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from typing import Any, Union, Tuple, List, Optional
 
 from requests import Session, Response
@@ -66,7 +67,7 @@ class SessionPage(BasePage):
     def download_path(self) -> str: ...
 
     def get(self,
-            url: str,
+            url: Union[Path, str],
             show_errmsg: bool | None = False,
             retry: int | None = None,
             interval: float | None = None,

@@ -5,8 +5,8 @@
 """
 from time import sleep, perf_counter
 
-from .._commons.keys import modifierBit, keyDescriptionForString, input_text_or_keys
-from .._commons.web import location_in_viewport
+from .._functions.keys import modifierBit, keyDescriptionForString, input_text_or_keys
+from .._functions.web import location_in_viewport
 
 
 class Actions:

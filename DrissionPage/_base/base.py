@@ -8,9 +8,9 @@ from re import sub
 
 from DownloadKit import DownloadKit
 
-from .._commons.settings import Settings
-from .._commons.locator import get_loc
-from .._commons.web import format_html
+from .._functions.settings import Settings
+from .._functions.locator import get_loc
+from .._functions.web import format_html
 from .._elements.none_element import NoneElement
 from ..errors import ElementNotFoundError
 

@@ -6,7 +6,7 @@
 from time import sleep, perf_counter
 
 from .chromium_driver import BrowserDriver, ChromiumDriver
-from .._commons.tools import stop_process_on_port, raise_error
+from .._functions.tools import stop_process_on_port, raise_error
 from .._units.downloader import DownloadManager
 
 __ERROR__ = 'error'

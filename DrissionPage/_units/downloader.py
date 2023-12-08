@@ -8,7 +8,7 @@ from pathlib import Path
 from shutil import move
 from time import sleep, perf_counter
 
-from .._commons.tools import get_usable_path
+from .._functions.tools import get_usable_path
 
 
 class DownloadManager(object):

@@ -5,8 +5,8 @@
 """
 from time import perf_counter, sleep
 
-from .._commons.settings import Settings
-from .._commons.web import offset_scroll
+from .._functions.settings import Settings
+from .._functions.web import offset_scroll
 from ..errors import CanNotClickError, CDPError, NoRectError
 
 

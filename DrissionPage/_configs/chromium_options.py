@@ -10,7 +10,7 @@ from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
 
 from .options_manage import OptionsManager
-from .._commons.tools import port_is_using, clean_folder
+from .._functions.tools import port_is_using, clean_folder
 
 
 class ChromiumOptions(object):

@@ -11,11 +11,11 @@ from time import perf_counter, sleep
 from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
-from .._commons.keys import input_text_or_keys
-from .._commons.locator import get_loc
-from .._commons.settings import Settings
-from .._commons.tools import get_usable_path
-from .._commons.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
+from .._functions.keys import input_text_or_keys
+from .._functions.locator import get_loc
+from .._functions.settings import Settings
+from .._functions.tools import get_usable_path
+from .._functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller

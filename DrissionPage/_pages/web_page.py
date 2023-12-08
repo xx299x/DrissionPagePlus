@@ -7,8 +7,8 @@ from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .session_page import SessionPage
 from .._base.base import BasePage
-from .._commons.web import set_session_cookies, set_browser_cookies
 from .._configs.chromium_options import ChromiumOptions
+from .._functions.web import set_session_cookies, set_browser_cookies
 from .._units.setter import WebPageSetter
 
 

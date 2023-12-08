@@ -13,9 +13,9 @@ from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
 from .._base.base import BasePage
-from .._commons.web import cookie_to_dict
 from .._configs.session_options import SessionOptions
 from .._elements.session_element import SessionElement, make_session_ele
+from .._functions.web import cookie_to_dict
 from .._units.setter import SessionPageSetter
 
 
@@ -139,6 +139,8 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
+        if isinstance(url, Path):
+            url = str(url.absolute())
         if not url.lower().startswith('http'):
             if url.startswith('file:///'):
                 url = url[8:]

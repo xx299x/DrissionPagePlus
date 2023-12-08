@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from .._commons.web import location_in_viewport
+from .._functions.web import location_in_viewport
 from ..errors import CDPError, NoRectError, PageClosedError, ElementLostError
 
 

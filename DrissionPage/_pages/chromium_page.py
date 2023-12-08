@@ -9,7 +9,7 @@ from time import sleep, perf_counter
 from requests import get
 
 from .._base.browser import Browser
-from .._commons.browser import connect_browser
+from .._functions.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions
 from .._pages.chromium_base import ChromiumBase, Timeout
 from .._pages.chromium_tab import ChromiumTab

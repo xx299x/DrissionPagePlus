@@ -6,7 +6,7 @@
 from copy import copy
 
 from .._base.base import BasePage
-from .._commons.web import set_session_cookies, set_browser_cookies
+from .._functions.web import set_session_cookies, set_browser_cookies
 from .._configs.session_options import SessionOptions
 from .._pages.chromium_base import ChromiumBase
 from .._pages.session_page import SessionPage
