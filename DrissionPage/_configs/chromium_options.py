@@ -340,6 +340,14 @@ class ChromiumOptions(object):
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
+    def incognito(self, on_off=True):
+        """设置是否使用无痕模式启动
+        :param on_off: 开或关
+        :return: 当前对象
+        """
+        on_off = None if on_off else False
+        return self.set_argument('--incognito', on_off)
+
     def ignore_certificate_errors(self, on_off=True):
         """设置是否忽略证书错误
         :param on_off: 开或关

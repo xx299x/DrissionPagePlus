@@ -9,8 +9,7 @@ from threading import Thread, Event
 from time import perf_counter
 
 from requests import get
-from websocket import (WebSocketTimeoutException, WebSocketException, WebSocketConnectionClosedException,
-                       create_connection)
+from websocket import WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection
 
 
 class ChromiumDriver(object):
@@ -103,7 +102,7 @@ class ChromiumDriver(object):
                 msg = loads(msg_json)
             except WebSocketTimeoutException:
                 continue
-            except (WebSocketException, OSError, WebSocketConnectionClosedException):
+            except:
                 self.stop()
                 return
 

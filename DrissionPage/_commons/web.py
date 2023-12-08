@@ -266,6 +266,8 @@ def set_browser_cookies(page, cookies):
                                                           '%a, %d %b %y %H:%M:%S GMT').timestamp()
         if cookie['value'] is None:
             cookie['value'] = ''
+        elif not isinstance(cookie['value'], str):
+            cookie['value'] = str(cookie['value'])
         if cookie['name'].startswith('__Secure-'):
             cookie['secure'] = True
 
