@@ -6,9 +6,9 @@
 from pathlib import Path
 from re import search
 from time import sleep
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 
-from requests import Session
+from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
 from tldextract import extract
 
@@ -130,8 +130,8 @@ class SessionPage(BasePage):
         return self._set
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None, **kwargs):
-        """用get方式跳转到url
-        :param url: 目标url
+        """用get方式跳转到url，可输入文件路径
+        :param url: 目标url，可指定本地文件路径
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
@@ -139,6 +139,17 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
+        if not url.lower().startswith('http'):
+            if url.startswith('file:///'):
+                url = url[8:]
+            if Path(url).exists():
+                with open(url, 'rb') as f:
+                    r = Response()
+                    r._content = f.read()
+                    r.status_code = 200
+                    self._response = r
+                return
+        retry, interval = self._before_connect(url, retry, interval)
         return self._s_connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
@@ -220,6 +231,7 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
+        retry, interval = self._before_connect(url, retry, interval)
         return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
 
     def close(self):
@@ -227,6 +239,18 @@ class SessionPage(BasePage):
         self._session.close()
         if self._response is not None:
             self._response.close()
+
+    def _before_connect(self, url, retry, interval):
+        """连接前的准备
+        :param url: 要访问的url
+        :param retry: 重试次数
+        :param interval: 重试间隔
+        :return: 重试次数和间隔组成的tuple
+        """
+        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
+        return retry, interval
 
     def _s_connect(self, url, mode, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
         """执行get或post连接

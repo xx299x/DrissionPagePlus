@@ -195,10 +195,10 @@ class SessionElement(DrissionElement):
                 return link
 
             else:  # 其它情况直接返回绝对url
-                return make_absolute_link(link, self.page)
+                return make_absolute_link(link, self.page.url)
 
         elif attr == 'src':
-            return make_absolute_link(self.inner_ele.get('src'), self.page)
+            return make_absolute_link(self.inner_ele.get('src'), self.page.url)
 
         elif attr == 'text':
             return self.text

@@ -75,3 +75,7 @@ class GetDocumentError(BaseError):
 
 class WaitTimeoutError(BaseError):
     _info = '等待失败。'
+
+
+class WrongURLError(BaseError):
+    _info = '无效的url。'

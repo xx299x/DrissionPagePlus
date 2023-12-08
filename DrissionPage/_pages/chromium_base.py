@@ -5,9 +5,10 @@
 """
 from json import loads, JSONDecodeError
 from os.path import sep
-from re import findall
+from re import findall, match
 from threading import Thread
 from time import perf_counter, sleep
+from urllib.parse import quote
 
 from .._base.base import BasePage
 from .._commons.locator import get_loc, is_loc
@@ -894,6 +895,24 @@ class ChromiumBase(BasePage):
         except CDPError:
             pass
         return False
+
+    def _before_connect(self, url, retry, interval):
+        """连接前的准备
+        :param url: 要访问的url
+        :param retry: 重试次数
+        :param interval: 重试间隔
+        :return: 重试次数和间隔组成的tuple
+        """
+        url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
+        if not url:
+            self._url = 'chrome://newtab/'
+        elif not match(r'.*?://', url):
+            self._url = f'http://{url}'
+        else:
+            self._url = url
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
+        return retry, interval
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次

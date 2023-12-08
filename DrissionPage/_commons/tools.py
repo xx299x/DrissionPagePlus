@@ -12,7 +12,8 @@ from time import perf_counter, sleep
 from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
 from .._configs.options_manage import OptionsManager
-from ..errors import ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError
+from ..errors import (ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError,
+                      WrongURLError)
 
 
 def get_usable_path(path, is_file=True, parents=True):
@@ -273,6 +274,8 @@ def raise_error(r):
         raise AlertExistsError
     elif error in ('Node does not have a layout object', 'Could not compute box model.'):
         raise NoRectError
+    elif error == 'Cannot navigate to invalid URL':
+        raise WrongURLError(f'无效的url：{r["args"]["url"]}。也许要加上"http://"？')
     elif r['type'] == 'call_method_error':
         raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}\n出现这个错误可能意味着程序有bug，'
                        '请把错误信息和重现方法告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')

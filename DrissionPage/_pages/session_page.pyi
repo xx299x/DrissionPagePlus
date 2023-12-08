@@ -136,6 +136,10 @@ class SessionPage(BasePage):
              verify: Any | None = ...,
              cert: Any | None = ...) -> bool: ...
 
+    def close(self) -> None: ...
+
+    def _before_connect(self, url: str, retry: int, interval: float) -> tuple: ...
+
     def _s_connect(self,
                    url: str,
                    mode: str,
