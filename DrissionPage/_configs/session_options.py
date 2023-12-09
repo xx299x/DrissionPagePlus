@@ -457,6 +457,9 @@ class SessionOptions(object):
             self._download_path = str(download_path)
         return self
 
+    def __repr__(self):
+        return f'<SessionOptions at {id(self)}>'
+
 
 def session_options_to_dict(options):
     """把session配置对象转换为字典

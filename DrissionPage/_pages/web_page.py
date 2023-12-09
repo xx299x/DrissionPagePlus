@@ -387,3 +387,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             super(SessionPage, self).quit(timeout, force)
             self._driver = None
             self._has_driver = None
+
+    def __repr__(self):
+        return f'<WebPage browser_id={self.browser.id} tab_id={self.tab_id}>'

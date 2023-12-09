@@ -12,6 +12,8 @@ from time import perf_counter, sleep
 from requests.structures import CaseInsensitiveDict
 
 from .._base.chromium_driver import ChromiumDriver
+from .._functions.settings import Settings
+from ..errors import WaitTimeoutError
 
 
 class Listener(object):
@@ -87,11 +89,12 @@ class Listener(object):
 
         self._set_callback()
 
-    def wait(self, count=1, timeout=None, fit_count=True):
+    def wait(self, count=1, timeout=None, fit_count=True, raise_err=None):
         """等待符合要求的数据包到达指定数量
         :param count: 需要捕捉的数据包数量
         :param timeout: 超时时间，为None无限等待
         :param fit_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
+        :param raise_err: 超时时是否抛出错误，为None时根据Settings设置
         :return: count为1时返回数据包对象，大于1时返回列表，超时且fit_count为True时返回False
         """
         if not self.listening:
@@ -113,7 +116,10 @@ class Listener(object):
 
         if fail:
             if fit_count or not self._caught.qsize():
-                return False
+                if raise_err is True or Settings.raise_when_wait_failed is True:
+                    raise WaitTimeoutError('等待数据包失败。')
+                else:
+                    return False
             else:
                 return [self._caught.get_nowait() for _ in range(self._caught.qsize())]
 

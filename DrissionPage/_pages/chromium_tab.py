@@ -58,6 +58,9 @@ class ChromiumTab(ChromiumBase):
             self._wait = TabWaiter(self)
         return self._wait
 
+    def __repr__(self):
+        return f'<ChromiumTab browser_id={self.browser.id} tab_id={self.tab_id}>'
+
 
 class WebPageTab(SessionPage, ChromiumTab, BasePage):
     def __init__(self, page, tab_id):
@@ -353,3 +356,6 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
                                                            relative=relative)
+
+    def __repr__(self):
+        return f'<WebPageTab browser_id={self.browser.id} tab_id={self.tab_id}>'

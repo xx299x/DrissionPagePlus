@@ -593,6 +593,9 @@ class ChromiumOptions(object):
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
+    def __repr__(self):
+        return f'<ChromiumOptions at {id(self)}>'
+
 
 class PortFinder(object):
     used_port = {}

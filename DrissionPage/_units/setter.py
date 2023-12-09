@@ -82,8 +82,15 @@ class ChromiumBaseSetter(BasePageSetter):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        js = f'sessionStorage.removeItem("{item}");' if item is False else f'sessionStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
+        self._page.run_cdp_loaded('DOMStorage.enable')
+        i = self._page.run_cdp('Storage.getStorageKeyForFrame', frameId=self._page._frame_id)['storageKey']
+        if value is False:
+            self._page.run_cdp('DOMStorage.removeDOMStorageItem',
+                               storageId={'storageKey': i, 'isLocalStorage': False}, key=item)
+        else:
+            self._page.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': False},
+                               key=item, value=value)
+        self._page.run_cdp_loaded('DOMStorage.disable')
 
     def local_storage(self, item, value):
         """设置或删除某项localStorage信息
@@ -91,8 +98,15 @@ class ChromiumBaseSetter(BasePageSetter):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        js = f'localStorage.removeItem("{item}");' if item is False else f'localStorage.setItem("{item}","{value}");'
-        return self._page.run_js_loaded(js, as_expr=True)
+        self._page.run_cdp_loaded('DOMStorage.enable')
+        i = self._page.run_cdp('Storage.getStorageKeyForFrame', frameId=self._page._frame_id)['storageKey']
+        if value is False:
+            self._page.run_cdp('DOMStorage.removeDOMStorageItem',
+                               storageId={'storageKey': i, 'isLocalStorage': True}, key=item)
+        else:
+            self._page.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': True},
+                               key=item, value=value)
+        self._page.run_cdp_loaded('DOMStorage.disable')
 
     def cookie(self, cookie):
         """设置单个cookie
@@ -236,6 +250,17 @@ class SessionPageSetter(BasePageSetter):
         :return: None
         """
         self._page.timeout = second
+
+    def encoding(self, encoding, set_all=True):
+        """设置编码
+        :param encoding: 编码名称
+        :param set_all: 是否设置对象参数，为False则只设置当前response
+        :return: None
+        """
+        if set_all:
+            self._page._encoding = encoding
+        if self._page.response:
+            self._page.response.encoding = encoding
 
     def cookie(self, cookie):
         """为Session对象设置单个cookie

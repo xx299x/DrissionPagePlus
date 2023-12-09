@@ -820,12 +820,18 @@ class ChromiumBase(BasePage):
         :param cookies: 是否清除cookies
         :return: None
         """
-        if session_storage:
-            self.run_js('sessionStorage.clear();', as_expr=True)
-        if local_storage:
-            self.run_js('localStorage.clear();', as_expr=True)
+        if session_storage or local_storage:
+            self.run_cdp_loaded('DOMStorage.enable')
+            i = self.run_cdp('Storage.getStorageKeyForFrame', frameId=self._frame_id)['storageKey']
+            if session_storage:
+                self.run_cdp('DOMStorage.clear', storageId={'storageKey': i, 'isLocalStorage': False})
+            if local_storage:
+                self.run_cdp('DOMStorage.clear', storageId={'storageKey': i, 'isLocalStorage': True})
+            self.run_cdp_loaded('DOMStorage.disable')
+
         if cache:
             self.run_cdp_loaded('Network.clearBrowserCache')
+
         if cookies:
             self.run_cdp_loaded('Network.clearBrowserCookies')
 

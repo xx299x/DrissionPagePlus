@@ -32,6 +32,7 @@ class SessionPage(BasePage):
         self._response = None
         self._session = None
         self._set = None
+        self._encoding = None
         self._s_set_start_options(session_or_options)
         self._s_set_runtime_settings()
         self._create_session()
@@ -123,6 +124,11 @@ class SessionPage(BasePage):
         return self._response
 
     @property
+    def encoding(self):
+        """返回设置的编码"""
+        return self._encoding
+
+    @property
     def set(self):
         """返回用于等待的对象"""
         if self._set is None:
@@ -151,7 +157,6 @@ class SessionPage(BasePage):
                     r.status_code = 200
                     self._response = r
                 return
-        retry, interval = self._before_connect(url, retry, interval)
         return self._s_connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
@@ -233,7 +238,6 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        retry, interval = self._before_connect(url, retry, interval)
         return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
 
     def close(self):
@@ -289,7 +293,7 @@ class SessionPage(BasePage):
         :param data: post方式要提交的数据
         :param show_errmsg: 是否显示和抛出异常
         :param kwargs: 其它参数
-        :return: tuple，第一位为Response或None，第二位为出错信息或'Success'
+        :return: tuple，第一位为Response或None，第二位为出错信息或 'Success'
         """
         kwargs = CaseInsensitiveDict(kwargs)
         if 'headers' not in kwargs:
@@ -322,6 +326,9 @@ class SessionPage(BasePage):
                     r = self.session.post(url, data=data, **kwargs)
 
                 if r and r.content:
+                    if self._encoding:
+                        r.encoding = self._encoding
+                        return r, 'Success'
                     return set_charset(r), 'Success'
 
             except Exception as e:
@@ -347,6 +354,9 @@ class SessionPage(BasePage):
             if show_errmsg:
                 raise ConnectionError(f'状态码：{r.status_code}')
             return r, f'状态码：{r.status_code}'
+
+    def __repr__(self):
+        return f'<SessionPage url={self.url}>'
 
 
 def check_headers(kwargs, headers, arg):

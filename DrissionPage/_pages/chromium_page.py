@@ -248,6 +248,9 @@ class ChromiumPage(ChromiumBase):
         """
         self.browser.quit(timeout, force)
 
+    def __repr__(self):
+        return f'<ChromiumPage browser_id={self.browser.id} tab_id={self.tab_id}>'
+
 
 def get_rename(original, rename):
     if '.' in rename:
