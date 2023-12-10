@@ -304,7 +304,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
                         self.get(url)
 
     def cookies_to_session(self, copy_user_agent=True):
-        """把driver对象的cookies复制到session对象
+        """把浏览器的cookies复制到session对象
         :param copy_user_agent: 是否复制ua信息
         :return: None
         """
@@ -313,7 +313,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
 
         if copy_user_agent:
             user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self.session.headers.update({"User-Agent": user_agent})
+            self._headers.update({"User-Agent": user_agent})
 
         set_session_cookies(self.session, super(SessionPage, self).get_cookies())
 

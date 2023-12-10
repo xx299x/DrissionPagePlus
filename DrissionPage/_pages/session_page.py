@@ -49,6 +49,8 @@ class SessionPage(BasePage):
 
         elif isinstance(session_or_options, Session):
             self._session_options = SessionOptions()
+            self._headers = session_or_options.headers
+            session_or_options.headers = None
             self._session = session_or_options
 
     def _s_set_runtime_settings(self):
@@ -305,12 +307,12 @@ class SessionPage(BasePage):
         parsed_url = urlparse(url)
         hostname = parsed_url.hostname
         scheme = parsed_url.scheme
-        if not check_headers(kwargs, self.session.headers, 'Referer'):
+        if not check_headers(kwargs, self._headers, 'Referer'):
             kwargs['headers']['Referer'] = self.url if self.url else f'{scheme}://{hostname}'
         if 'Host' not in kwargs['headers']:
             kwargs['headers']['Host'] = hostname
 
-        if not check_headers(kwargs, self.session.headers, 'timeout'):
+        if not check_headers(kwargs, self._headers, 'timeout'):
             kwargs['timeout'] = self.timeout
 
         kwargs['headers'] = {**self._headers, **kwargs['headers']}

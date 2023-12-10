@@ -274,7 +274,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
         if copy_user_agent:
             user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
-            self.session.headers.update({"User-Agent": user_agent})
+            self._headers.update({"User-Agent": user_agent})
 
         set_session_cookies(self.session, super(SessionPage, self).get_cookies())
 

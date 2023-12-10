@@ -5,7 +5,7 @@
 """
 from http.cookiejar import Cookie
 from pathlib import Path
-from typing import Union, Tuple, Literal, Any
+from typing import Union, Tuple, Literal, Any, Optional
 
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
@@ -100,7 +100,7 @@ class SessionPageSetter(BasePageSetter):
 
     def timeout(self, second: float) -> None: ...
 
-    def encoding(self, encoding: str, set_all: bool = True) -> None: ...
+    def encoding(self, encoding: Optional[str, None], set_all: bool = True) -> None: ...
 
     def cookie(self, cookie: Union[Cookie, str, dict]) -> None: ...
 

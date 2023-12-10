@@ -253,12 +253,12 @@ class SessionPageSetter(BasePageSetter):
 
     def encoding(self, encoding, set_all=True):
         """设置编码
-        :param encoding: 编码名称
-        :param set_all: 是否设置对象参数，为False则只设置当前response
+        :param encoding: 编码名称，如果要取消之前的设置，传入None
+        :param set_all: 是否设置对象参数，为False则只设置当前Response
         :return: None
         """
         if set_all:
-            self._page._encoding = encoding
+            self._page._encoding = encoding if encoding else None
         if self._page.response:
             self._page.response.encoding = encoding
 
