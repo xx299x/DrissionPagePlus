@@ -88,6 +88,7 @@ class Listener(object):
         self._driver.run('Network.enable')
 
         self._set_callback()
+        self.listening = True
 
     def wait(self, count=1, timeout=None, fit_count=True, raise_err=None):
         """等待符合要求的数据包到达指定数量

@@ -34,6 +34,13 @@ class Clicker(object):
         :param wait_stop: 是否等待元素运动结束再执行点击
         :return: 是否点击成功
         """
+        if self._ele.tag == 'option':
+            if self._ele.states.is_selected:
+                self._ele.parent('t:select').select.cancel_by_option(self._ele)
+            else:
+                self._ele.parent('t:select').select.by_option(self._ele)
+            return
+
         if not by_js:  # 模拟点击
             can_click = False
             timeout = self._ele.page.timeout if timeout is None else timeout

@@ -109,6 +109,13 @@ class SelectElement(object):
         """
         return self._by_loc(loc, timeout)
 
+    def by_option(self, option):
+        """选中单个或多个选项元素
+        :param option: 定位符
+        :return: None
+        """
+        self._select_options(option, 'true')
+
     def cancel_by_text(self, text, timeout=None):
         """此方法用于根据text值取消选择项。当元素是多选列表时，可以接收list或tuple
         :param text: 文本，传入list或tuple可取消多项
@@ -141,6 +148,13 @@ class SelectElement(object):
         """
         return self._by_loc(loc, timeout, True)
 
+    def cancel_by_option(self, option):
+        """选中单个或多个选项元素
+        :param option: 定位符
+        :return: None
+        """
+        self._select_options(option, 'false')
+
     def _by_loc(self, loc, timeout=None, cancel=False):
         """用定位符取消选择指定的项
         :param loc: 定位符
@@ -154,13 +168,9 @@ class SelectElement(object):
 
         mode = 'false' if cancel else 'true'
         if self.is_multi:
-            for ele in eles:
-                ele.run_js(f'this.selected={mode};')
-            self._dispatch_change()
-            return True
-
-        eles[0].run_js(f'this.selected={mode};')
-        self._dispatch_change()
+            self._select_options(eles, mode)
+        else:
+            self._select_options(eles[0], mode)
         return True
 
     def _select(self, condition, para_type='text', cancel=False, timeout=None):
@@ -205,10 +215,7 @@ class SelectElement(object):
                 break
 
         if ok:
-            for i in eles:
-                i.run_js(f'this.selected={mode};')
-
-            self._dispatch_change()
+            self._select_options(eles, mode)
             return True
 
         return False
@@ -231,13 +238,25 @@ class SelectElement(object):
 
         if ok:
             eles = self.options
-            for i in condition:
-                eles[i - 1].run_js(f'this.selected={mode};')
-
-            self._dispatch_change()
+            eles = [eles[i - 1] for i in condition]
+            self._select_options(eles, mode)
             return True
 
         return False
+
+    def _select_options(self, option, mode):
+        """选中或取消某个选项
+        :param option: options元素对象
+        :param mode: 选中还是取消
+        :return: None
+        """
+        if isinstance(option, (list, tuple, set)):
+            for o in option:
+                o.run_js(f'this.selected={mode};')
+                self._dispatch_change()
+        else:
+            option.run_js(f'this.selected={mode};')
+            self._dispatch_change()
 
     def _dispatch_change(self):
         """触发修改动作"""

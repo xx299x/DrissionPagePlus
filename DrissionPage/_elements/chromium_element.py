@@ -688,14 +688,18 @@ class ChromiumElement(DrissionElement):
         if obj_id:
             return self.page.run_cdp('DOM.requestNode', objectId=obj_id)['nodeId']
         else:
-            return self.page.run_cdp('DOM.describeNode', backendNodeId=backend_id)['node']['nodeId']
+            n = self.page.run_cdp('DOM.describeNode', backendNodeId=backend_id)['node']
+            self._tag = n['localName']
+            return n['nodeId']
 
     def _get_backend_id(self, node_id):
         """根据传入node id获取backend id
         :param node_id:
         :return: backend id
         """
-        return self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']['backendNodeId']
+        n = self.page.run_cdp('DOM.describeNode', nodeId=node_id)['node']
+        self._tag = n['localName']
+        return n['backendNodeId']
 
     def _get_ele_path(self, mode):
         """返获取绝对的css路径或xpath路径"""
