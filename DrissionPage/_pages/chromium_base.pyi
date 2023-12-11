@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from typing import Union, Tuple, List, Any, Optional
+from typing import Union, Tuple, List, Any, Optional, Literal
 
 from .._base.base import BasePage
 from .._base.browser import Browser
@@ -22,6 +22,8 @@ from .._units.scroller import Scroller, PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
+
+PIC_TYPE = Literal['jpg', 'jpeg', 'png', 'webp', True]
 
 
 class ChromiumBase(BasePage):
@@ -214,12 +216,12 @@ class ChromiumBase(BasePage):
 
     def get_local_storage(self, item: str = None) -> Union[str, dict, None]: ...
 
-    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
-                       as_base64: [bool, str] = None, full_page: bool = False,
-                       left_top: Tuple[int, int] = None, right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
+    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: PIC_TYPE = None,
+                       as_base64: PIC_TYPE = None, full_page: bool = False, left_top: Tuple[int, int] = None,
+                       right_bottom: Tuple[int, int] = None) -> Union[str, bytes]: ...
 
-    def _get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
-                        as_base64: [bool, str] = None, full_page: bool = False, left_top: Tuple[float, float] = None,
+    def _get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: PIC_TYPE = None,
+                        as_base64: PIC_TYPE = None, full_page: bool = False, left_top: Tuple[float, float] = None,
                         right_bottom: Tuple[float, float] = None, ele: ChromiumElement = None) -> Union[str, bytes]: ...
 
     def clear_cache(self, session_storage: bool = True, local_storage: bool = True, cache: bool = True,

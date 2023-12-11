@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from typing import Union, Tuple, List, Any
+from typing import Union, Tuple, List, Any, Literal
 
 from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
@@ -20,6 +20,8 @@ from .._units.selector import SelectElement
 from .._units.setter import ChromiumElementSetter
 from .._units.states import ShadowRootStates, ElementStates
 from .._units.waiter import ElementWaiter
+
+PIC_TYPE = Literal['jpg', 'jpeg', 'png', 'webp', True]
 
 
 class ChromiumElement(DrissionElement):
@@ -175,8 +177,8 @@ class ChromiumElement(DrissionElement):
 
     def save(self, path: [str, bool] = None, name: str = None, timeout: float = None) -> str: ...
 
-    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: [bool, str] = None,
-                       as_base64: [bool, str] = None, scroll_to_center: bool = True) -> Union[str, bytes]: ...
+    def get_screenshot(self, path: [str, Path] = None, name: str = None, as_bytes: PIC_TYPE = None,
+                       as_base64: PIC_TYPE = None, scroll_to_center: bool = True) -> Union[str, bytes]: ...
 
     def input(self, vals: Any, clear: bool = True, by_js: bool = False) -> None: ...
 

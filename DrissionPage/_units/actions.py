@@ -5,7 +5,7 @@
 """
 from time import sleep, perf_counter
 
-from .._functions.keys import modifierBit, keyDescriptionForString, input_text_or_keys
+from .._functions.keys import modifierBit, keyDescriptionForString, input_text_or_keys, Keys
 from .._functions.web import location_in_viewport
 
 
@@ -241,10 +241,11 @@ class Actions:
         return self.move(pixel, 0)
 
     def key_down(self, key):
-        """按下键盘上的按键
-        :param key: 按键，特殊字符见Keys
+        """按下键盘上的按键，
+        :param key: 使用Keys获取的按键，或'DEL'形式按键名称
         :return: self
         """
+        key = getattr(Keys, key.upper(), key)
         if key in ('\ue009', '\ue008', '\ue00a', '\ue03d'):  # 如果上修饰符，添加到变量
             self.modifier |= modifierBit.get(key, 0)
             return self
@@ -258,6 +259,7 @@ class Actions:
         :param key: 按键，特殊字符见Keys
         :return: self
         """
+        key = getattr(Keys, key.upper(), key)
         if key in ('\ue009', '\ue008', '\ue00a', '\ue03d'):  # 如果上修饰符，添加到变量
             self.modifier ^= modifierBit.get(key, 0)
             return self

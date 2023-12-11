@@ -79,3 +79,7 @@ class WaitTimeoutError(BaseError):
 
 class WrongURLError(BaseError):
     _info = '无效的url。'
+
+
+class StorageError(BaseError):
+    _info = '无法操作当前存储数据。'
