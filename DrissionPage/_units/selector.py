@@ -110,8 +110,8 @@ class SelectElement(object):
         return self._by_loc(loc, timeout)
 
     def by_option(self, option):
-        """选中单个或多个选项元素
-        :param option: 定位符
+        """选中单个或多个option元素
+        :param option: option元素或它们组成的列表
         :return: None
         """
         self._select_options(option, 'true')
@@ -149,8 +149,8 @@ class SelectElement(object):
         return self._by_loc(loc, timeout, True)
 
     def cancel_by_option(self, option):
-        """选中单个或多个选项元素
-        :param option: 定位符
+        """取消选中单个或多个option元素
+        :param option: option元素或它们组成的列表
         :return: None
         """
         self._select_options(option, 'false')
@@ -251,6 +251,8 @@ class SelectElement(object):
         :return: None
         """
         if isinstance(option, (list, tuple, set)):
+            if not self.is_multi:
+                raise TypeError("只能对多项选框执行多选。")
             for o in option:
                 o.run_js(f'this.selected={mode};')
                 self._dispatch_change()
