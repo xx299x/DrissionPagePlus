@@ -9,8 +9,8 @@ from .._base.chromium_driver import ChromiumDriver
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 
-KEYS = Literal['NULL', 'CANCEL', 'HELP', 'BACKSPACE', 'BACK_SPACE',
-'TAB', 'CLEAR', 'RETURN', 'ENTER', 'SHIFT', 'LEFT_SHIFT', 'CONTROL',
+KEYS = Literal['NULL', 'CANCEL', 'HELP', 'BACKSPACE', 'BACK_SPACE', 'meta',
+'TAB', 'CLEAR', 'RETURN', 'ENTER', 'SHIFT', 'LEFT_SHIFT', 'CONTROL', 'command ',
 'CTRL', 'LEFT_CONTROL', 'ALT', 'LEFT_ALT', 'PAUSE', 'ESCAPE', 'SPACE',
 'PAGE_UP', 'PAGE_DOWN', 'END', 'HOME', 'LEFT', 'ARROW_LEFT', 'UP',
 'ARROW_UP', 'RIGHT', 'ARROW_RIGHT', 'DOWN', 'ARROW_DOWN', 'INSERT',
@@ -25,14 +25,18 @@ KEYS = Literal['NULL', 'CANCEL', 'HELP', 'BACKSPACE', 'BACK_SPACE',
 'semicolon', 'equals', 'numpad0', 'numpad1', 'numpad2', 'numpad3', 'numpad4', 'numpad5',
 'numpad6', 'numpad7', 'numpad8', 'numpad9', 'multiply', 'add', 'subtract', 'decimal',
 'divide', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
-'meta', 'command ',
 '\ue000', '\ue002', '\ue003', '\ue004', '\ue005', '\ue006', '\ue007', '\ue008', '\ue009',
 '\ue009', '\ue00a', '\ue00b', '\ue00c', '\ue00d', '\ue00e', '\ue00f', '\ue010', '\ue011',
 '\ue012', '\ue013', '\ue014', '\ue015', '\ue016', '\ue017', '\ue017', '\ue018', '\ue019',
 '\ue01a', '\ue01b', '\ue01c', '\ue01d', '\ue01e', '\ue01f', '\ue020', '\ue021', '\ue022',
 '\ue023', '\ue024', '\ue025', '\ue027', '\ue028', '\ue029', '\ue031', '\ue032', '\ue033', '\ue034',
-'\ue035', '\ue036', '\ue037', '\ue038', '\ue039', '\ue03a', '\ue03b', '\ue03c', '\ue03d', '\ue03d'
-]
+'\ue035', '\ue036', '\ue037', '\ue038', '\ue039', '\ue03a', '\ue03b', '\ue03c', '\ue03d', '\ue03d',
+'`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'q', 'w',
+'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\', 'a', 's', 'd', 'f',
+'g', 'h', 'j', 'k', 'l', ';', '\'', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',',
+'.', '/', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
+'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', 'A', 'S', 'D',
+'F', 'G', 'H', 'J', 'K', 'L', ':', '"', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?']
 
 
 class Actions:

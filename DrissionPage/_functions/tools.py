@@ -232,7 +232,7 @@ def stop_process_on_port(port):
     for proc in process_iter(['pid', 'connections']):
         try:
             connections = proc.connections()
-        except AccessDenied:
+        except (AccessDenied, NoSuchProcess):
             continue
         for conn in connections:
             if conn.laddr.port == int(port):

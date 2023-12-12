@@ -89,7 +89,7 @@ class SessionOptions(object):
         """返回默认下载路径属性信息"""
         return self._download_path
 
-    def set_download_path(self, path=None):
+    def set_download_path(self, path):
         """设置默认下载路径
         :param path: 下载路径
         :return: 返回当前对象

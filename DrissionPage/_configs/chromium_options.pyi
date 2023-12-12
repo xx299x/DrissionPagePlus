@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from typing import Union, Tuple, Any
+from typing import Union, Tuple, Any, Literal
 
 
 class ChromiumOptions(object):
@@ -121,7 +121,7 @@ class ChromiumOptions(object):
 
     def ignore_certificate_errors(self, on_off=True) -> ChromiumOptions: ...
 
-    def set_load_mode(self, value: str) -> ChromiumOptions: ...
+    def set_load_mode(self, value: Literal['normal', 'eager', 'none']) -> ChromiumOptions: ...
 
     def set_browser_path(self, path: Union[str, Path]) -> ChromiumOptions: ...
 

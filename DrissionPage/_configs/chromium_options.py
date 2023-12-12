@@ -125,16 +125,6 @@ class ChromiumOptions(object):
         return self._proxy
 
     @property
-    def debugger_address(self):
-        """返回浏览器地址，ip:port"""
-        return self._address
-
-    @debugger_address.setter
-    def debugger_address(self, address):
-        """设置浏览器地址，格式ip:port"""
-        self.set_address(address)
-
-    @property
     def address(self):
         """返回浏览器地址，ip:port"""
         return self._address
@@ -278,7 +268,7 @@ class ChromiumOptions(object):
         return self
 
     def clear_flags_in_file(self):
-        """删除浏览器设置文件中已设置的实验项"""
+        """删除浏览器配置文件中已设置的实验项"""
         self.clear_file_flags = True
         return self
 
@@ -370,7 +360,7 @@ class ChromiumOptions(object):
         """
         if search(r'.*?:.*?@.*?\..*', proxy):
             print('你似乎在设置使用账号密码的代理，暂时不支持这种代理，可自行用插件实现需求。')
-        if not proxy.lower().startswith('socks'):
+        if proxy.lower().startswith('socks'):
             print('你似乎在设置使用socks代理，暂时不支持这种代理，可自行用插件实现需求。')
         self._proxy = proxy
         return self.set_argument('--proxy-server', proxy)
@@ -557,6 +547,16 @@ class ChromiumOptions(object):
         return self.save('default')
 
     # ---------------即将废弃--------------
+
+    @property
+    def debugger_address(self):
+        """返回浏览器地址，ip:port"""
+        return self._address
+
+    @debugger_address.setter
+    def debugger_address(self, address):
+        """设置浏览器地址，格式ip:port"""
+        self.set_address(address)
 
     def set_page_load_strategy(self, value):
         return self.set_load_mode(value)
