@@ -835,13 +835,19 @@ class ChromiumBase(BasePage):
         if cookies:
             self.run_cdp_loaded('Network.clearBrowserCookies')
 
-    def handle_alert(self, accept=True, send=None, timeout=None):
+    def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         """处理提示框，可以自动等待提示框出现
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
         :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
+        :param next_one: 是否处理下一个出现的提示框，为True时timeout参数无效
         :return: 提示框内容文本，未等到提示框则返回False
         """
+        if next_one:
+            self._alert.handle_next = accept
+            self._alert.next_text = send
+            return
+
         timeout = self.timeout if timeout is None else timeout
         timeout = .1 if timeout <= 0 else timeout
         end_time = perf_counter() + timeout
@@ -857,16 +863,6 @@ class ChromiumBase(BasePage):
             self.driver.run('Page.handleJavaScriptDialog', accept=accept)
         return res_text
 
-    def _on_alert_close(self, **kwargs):
-        """alert关闭时触发的方法"""
-        self._alert.activated = False
-        self._alert.text = None
-        self._alert.type = None
-        self._alert.defaultPrompt = None
-        self._alert.response_accept = kwargs.get('result')
-        self._alert.response_text = kwargs['userInput']
-        self._has_alert = False
-
     def _on_alert_open(self, **kwargs):
         """alert出现时触发的方法"""
         self._alert.activated = True
@@ -876,6 +872,22 @@ class ChromiumBase(BasePage):
         self._alert.response_accept = None
         self._alert.response_text = None
         self._has_alert = True
+
+        if self._alert.auto is not None:
+            self.handle_alert(self._alert.auto)
+        elif self._alert.handle_next is not None:
+            self.handle_alert(self._alert.handle_next, self._alert.next_text)
+            self._alert.handle_next = None
+
+    def _on_alert_close(self, **kwargs):
+        """alert关闭时触发的方法"""
+        self._alert.activated = False
+        self._alert.text = None
+        self._alert.type = None
+        self._alert.defaultPrompt = None
+        self._alert.response_accept = kwargs.get('result')
+        self._alert.response_text = kwargs['userInput']
+        self._has_alert = False
 
     def _wait_loaded(self, timeout=None):
         """等待页面加载完成，超时触发停止加载
@@ -1107,6 +1119,9 @@ class Alert(object):
         self.defaultPrompt = None
         self.response_accept = None
         self.response_text = None
+        self.handle_next = None
+        self.next_text = None
+        self.auto = None
 
 
 def close_privacy_dialog(page, tid):

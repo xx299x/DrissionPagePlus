@@ -146,6 +146,14 @@ class ChromiumBaseSetter(BasePageSetter):
         self._page.run_cdp('Network.enable')
         self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
 
+    def auto_handle_alert(self, on_off=True, accept=True):
+        """设置是否启用自动处理弹窗
+        :param on_off: bool表示开或关
+        :param accept: bool表示确定还是取消
+        :return: None
+        """
+        self._page._alert.auto = accept if on_off else None
+
     # --------------即将废弃---------------
 
     @property
