@@ -1374,8 +1374,10 @@ def convert_argument(arg):
     from math import inf
     if arg == inf:
         return {'unserializableValue': 'Infinity'}
-    if arg == -inf:
+    elif arg == -inf:
         return {'unserializableValue': '-Infinity'}
+
+    raise TypeError(f'不支持参数{arg}的类型：{type(arg)}')
 
 
 class Pseudo(object):
