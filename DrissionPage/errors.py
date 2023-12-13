@@ -83,3 +83,7 @@ class WrongURLError(BaseError):
 
 class StorageError(BaseError):
     _info = '无法操作当前存储数据。'
+
+
+class CookieFormatError(BaseError):
+    _info = 'cookie格式不正确。'

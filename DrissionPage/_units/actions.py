@@ -268,24 +268,24 @@ class Actions:
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
 
-    def type(self, text):
-        """用模拟键盘按键方式输入文本，可输入字符串，只能输入键盘上有的字符
-        :param text: 要输入的文本，特殊字符和多个文本可用list或tuple传入
+    def type(self, keys):
+        """用模拟键盘按键方式输入文本，可输入字符串，也可输入组合键，只能输入键盘上有的字符
+        :param keys: 要按下的按键，特殊字符和多个文本可用list或tuple传入
         :return: self
         """
-        for i in text:
+        for i in keys:
             for character in i:
                 self.key_down(character)
                 sleep(.05)
                 self.key_up(character)
         return self
 
-    def input(self, text_or_keys):
+    def input(self, text):
         """输入文本，也可输入组合键，组合键用tuple形式输入
-        :param text_or_keys: 文本值或按键组合
+        :param text: 文本值或按键组合
         :return: self
         """
-        input_text_or_keys(self.page, text_or_keys)
+        input_text_or_keys(self.page, text)
         return self
 
     def wait(self, second):
