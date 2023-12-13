@@ -572,7 +572,7 @@ class WindowSetter(object):
             self._perform({'windowState': 'normal'})
         self._perform({'windowState': 'minimized'})
 
-    def fullscreen(self):
+    def full(self):
         """设置窗口为全屏"""
         s = self._get_info()['bounds']['windowState']
         if s == 'minimized':
@@ -634,6 +634,10 @@ class WindowSetter(object):
     def minimized(self):
         """窗口最小化"""
         self.mini()
+
+    def fullscreen(self):
+        """设置窗口为全屏"""
+        self.full()
 
 
 class PageWindowSetter(WindowSetter):

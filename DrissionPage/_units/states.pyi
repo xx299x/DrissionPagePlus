@@ -69,10 +69,16 @@ class PageStates(object):
     @property
     def ready_state(self) -> Optional[str]: ...
 
+    @property
+    def has_alert(self) -> bool: ...
+
 
 class FrameStates(object):
     def __init__(self, frame: ChromiumFrame):
         self._frame: ChromiumFrame = ...
+
+    @property
+    def is_loading(self) -> bool: ...
 
     @property
     def is_alive(self) -> bool: ...

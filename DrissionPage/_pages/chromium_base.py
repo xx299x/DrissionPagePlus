@@ -427,11 +427,6 @@ class ChromiumBase(BasePage):
         return self._upload_list
 
     @property
-    def has_alert(self):
-        """返回是否存在提示框"""
-        return self._has_alert
-
-    @property
     def _js_ready_state(self):
         """返回js获取的ready state信息"""
         try:

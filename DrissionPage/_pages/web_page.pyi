@@ -131,6 +131,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def close_session(self) -> None: ...
 
+    def close(self) -> None: ...
+
     # ----------------重写SessionPage的函数-----------------------
     def post(self,
              url: str,

@@ -1287,7 +1287,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         obj_id = page_or_ele._root_id
         is_page = True
 
-    if page.has_alert:
+    if page.states.has_alert:
         raise AlertExistsError
 
     try:
@@ -1309,7 +1309,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         else:
             raise ElementLostError('原来获取到的元素对象已不在页面内。')
 
-    if res is None and page.driver.has_alert:  # 存在alert的情况
+    if res is None and page.states.has_alert:  # 存在alert的情况
         return None
 
     exceptionDetails = res.get('exceptionDetails')

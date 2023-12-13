@@ -132,6 +132,11 @@ class PageStates(object):
         """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
         return self._page._ready_state
 
+    @property
+    def has_alert(self):
+        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        return self._page._has_alert
+
 
 class FrameStates(object):
     def __init__(self, frame):
@@ -139,6 +144,11 @@ class FrameStates(object):
         :param frame: ChromiumFrame对象
         """
         self._frame = frame
+
+    @property
+    def is_loading(self):
+        """返回页面是否在加载状态"""
+        return self._frame._is_loading
 
     @property
     def is_alive(self):
@@ -152,4 +162,12 @@ class FrameStates(object):
 
     @property
     def ready_state(self):
+        """返回加载状态"""
         return self._frame._ready_state
+
+    @property
+    def is_displayed(self):
+        """返回iframe是否显示"""
+        return not (self._frame.frame_ele.style('visibility') == 'hidden'
+                    or self._frame.frame_ele.run_js('return this.offsetParent === null;')
+                    or self._frame.frame_ele.style('display') == 'none')

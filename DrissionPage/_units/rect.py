@@ -19,14 +19,13 @@ class ElementRect(object):
         r = self._ele.page.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
         sx = r['pageX']
         sy = r['pageY']
-        return [(vr[0] + sx, vr[1] + sy), (vr[2] + sx, vr[3] + sy),
-                (vr[4] + sx, vr[5] + sy), (vr[6] + sx, vr[7] + sy)]
+        return [(vr[0] + sx, vr[1] + sy), (vr[2] + sx, vr[3] + sy), (vr[4] + sx, vr[5] + sy), (vr[6] + sx, vr[7] + sy)]
 
     @property
     def viewport_corners(self):
         """返回元素四个角视口坐标，顺序：坐上、右上、右下、左下，没有大小的元素抛出NoRectError"""
         r = self._get_viewport_rect('border')
-        return [(r[0], r[1]), (r[2], r[3]), (r[4], r[5]), (r[6], r[7])]
+        return (r[0], r[1]), (r[2], r[3]), (r[4], r[5]), (r[6], r[7])
 
     @property
     def size(self):
@@ -188,12 +187,12 @@ class FrameRect(object):
 
     @property
     def location(self):
-        """返回元素左上角的绝对坐标"""
+        """返回iframe元素左上角的绝对坐标"""
         return self._frame.frame_ele.rect.location
 
     @property
     def viewport_location(self):
-        """返回视口在屏幕中坐标，左上角为(0, 0)"""
+        """返回元素在视口中坐标，左上角为(0, 0)"""
         return self._frame.frame_ele.rect.viewport_location
 
     @property

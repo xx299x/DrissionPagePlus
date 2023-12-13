@@ -349,7 +349,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             self._has_session = None
 
     def close(self):
-        """关闭标签页"""
+        """关闭标签页和Session"""
         if self._has_driver:
             self.close_tabs(self.tab_id)
         if self._session:
