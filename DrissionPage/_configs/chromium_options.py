@@ -599,19 +599,19 @@ class ChromiumOptions(object):
 
 class PortFinder(object):
     used_port = {}
+    lock = Lock()
 
     def __init__(self):
         self.tmp_dir = Path(gettempdir()) / 'DrissionPage' / 'TempFolder'
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
         if not PortFinder.used_port:
             clean_folder(self.tmp_dir)
-        self._lock = Lock()
 
     def get_port(self):
         """查找一个可用端口
         :return: 可以使用的端口和用户文件夹路径组成的元组
         """
-        with self._lock:
+        with PortFinder.lock:
             for i in range(9600, 19600):
                 if i in PortFinder.used_port:
                     continue

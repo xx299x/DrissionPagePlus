@@ -4,6 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
+from threading import Lock
 from typing import Union, Tuple, Any, Literal
 
 
@@ -152,6 +153,7 @@ class ChromiumOptions(object):
 
 class PortFinder(object):
     used_port: dict = ...
+    lock: Lock = ...
 
     @staticmethod
     def get_port() -> Tuple[int, str]: ...

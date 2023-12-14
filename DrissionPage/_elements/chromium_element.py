@@ -159,7 +159,7 @@ class ChromiumElement(DrissionElement):
         if not info.get('shadowRoots', None):
             return None
 
-        return ChromiumShadowRoot(self, backend_id=info['shadowRoots'][0]['backendNodeId'])
+        return ShadowRoot(self, backend_id=info['shadowRoots'][0]['backendNodeId'])
 
     @property
     def sr(self):
@@ -764,8 +764,8 @@ class ChromiumElement(DrissionElement):
         return self.rect.size
 
 
-class ChromiumShadowRoot(BaseElement):
-    """ChromiumShadowRoot是用于处理ShadowRoot的类，使用方法和ChromiumElement基本一致"""
+class ShadowRoot(BaseElement):
+    """ShadowRoot是用于处理ShadowRoot的类，使用方法和ChromiumElement基本一致"""
 
     def __init__(self, parent_ele, obj_id=None, backend_id=None):
         """
@@ -786,7 +786,7 @@ class ChromiumShadowRoot(BaseElement):
         self._states = None
 
     def __repr__(self):
-        return f'<ChromiumShadowRoot in {self.parent_ele}>'
+        return f'<ShadowRoot in {self.parent_ele}>'
 
     def __call__(self, loc_or_str, timeout=None):
         """在内部查找元素
@@ -1278,7 +1278,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
     :return: js执行结果
     """
-    if isinstance(page_or_ele, (ChromiumElement, ChromiumShadowRoot)):
+    if isinstance(page_or_ele, (ChromiumElement, ShadowRoot)):
         page = page_or_ele.page
         obj_id = page_or_ele._obj_id
         is_page = False
@@ -1337,7 +1337,7 @@ def parse_js_result(page, ele, result):
         elif sub_type == 'node':
             class_name = result['className']
             if class_name == 'ShadowRoot':
-                return ChromiumShadowRoot(ele, obj_id=result['objectId'])
+                return ShadowRoot(ele, obj_id=result['objectId'])
             elif class_name == 'HTMLDocument':
                 return result
             else:

@@ -85,7 +85,7 @@ class BaseElement(BaseParser):
 
 class DrissionElement(BaseElement):
     """ChromiumElement 和 SessionElement的基类
-    但不是ShadowRootElement的基类"""
+    但不是ShadowRoot的基类"""
 
     @property
     def link(self):

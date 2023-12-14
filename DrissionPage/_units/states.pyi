@@ -5,7 +5,7 @@
 """
 from typing import Union, Tuple, List, Optional
 
-from .._elements.chromium_element import ChromiumShadowRoot, ChromiumElement
+from .._elements.chromium_element import ShadowRoot, ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
 
@@ -43,11 +43,11 @@ class ElementStates(object):
 
 
 class ShadowRootStates(object):
-    def __init__(self, ele: ChromiumShadowRoot):
+    def __init__(self, ele: ShadowRoot):
         """
         :param ele: ChromiumElement
         """
-        self._ele: ChromiumShadowRoot = ...
+        self._ele: ShadowRoot = ...
 
     @property
     def is_enabled(self) -> bool: ...

@@ -129,12 +129,12 @@ class PageStates(object):
 
     @property
     def ready_state(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        """返回当前页面加载状态，'connecting' 'loading' 'interactive' 'complete'"""
         return self._page._ready_state
 
     @property
     def has_alert(self):
-        """返回当前页面加载状态，'loading' 'interactive' 'complete'"""
+        """返回当前页面是否存在弹窗"""
         return self._page._has_alert
 
 

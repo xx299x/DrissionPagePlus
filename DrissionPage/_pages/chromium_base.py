@@ -190,7 +190,7 @@ class ChromiumBase(BasePage):
                 print('在FrameStartedLoading变成loading')
 
             self._doc_got = False
-            self._ready_state = 'loading'
+            self._ready_state = 'connecting'
             self._is_loading = True
             self._load_end_time = perf_counter() + self.timeouts.page_load
             if self._load_mode == 'eager':

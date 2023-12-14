@@ -173,7 +173,7 @@ class Listener(object):
         if clear:
             self.clear()
 
-    def go_on(self):
+    def resume(self):
         """继续暂停的监听"""
         if self.listening:
             return

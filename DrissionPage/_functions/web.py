@@ -250,7 +250,8 @@ def set_browser_cookies(page, cookies):
         if 'expiry' in cookie:
             cookie['expires'] = int(cookie['expiry'])
             cookie.pop('expiry')
-        if 'expires' in cookie:
+
+        if 'expires' in cookie and isinstance(cookie['expires'], str):
             if cookie['expires'].isdigit():
                 cookie['expires'] = int(cookie['expires'])
 
