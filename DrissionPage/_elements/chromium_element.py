@@ -1279,13 +1279,19 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     :return: js执行结果
     """
     if isinstance(page_or_ele, (ChromiumElement, ShadowRoot)):
+        is_page = False
         page = page_or_ele.page
         obj_id = page_or_ele._obj_id
-        is_page = False
     else:
-        page = page_or_ele
-        obj_id = page_or_ele._root_id
         is_page = True
+        page = page_or_ele
+        end_time = perf_counter() + 5
+        while perf_counter() < end_time:
+            obj_id = page_or_ele._root_id
+            if obj_id is not None:
+                break
+        else:
+            raise RuntimeError('js运行环境出错。')
 
     if page.states.has_alert:
         raise AlertExistsError
