@@ -266,7 +266,7 @@ def raise_error(r):
                    'No node with given id found', 'Node with given id does not belong to the document',
                    'No node found for given backend id'):
         raise ElementLostError
-    elif error == 'tab closed':
+    elif error == ('tab closed', 'No target with given id found'):
         raise PageClosedError
     elif error == 'timeout':
         raise TimeoutError

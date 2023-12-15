@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from pathlib import Path
-from re import search
+from re import search, DOTALL
 from time import sleep
 from urllib.parse import urlparse, quote
 
@@ -379,7 +379,7 @@ def set_charset(response):
 
     # 在headers中获取不到编码，且如果是网页
     elif content_type.replace(' ', '').startswith('text/html'):
-        re_result = search(b'<meta.*?charset=[ \\\'"]*([^"\\\' />]+).*?>', response.content)
+        re_result = search(b'<meta.*?charset=[ \\\'"]*([^"\\\' />]+).*?>', response.content, DOTALL)
 
         if re_result:
             charset = re_result.group(1).decode()

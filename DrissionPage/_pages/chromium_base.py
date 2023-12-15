@@ -172,6 +172,8 @@ class ChromiumBase(BasePage):
         except:
             if self._debug:
                 print('获取文档失败。')
+            from traceback import print_exc
+            print_exc()
             print('请把报错信息和重现方法告知作者，感谢。\nhttps://gitee.com/g1879/DrissionPage/issues/new')
             raise
             # return False

@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from copy import copy
-from re import search, findall
+from re import search, findall, DOTALL
 from time import sleep, perf_counter
 
 from .._elements.chromium_element import ChromiumElement
@@ -304,7 +304,7 @@ class ChromiumFrame(ChromiumBase):
         """返回元素outerHTML文本"""
         tag = self.tag
         out_html = self._target_page.run_cdp('DOM.getOuterHTML', backendNodeId=self.frame_ele._backend_id)['outerHTML']
-        sign = search(rf'<{tag}.*?>', out_html).group(0)
+        sign = search(rf'<{tag}.*?>', out_html, DOTALL).group(0)
         return f'{sign}{self.inner_html}</{tag}>'
 
     @property
