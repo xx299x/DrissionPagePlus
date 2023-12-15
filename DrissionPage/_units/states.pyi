@@ -85,3 +85,9 @@ class FrameStates(object):
 
     @property
     def ready_state(self) -> str: ...
+
+    @property
+    def is_displayed(self) -> bool: ...
+
+    @property
+    def has_alert(self) -> bool: ...

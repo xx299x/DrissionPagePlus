@@ -171,3 +171,8 @@ class FrameStates(object):
         return not (self._frame.frame_ele.style('visibility') == 'hidden'
                     or self._frame.frame_ele.run_js('return this.offsetParent === null;')
                     or self._frame.frame_ele.style('display') == 'none')
+
+    @property
+    def has_alert(self):
+        """返回当前页面是否存在弹窗"""
+        return self._frame._has_alert
