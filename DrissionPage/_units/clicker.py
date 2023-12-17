@@ -147,10 +147,10 @@ class Clicker(object):
         :return: None
         """
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
-                               x=client_x, y=client_y, button=button, clickCount=count)
+                               x=client_x, y=client_y, button=button, clickCount=count, _timeout=0.3)
         # sleep(.05)
         self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
-                               x=client_x, y=client_y, button=button)
+                               x=client_x, y=client_y, button=button, _timeout=0.2)
 
     # -------------即将废弃--------------
 

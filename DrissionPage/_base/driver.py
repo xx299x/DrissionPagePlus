@@ -37,6 +37,7 @@ class Driver(object):
         self._stopped = Event()
 
         self.event_handlers = {}
+        self.immediate_event_handlers = {}
         self.method_results = {}
         self.event_queue = Queue()
 
@@ -63,12 +64,14 @@ class Driver(object):
                         print(f'发> {message_json}')
                         break
 
-        if timeout is not None:
-            timeout = perf_counter() + timeout
-
+        end_time = perf_counter() + timeout if timeout is not None else None
         self.method_results[ws_id] = Queue()
         try:
             self._ws.send(message_json)
+            if timeout == 0:
+                self.method_results.pop(ws_id, None)
+                return {'id': ws_id, 'result': {}}
+
         except (OSError, WebSocketConnectionClosedException):
             self.method_results.pop(ws_id, None)
             return None
@@ -82,14 +85,12 @@ class Driver(object):
             except Empty:
                 if self.alert_flag:
                     self.alert_flag = False
-                    result = {'result': {'message': 'alert exists.'}}
                     self.method_results.pop(ws_id, None)
-                    return result
+                    return {'result': {'message': 'alert exists.'}}
 
-                elif timeout is not None and perf_counter() > timeout:
-                    result = {'error': {'message': 'timeout'}}
+                elif timeout is not None and perf_counter() > end_time:
                     self.method_results.pop(ws_id, None)
-                    return result
+                    return {'error': {'message': 'timeout'}}
 
                 continue
 
@@ -119,8 +120,12 @@ class Driver(object):
             if 'method' in msg:
                 if msg['method'].startswith('Page.javascriptDialog'):
                     self.alert_flag = msg['method'].endswith('Opening')
-
-                self.event_queue.put(msg)
+                if msg['method'] in self.immediate_event_handlers:
+                    function = self.immediate_event_handlers.get(msg['method'])
+                    if function:
+                        function(**msg['params'])
+                else:
+                    self.event_queue.put(msg)
 
             elif msg.get('id') in self.method_results:
                 self.method_results[msg['id']].put(msg)
@@ -138,11 +143,7 @@ class Driver(object):
 
             function = self.event_handlers.get(event['method'])
             if function:
-                # if self._debug:
-                #     print(f'开始执行 {function.__name__}')
                 function(**event['params'])
-                # if self._debug:
-                #     print(f'执行 {function.__name__}完毕')
 
             self.event_queue.task_done()
 
@@ -156,8 +157,8 @@ class Driver(object):
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
 
-        timeout = kwargs.pop("_timeout", 20)
-        result = self._send({"method": _method, "params": kwargs}, timeout=timeout)
+        timeout = kwargs.pop('_timeout', 20)
+        result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
         if result is None:
             return {'error': 'tab closed', 'type': 'tab_closed'}
         if 'result' not in result and 'error' in result:
@@ -199,19 +200,21 @@ class Driver(object):
         self.event_queue.queue.clear()
         return True
 
-    def set_callback(self, event, callback):
+    def set_callback(self, event, callback, immediate=False):
         """绑定cdp event和回调方法
         :param event: cdp event
         :param callback: 绑定到cdp event的回调方法
+        :param immediate: 是否要立即处理的动作
         :return: None
         """
+        handler = self.immediate_event_handlers if immediate else self.event_handlers
         if callback:
-            self.event_handlers[event] = callback
+            handler[event] = callback
         else:
-            self.event_handlers.pop(event, None)
+            handler.pop(event, None)
 
     def __str__(self):
-        return f"<Driver {self.id}>"
+        return f'<Driver {self.id}>'
 
     __repr__ = __str__
 
@@ -233,7 +236,7 @@ class BrowserDriver(Driver):
         self.browser = browser
 
     def __repr__(self):
-        return f"<BrowserDriver {self.id}>"
+        return f'<BrowserDriver {self.id}>'
 
     def get(self, url):
         r = get(url, headers={'Connection': 'close'})

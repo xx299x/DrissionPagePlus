@@ -34,6 +34,7 @@ class Driver(object):
     _handle_event_th: Thread
     _stopped: Event
     event_handlers: dict
+    immediate_event_handlers: dict
     method_results: dict
     event_queue: Queue
 
@@ -53,7 +54,7 @@ class Driver(object):
 
     def stop(self) -> bool: ...
 
-    def set_callback(self, event: str, callback: Union[Callable, None]) -> None: ...
+    def set_callback(self, event: str, callback: Union[Callable, None], immediate: bool = False) -> None: ...
 
     def __str__(self) -> str: ...
 

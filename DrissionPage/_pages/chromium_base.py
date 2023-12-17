@@ -123,7 +123,7 @@ class ChromiumBase(BasePage):
         self._driver = self.browser._get_driver(tab_id)
 
         self._alert = Alert()
-        self._driver.set_callback('Page.javascriptDialogOpening', self._on_alert_open)
+        self._driver.set_callback('Page.javascriptDialogOpening', self._on_alert_open, immediate=True)
         self._driver.set_callback('Page.javascriptDialogClosed', self._on_alert_close)
 
         self._driver.run('DOM.enable')
@@ -837,6 +837,12 @@ class ChromiumBase(BasePage):
             self.run_cdp_loaded('Network.clearBrowserCookies')
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
+        r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
+        while self._has_alert:
+            sleep(.1)
+        return r
+
+    def _handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         """处理提示框，可以自动等待提示框出现
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
@@ -858,10 +864,10 @@ class ChromiumBase(BasePage):
             return False
 
         res_text = self._alert.text
-        if self._alert.type == 'prompt':
-            self.driver.run('Page.handleJavaScriptDialog', accept=accept, promptText=send)
-        else:
-            self.driver.run('Page.handleJavaScriptDialog', accept=accept)
+        d = {'accept': accept, '_timeout': 0}
+        if self._alert.type == 'prompt' and send is not None:
+            d['promptText'] = send
+        self.driver.run('Page.handleJavaScriptDialog', **d)
         return res_text
 
     def _on_alert_open(self, **kwargs):
@@ -875,9 +881,9 @@ class ChromiumBase(BasePage):
         self._has_alert = True
 
         if self._alert.auto is not None:
-            self.handle_alert(self._alert.auto)
+            self._handle_alert(self._alert.auto)
         elif self._alert.handle_next is not None:
-            self.handle_alert(self._alert.handle_next, self._alert.next_text)
+            self._handle_alert(self._alert.handle_next, self._alert.next_text)
             self._alert.handle_next = None
 
     def _on_alert_close(self, **kwargs):

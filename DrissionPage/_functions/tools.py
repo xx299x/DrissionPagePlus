@@ -269,7 +269,8 @@ def raise_error(r):
     elif error == ('tab closed', 'No target with given id found'):
         raise PageClosedError
     elif error == 'timeout':
-        raise TimeoutError
+        return
+        # raise TimeoutError
     elif error == 'alert exists.':
         raise AlertExistsError
     elif error in ('Node does not have a layout object', 'Could not compute box model.'):
