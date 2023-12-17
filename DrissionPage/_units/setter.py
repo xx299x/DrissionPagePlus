@@ -7,8 +7,8 @@ from pathlib import Path
 
 from requests.structures import CaseInsensitiveDict
 
+from .cookies_setter import SessionCookiesSetter, CookiesSetter
 from .._functions.tools import show_or_hide_browser
-from .._functions.web import set_browser_cookies, set_session_cookies
 
 
 class BasePageSetter(object):
@@ -28,6 +28,7 @@ class BasePageSetter(object):
 class ChromiumBaseSetter(BasePageSetter):
     def __init__(self, page):
         super().__init__(page)
+        self._cookies_setter = None
 
     @property
     def load_mode(self):
@@ -38,6 +39,13 @@ class ChromiumBaseSetter(BasePageSetter):
     def scroll(self):
         """返回用于设置页面滚动设置的对象"""
         return PageScrollSetter(self._page.scroll)
+
+    @property
+    def cookies(self):
+        """返回用于设置cookies的对象"""
+        if self._cookies_setter is None:
+            self._cookies_setter = CookiesSetter(self._page)
+        return self._cookies_setter
 
     def retry_times(self, times):
         """设置连接失败重连次数"""
@@ -107,23 +115,6 @@ class ChromiumBaseSetter(BasePageSetter):
             self._page.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': True},
                                key=item, value=value)
         self._page.run_cdp_loaded('DOMStorage.disable')
-
-    def cookie(self, cookie):
-        """设置单个cookie
-        :param cookie: cookie信息
-        :return: None
-        """
-        if isinstance(cookie, str):
-            self.cookies(cookie)
-        else:
-            self.cookies([cookie])
-
-    def cookies(self, cookies):
-        """设置多个cookie，注意不要传入单个
-        :param cookies: cookies信息
-        :return: None
-        """
-        set_browser_cookies(self._page, cookies)
 
     def upload_files(self, files):
         """等待上传的文件路径
@@ -233,6 +224,14 @@ class SessionPageSetter(BasePageSetter):
         :param page: SessionPage对象
         """
         super().__init__(page)
+        self._cookies_setter = None
+
+    @property
+    def cookies(self):
+        """返回用于设置cookies的对象"""
+        if self._cookies_setter is None:
+            self._cookies_setter = SessionCookiesSetter(self._page)
+        return self._cookies_setter
 
     def retry_times(self, times):
         """设置连接失败时重连次数"""
@@ -269,23 +268,6 @@ class SessionPageSetter(BasePageSetter):
             self._page._encoding = encoding if encoding else None
         if self._page.response:
             self._page.response.encoding = encoding
-
-    def cookie(self, cookie):
-        """为Session对象设置单个cookie
-        :param cookie: cookie信息
-        :return: None
-        """
-        if isinstance(cookie, str):
-            self.cookies(cookie)
-        else:
-            self.cookies([cookie])
-
-    def cookies(self, cookies):
-        """为Session对象设置多个cookie，注意不要传入单个
-        :param cookies: cookies信息
-        :return: None
-        """
-        set_session_cookies(self._page.session, cookies)
 
     def headers(self, headers):
         """设置通用的headers

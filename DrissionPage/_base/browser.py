@@ -5,7 +5,7 @@
 """
 from time import sleep, perf_counter
 
-from .chromium_driver import BrowserDriver, ChromiumDriver
+from .driver import BrowserDriver, Driver
 from .._functions.tools import stop_process_on_port, raise_error
 from .._units.downloader import DownloadManager
 
@@ -42,7 +42,7 @@ class Browser(object):
         self.id = browser_id
         self._frames = {}
         self._drivers = {}
-        # self._drivers = {t: ChromiumDriver(t, 'page', address) for t in self.tabs}
+        # self._drivers = {t: Driver(t, 'page', address) for t in self.tabs}
         self._connected = False
 
         self._process_id = None
@@ -57,16 +57,16 @@ class Browser(object):
         self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
 
     def _get_driver(self, tab_id):
-        """获取对应tab id的ChromiumDriver
+        """获取对应tab id的Driver
         :param tab_id: 标签页id
-        :return: ChromiumDriver对象
+        :return: Driver对象
         """
-        return self._drivers.pop(tab_id, ChromiumDriver(tab_id, 'page', self.address))
+        return self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address))
 
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
         if kwargs['targetInfo']['type'] == 'page' and not kwargs['targetInfo']['url'].startswith('devtools://'):
-            self._drivers[kwargs['targetInfo']['targetId']] = ChromiumDriver(kwargs['targetInfo']['targetId'], 'page',
+            self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'], 'page',
                                                                              self.address)
 
     def _onTargetDestroyed(self, **kwargs):

@@ -19,7 +19,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
         :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
-        :param chromium_options: ChromiumDriver对象，只使用s模式时应传入False
+        :param chromium_options: Driver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
         chromium_options = chromium_options or driver_or_options

@@ -37,7 +37,7 @@ class ChromiumPage(ChromiumBase):
 
     def _handle_options(self, addr_or_opts):
         """设置浏览器启动属性
-        :param addr_or_opts: 'ip:port'、ChromiumOptions、ChromiumDriver
+        :param addr_or_opts: 'ip:port'、ChromiumOptions、Driver
         :return: 返回浏览器地址
         """
         if not addr_or_opts:

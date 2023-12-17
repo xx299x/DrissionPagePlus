@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union
+from typing import Union, Optional
 
 from .._elements.chromium_element import ChromiumElement
 
@@ -12,9 +12,9 @@ class Clicker(object):
     def __init__(self, ele: ChromiumElement):
         self._ele: ChromiumElement = ...
 
-    def __call__(self, by_js: Union[None, bool] = None, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
+    def __call__(self, by_js: Optional[bool] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
 
-    def left(self, by_js: Union[None, bool] = None, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
+    def left(self, by_js: Optional[bool] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
 
     def right(self) -> None: ...
 

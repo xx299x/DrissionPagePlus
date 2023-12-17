@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from html import unescape
-from re import match, DOTALL
+from re import match, sub, DOTALL
 
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
@@ -342,15 +342,18 @@ def make_session_ele(html_or_ele, loc=None, single=True):
     # 各种页面对象
     elif isinstance(html_or_ele, BasePage):
         page = html_or_ele
-        html_or_ele = fromstring(html_or_ele.html)
+        html = html_or_ele.html
+        if html.startswith('<?xml '):
+            html = sub(r'^<\?xml.*?>', '', html)
+        html_or_ele = fromstring(html)
 
     # 直接传入html文本
     elif isinstance(html_or_ele, str):
         page = None
         html_or_ele = fromstring(html_or_ele)
 
-    # ShadowRoot, ChromiumFrame
-    elif isinstance(html_or_ele, BaseElement) or the_type.endswith(".ChromiumFrame'>"):
+    # ShadowRoot
+    elif isinstance(html_or_ele, BaseElement):
         page = html_or_ele.page
         html_or_ele = fromstring(html_or_ele.html)
 

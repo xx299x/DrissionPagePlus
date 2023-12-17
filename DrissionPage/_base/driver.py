@@ -12,7 +12,7 @@ from requests import get
 from websocket import WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection
 
 
-class ChromiumDriver(object):
+class Driver(object):
     def __init__(self, tab_id, tab_type, address):
         """
         :param tab_id: 标签页id
@@ -211,12 +211,12 @@ class ChromiumDriver(object):
             self.event_handlers.pop(event, None)
 
     def __str__(self):
-        return f"<ChromiumDriver {self.id}>"
+        return f"<Driver {self.id}>"
 
     __repr__ = __str__
 
 
-class BrowserDriver(ChromiumDriver):
+class BrowserDriver(Driver):
     BROWSERS = {}
 
     def __new__(cls, tab_id, tab_type, address, browser):

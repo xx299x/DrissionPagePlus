@@ -251,20 +251,25 @@ def set_browser_cookies(page, cookies):
             cookie['expires'] = int(cookie['expiry'])
             cookie.pop('expiry')
 
-        if 'expires' in cookie and isinstance(cookie['expires'], str):
-            if cookie['expires'].isdigit():
-                cookie['expires'] = int(cookie['expires'])
+        if 'expires' in cookie:
+            if not cookie['expires']:
+                cookie.pop('expires')
 
-            elif cookie['expires'].replace('.', '').isdigit():
-                cookie['expires'] = float(cookie['expires'])
+            elif isinstance(cookie['expires'], str):
+                if cookie['expires'].isdigit():
+                    cookie['expires'] = int(cookie['expires'])
 
-            else:
-                try:
-                    cookie['expires'] = datetime.strptime(cookie['expires'],
-                                                          '%a, %d %b %Y %H:%M:%S GMT').timestamp()
-                except ValueError:
-                    cookie['expires'] = datetime.strptime(cookie['expires'],
-                                                          '%a, %d %b %y %H:%M:%S GMT').timestamp()
+                elif cookie['expires'].replace('.', '').isdigit():
+                    cookie['expires'] = float(cookie['expires'])
+
+                else:
+                    try:
+                        cookie['expires'] = datetime.strptime(cookie['expires'],
+                                                              '%a, %d %b %Y %H:%M:%S GMT').timestamp()
+                    except ValueError:
+                        cookie['expires'] = datetime.strptime(cookie['expires'],
+                                                              '%a, %d %b %y %H:%M:%S GMT').timestamp()
+
         if cookie['value'] is None:
             cookie['value'] = ''
         elif not isinstance(cookie['value'], str):

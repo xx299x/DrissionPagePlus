@@ -12,7 +12,7 @@ from .chromium_page import ChromiumPage
 from .chromium_tab import WebPageTab
 from .session_page import SessionPage
 from .._base.base import BasePage
-from .._base.chromium_driver import ChromiumDriver
+from .._base.driver import Driver
 from .._configs.chromium_options import ChromiumOptions
 from .._configs.session_options import SessionOptions
 from .._elements.chromium_element import ChromiumElement
@@ -162,9 +162,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
                 Union[ChromiumElement, str, ChromiumFrame]]]: ...
 
-    def _set_start_options(self, dr_opt: Union[ChromiumDriver, bool, None],
+    def _set_start_options(self, dr_opt: Union[Driver, bool, None],
                            se_opt: Union[Session, SessionOptions, bool, None]) -> None: ...
 
     def quit(self, timeout: float = 5, force: bool = True) -> None: ...
-
-    def _on_download_begin(self, **kwargs): ...

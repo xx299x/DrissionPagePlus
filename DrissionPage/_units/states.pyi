@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, Tuple, List, Optional
+from typing import Union, Tuple, List, Optional, Literal
 
 from .._elements.chromium_element import ShadowRoot, ChromiumElement
 from .._pages.chromium_base import ChromiumBase
@@ -36,7 +36,7 @@ class ElementStates(object):
     def is_whole_in_viewport(self) -> bool: ...
 
     @property
-    def is_covered(self) -> bool: ...
+    def is_covered(self) -> Union[Literal[False], int]: ...
 
     @property
     def has_rect(self) -> Union[bool, List[Tuple[float, float]]]: ...

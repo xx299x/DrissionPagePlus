@@ -17,7 +17,7 @@ class Clicker(object):
         """
         self._ele = ele
 
-    def __call__(self, by_js=None, timeout=1.5, wait_stop=True):
+    def __call__(self, by_js=False, timeout=1.5, wait_stop=True):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
@@ -27,7 +27,7 @@ class Clicker(object):
         """
         return self.left(by_js, timeout, wait_stop)
 
-    def left(self, by_js=None, timeout=1.5, wait_stop=True):
+    def left(self, by_js=False, timeout=1.5, wait_stop=True):
         """点击元素，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
         :param timeout: 模拟点击的超时时间，等待元素可见、可用、进入视口

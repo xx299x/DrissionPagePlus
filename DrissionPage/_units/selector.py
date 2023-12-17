@@ -251,7 +251,7 @@ class SelectElement(object):
         :return: None
         """
         if isinstance(option, (list, tuple, set)):
-            if not self.is_multi:
+            if not self.is_multi and len(option) > 1:
                 raise TypeError("只能对多项选框执行多选。")
             for o in option:
                 o.run_js(f'this.selected={mode};')

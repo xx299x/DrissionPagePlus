@@ -61,17 +61,13 @@ class ElementStates(object):
 
     @property
     def is_covered(self):
-        """返回元素是否被覆盖，与是否在视口中无关"""
+        """返回元素是否被覆盖，与是否在视口中无关，如被覆盖返回覆盖元素的backend id，否则返回False"""
         lx, ly = self._ele.rect.click_point
         try:
-            r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly)
+            bid = self._ele.page.run_cdp('DOM.getNodeForLocation', x=lx, y=ly).get('backendNodeId')
+            return bid if bid != self._ele._backend_id else False
         except CDPError:
             return False
-
-        if r.get('backendNodeId') != self._ele._backend_id:
-            return True
-
-        return False
 
     @property
     def has_rect(self):

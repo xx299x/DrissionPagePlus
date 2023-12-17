@@ -11,7 +11,7 @@ from time import perf_counter, sleep
 
 from requests.structures import CaseInsensitiveDict
 
-from .._base.chromium_driver import ChromiumDriver
+from .._base.driver import Driver
 from .._functions.settings import Settings
 from ..errors import WaitTimeoutError
 
@@ -84,7 +84,7 @@ class Listener(object):
         if self.listening:
             return
 
-        self._driver = ChromiumDriver(self._target_id, 'page', self._address)
+        self._driver = Driver(self._target_id, 'page', self._address)
         self._driver.run('Network.enable')
 
         self._set_callback()
@@ -222,7 +222,7 @@ class Listener(object):
             debug = self._driver._debug
             self._driver.stop()
         if self.listening:
-            self._driver = ChromiumDriver(self._target_id, 'page', self._address)
+            self._driver = Driver(self._target_id, 'page', self._address)
             self._driver._debug = debug
             self._driver.run('Network.enable')
             self._set_callback()

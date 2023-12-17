@@ -5,7 +5,7 @@
 """
 from typing import List, Optional, Union
 
-from .chromium_driver import BrowserDriver, ChromiumDriver
+from .driver import BrowserDriver, Driver
 from .._pages.chromium_page import ChromiumPage
 from .._units.downloader import DownloadManager
 
@@ -26,7 +26,7 @@ class Browser(object):
 
     def __init__(self, address: str, browser_id: str, page: ChromiumPage): ...
 
-    def _get_driver(self, tab_id: str) -> ChromiumDriver: ...
+    def _get_driver(self, tab_id: str) -> Driver: ...
 
     def run_cdp(self, cmd, **cmd_args) -> dict: ...
 

@@ -156,31 +156,31 @@ class ChromiumBase(BasePage):
         timeout = timeout if timeout >= .5 else .5
         self._is_reading = True
         end_time = perf_counter() + timeout
-        try:
-            b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
-            timeout = end_time - perf_counter()
-            timeout = .5 if timeout < 0 else timeout
-            self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id, _timeout=timeout)['object']['objectId']
+        while perf_counter() < end_time:
+            try:
+                b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
+                timeout = end_time - perf_counter()
+                timeout = .5 if timeout < 0 else timeout
+                self._root_id = self.run_cdp('DOM.resolveNode',
+                                             backendNodeId=b_id, _timeout=timeout)['object']['objectId']
+                r = self.run_cdp('Page.getFrameTree')
+                for i in findall(r"'id': '(.*?)'", str(r)):
+                    self.browser._frames[i] = self.tab_id
+                if self._debug:
+                    print('获取文档结束')
+                result = True
+                break
 
-            r = self.run_cdp('Page.getFrameTree')
-            for i in findall(r"'id': '(.*?)'", str(r)):
-                self.browser._frames[i] = self.tab_id
-            if self._debug:
-                print('获取文档结束')
-            return True
+            except:
+                timeout = end_time - perf_counter()
+                timeout = .5 if timeout < 0 else timeout
 
-        except:
-            if self._debug:
-                print('获取文档失败。')
-            from traceback import print_exc
-            print_exc()
-            print('请把报错信息和重现方法告知作者，感谢。\nhttps://gitee.com/g1879/DrissionPage/issues/new')
-            raise
-            # return False
+        else:
+            result = False
 
-        finally:
-            self._is_loading = False
-            self._is_reading = False
+        self._is_loading = False
+        self._is_reading = False
+        return result
 
     def _onFrameDetached(self, **kwargs):
         self.browser._frames.pop(kwargs['frameId'], None)
@@ -230,8 +230,8 @@ class ChromiumBase(BasePage):
 
         if self._load_mode == 'eager':
             self.run_cdp('Page.stopLoading')
-        self._get_document(self._load_end_time - perf_counter() - .1)
-        self._doc_got = True
+        if self._get_document(self._load_end_time - perf_counter() - .1):
+            self._doc_got = True
         self._ready_state = 'interactive'
 
         if self._debug:
@@ -243,8 +243,7 @@ class ChromiumBase(BasePage):
             print(f'{self._frame_id}触发LoadEventFired')
             print('在LoadEventFired变成complete')
 
-        if self._doc_got is False:
-            self._get_document(self._load_end_time - perf_counter() - .1)
+        if self._doc_got is False and self._get_document(self._load_end_time - perf_counter() - .1):
             self._doc_got = True
         self._ready_state = 'complete'
 
@@ -369,7 +368,7 @@ class ChromiumBase(BasePage):
 
     @property
     def driver(self):
-        """返回用于控制浏览器的ChromiumDriver对象"""
+        """返回用于控制浏览器的Driver对象"""
         if self._driver is None:
             raise RuntimeError('浏览器已关闭或链接已断开。')
         return self._driver
@@ -960,6 +959,9 @@ class ChromiumBase(BasePage):
                     sleep(interval)
                     if self._debug or show_errmsg:
                         print(f'重试{t + 1} {to_url}')
+                end_time1 = end_time - perf_counter()
+                while self._ready_state not in ('loading', 'complete') and perf_counter() < end_time1:  # 等待出错信息显示
+                    sleep(.1)
                 self.stop_loading()
                 continue
 
