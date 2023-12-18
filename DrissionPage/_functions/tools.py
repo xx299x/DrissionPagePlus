@@ -254,35 +254,40 @@ def configs_to_here(save_name=None):
     om.save(save_name)
 
 
-def raise_error(r):
+def raise_error(result, ignore=None):
     """抛出error对应报错
-    :param r: 包含error的dict
+    :param result: 包含error的dict
+    :param ignore: 要忽略的错误
     :return: None
     """
-    error = r['error']
+    error = result['error']
     if error in ('Cannot find context with specified id', 'Inspected target navigated or closed'):
-        raise ContextLostError
+        r = ContextLostError()
     elif error in ('Could not find node with given id', 'Could not find object with given id',
                    'No node with given id found', 'Node with given id does not belong to the document',
                    'No node found for given backend id'):
-        raise ElementLostError
+        r = ElementLostError()
     elif error == ('tab closed', 'No target with given id found'):
-        raise PageClosedError
+        r = PageClosedError()
     elif error == 'timeout':
-        return
-        # raise TimeoutError
+        r = TimeoutError(f'超时。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
+                         f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
+                         '报告网站：https://gitee.com/g1879/DrissionPage/issues')
     elif error == 'alert exists.':
-        raise AlertExistsError
+        r = AlertExistsError()
     elif error in ('Node does not have a layout object', 'Could not compute box model.'):
-        raise NoRectError
+        r = NoRectError()
     elif error == 'Cannot navigate to invalid URL':
-        raise WrongURLError(f'无效的url：{r["args"]["url"]}。也许要加上"http://"？')
+        r = WrongURLError(f'无效的url：{result["args"]["url"]}。也许要加上"http://"？')
     elif error == 'Frame corresponds to an opaque origin and its storage key cannot be serialized':
-        raise StorageError
+        r = StorageError()
     elif error == 'Sanitizing cookie failed':
-        raise CookieFormatError(f'cookie格式不正确：{r["args"]}')
-    elif r['type'] == 'call_method_error':
-        raise CDPError(f'\n错误：{r["error"]}\nmethod：{r["method"]}\nargs：{r["args"]}\n出现这个错误可能意味着程序有bug，'
-                       '请把错误信息和重现方法告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
+        r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
+    elif result['type'] == 'call_method_error':
+        r = CDPError(f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n出现这个错误可能意味着程序有bug，'
+                     '请把错误信息和重现方法告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
     else:
-        raise RuntimeError(r)
+        r = RuntimeError(result)
+
+    if not ignore or not isinstance(r, ignore):
+        raise r

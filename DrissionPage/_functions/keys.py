@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from ..errors import AlertExistsError
 
 
 class Keys:
@@ -403,7 +404,7 @@ def keyDescriptionForString(_modifiers, keyString):  # noqa: C901
 def send_key(page, modifier, key):
     """发送一个字，在键盘中的字符触发按键，其它直接发送文本"""
     if key not in keyDefinitions:
-        page.run_cdp('Input.insertText', text=key)
+        page.run_cdp('Input.insertText', text=key, _ignore=AlertExistsError, _timeout=0.3)
 
     else:
         description = keyDescriptionForString(modifier, key)
@@ -417,7 +418,8 @@ def send_key(page, modifier, key):
                 'autoRepeat': False,
                 'unmodifiedText': text,
                 'location': description['location'],
-                'isKeypad': description['location'] == 3}
+                'isKeypad': description['location'] == 3,
+                '_ignore': AlertExistsError, '_timeout': 0.3}
 
         page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'
@@ -440,7 +442,7 @@ def input_text_or_keys(page, text_or_keys):
         return
 
     if text_or_keys.endswith(('\n', '\ue007')):
-        page.run_cdp('Input.insertText', text=text_or_keys[:-1])
+        page.run_cdp('Input.insertText', text=text_or_keys[:-1], _ignore=AlertExistsError, _timeout=0.3)
         send_key(page, modifier, '\n')
     else:
-        page.run_cdp('Input.insertText', text=text_or_keys)
+        page.run_cdp('Input.insertText', text=text_or_keys, _ignore=AlertExistsError, _timeout=0.3)

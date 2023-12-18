@@ -7,7 +7,7 @@ from time import perf_counter, sleep
 
 from .._functions.settings import Settings
 from .._functions.web import offset_scroll
-from ..errors import CanNotClickError, CDPError, NoRectError
+from ..errors import CanNotClickError, CDPError, NoRectError, AlertExistsError
 
 
 class Clicker(object):
@@ -146,11 +146,11 @@ class Clicker(object):
         :param count: 点击次数
         :return: None
         """
-        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed',
-                               x=client_x, y=client_y, button=button, clickCount=count, _timeout=0.3)
+        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed', x=client_x,
+                               y=client_y, button=button, clickCount=count, _ignore=AlertExistsError, _timeout=0.3)
         # sleep(.05)
-        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased',
-                               x=client_x, y=client_y, button=button, _timeout=0.2)
+        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased', x=client_x,
+                               y=client_y, button=button, _ignore=AlertExistsError, _timeout=0.2)
 
     # -------------即将废弃--------------
 
