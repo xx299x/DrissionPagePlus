@@ -19,7 +19,7 @@ class BaseWaiter(object):
         """
         sleep(second)
 
-    def ele_delete(self, loc_or_ele, timeout=None, raise_err=None):
+    def ele_deleted(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素从DOM中删除
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
@@ -27,7 +27,7 @@ class BaseWaiter(object):
         :return: 是否等待成功
         """
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
-        return ele.wait.delete(timeout, raise_err=raise_err) if ele else True
+        return ele.wait.deleted(timeout, raise_err=raise_err) if ele else True
 
     def ele_display(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素变成显示状态
@@ -49,7 +49,7 @@ class BaseWaiter(object):
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
-    def ele_load(self, loc, timeout=None, raise_err=None):
+    def ele_loaded(self, loc, timeout=None, raise_err=None):
         """等待元素加载到DOM
         :param loc: 要等待的元素，输入定位符
         :param timeout: 超时时间，默认读取页面超时时间
@@ -290,7 +290,7 @@ class ElementWaiter(object):
         """
         sleep(second)
 
-    def delete(self, timeout=None, raise_err=None):
+    def deleted(self, timeout=None, raise_err=None):
         """等待元素从dom删除
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
@@ -346,7 +346,7 @@ class ElementWaiter(object):
         """
         return self._wait_state('is_enabled', False, timeout, raise_err)
 
-    def disabled_or_delete(self, timeout=None, raise_err=None):
+    def disabled_or_deleted(self, timeout=None, raise_err=None):
         """等待当前元素变成不可用或从DOM移除
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置

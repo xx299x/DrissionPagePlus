@@ -3,10 +3,9 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, List
+from typing import Union
 
 from .downloader import DownloadMission
-from .listener import DataPacket
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
@@ -19,7 +18,7 @@ class BaseWaiter(object):
 
     def __call__(self, second: float) -> None: ...
 
-    def ele_delete(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
+    def ele_deleted(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
                    raise_err: bool = None) -> bool: ...
 
     def ele_display(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
@@ -28,7 +27,7 @@ class BaseWaiter(object):
     def ele_hidden(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
                    raise_err: bool = None) -> bool: ...
 
-    def ele_load(self, loc: Union[str, tuple], timeout: float = None,
+    def ele_loaded(self, loc: Union[str, tuple], timeout: float = None,
                  raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
 
     def _loading(self, timeout: float = None, start: bool = True, gap: float = .01, raise_err: bool = None) -> bool: ...
@@ -73,7 +72,7 @@ class ElementWaiter(object):
 
     def __call__(self, second: float) -> None: ...
 
-    def delete(self, timeout: float = None, raise_err: bool = None) -> bool: ...
+    def deleted(self, timeout: float = None, raise_err: bool = None) -> bool: ...
 
     def display(self, timeout: float = None, raise_err: bool = None) -> bool: ...
 
@@ -87,7 +86,7 @@ class ElementWaiter(object):
 
     def disabled(self, timeout: float = None, raise_err: bool = None) -> bool: ...
 
-    def disabled_or_delete(self, timeout: float = None, raise_err: bool = None) -> bool: ...
+    def disabled_or_deleted(self, timeout: float = None, raise_err: bool = None) -> bool: ...
 
     def stop_moving(self, gap: float = .1, timeout: float = None, raise_err: bool = None) -> bool: ...
 
