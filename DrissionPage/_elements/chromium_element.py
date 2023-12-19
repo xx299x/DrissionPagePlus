@@ -642,7 +642,7 @@ class ChromiumElement(DrissionElement):
         self.page.scroll.to_see(self)
         x, y = offset_scroll(self, offset_x, offset_y)
         self.page.run_cdp('Input.dispatchMouseEvent', type='mouseMoved', x=x, y=y,
-                          _ignore=AlertExistsError, _timeout=0.3)
+                          _ignore=AlertExistsError, _timeout=1)
 
     def drag(self, offset_x=0, offset_y=0, duration=.5):
         """拖拽当前元素到相对位置

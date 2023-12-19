@@ -85,7 +85,7 @@ class Actions:
             self.curr_x = x
             self.curr_y = y
             self._dr.run('Input.dispatchMouseEvent', type='mouseMoved', x=self.curr_x, y=self.curr_y,
-                         modifiers=self.modifier, _ignore=AlertExistsError, _timeout=0.3)
+                         modifiers=self.modifier, _ignore=AlertExistsError, _timeout=1)
             ss = .02 - perf_counter() + t
             if ss > 0:
                 sleep(ss)
@@ -188,7 +188,7 @@ class Actions:
         if on_ele:
             self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mousePressed', button=button, clickCount=count,
-                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=0.3)
+                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=1)
         return self
 
     def _release(self, button):
@@ -197,7 +197,7 @@ class Actions:
         :return: self
         """
         self._dr.run('Input.dispatchMouseEvent', type='mouseReleased', button=button, clickCount=1,
-                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=0.3)
+                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=1)
         return self
 
     def scroll(self, delta_x=0, delta_y=0, on_ele=None):
@@ -210,7 +210,7 @@ class Actions:
         if on_ele:
             self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mouseWheel', x=self.curr_x, y=self.curr_y,
-                     deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=0.3)
+                     deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier, _ignore=AlertExistsError, _timeout=1)
         return self
 
     def up(self, pixel):
@@ -252,7 +252,7 @@ class Actions:
             return self
 
         data = self._get_key_data(key, 'keyDown')
-        data['_timeout'] = .3
+        data['_timeout'] = 1
         data['_ignore'] = AlertExistsError
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
@@ -268,7 +268,7 @@ class Actions:
             return self
 
         data = self._get_key_data(key, 'keyUp')
-        data['_timeout'] = .3
+        data['_timeout'] = 1
         data['_ignore'] = AlertExistsError
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
