@@ -211,7 +211,7 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
             value = condition_method(page)
             if value:
                 return value
-        except Exception as exc:
+        except Exception:
             pass
 
         sleep(poll)
@@ -284,8 +284,9 @@ def raise_error(result, ignore=None):
     elif error == 'Sanitizing cookie failed':
         r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
     elif result['type'] == 'call_method_error':
-        r = CDPError(f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n出现这个错误可能意味着程序有bug，'
-                     '请把错误信息和重现方法告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
+        r = CDPError(f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
+                     f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。'
+                     f'\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
     else:
         r = RuntimeError(result)
 
