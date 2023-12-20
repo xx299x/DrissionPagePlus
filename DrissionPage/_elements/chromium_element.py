@@ -1149,7 +1149,7 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
         return NoneElement(ele.page) if r['result']['subtype'] == 'null' \
             else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
-    if r['result']['description'] == 'NodeList(0)':
+    if r['result']['description'] in ('NodeList(0)', 'Array(0)'):
         return []
     else:
         r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'],
@@ -1176,7 +1176,7 @@ def find_by_css(ele, selector, single, timeout):
 
     end_time = perf_counter() + timeout
     while ('exceptionDetails' in r or r['result']['subtype'] == 'null' or
-           r['result']['description'] == 'NodeList(0)') and perf_counter() < end_time:
+           r['result']['description'] in ('NodeList(0)', 'Array(0)')) and perf_counter() < end_time:
         r = ele.page.run_cdp_loaded('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
                                     returnByValue=False, awaitPromise=True, userGesture=True)
 
@@ -1187,7 +1187,7 @@ def find_by_css(ele, selector, single, timeout):
         return NoneElement(ele.page) if r['result']['subtype'] == 'null' \
             else make_chromium_ele(ele.page, obj_id=r['result']['objectId'])
 
-    if r['result']['description'] == 'NodeList(0)':
+    if r['result']['description'] in ('NodeList(0)', 'Array(0)'):
         return []
     else:
         r = ele.page.run_cdp_loaded('Runtime.getProperties', objectId=r['result']['objectId'],

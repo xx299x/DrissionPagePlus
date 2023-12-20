@@ -16,6 +16,7 @@ from .._base.driver import Driver
 from .._configs.chromium_options import ChromiumOptions
 from .._configs.session_options import SessionOptions
 from .._elements.chromium_element import ChromiumElement
+from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.setter import WebPageSetter
 
@@ -35,7 +36,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -102,16 +103,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, str]: ...
+            timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[ChromiumElement, SessionElement, str]]: ...
+             timeout: float = None) -> List[Union[ChromiumElement, SessionElement]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) \
-            -> Union[SessionElement, str, None]: ...
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
@@ -119,12 +119,17 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def cookies_to_browser(self) -> None: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
+    def get_cookies(self,
+                    as_dict: bool = False,
+                    all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...
 
     def get_tab(self, id_or_num: Union[str, WebPageTab, int] = None) -> WebPageTab: ...
 
-    def new_tab(self, url: str = None, new_window: bool = False, background: bool = False,
+    def new_tab(self,
+                url: str = None,
+                new_window: bool = False,
+                background: bool = False,
                 new_context: bool = False) -> WebPageTab: ...
 
     def close_driver(self) -> None: ...
@@ -157,12 +162,17 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     @property
     def set(self) -> WebPageSetter: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
-                       timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
-            -> Union[ChromiumElement, SessionElement, ChromiumFrame, str, None, List[Union[SessionElement, str]], List[
-                Union[ChromiumElement, str, ChromiumFrame]]]: ...
+    def _find_elements(self,
+                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       timeout: float = None,
+                       single: bool = True,
+                       relative: bool = False,
+                       raise_err: bool = None) \
+            -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement],
+            List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
-    def _set_start_options(self, dr_opt: Union[Driver, bool, None],
+    def _set_start_options(self,
+                           dr_opt: Union[Driver, bool, None],
                            se_opt: Union[Session, SessionOptions, bool, None]) -> None: ...
 
     def quit(self, timeout: float = 5, force: bool = True) -> None: ...

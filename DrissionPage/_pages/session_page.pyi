@@ -40,7 +40,7 @@ class SessionPage(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
-                 timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
+                 timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -89,23 +89,28 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-            timeout: float = None) -> Union[SessionElement, str, NoneElement]: ...
+            timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union[SessionElement, str]]: ...
+             timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
               loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) \
-            -> Union[SessionElement, str, NoneElement]: ...
+            -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[Union[SessionElement, str]]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, SessionElement],
-                       timeout: float = None, single: bool = True, raise_err: bool = None) \
-            -> Union[SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
+    def _find_elements(self,
+                       loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+                       timeout: float = None,
+                       single: bool = True,
+                       raise_err: bool = None) \
+            -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
+    def get_cookies(self,
+                    as_dict: bool = False,
+                    all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...
 
     # ----------------session独有属性和方法-----------------------
@@ -164,7 +169,8 @@ class SessionPage(BasePage):
                        **kwargs) -> tuple: ...
 
 
-def check_headers(kwargs: Union[dict, CaseInsensitiveDict], headers: Union[dict, CaseInsensitiveDict],
+def check_headers(kwargs: Union[dict, CaseInsensitiveDict],
+                  headers: Union[dict, CaseInsensitiveDict],
                   arg: str) -> bool: ...
 
 

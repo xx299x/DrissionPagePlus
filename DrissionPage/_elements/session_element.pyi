@@ -3,7 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 from lxml.html import HtmlElement
 
@@ -28,7 +28,7 @@ class SessionElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 timeout: float = None) -> Union['SessionElement', str, None]: ...
+                 timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     @property
     def tag(self) -> str: ...
@@ -48,68 +48,80 @@ class SessionElement(DrissionElement):
     @property
     def raw_text(self) -> str: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union['SessionElement', None]: ...
+    def parent(self,
+               level_or_loc: Union[tuple, str, int] = 1,
+               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def child(self, filter_loc: Union[tuple, str, int] = '',
+    def child(self,
+              filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union['SessionElement', str, None]: ...
+              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
-    def prev(self, filter_loc: Union[tuple, str, int] = '',
+    def prev(self,
+             filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union['SessionElement', str, None]: ...
+             ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
-    def next(self, filter_loc: Union[tuple, str, int] = '',
+    def next(self,
+             filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union['SessionElement', str, None]: ...
+             ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
-    def before(self, filter_loc: Union[tuple, str, int] = '',
+    def before(self,
+               filter_loc: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
-               ele_only: bool = True) -> Union['SessionElement', str, None]: ...
+               ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
-    def after(self, filter_loc: Union[tuple, str, int] = '',
+    def after(self,
+              filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union['SessionElement', str, None]: ...
+              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
-    def children(self, filter_loc: Union[tuple, str] = '',
+    def children(self,
+                 filter_loc: Union[tuple, str] = '',
                  timeout: float = None,
-                 ele_only: bool = True) -> List[Union['SessionElement', str]]: ...
+                 ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def prevs(self, filter_loc: Union[tuple, str] = '',
+    def prevs(self,
+              filter_loc: Union[tuple, str] = '',
               timeout: float = None,
-              ele_only: bool = True) -> List[Union['SessionElement', str]]: ...
+              ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def nexts(self, filter_loc: Union[tuple, str] = '',
+    def nexts(self,
+              filter_loc: Union[tuple, str] = '',
               timeout: float = None,
-              ele_only: bool = True) -> List[Union['SessionElement', str]]: ...
+              ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def befores(self, filter_loc: Union[tuple, str] = '',
+    def befores(self,
+                filter_loc: Union[tuple, str] = '',
                 timeout: float = None,
-                ele_only: bool = True) -> List[Union['SessionElement', str]]: ...
+                ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def afters(self, filter_loc: Union[tuple, str] = '',
+    def afters(self,
+               filter_loc: Union[tuple, str] = '',
                timeout: float = None,
-               ele_only: bool = True) -> List[Union['SessionElement', str]]: ...
+               ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def attr(self, attr: str) -> Union[str, None]: ...
+    def attr(self, attr: str) -> Optional[str]: ...
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            timeout: float = None) -> Union['SessionElement', str, NoneElement]: ...
+            timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
-             timeout: float = None) -> List[Union['SessionElement', str]]: ...
+             timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None) -> Union['SessionElement', str, NoneElement]: ...
+              loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self,
-               loc_or_str: Union[Tuple[str, str], str]) -> List[Union['SessionElement', str]]: ...
+               loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
@@ -117,7 +129,7 @@ class SessionElement(DrissionElement):
                        single: bool = True,
                        relative: bool = False,
                        raise_err: bool = None) \
-            -> Union['SessionElement', str, NoneElement, List[Union['SessionElement', str]]]: ...
+            -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 
     def _get_ele_path(self, mode: str) -> str: ...
 
@@ -126,4 +138,4 @@ def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, Chromi
 ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
                      single: bool = True) -> Union[
-    SessionElement, str, NoneElement, List[Union[SessionElement, str]]]: ...
+    SessionElement, NoneElement, List[SessionElement]]: ...
