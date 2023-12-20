@@ -84,8 +84,8 @@ class Actions:
             t = perf_counter()
             self.curr_x = x
             self.curr_y = y
-            self._dr.run('Input.dispatchMouseEvent', type='mouseMoved', x=self.curr_x, y=self.curr_y,
-                         modifiers=self.modifier, _timeout=1)
+            self._dr.run('Input.dispatchMouseEvent', type='mouseMoved',
+                         x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
             ss = .02 - perf_counter() + t
             if ss > 0:
                 sleep(ss)
@@ -188,7 +188,7 @@ class Actions:
         if on_ele:
             self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mousePressed', button=button, clickCount=count,
-                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _timeout=1)
+                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
     def _release(self, button):
@@ -197,7 +197,7 @@ class Actions:
         :return: self
         """
         self._dr.run('Input.dispatchMouseEvent', type='mouseReleased', button=button, clickCount=1,
-                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier, _timeout=1)
+                     x=self.curr_x, y=self.curr_y, modifiers=self.modifier)
         return self
 
     def scroll(self, delta_x=0, delta_y=0, on_ele=None):
@@ -210,7 +210,7 @@ class Actions:
         if on_ele:
             self.move_to(on_ele, duration=0)
         self._dr.run('Input.dispatchMouseEvent', type='mouseWheel', x=self.curr_x, y=self.curr_y,
-                     deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier, _timeout=1)
+                     deltaX=delta_x, deltaY=delta_y, modifiers=self.modifier)
         return self
 
     def up(self, pixel):

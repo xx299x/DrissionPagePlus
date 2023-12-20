@@ -83,10 +83,8 @@ class Driver(object):
                 return result
 
             except Empty:
-                # if self.alert_flag:
-                #     self.alert_flag = False
-                #     self.method_results.pop(ws_id, None)
-                #     return {'result': {'message': 'alert exists.'}}
+                if self.alert_flag and message['method'].startswith('Input.'):
+                    return {'result': {'message': 'alert exists.'}}
 
                 if timeout is not None and perf_counter() > end_time:
                     self.method_results.pop(ws_id, None)
