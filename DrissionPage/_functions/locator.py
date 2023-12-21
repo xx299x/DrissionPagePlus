@@ -404,7 +404,7 @@ def translate_loc(loc):
     elif loc_0 == By.CLASS_NAME:
         loc_str = f'//*[@class="{loc[1]}"]'
 
-    elif loc_0 == By.PARTIAL_LINK_TEXT:
+    elif loc_0 == By.LINK_TEXT:
         loc_str = f'//a[text()="{loc[1]}"]'
 
     elif loc_0 == By.NAME:
@@ -446,7 +446,7 @@ def translate_css_loc(loc):
     elif loc_0 == By.CLASS_NAME:
         loc_str = f'.{css_trans(loc[1])}'
 
-    elif loc_0 == By.PARTIAL_LINK_TEXT:
+    elif loc_0 == By.LINK_TEXT:
         loc_by = By.XPATH
         loc_str = f'//a[text()="{css_trans(loc[1])}"]'
 
@@ -462,9 +462,6 @@ def translate_css_loc(loc):
 
     else:
         raise ValueError('无法识别的定位符。')
-
-    if loc_by == By.CSS_SELECTOR:
-        pass
 
     return loc_by, loc_str
 

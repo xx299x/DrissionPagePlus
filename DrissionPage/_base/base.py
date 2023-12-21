@@ -68,14 +68,13 @@ class BaseElement(BaseParser):
 
     def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None, method=None):
         r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
-        if not single:
+        if r or isinstance(r, list):
             return r
-        if isinstance(r, NoneElement):
-            if Settings.raise_when_ele_not_found or raise_err is True:
-                raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_str})
-            else:
-                r.method = method
-                r.args = {'loc_or_str': loc_or_str}
+        if Settings.raise_when_ele_not_found or raise_err is True:
+            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_str})
+
+        r.method = method
+        r.args = {'loc_or_str': loc_or_str}
         return r
 
     @abstractmethod
