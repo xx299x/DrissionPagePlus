@@ -447,14 +447,13 @@ class BasePage(BaseParser):
 
         r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
 
-        if not single:
+        if r or isinstance(r, list):
             return r
-        if isinstance(r, NoneElement):
-            if Settings.raise_when_ele_not_found or raise_err is True:
-                raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
-            else:
-                r.method = method
-                r.args = {'loc_or_str': loc_or_ele}
+        if Settings.raise_when_ele_not_found or raise_err is True:
+            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
+
+        r.method = method
+        r.args = {'loc_or_str': loc_or_ele}
         return r
 
     @abstractmethod

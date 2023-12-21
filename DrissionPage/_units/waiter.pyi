@@ -18,17 +18,23 @@ class BaseWaiter(object):
 
     def __call__(self, second: float) -> None: ...
 
-    def ele_deleted(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
-                   raise_err: bool = None) -> bool: ...
+    def ele_deleted(self,
+                    loc_or_ele: Union[str, tuple, ChromiumElement],
+                    timeout: float = None,
+                    raise_err: bool = None) -> bool: ...
 
-    def ele_display(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
+    def ele_display(self,
+                    loc_or_ele: Union[str, tuple, ChromiumElement],
+                    timeout: float = None,
                     raise_err: bool = None) -> bool: ...
 
     def ele_hidden(self, loc_or_ele: Union[str, tuple, ChromiumElement], timeout: float = None,
                    raise_err: bool = None) -> bool: ...
 
-    def ele_loaded(self, loc: Union[str, tuple], timeout: float = None,
-                 raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
+    def ele_loaded(self,
+                   loc: Union[str, tuple],
+                   timeout: float = None,
+                   raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
 
     def _loading(self, timeout: float = None, start: bool = True, gap: float = .01, raise_err: bool = None) -> bool: ...
 
@@ -64,9 +70,7 @@ class PageWaiter(TabWaiter):
 
 
 class ElementWaiter(object):
-    def __init__(self,
-                 page: ChromiumBase,
-                 ele: ChromiumElement):
+    def __init__(self, page: ChromiumBase, ele: ChromiumElement):
         self._ele: ChromiumElement = ...
         self._page: ChromiumBase = ...
 
@@ -90,7 +94,12 @@ class ElementWaiter(object):
 
     def stop_moving(self, gap: float = .1, timeout: float = None, raise_err: bool = None) -> bool: ...
 
-    def _wait_state(self, attr: str, mode: bool = False, timeout: float = None, raise_err: bool = None) -> bool: ...
+    def _wait_state(self,
+                    attr: str,
+                    mode: bool = False,
+                    timeout: float = None,
+                    raise_err: bool = None,
+                    err_text: str = None) -> bool: ...
 
 
 class FrameWaiter(BaseWaiter, ElementWaiter):

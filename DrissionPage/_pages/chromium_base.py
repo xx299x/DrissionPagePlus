@@ -11,13 +11,13 @@ from time import perf_counter, sleep
 from urllib.parse import quote
 
 from .._base.base import BasePage
+from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_eles
+from .._elements.none_element import NoneElement
+from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
 from .._functions.settings import Settings
 from .._functions.tools import get_usable_path, raise_error
 from .._functions.web import location_in_viewport
-from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_ele
-from .._elements.none_element import NoneElement
-from .._elements.session_element import make_session_ele
 from .._units.actions import Actions
 from .._units.listener import Listener
 from .._units.rect import TabRect
@@ -26,7 +26,7 @@ from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
-from ..errors import ContextLostError, ElementLostError, CDPError, PageClosedError, ElementNotFoundError
+from ..errors import ContextLostError, CDPError, PageClosedError, ElementNotFoundError
 
 __ERROR__ = 'error'
 
@@ -586,9 +586,11 @@ class ChromiumBase(BasePage):
         timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
 
+        search_ids = []
         try:
             search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
+            search_ids.append(search_result['searchId'])
         except ContextLostError:
             search_result = None
             count = 0
@@ -606,33 +608,27 @@ class ChromiumBase(BasePage):
                     pass
 
             if ok:
-                try:
-                    if single:
-                        r = make_chromium_ele(self, node_id=nodeIds['nodeIds'][0])
-                        break
-
-                    else:
-                        r = [make_chromium_ele(self, node_id=i) for i in nodeIds['nodeIds']]
-                        break
-
-                except ElementLostError:
+                r = make_chromium_eles(self, node_ids=nodeIds['nodeIds'], single=single)
+                if r is not False:
+                    break
+                else:
                     ok = False
 
             try:
                 search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
                 count = search_result['resultCount']
+                search_ids.append(search_result['searchId'])
             except ContextLostError:
                 pass
 
             if perf_counter() >= end_time:
-                return NoneElement(self) if single else []
+                return None if single else []
 
             sleep(.1)
 
-        try:
-            self.run_cdp('DOM.discardSearchResults', searchId=search_result['searchId'])
-        except:
-            pass
+        for _id in search_ids:
+            self._driver.run('DOM.discardSearchResults', searchId=_id)
+
         return r
 
     def refresh(self, ignore_cache=False):

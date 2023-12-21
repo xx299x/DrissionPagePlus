@@ -36,7 +36,16 @@ class BaseWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
+        if timeout is None:
+            timeout = self._driver.timeout
+        end_time = perf_counter() + timeout
+        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=timeout)
+        timeout = end_time - perf_counter()
+        if timeout <= 0:
+            if raise_err is True or Settings.raise_when_wait_failed is True:
+                raise WaitTimeoutError('等待元素显示失败。')
+            else:
+                return False
         return ele.wait.display(timeout, raise_err=raise_err)
 
     def ele_hidden(self, loc_or_ele, timeout=None, raise_err=None):
@@ -46,7 +55,16 @@ class BaseWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
+        if timeout is None:
+            timeout = self._driver.timeout
+        end_time = perf_counter() + timeout
+        ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=timeout)
+        timeout = end_time - perf_counter()
+        if timeout <= 0:
+            if raise_err is True or Settings.raise_when_wait_failed is True:
+                raise WaitTimeoutError('等待元素显示失败。')
+            else:
+                return False
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
     def ele_loaded(self, loc, timeout=None, raise_err=None):
@@ -296,7 +314,7 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_alive', False, timeout, raise_err)
+        return self._wait_state('is_alive', False, timeout, raise_err, err_text='等待元素被删除失败。')
 
     def display(self, timeout=None, raise_err=None):
         """等待元素从dom显示
@@ -304,7 +322,7 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_displayed', True, timeout, raise_err)
+        return self._wait_state('is_displayed', True, timeout, raise_err, err_text='等待元素显示失败。')
 
     def hidden(self, timeout=None, raise_err=None):
         """等待元素从dom隐藏
@@ -312,7 +330,7 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_displayed', False, timeout, raise_err)
+        return self._wait_state('is_displayed', False, timeout, raise_err, err_text='等待元素隐藏失败。')
 
     def covered(self, timeout=None, raise_err=None):
         """等待当前元素被遮盖
@@ -320,15 +338,15 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_covered', True, timeout, raise_err)
+        return self._wait_state('is_covered', True, timeout, raise_err, err_text='等待元素被覆盖失败。')
 
     def not_covered(self, timeout=None, raise_err=None):
-        """等待当前元素被遮盖
+        """等待当前元素不被遮盖
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_covered', False, timeout, raise_err)
+        return self._wait_state('is_covered', False, timeout, raise_err, err_text='等待元素不被覆盖失败。')
 
     def enabled(self, timeout=None, raise_err=None):
         """等待当前元素变成可用
@@ -336,15 +354,15 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_enabled', True, timeout, raise_err)
+        return self._wait_state('is_enabled', True, timeout, raise_err, err_text='等待元素变成可用失败。')
 
     def disabled(self, timeout=None, raise_err=None):
-        """等待当前元素变成可用
+        """等待当前元素变成不可用
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('is_enabled', False, timeout, raise_err)
+        return self._wait_state('is_enabled', False, timeout, raise_err, err_text='等待元素变成不可用失败。')
 
     def disabled_or_deleted(self, timeout=None, raise_err=None):
         """等待当前元素变成不可用或从DOM移除
@@ -361,7 +379,7 @@ class ElementWaiter(object):
             sleep(.05)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素隐藏或删除失败。')
+            raise WaitTimeoutError('等待元素隐藏或被删除失败。')
         else:
             return False
 
@@ -397,14 +415,16 @@ class ElementWaiter(object):
         else:
             return False
 
-    def _wait_state(self, attr, mode=False, timeout=None, raise_err=None):
-        """等待元素某个bool状态到达指定状态
+    def _wait_state(self, attr, mode=False, timeout=None, raise_err=None, err_text=None):
+        """等待元素某个元素状态到达指定状态
         :param attr: 状态名称
         :param mode: True或False
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :param err_text: 抛出错误时显示的信息
         :return: 是否等待成功
         """
+        err_text = err_text or '等待元素状态改变失败。'
         if timeout is None:
             timeout = self._page.timeout
         end_time = perf_counter() + timeout
@@ -414,7 +434,7 @@ class ElementWaiter(object):
             sleep(.05)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素状态改变失败。')
+            raise WaitTimeoutError(err_text)
         else:
             return False
 

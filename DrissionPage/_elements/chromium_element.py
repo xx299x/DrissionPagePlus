@@ -1040,7 +1040,7 @@ class ShadowRoot(BaseElement):
 
                 else:
                     nod_ids = self.page.run_cdp('DOM.querySelectorAll', nodeId=self._node_id, selector=loc[1])['nodeId']
-                    result = [make_chromium_ele(self.page, node_id=n) for n in nod_ids]
+                    result = make_chromium_eles(self.page, node_ids=nod_ids, single=False)
 
             else:
                 eles = make_session_ele(self.html).eles(loc)
@@ -1205,6 +1205,7 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
     if node_id:
         node = page.run_cdp('DOM.describeNode', nodeId=node_id)
         if node['node']['nodeName'] in ('#text', '#comment'):
+            # todo: Node()
             return node['node']['nodeValue']
         backend_id = node['node']['backendNodeId']
         obj_id = page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
@@ -1212,6 +1213,7 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
     elif obj_id:
         node = page.run_cdp('DOM.describeNode', objectId=obj_id)
         if node['node']['nodeName'] in ('#text', '#comment'):
+            # todo: Node()
             return node['node']['nodeValue']
         backend_id = node['node']['backendNodeId']
         node_id = node['node']['nodeId']
@@ -1225,6 +1227,61 @@ def make_chromium_ele(page, node_id=None, obj_id=None):
         ele = ChromiumFrame(page, ele)
 
     return ele
+
+
+def make_chromium_eles(page, node_ids=None, obj_ids=None, single=True, ele_only=True):
+    """根据node id或object id生成相应元素对象
+    :param page: ChromiumPage对象
+    :param node_ids: 元素的node id
+    :param obj_ids: 元素的object id
+    :param single: 是否获取但个元素
+    :param ele_only: 是否只要ele
+    :return: ChromiumElement对象或ChromiumFrame对象
+    """
+    nodes = []
+    if node_ids:
+        for node_id in node_ids:
+            if not node_id:
+                return False
+            node = page.run_cdp('DOM.describeNode', nodeId=node_id)
+            if node['node']['nodeName'] in ('#text', '#comment'):
+                if ele_only:
+                    continue
+                else:
+                    # todo: Node()
+                    pass
+
+            obj_id = page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
+            ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=node['node']['backendNodeId'])
+            if ele.tag in __FRAME_ELEMENT__:
+                from .._pages.chromium_frame import ChromiumFrame
+                ele = ChromiumFrame(page, ele)
+            if single:
+                return ele
+            nodes.append(ele)
+
+    if obj_ids:
+        for obj_id in obj_ids:
+            if not obj_id:
+                return False
+            node = page.run_cdp('DOM.describeNode', objectId=obj_id)
+            if node['node']['nodeName'] in ('#text', '#comment'):
+                if ele_only:
+                    continue
+                else:
+                    # todo: Node
+                    pass
+
+            ele = ChromiumElement(page, obj_id=obj_id, node_id=node['node']['nodeId'],
+                                  backend_id=node['node']['backendNodeId'])
+            if ele.tag in __FRAME_ELEMENT__:
+                from .._pages.chromium_frame import ChromiumFrame
+                ele = ChromiumFrame(page, ele)
+            if single:
+                return ele
+            nodes.append(ele)
+
+    return NoneElement(page) if single and not nodes else nodes
 
 
 def make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt):
@@ -1347,7 +1404,7 @@ def parse_js_result(page, ele, result):
             elif class_name == 'HTMLDocument':
                 return result
             else:
-                return make_chromium_ele(page, obj_id=result['objectId'])
+                return make_chromium_eles(page, obj_ids=(result['objectId'],))
 
         elif sub_type == 'array':
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'],

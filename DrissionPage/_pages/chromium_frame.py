@@ -586,9 +586,7 @@ class ChromiumFrame(ChromiumBase):
         """
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
-
         self.wait.load_complete()
-
         return self.doc_ele._ele(loc_or_ele, timeout,
                                  raise_err=raise_err) if single else self.doc_ele.eles(loc_or_ele, timeout)
 
