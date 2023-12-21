@@ -622,7 +622,7 @@ class ChromiumBase(BasePage):
                 pass
 
             if perf_counter() >= end_time:
-                return None if single else []
+                return NoneElement(self) if single else []
 
             sleep(.1)
 
