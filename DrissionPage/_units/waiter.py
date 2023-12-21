@@ -29,7 +29,7 @@ class BaseWaiter(object):
         ele = self._driver._ele(loc_or_ele, raise_err=False, timeout=0)
         return ele.wait.deleted(timeout, raise_err=raise_err) if ele else True
 
-    def ele_display(self, loc_or_ele, timeout=None, raise_err=None):
+    def ele_displayed(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素变成显示状态
         :param loc_or_ele: 要等待的元素，可以是已有元素、定位符
         :param timeout: 超时时间，默认读取页面超时时间
@@ -46,7 +46,7 @@ class BaseWaiter(object):
                 raise WaitTimeoutError('等待元素显示失败。')
             else:
                 return False
-        return ele.wait.display(timeout, raise_err=raise_err)
+        return ele.wait.displayed(timeout, raise_err=raise_err)
 
     def ele_hidden(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素变成隐藏状态
@@ -316,7 +316,7 @@ class ElementWaiter(object):
         """
         return self._wait_state('is_alive', False, timeout, raise_err, err_text='等待元素被删除失败。')
 
-    def display(self, timeout=None, raise_err=None):
+    def displayed(self, timeout=None, raise_err=None):
         """等待元素从dom显示
         :param timeout: 超时时间，为None使用元素所在页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
