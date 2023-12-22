@@ -12,6 +12,7 @@ from .._elements.session_element import SessionElement
 from .._pages.chromium_base import ChromiumBase
 from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
+from .._pages.chromium_tab import ChromiumTab
 from .._pages.web_page import WebPage
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect
@@ -314,11 +315,12 @@ def find_by_css(ele: ChromiumElement, selector: str, single: bool,
                 timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
-def make_chromium_ele(page: ChromiumBase, node_id: int = ..., obj_id: str = ...) \
-        -> Union[ChromiumElement, ChromiumFrame, str]: ...
+def make_chromium_ele(page: Union[ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
+                      node_id: int = ...,
+                      obj_id: str = ...) -> Union[ChromiumElement, ChromiumFrame, str]: ...
 
 
-def make_chromium_eles(page: ChromiumBase,
+def make_chromium_eles(page: Union[ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                        node_ids: Union[tuple, list] = None,
                        obj_ids: Union[tuple, list] = None,
                        single: bool = True,
