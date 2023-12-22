@@ -5,10 +5,10 @@
 """
 from time import sleep, perf_counter
 
-from errors import PageClosedError
 from .driver import BrowserDriver, Driver
 from .._functions.tools import stop_process_on_port, raise_error
 from .._units.downloader import DownloadManager
+from ..errors import PageClosedError
 
 __ERROR__ = 'error'
 

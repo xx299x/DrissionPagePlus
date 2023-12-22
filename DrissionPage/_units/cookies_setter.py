@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+@Author  :   g1879
+@Contact :   g1879@qq.com
+"""
 from http.cookiejar import Cookie
 
 from .._functions.web import set_browser_cookies, set_session_cookies
