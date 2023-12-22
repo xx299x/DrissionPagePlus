@@ -603,6 +603,7 @@ class ChromiumElement(DrissionElement):
         if clear and vals not in ('\n', '\ue007'):
             self.clear(by_js=False)
         else:
+            self.wait.has_rect()
             self._input_focus()
 
         input_text_or_keys(self.page, vals)
@@ -614,10 +615,10 @@ class ChromiumElement(DrissionElement):
         """
         if by_js:
             self.run_js("this.value='';")
+            return
 
-        else:
-            self._input_focus()
-            self.input(('\ue009', 'a', '\ue017'), clear=False)
+        self._input_focus()
+        self.input(('\ue009', 'a', '\ue017'), clear=False)
 
     def _input_focus(self):
         """输入前使元素获取焦点"""
@@ -1248,8 +1249,10 @@ def make_chromium_eles(page, node_ids=None, obj_ids=None, single=True, ele_only=
                 if ele_only:
                     continue
                 else:
-                    # todo: Node()
-                    pass
+                    if single:
+                        return node['node']['nodeValue']
+                    else:
+                        nodes.append(node['node']['nodeValue'])
 
             obj_id = page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
             ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=node['node']['backendNodeId'])
@@ -1269,8 +1272,10 @@ def make_chromium_eles(page, node_ids=None, obj_ids=None, single=True, ele_only=
                 if ele_only:
                     continue
                 else:
-                    # todo: Node
-                    pass
+                    if single:
+                        return node['node']['nodeValue']
+                    else:
+                        nodes.append(node['node']['nodeValue'])
 
             ele = ChromiumElement(page, obj_id=obj_id, node_id=node['node']['nodeId'],
                                   backend_id=node['node']['backendNodeId'])
@@ -1356,7 +1361,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     try:
         if as_expr:
             res = page.run_cdp('Runtime.evaluate', expression=script, returnByValue=False,
-                               awaitPromise=True, userGesture=True, _timeout=timeout)
+                               awaitPromise=True, userGesture=True, _timeout=timeout, _ignore=AlertExistsError)
 
         else:
             args = args or ()
@@ -1364,7 +1369,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
                 script = f'function(){{{script}}}'
             res = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=script, objectId=obj_id,
                                arguments=[convert_argument(arg) for arg in args], returnByValue=False,
-                               awaitPromise=True, userGesture=True, _timeout=timeout)
+                               awaitPromise=True, userGesture=True, _timeout=timeout, _ignore=AlertExistsError)
 
     except ContextLostError:
         if is_page:

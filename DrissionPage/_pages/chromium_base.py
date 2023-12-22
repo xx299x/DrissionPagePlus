@@ -89,7 +89,8 @@ class ChromiumBase(BasePage):
 
         if not tab_id:
             tabs = self.browser.driver.get(f'http://{self.address}/json').json()
-            tabs = [(i['id'], i['url']) for i in tabs if i['type'] == 'page' and not i['url'].startswith('devtools://')]
+            tabs = [(i['id'], i['url']) for i in tabs
+                    if i['type'] in ('page', 'webview') and not i['url'].startswith('devtools://')]
             dialog = None
             if len(tabs) > 1:
                 for k, t in enumerate(tabs):
@@ -588,7 +589,8 @@ class ChromiumBase(BasePage):
 
         search_ids = []
         try:
-            search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+            search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, _timeout=timeout,
+                                                includeUserAgentShadowDOM=True)
             count = search_result['resultCount']
             search_ids.append(search_result['searchId'])
         except ContextLostError:
@@ -615,7 +617,11 @@ class ChromiumBase(BasePage):
                     ok = False
 
             try:
-                search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+                timeout = end_time - perf_counter()
+                if timeout <= 0:
+                    timeout = .5
+                search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, _timeout=timeout,
+                                                    includeUserAgentShadowDOM=True)
                 count = search_result['resultCount']
                 search_ids.append(search_result['searchId'])
             except ContextLostError:

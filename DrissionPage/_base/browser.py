@@ -5,6 +5,7 @@
 """
 from time import sleep, perf_counter
 
+from errors import PageClosedError
 from .driver import BrowserDriver, Driver
 from .._functions.tools import stop_process_on_port, raise_error
 from .._units.downloader import DownloadManager
@@ -65,9 +66,10 @@ class Browser(object):
 
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
-        if kwargs['targetInfo']['type'] == 'page' and not kwargs['targetInfo']['url'].startswith('devtools://'):
-            self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'], 'page',
-                                                                             self.address)
+        if (kwargs['targetInfo']['type'] in ('page', 'webview')
+                and not kwargs['targetInfo']['url'].startswith('devtools://')):
+            self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'],
+                                                                     'page', self.address)
 
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
@@ -101,13 +103,13 @@ class Browser(object):
     def tabs_count(self):
         """返回标签页数量"""
         j = self.run_cdp('Target.getTargets')['targetInfos']  # 不要改用get，避免卡死
-        return len([i for i in j if i['type'] == 'page' and not i['url'].startswith('devtools://')])
+        return len([i for i in j if i['type'] in ('page', 'webview') and not i['url'].startswith('devtools://')])
 
     @property
     def tabs(self):
         """返回所有标签页id组成的列表"""
         j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp，因为顺序不对
-        return [i['id'] for i in j if i['type'] == 'page' and not i['url'].startswith('devtools://')]
+        return [i['id'] for i in j if i['type'] in ('page', 'webview') and not i['url'].startswith('devtools://')]
 
     @property
     def process_id(self):
@@ -140,7 +142,7 @@ class Browser(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self.run_cdp('Target.closeTarget', targetId=tab_id)
+        self.run_cdp('Target.closeTarget', targetId=tab_id, _ignore=PageClosedError)
 
     def activate_tab(self, tab_id):
         """使标签页变为活动状态
@@ -162,8 +164,12 @@ class Browser(object):
         :param force: 是否立刻强制终止进程
         :return: None
         """
-        self.run_cdp('Browser.close')
-        self.driver.stop()
+        try:
+            self.run_cdp('Browser.close')
+            self.driver.stop()
+        except PageClosedError:
+            self.driver.stop()
+            return
 
         if force:
             ip, port = self.address.split(':')

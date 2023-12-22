@@ -83,8 +83,8 @@ class Driver(object):
                 return result
 
             except Empty:
-                if self.alert_flag and message['method'].startswith('Input.'):
-                    return {'result': {'message': 'alert exists.'}}
+                if self.alert_flag and message['method'].startswith(('Input.', 'Runtime.')):
+                    return {'error': {'message': 'alert exists.'}}
 
                 if timeout is not None and perf_counter() > end_time:
                     self.method_results.pop(ws_id, None)
@@ -156,7 +156,7 @@ class Driver(object):
         if self._stopped.is_set():
             return {'error': 'tab closed', 'type': 'tab_closed'}
 
-        timeout = kwargs.pop('_timeout', 10)
+        timeout = kwargs.pop('_timeout', 15)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
         if result is None:
             return {'error': 'tab closed', 'type': 'tab_closed'}

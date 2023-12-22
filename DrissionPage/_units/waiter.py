@@ -238,6 +238,13 @@ class TabWaiter(BaseWaiter):
             else:
                 return True
 
+    def alert_closed(self):
+        """等待弹出框关闭"""
+        while not self._driver.states.has_alert:
+            sleep(.2)
+        while self._driver.states.has_alert:
+            sleep(.2)
+
 
 class PageWaiter(TabWaiter):
     def __init__(self, page):
@@ -414,6 +421,14 @@ class ElementWaiter(object):
             raise WaitTimeoutError('等待元素停止运动失败。')
         else:
             return False
+
+    def has_rect(self, timeout=None, raise_err=None):
+        """等待当前元素有大小及位置属性
+        :param timeout: 超时时间，为None使用元素所在页面timeout属性
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        return self._wait_state('has_rect', True, timeout, raise_err, err_text='等待元素拥有大小及位置属性失败。')
 
     def _wait_state(self, attr, mode=False, timeout=None, raise_err=None, err_text=None):
         """等待元素某个元素状态到达指定状态

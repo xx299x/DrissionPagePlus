@@ -203,7 +203,7 @@ def test_connect(ip, port, timeout=30):
             tabs = requests_get(f'http://{ip}:{port}/json', timeout=10, headers={'Connection': 'close'},
                                 proxies={'http': None, 'https': None}).json()
             for tab in tabs:
-                if tab['type'] == 'page':
+                if tab['type'] in ('page', 'webview'):
                     return
         except Exception:
             sleep(.2)
