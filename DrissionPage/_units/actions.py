@@ -276,11 +276,17 @@ class Actions:
         :param keys: 要按下的按键，特殊字符和多个文本可用list或tuple传入
         :return: self
         """
+        modifiers = []
         for i in keys:
             for character in i:
                 self.key_down(character)
-                sleep(.05)
-                self.key_up(character)
+                if character in ('\ue009', '\ue008', '\ue00a', '\ue03d'):
+                    modifiers.append(character)
+                else:
+                    sleep(.01)
+                    self.key_up(character)
+        for m in modifiers:
+            self.key_up(m)
         return self
 
     def input(self, text):
