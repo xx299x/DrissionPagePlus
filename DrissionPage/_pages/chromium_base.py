@@ -38,7 +38,7 @@ class ChromiumBase(BasePage):
         """
         :param address: 浏览器 ip:port
         :param tab_id: 要控制的标签页id，不指定默认为激活的
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         """
         super().__init__()
         self._is_loading = None
@@ -147,7 +147,7 @@ class ChromiumBase(BasePage):
 
     def _get_document(self, timeout=10):
         """获取页面文档
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: 是否获取成功
         """
         if self._debug:
@@ -282,7 +282,7 @@ class ChromiumBase(BasePage):
         """在内部查找元素
         例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: ChromiumElement对象
         """
         return self.ele(loc_or_str, timeout)
@@ -468,7 +468,7 @@ class ChromiumBase(BasePage):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间，为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
         return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
@@ -478,7 +478,7 @@ class ChromiumBase(BasePage):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间，为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
         self.wait.load_complete()
@@ -489,7 +489,7 @@ class ChromiumBase(BasePage):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间，为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
         :return: None
         """
         from threading import Thread
@@ -502,7 +502,7 @@ class ChromiumBase(BasePage):
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间
+        :param timeout: 连接超时时间（秒）
         :return: 目标url是否可用
         """
         retry, interval = self._before_connect(url, retry, interval)
@@ -531,7 +531,7 @@ class ChromiumBase(BasePage):
     def ele(self, loc_or_ele, timeout=None):
         """获取第一个符合条件的元素对象
         :param loc_or_ele: 定位符或元素对象
-        :param timeout: 查找超时时间
+        :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象
         """
         return self._ele(loc_or_ele, timeout=timeout, method='ele()')
@@ -539,7 +539,7 @@ class ChromiumBase(BasePage):
     def eles(self, loc_or_str, timeout=None):
         """获取所有符合条件的元素对象
         :param loc_or_str: 定位符或元素对象
-        :param timeout: 查找超时时间
+        :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象组成的列表
         """
         return self._ele(loc_or_str, timeout=timeout, single=False)
@@ -568,7 +568,7 @@ class ChromiumBase(BasePage):
     def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
         """执行元素查找
         :param loc_or_ele: 定位符或元素对象
-        :param timeout: 查找超时时间
+        :param timeout: 查找超时时间（秒）
         :param single: 是否只返回第一个
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
@@ -581,56 +581,39 @@ class ChromiumBase(BasePage):
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
 
-        ok = False
-        nodeIds = None
-
+        self.wait.load_complete()
         timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
 
         search_ids = []
-        try:
-            search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, _timeout=timeout,
-                                                includeUserAgentShadowDOM=True)
-            count = search_result['resultCount']
-            search_ids.append(search_result['searchId'])
-        except ContextLostError:
-            search_result = None
-            count = 0
+        timeout = .5 if timeout <= 0 else timeout
+        result = self.driver.run('DOM.performSearch', query=loc, _timeout=timeout, includeUserAgentShadowDOM=True)
+        if not result or __ERROR__ in result:
+            num = 0
+        else:
+            num = result['resultCount']
+            search_ids.append(result['searchId'])
 
         while True:
-            if count > 0:
-                count = 1 if single else count
-                try:
-                    nodeIds = self.run_cdp_loaded('DOM.getSearchResults', searchId=search_result['searchId'],
-                                                  fromIndex=0, toIndex=count)
-                    if nodeIds['nodeIds'][0] != 0:
-                        ok = True
-
-                except Exception:
-                    pass
-
-            if ok:
-                r = make_chromium_eles(self, node_ids=nodeIds['nodeIds'], single=single)
-                if r is not False:
-                    break
-                else:
-                    ok = False
-
-            try:
-                timeout = end_time - perf_counter()
-                if timeout <= 0:
-                    timeout = .5
-                search_result = self.run_cdp_loaded('DOM.performSearch', query=loc, _timeout=timeout,
-                                                    includeUserAgentShadowDOM=True)
-                count = search_result['resultCount']
-                search_ids.append(search_result['searchId'])
-            except ContextLostError:
-                pass
+            if num > 0:
+                num = 1 if single else num
+                nIds = self._driver.run('DOM.getSearchResults', searchId=result['searchId'], fromIndex=0, toIndex=num)
+                if __ERROR__ not in nIds:
+                    if nIds['nodeIds'][0] != 0:
+                        r = make_chromium_eles(self, node_ids=nIds['nodeIds'], single=single)
+                        if r is not False:
+                            break
 
             if perf_counter() >= end_time:
                 return NoneElement(self) if single else []
 
             sleep(.1)
+            timeout = end_time - perf_counter()
+            timeout = .5 if timeout <= 0 else timeout
+            result = self.driver.run('DOM.performSearch', query=loc, _timeout=timeout, includeUserAgentShadowDOM=True)
+            if not result or __ERROR__ not in result:
+                num = result['resultCount']
+                search_ids.append(result['searchId'])
 
         for _id in search_ids:
             self._driver.run('DOM.discardSearchResults', searchId=_id)
@@ -712,7 +695,7 @@ class ChromiumBase(BasePage):
     def get_frame(self, loc_ind_ele, timeout=None):
         """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从1开始
         :param loc_ind_ele: 定位符、iframe序号、ChromiumFrame对象
-        :param timeout: 查找元素超时时间
+        :param timeout: 查找元素超时时间（秒）
         :return: ChromiumFrame对象
         """
         if isinstance(loc_ind_ele, str):
@@ -752,7 +735,7 @@ class ChromiumBase(BasePage):
     def get_frames(self, loc=None, timeout=None):
         """获取所有符合条件的frame对象
         :param loc: 定位符，为None时返回所有
-        :param timeout: 查找超时时间
+        :param timeout: 查找超时时间（秒）
         :return: ChromiumFrame对象组成的列表
         """
         loc = loc or 'xpath://*[name()="iframe" or name()="frame"]'
@@ -839,6 +822,11 @@ class ChromiumBase(BasePage):
         if cookies:
             self.run_cdp_loaded('Network.clearBrowserCookies')
 
+    def disconnect(self):
+        """断开与页面的连接，不关闭页面"""
+        if self._driver:
+            self.driver.stop()
+
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
         while self._has_alert:
@@ -849,7 +837,7 @@ class ChromiumBase(BasePage):
         """处理提示框，可以自动等待提示框出现
         :param accept: True表示确认，False表示取消，其它值不会按按钮但依然返回文本值
         :param send: 处理prompt提示框时可输入文本
-        :param timeout: 等待提示框出现的超时时间，为None则使用self.timeout属性的值
+        :param timeout: 等待提示框出现的超时时间（秒），为None则使用self.timeout属性的值
         :param next_one: 是否处理下一个出现的提示框，为True时timeout参数无效
         :return: 提示框内容文本，未等到提示框则返回False
         """
@@ -901,12 +889,9 @@ class ChromiumBase(BasePage):
 
     def _wait_loaded(self, timeout=None):
         """等待页面加载完成，超时触发停止加载
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: 是否成功，超时返回False
         """
-        if self._load_mode == 'none':
-            return True
-
         timeout = timeout if timeout is not None else self.timeouts.page_load
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
@@ -948,10 +933,11 @@ class ChromiumBase(BasePage):
         :param times: 重试次数
         :param interval: 重试间隔（秒）
         :param show_errmsg: 是否抛出异常
-        :param timeout: 连接超时时间
+        :param timeout: 连接超时时间（秒）
         :return: 是否成功，返回None表示不确定
         """
         err = None
+        self._is_loading = True
         timeout = timeout if timeout is not None else self.timeouts.page_load
         for t in range(times + 1):
             err = None

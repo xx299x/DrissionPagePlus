@@ -252,7 +252,6 @@ class Actions:
             return self
 
         data = self._get_key_data(key, 'keyDown')
-        data['_timeout'] = 1
         data['_ignore'] = AlertExistsError
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self
@@ -268,7 +267,6 @@ class Actions:
             return self
 
         data = self._get_key_data(key, 'keyUp')
-        data['_timeout'] = 1
         data['_ignore'] = AlertExistsError
         self.page.run_cdp('Input.dispatchKeyEvent', **data)
         return self

@@ -160,7 +160,7 @@ class Browser(object):
 
     def quit(self, timeout=5, force=False):
         """关闭浏览器
-        :param timeout: 等待浏览器关闭超时时间
+        :param timeout: 等待浏览器关闭超时时间（秒）
         :param force: 是否立刻强制终止进程
         :return: None
         """

@@ -18,7 +18,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def __init__(self, mode='d', timeout=None, chromium_options=None, session_or_options=None, driver_or_options=None):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
-        :param timeout: 超时时间，d模式时为寻找元素时间，s模式时为连接时间，默认10秒
+        :param timeout: 超时时间（秒），d模式时为寻找元素时间，s模式时为连接时间，默认10秒
         :param chromium_options: Driver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
@@ -40,7 +40,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """在内部查找元素
         例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: 子元素对象
         """
         if self._mode == 'd':
@@ -182,7 +182,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def ele(self, loc_or_ele, timeout=None):
         """返回第一个符合条件的元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param timeout: 查找元素超时时间，默认与页面等待时间一致
+        :param timeout: 查找元素超时时间（秒），默认与页面等待时间一致
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
@@ -193,7 +193,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def eles(self, loc_or_str, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 查找元素超时时间，默认与页面等待时间一致
+        :param timeout: 查找元素超时时间（秒），默认与页面等待时间一致
         :return: 元素对象或属性、文本组成的列表
         """
         if self._mode == 's':

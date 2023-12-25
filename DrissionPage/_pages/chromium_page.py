@@ -25,7 +25,7 @@ class ChromiumPage(ChromiumBase):
         """
         :param addr_or_opts: 浏览器地址:端口、ChromiumOptions对象或端口数字（int）
         :param tab_id: 要控制的标签页id，不指定默认为激活的
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         """
         addr_or_opts = addr_or_opts or addr_driver_opts
         self._page = self
@@ -242,7 +242,7 @@ class ChromiumPage(ChromiumBase):
 
     def quit(self, timeout=5, force=True):
         """关闭浏览器
-        :param timeout: 等待浏览器关闭超时时间
+        :param timeout: 等待浏览器关闭超时时间（秒）
         :param force: 关闭超时是否强制终止进程
         :return: None
         """

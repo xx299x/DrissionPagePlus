@@ -24,7 +24,8 @@ class ChromiumFrame(ChromiumBase):
 
     def __init__(self,
                  page: Union[ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
-                 ele: ChromiumElement):
+                 ele: ChromiumElement,
+                 info: dict = None):
         self._page: ChromiumPage = ...
         self._target_page: ChromiumBase = ...
         self.tab: ChromiumTab = ...

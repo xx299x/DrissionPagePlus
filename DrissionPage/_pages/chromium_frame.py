@@ -19,10 +19,11 @@ from ..errors import ContextLostError, ElementLostError, GetDocumentError, PageC
 
 
 class ChromiumFrame(ChromiumBase):
-    def __init__(self, page, ele):
+    def __init__(self, page, ele, info=None):
         """
         :param page: frame所在的页面对象
         :param ele: frame所在元素
+        :param info: frame所在元素信息
         """
         page_type = str(type(page))
         if 'ChromiumPage' in page_type or 'WebPage' in page_type:
@@ -41,7 +42,7 @@ class ChromiumFrame(ChromiumBase):
         self._states = None
         self._reloading = False
 
-        node = page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
+        node = info['node'] if not info else page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
         self._frame_id = node['frameId']
         if self._is_inner_frame():
             self._is_diff_domain = False
@@ -65,7 +66,7 @@ class ChromiumFrame(ChromiumBase):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
         return self.ele(loc_or_str, timeout)
@@ -159,7 +160,7 @@ class ChromiumFrame(ChromiumBase):
 
     def _get_document(self, timeout=10):
         """刷新cdp使用的document数据
-        :param timeout: 超时时间
+        :param timeout: 超时时间（秒）
         :return: 是否获取成功
         """
         if self._is_reading:
@@ -392,7 +393,7 @@ class ChromiumFrame(ChromiumBase):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间，为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
         :return: 运行的结果
         """
         if script.startswith('this.scrollIntoView'):
@@ -412,7 +413,7 @@ class ChromiumFrame(ChromiumBase):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
@@ -422,7 +423,7 @@ class ChromiumFrame(ChromiumBase):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
@@ -433,7 +434,7 @@ class ChromiumFrame(ChromiumBase):
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
@@ -444,7 +445,7 @@ class ChromiumFrame(ChromiumBase):
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
@@ -453,7 +454,7 @@ class ChromiumFrame(ChromiumBase):
     def prevs(self, filter_loc='', timeout=0, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
@@ -462,7 +463,7 @@ class ChromiumFrame(ChromiumBase):
     def nexts(self, filter_loc='', timeout=0, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """

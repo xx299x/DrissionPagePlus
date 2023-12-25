@@ -21,7 +21,7 @@ class Clicker(object):
         """点击元素
         如果遇到遮挡，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
-        :param timeout: 模拟点击的超时时间，等待元素可见、可用、进入视口
+        :param timeout: 模拟点击的超时时间（秒），等待元素可见、可用、进入视口
         :param wait_stop: 是否等待元素运动结束再执行点击
         :return: 是否点击成功
         """
@@ -30,7 +30,7 @@ class Clicker(object):
     def left(self, by_js=False, timeout=1.5, wait_stop=True):
         """点击元素，可选择是否用js点击
         :param by_js: 是否用js点击，为None时先用模拟点击，遇到遮挡改用js，为True时直接用js点击，为False时只用模拟点击
-        :param timeout: 模拟点击的超时时间，等待元素可见、可用、进入视口
+        :param timeout: 模拟点击的超时时间（秒），等待元素可见、可用、进入视口
         :param wait_stop: 是否等待元素运动结束再执行点击
         :return: 是否点击成功
         """

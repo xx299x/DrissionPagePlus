@@ -419,7 +419,7 @@ def send_key(page, modifier, key):
                 'unmodifiedText': text,
                 'location': description['location'],
                 'isKeypad': description['location'] == 3,
-                '_ignore': AlertExistsError, '_timeout': 1}
+                '_ignore': AlertExistsError}
 
         page.run_cdp('Input.dispatchKeyEvent', **data)
         data['type'] = 'keyUp'

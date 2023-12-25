@@ -194,7 +194,7 @@ def test_connect(ip, port, timeout=30):
     """测试浏览器是否可用
     :param ip: 浏览器ip
     :param port: 浏览器端口
-    :param timeout: 超时时间
+    :param timeout: 超时时间（秒）
     :return: None
     """
     end_time = perf_counter() + timeout

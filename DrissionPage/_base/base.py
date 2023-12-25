@@ -144,7 +144,7 @@ class DrissionElement(BaseElement):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本组成的列表
         """
@@ -174,7 +174,7 @@ class DrissionElement(BaseElement):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
@@ -194,7 +194,7 @@ class DrissionElement(BaseElement):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
@@ -214,7 +214,7 @@ class DrissionElement(BaseElement):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
@@ -234,7 +234,7 @@ class DrissionElement(BaseElement):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
@@ -253,7 +253,7 @@ class DrissionElement(BaseElement):
     def children(self, filter_loc='', timeout=None, ele_only=True):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本组成的列表
         """
@@ -272,7 +272,7 @@ class DrissionElement(BaseElement):
     def prevs(self, filter_loc='', timeout=None, ele_only=True):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
@@ -281,7 +281,7 @@ class DrissionElement(BaseElement):
     def nexts(self, filter_loc='', timeout=None, ele_only=True):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
@@ -290,7 +290,7 @@ class DrissionElement(BaseElement):
     def befores(self, filter_loc='', timeout=None, ele_only=True):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
@@ -300,7 +300,7 @@ class DrissionElement(BaseElement):
     def afters(self, filter_loc='', timeout=None, ele_only=True):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
         :param filter_loc: 用于筛选的查询语法
-        :param timeout: 查找节点的超时时间
+        :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
@@ -314,7 +314,7 @@ class DrissionElement(BaseElement):
         :param filter_loc: 用于筛选的查询语法
         :param direction: 'following' 或 'preceding'，查找的方向
         :param brother: 查找范围，在同级查找还是整个dom前后查找
-        :param timeout: 查找等待时间
+        :param timeout: 查找等待时间（秒）
         :return: 元素对象或字符串
         """
         if index is not None and index < 1:

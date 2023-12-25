@@ -3,13 +3,14 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
-from json import dumps, loads
+from json import dumps, loads, JSONDecodeError
 from queue import Queue, Empty
 from threading import Thread, Event
 from time import perf_counter
 
 from requests import get
-from websocket import WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection
+from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
+                       WebSocketException)
 
 
 class Driver(object):
@@ -74,7 +75,7 @@ class Driver(object):
 
         except (OSError, WebSocketConnectionClosedException):
             self.method_results.pop(ws_id, None)
-            return None
+            return {'error': {'message': 'page closed'}}
 
         while not self._stopped.is_set():
             try:
@@ -102,7 +103,7 @@ class Driver(object):
                 msg = loads(msg_json)
             except WebSocketTimeoutException:
                 continue
-            except:
+            except (WebSocketException, OSError, WebSocketConnectionClosedException, JSONDecodeError):
                 self.stop()
                 return
 
@@ -119,10 +120,10 @@ class Driver(object):
             if 'method' in msg:
                 if msg['method'].startswith('Page.javascriptDialog'):
                     self.alert_flag = msg['method'].endswith('Opening')
-                if msg['method'] in self.immediate_event_handlers:
-                    function = self.immediate_event_handlers.get(msg['method'])
-                    if function:
-                        function(**msg['params'])
+                function = self.immediate_event_handlers.get(msg['method'])
+                if function:
+                    Thread(target=function, kwargs=msg['params']).start()
+                    # function(**msg['params'])
                 else:
                     self.event_queue.put(msg)
 
@@ -154,12 +155,10 @@ class Driver(object):
         :return: 执行结果
         """
         if self._stopped.is_set():
-            return {'error': 'tab closed', 'type': 'tab_closed'}
+            return {'error': 'page closed', 'type': 'page_closed'}
 
         timeout = kwargs.pop('_timeout', 15)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
-        if result is None:
-            return {'error': 'tab closed', 'type': 'tab_closed'}
         if 'result' not in result and 'error' in result:
             return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
                     'method': _method, 'args': kwargs}
@@ -169,8 +168,7 @@ class Driver(object):
     def start(self):
         """启动连接"""
         self._stopped.clear()
-        self._ws = create_connection(self._websocket_url, enable_multithread=True,
-                                     suppress_origin=True)
+        self._ws = create_connection(self._websocket_url, enable_multithread=True, suppress_origin=True)
         self._recv_th.start()
         self._handle_event_th.start()
         return True

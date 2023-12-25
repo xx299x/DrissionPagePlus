@@ -99,19 +99,19 @@ class ChromiumElement(DrissionElement):
     def child(self,
               filter_loc: Union[tuple, str, int] = '',
               index: int = 1,
-              timeout: float = 0,
+              timeout: float = None,
               ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def prev(self,
              filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
-             timeout: float = 0,
+             timeout: float = None,
              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def next(self,
              filter_loc: Union[tuple, str, int] = '',
              index: int = 1,
-             timeout: float = 0,
+             timeout: float = None,
              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def before(self,
@@ -128,17 +128,17 @@ class ChromiumElement(DrissionElement):
 
     def children(self,
                  filter_loc: Union[tuple, str] = '',
-                 timeout: float = 0,
+                 timeout: float = None,
                  ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def prevs(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+              timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def nexts(self,
               filter_loc: Union[tuple, str] = '',
-              timeout: float = 0,
+              timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def befores(self,
@@ -315,12 +315,12 @@ def find_by_css(ele: ChromiumElement, selector: str, single: bool,
                 timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
-def make_chromium_ele(page: Union[ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
+def make_chromium_ele(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                       node_id: int = ...,
                       obj_id: str = ...) -> Union[ChromiumElement, ChromiumFrame, str]: ...
 
 
-def make_chromium_eles(page: Union[ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
+def make_chromium_eles(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                        node_ids: Union[tuple, list] = None,
                        obj_ids: Union[tuple, list] = None,
                        single: bool = True,

@@ -192,7 +192,7 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
     """等待返回值不为False或空，直到超时
     :param page: DrissionPage对象
     :param condition: 等待条件，返回值不为False则停止等待
-    :param timeout: 超时时间
+    :param timeout: 超时时间（秒）
     :param poll: 轮询间隔
     :param raise_err: 是否抛出异常
     :return: DP Element or bool
@@ -267,7 +267,7 @@ def raise_error(result, ignore=None):
                    'No node with given id found', 'Node with given id does not belong to the document',
                    'No node found for given backend id'):
         r = ElementLostError()
-    elif error in ('tab closed', 'No target with given id found'):
+    elif error in ('page closed', 'No target with given id found'):
         r = PageClosedError()
     elif error == 'timeout':
         r = TimeoutError(f'超时。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
