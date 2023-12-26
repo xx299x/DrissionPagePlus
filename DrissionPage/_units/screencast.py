@@ -33,7 +33,9 @@ class Screencast(object):
         self.set_save_path(save_path)
         if self._path is None:
             raise ValueError('save_path必须设置。')
-        clean_folder(self._path)
+        tmp = self._path / 'tmp'
+        tmp.mkdir(parents=True, exist_ok=True)
+        clean_folder(tmp)
         if self._mode.startswith('frugal'):
             self._page.driver.set_callback('Page.screencastFrame', self._onScreencastFrame)
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)

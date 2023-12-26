@@ -123,7 +123,7 @@ class Browser(object):
         :param url: 要匹配url的文本
         :param tab_type: tab类型，可用列表输入多个
         :param single: 是否返回首个结果的id，为False返回所有信息
-        :return: tab id或tab dict
+        :return: tab id或tab列表
         """
         tabs = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp
 

@@ -5,6 +5,7 @@
 """
 from json import loads, JSONDecodeError
 from os.path import sep
+from pathlib import Path
 from re import findall, match
 from threading import Thread
 from time import perf_counter, sleep
@@ -16,7 +17,7 @@ from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
 from .._functions.settings import Settings
-from .._functions.tools import get_usable_path, raise_error
+from .._functions.tools import raise_error
 from .._functions.web import location_in_viewport
 from .._units.actions import Actions
 from .._units.listener import Listener
@@ -1021,7 +1022,7 @@ class ChromiumBase(BasePage):
                     name = f'{name}.jpg'
                 path = f'{path}{sep}{name}'
 
-            path = get_usable_path(path)
+            path = Path(path)
             pic_type = path.suffix.lower()
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
