@@ -15,7 +15,7 @@ from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLostError, ElementLostError, GetDocumentError, PageClosedError, JavaScriptError
+from ..errors import ContextLostError, ElementLostError, PageClosedError, JavaScriptError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -205,13 +205,19 @@ class ChromiumFrame(ChromiumBase):
 
     def _onInspectorDetached(self, **kwargs):
         """异域转同域或退出"""
-        self._reload()
+        try:
+            self._reload()
+        except PageClosedError:
+            pass
 
     def _onFrameDetached(self, **kwargs):
         """同域变异域"""
         self.browser._frames.pop(kwargs['frameId'], None)
         if kwargs['frameId'] == self._frame_id:
-            self._reload()
+            try:
+                self._reload()
+            except PageClosedError:
+                pass
 
     # ----------挂件----------
 

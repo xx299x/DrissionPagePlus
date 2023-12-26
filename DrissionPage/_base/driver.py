@@ -6,7 +6,7 @@
 from json import dumps, loads, JSONDecodeError
 from queue import Queue, Empty
 from threading import Thread, Event
-from time import perf_counter
+from time import perf_counter, sleep
 
 from requests import get
 from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
@@ -104,7 +104,7 @@ class Driver(object):
             except WebSocketTimeoutException:
                 continue
             except (WebSocketException, OSError, WebSocketConnectionClosedException, JSONDecodeError):
-                self.stop()
+                self._stop()
                 return
 
             if self._debug:
@@ -175,6 +175,13 @@ class Driver(object):
 
     def stop(self):
         """中断连接"""
+        self._stop()
+        while self._handle_event_th.is_alive() or self._recv_th.is_alive():
+            sleep(.1)
+        return True
+
+    def _stop(self):
+        """中断连接"""
         if self._stopped.is_set():
             return False
 
@@ -195,7 +202,6 @@ class Driver(object):
         self.event_handlers.clear()
         self.method_results.clear()
         self.event_queue.queue.clear()
-        return True
 
     def set_callback(self, event, callback, immediate=False):
         """绑定cdp event和回调方法
