@@ -143,7 +143,7 @@ class ChromiumBase(BasePage):
         self._driver.set_callback('Page.loadEventFired', self._onLoadEventFired)
         self._driver.set_callback('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_callback('Page.frameAttached', self._onFrameAttached)
-        self._driver.set_callback('Page.frameDetached', self._onFrameDetached)
+        self._driver.set_callback('Page.frameDetached', self._onFrameDetached, immediate=True)
 
     def _get_document(self, timeout=10):
         """获取页面文档

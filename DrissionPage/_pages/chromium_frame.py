@@ -95,7 +95,7 @@ class ChromiumFrame(ChromiumBase):
         except:
             self.browser.driver.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
-        self._driver.set_callback('Inspector.detached', self._onInspectorDetached)
+        self._driver.set_callback('Inspector.detached', self._onInspectorDetached, immediate=True)
 
     def _reload(self):
         """重新获取document"""
@@ -136,19 +136,23 @@ class ChromiumFrame(ChromiumBase):
             self._is_diff_domain = True
             if self._listener:
                 self._listener._to_target(node['frameId'], self.address, self)
-            super().__init__(self.address, node['frameId'], self._target_page.timeout)
             end_time = perf_counter() + self.timeouts.page_load
-            while perf_counter() < end_time:
-                try:
-                    obj_id = super().run_js('document;', as_expr=True)['objectId']
-                    self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-                    break
-                except Exception as e:
-                    sleep(.1)
-                    if self._debug:
-                        print(f'获取doc失败，重试 {e}')
-            else:
-                raise GetDocumentError
+            super().__init__(self.address, node['frameId'], self._target_page.timeout)
+            timeout = end_time - perf_counter()
+            if timeout <= 0:
+                timeout = .5
+            self._wait_loaded(timeout)
+            # while perf_counter() < end_time:
+            #     try:
+            #         obj_id = super().run_js('document;', as_expr=True)['objectId']
+            #         self.doc_ele = ChromiumElement(self, obj_id=obj_id)
+            #         break
+            #     except Exception as e:
+            #         sleep(.1)
+            #         if self._debug:
+            #             print(f'获取doc失败，重试 {e}')
+            # else:
+            #     raise GetDocumentError
             self._debug = debug
             self.driver._debug = d_debug
 
@@ -201,25 +205,13 @@ class ChromiumFrame(ChromiumBase):
 
     def _onInspectorDetached(self, **kwargs):
         """异域转同域或退出"""
-        if self._debug:
-            print(f'{self._frame_id}触发InspectorDetached')
-
         self._reload()
-
-        if self._debug:
-            print(f'{self._frame_id}执行InspectorDetached完毕')
 
     def _onFrameDetached(self, **kwargs):
         """同域变异域"""
         self.browser._frames.pop(kwargs['frameId'], None)
         if kwargs['frameId'] == self._frame_id:
-            if self._debug:
-                print(f'{self._frame_id}触发FrameDetached')
-
             self._reload()
-
-            if self._debug:
-                print(f'{self._frame_id}执行FrameDetached完毕')
 
     # ----------挂件----------
 

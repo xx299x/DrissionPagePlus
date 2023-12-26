@@ -252,7 +252,7 @@ class SelectElement(object):
         """
         if isinstance(option, (list, tuple, set)):
             if not self.is_multi and len(option) > 1:
-                raise TypeError("只能对多项选框执行多选。")
+                option = option[:1]
             for o in option:
                 o.run_js(f'this.selected={mode};')
                 self._dispatch_change()

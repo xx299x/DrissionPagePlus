@@ -92,8 +92,9 @@ class Browser(object):
         :param cmd_args: 参数
         :return: 执行的结果
         """
+        ignore = cmd_args.pop('_ignore', None)
         r = self._driver.run(cmd, **cmd_args)
-        return r if __ERROR__ not in r else raise_error(r)
+        return r if __ERROR__ not in r else raise_error(r, ignore)
 
     @property
     def driver(self):
