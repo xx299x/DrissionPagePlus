@@ -6,16 +6,17 @@
 from base64 import b64decode
 from os.path import sep
 from pathlib import Path
+from random import randint
+from shutil import rmtree
 from threading import Thread
 from time import sleep, time
-
-from .._functions.tools import clean_folder
 
 
 class Screencast(object):
     def __init__(self, page):
         self._page = page
         self._path = None
+        self._tmp_path = None
         self._running = False
         self._enable = False
         self._mode = 'video'
@@ -33,9 +34,11 @@ class Screencast(object):
         self.set_save_path(save_path)
         if self._path is None:
             raise ValueError('save_path必须设置。')
-        tmp = self._path / 'tmp'
-        tmp.mkdir(parents=True, exist_ok=True)
-        clean_folder(tmp)
+
+        if self._mode in ('frugal_video', 'video'):
+            self._tmp_path = self._path / f'screencast_tmp_{time()}_{randint(0, 100)}'
+            self._tmp_path.mkdir(parents=True, exist_ok=True)
+
         if self._mode.startswith('frugal'):
             self._page.driver.set_callback('Page.screencastFrame', self._onScreencastFrame)
             self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
@@ -45,7 +48,7 @@ class Screencast(object):
             self._enable = True
             Thread(target=self._run).start()
 
-        else:
+        else:  # js模式
             js = '''
             async function () {
                 stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true})
@@ -104,7 +107,7 @@ class Screencast(object):
         if self._mode.endswith('imgs'):
             return str(Path(self._path).absolute())
 
-        if not str(video_name).isascii() or not str(self._path).isascii():
+        if not str(self._path).isascii():
             raise TypeError('转换成视频仅支持英文路径和文件名。')
 
         try:
@@ -113,7 +116,7 @@ class Screencast(object):
         except ModuleNotFoundError:
             raise ModuleNotFoundError('请先安装cv2，pip install opencv-python')
 
-        pic_list = Path(self._path).glob('*.jpg')
+        pic_list = Path(self._tmp_path or self._path).glob('*.jpg')
         img = imread(str(next(pic_list)))
         imgInfo = img.shape
         size = (imgInfo[1], imgInfo[0])
@@ -124,7 +127,8 @@ class Screencast(object):
             img = imread(str(i))
             videoWrite.write(img)
 
-        clean_folder(self._path, ignore=(name,))
+        rmtree(self._tmp_path)
+        self._tmp_path = None
         return f'{self._path}{sep}{name}'
 
     def set_save_path(self, save_path=None):
@@ -142,14 +146,16 @@ class Screencast(object):
     def _run(self):
         """非节俭模式运行方法"""
         self._running = True
+        path = self._tmp_path or self._path
         while self._enable:
-            self._page.get_screenshot(path=self._path, name=f'{time()}.jpg')
+            self._page.get_screenshot(path=path, name=f'{time()}.jpg')
             sleep(.04)
         self._running = False
 
     def _onScreencastFrame(self, **kwargs):
         """节俭模式运行方法"""
-        with open(f'{self._path}\\{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
+        path = self._tmp_path or self._path
+        with open(f'{path}{sep}{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
             f.write(b64decode(kwargs['data']))
         self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
 
@@ -159,16 +165,21 @@ class ScreencastMode(object):
         self._screencast = screencast
 
     def video_mode(self):
+        """持续视频模式，生成的视频没有声音"""
         self._screencast._mode = 'video'
 
     def frugal_video_mode(self):
+        """设置节俭视频模式，页面有变化时才录制，生成的视频没有声音"""
         self._screencast._mode = 'frugal_video'
 
     def js_video_mode(self):
+        """设置使用js录制视频模式，可生成有声音的视频，但需要手动启动"""
         self._screencast._mode = 'js_video'
 
     def frugal_imgs_mode(self):
+        """设置节俭视频模式，页面有变化时才截图"""
         self._screencast._mode = 'frugal_imgs'
 
     def imgs_mode(self):
+        """设置图片模式，持续对页面进行截图"""
         self._screencast._mode = 'imgs'

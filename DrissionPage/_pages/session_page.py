@@ -141,9 +141,9 @@ class SessionPage(BasePage):
         """用get方式跳转到url，可输入文件路径
         :param url: 目标url，可指定本地文件路径
         :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间（秒）
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象retry_interval属性值
+        :param timeout: 连接超时时间（秒），为None时使用页面对象timeout属性值
         :param kwargs: 连接参数
         :return: url是否可用
         """

@@ -479,7 +479,7 @@ class ChromiumBase(BasePage):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script属性值
         :return: 运行的结果
         """
         self.wait.load_complete()
@@ -490,7 +490,7 @@ class ChromiumBase(BasePage):
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
+        :param timeout: js超时时间（秒），为None则使用页面timeouts.script属性值
         :return: None
         """
         from threading import Thread
@@ -501,9 +501,9 @@ class ChromiumBase(BasePage):
         """访问url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间（秒）
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象retry_interval属性值
+        :param timeout: 连接超时时间（秒），为None时使用页面对象timeouts.page_load属性值
         :return: 目标url是否可用
         """
         retry, interval = self._before_connect(url, retry, interval)
@@ -1154,3 +1154,18 @@ def close_privacy_dialog(page, tid):
 
     except:
         pass
+
+
+def get_mhtml(page, path=None, name=None):
+    """把当前页面保存为mhtml文件
+    :param page: 要保存的页面对象
+    :param path: 保存路径，为None保存在当前路径
+    :param name: 文件名，为None则用title属性值
+    :return: mhtml文本
+    """
+    r = page.run_cdp('Page.captureSnapshot')['data']
+    path = path or '.'
+    name = name or page.title
+    with open(f'{path}{sep}{name}.mhtml', 'w', encoding='utf-8') as f:
+        f.write(r)
+    return r

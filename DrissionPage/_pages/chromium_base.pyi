@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Optional, Literal
 
+from .chromium_tab import ChromiumTab
 from .._base.base import BasePage
 from .._base.browser import Browser
 from .._base.driver import Driver
@@ -263,3 +264,6 @@ class Alert(object):
         self.handle_next: Optional[bool] = ...
         self.next_text: str = ...
         self.auto: Optional[bool] = ...
+
+
+def get_mhtml(page: Union[ChromiumPage, ChromiumTab], path: Union[str, Path] = None, name: str = None) -> str: ...

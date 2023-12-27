@@ -11,7 +11,7 @@ from requests import get
 from .._base.browser import Browser
 from .._functions.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions
-from .._pages.chromium_base import ChromiumBase, Timeout
+from .._pages.chromium_base import ChromiumBase, get_mhtml, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
 from .._units.waiter import PageWaiter
@@ -66,12 +66,13 @@ class ChromiumPage(ChromiumBase):
             ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
             if not ws:
                 raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
-        except :
+            ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
+        except KeyError:
+            raise BrowserConnectError('浏览器版本太旧，请升级。')
+        except:
             raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
 
-        ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
         self._browser = Browser(self._chromium_options.address, ws, self)
-
         if (is_exist and self._chromium_options._headless is False and
                 'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
             self._browser.quit(3)
@@ -139,6 +140,14 @@ class ChromiumPage(ChromiumBase):
     def process_id(self):
         """返回浏览器进程id"""
         return self.browser.process_id
+
+    def save(self, path=None, name=None):
+        """把当前页面保存为mhtml文件
+        :param path: 保存路径，为None保存在当前路径
+        :param name: 文件名，为None则用title属性值
+        :return: mhtml文本
+        """
+        return get_mhtml(self, path, name)
 
     def get_tab(self, id_or_num=None):
         """获取一个标签页对象

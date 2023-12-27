@@ -205,19 +205,13 @@ class ChromiumFrame(ChromiumBase):
 
     def _onInspectorDetached(self, **kwargs):
         """异域转同域或退出"""
-        try:
-            self._reload()
-        except PageClosedError:
-            pass
+        self._reload()
 
     def _onFrameDetached(self, **kwargs):
         """同域变异域"""
         self.browser._frames.pop(kwargs['frameId'], None)
         if kwargs['frameId'] == self._frame_id:
-            try:
-                self._reload()
-            except PageClosedError:
-                pass
+            self._reload()
 
     # ----------挂件----------
 

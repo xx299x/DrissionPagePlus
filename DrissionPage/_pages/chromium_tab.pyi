@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from typing import Union, Tuple, Any, List, Optional
 
 from requests import Session, Response
@@ -40,6 +41,8 @@ class ChromiumTab(ChromiumBase):
 
     @property
     def wait(self) -> TabWaiter: ...
+
+    def save(self, path: Union[str, Path] = None, name: str = None) -> str: ...
 
 
 class WebPageTab(SessionPage, ChromiumTab):

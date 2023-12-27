@@ -6,9 +6,9 @@
 from copy import copy
 
 from .._base.base import BasePage
-from .._functions.web import set_session_cookies, set_browser_cookies
 from .._configs.session_options import SessionOptions
-from .._pages.chromium_base import ChromiumBase
+from .._functions.web import set_session_cookies, set_browser_cookies
+from .._pages.chromium_base import ChromiumBase, get_mhtml
 from .._pages.session_page import SessionPage
 from .._units.setter import TabSetter, WebPageTabSetter
 from .._units.waiter import TabWaiter
@@ -57,6 +57,14 @@ class ChromiumTab(ChromiumBase):
         if self._wait is None:
             self._wait = TabWaiter(self)
         return self._wait
+
+    def save(self, path=None, name=None):
+        """把当前页面保存为mhtml文件
+        :param path: 保存路径，为None保存在当前路径
+        :param name: 文件名，为None则用title属性值
+        :return: mhtml文本
+        """
+        return get_mhtml(self, path, name)
 
     def __repr__(self):
         return f'<ChromiumTab browser_id={self.browser.id} tab_id={self.tab_id}>'
@@ -191,9 +199,9 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         """跳转到一个url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间（秒）
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象retry_interval属性值
+        :param timeout: 连接超时时间（秒），为None时使用页面对象timeouts.page_load属性值
         :param kwargs: 连接参数，s模式专用
         :return: url是否可用，d模式返回None时表示不确定
         """

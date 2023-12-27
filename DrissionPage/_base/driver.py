@@ -12,6 +12,8 @@ from requests import get
 from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
                        WebSocketException)
 
+from ..errors import PageClosedError
+
 
 class Driver(object):
     def __init__(self, tab_id, tab_type, address):
@@ -122,7 +124,7 @@ class Driver(object):
                     self.alert_flag = msg['method'].endswith('Opening')
                 function = self.immediate_event_handlers.get(msg['method'])
                 if function:
-                    Thread(target=function, kwargs=msg['params']).start()
+                    Thread(target=run_function, args=(function, msg['params'])).start()
                     # function(**msg['params'])
                 else:
                     self.event_queue.put(msg)
@@ -159,11 +161,13 @@ class Driver(object):
 
         timeout = kwargs.pop('_timeout', 15)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
-        if 'result' not in result and 'error' in result:
+        if result is None:
+            return {'error': {'message': 'page closed'}}
+        elif 'result' not in result and 'error' in result:
             return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
                     'method': _method, 'args': kwargs}
-
-        return result['result']
+        else:
+            return result['result']
 
     def start(self):
         """启动连接"""
@@ -190,14 +194,14 @@ class Driver(object):
             self._ws.close()
             self._ws = None
 
-        while not self.event_queue.empty():
-            event = self.event_queue.get_nowait()
-            function = self.event_handlers.get(event['method'])
-            if function:
-                try:
+        try:
+            while not self.event_queue.empty():
+                event = self.event_queue.get_nowait()
+                function = self.event_handlers.get(event['method'])
+                if function:
                     function(**event['params'])
-                except:
-                    pass
+        except:
+            pass
 
         self.event_handlers.clear()
         self.method_results.clear()
@@ -249,3 +253,10 @@ class BrowserDriver(Driver):
     def stop(self):
         super().stop()
         self.browser._on_quit()
+
+
+def run_function(function, kwargs):
+    try:
+        function(**kwargs)
+    except PageClosedError:
+        pass

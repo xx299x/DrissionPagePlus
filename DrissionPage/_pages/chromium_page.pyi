@@ -3,6 +3,7 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
 from typing import Union, Tuple, List, Optional
 
 from .._base.browser import Browser
@@ -53,6 +54,8 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def set(self) -> ChromiumPageSetter: ...
+
+    def save(self, path: Union[str, Path] = None, name: str = None) -> str: ...
 
     def get_tab(self, tab_id: Union[str, ChromiumTab, int] = None) -> ChromiumTab: ...
 

@@ -295,7 +295,9 @@ class Listener(object):
         packet = self._request_ids.get(rid)
         if packet:
             r = self._driver.run('Network.getResponseBody', requestId=rid)
-            if 'body' in r:
+            if 'error' in r:
+                return
+            elif 'body' in r:
                 packet._raw_body = r['body']
                 packet._base64_body = r['base64Encoded']
             else:

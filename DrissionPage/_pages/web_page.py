@@ -152,9 +152,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         """跳转到一个url
         :param url: 目标url
         :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param timeout: 连接超时时间（秒）
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象retry_interval属性值
+        :param timeout: 连接超时时间（秒），为None时使用页面对象timeouts.page_load属性值
         :param kwargs: 连接参数，s模式专用
         :return: url是否可用，d模式返回None时表示不确定
         """
