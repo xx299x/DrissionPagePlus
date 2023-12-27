@@ -17,7 +17,7 @@ from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
 from .._functions.settings import Settings
-from .._functions.tools import raise_error
+from .._functions.tools import raise_error, make_valid_name
 from .._functions.web import location_in_viewport
 from .._units.actions import Actions
 from .._units.listener import Listener
@@ -1165,7 +1165,8 @@ def get_mhtml(page, path=None, name=None):
     """
     r = page.run_cdp('Page.captureSnapshot')['data']
     path = path or '.'
-    name = name or page.title
+    Path(path).mkdir(parents=True, exist_ok=True)
+    name = make_valid_name(name or page.title)
     with open(f'{path}{sep}{name}.mhtml', 'w', encoding='utf-8') as f:
         f.write(r)
     return r
