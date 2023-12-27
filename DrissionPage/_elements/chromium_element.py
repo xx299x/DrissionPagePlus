@@ -364,7 +364,7 @@ class ChromiumElement(DrissionElement):
 
     def run_js(self, script, *args, as_expr=False, timeout=None):
         """对本元素执行javascript代码
-        :param script: js文本
+        :param script: js文本，文本中用this表示本元素
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
@@ -372,17 +372,14 @@ class ChromiumElement(DrissionElement):
         """
         return run_js(self, script, as_expr, self.page.timeouts.script if timeout is None else timeout, args)
 
-    def run_async_js(self, script, *args, as_expr=False, timeout=None):
+    def run_async_js(self, script, *args, as_expr=False):
         """以异步方式对本元素执行javascript代码
-        :param script: js文本
+        :param script: js文本，文本中用this表示本元素
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
         :return: None
         """
-        from threading import Thread
-        Thread(target=run_js, args=(self, script, as_expr, self.page.timeouts.script if timeout is None else timeout,
-                                    args, True)).start()
+        run_js(self, script, as_expr, 0, args)
 
     def ele(self, loc_or_str, timeout=None):
         """返回当前元素下级符合条件的第一个元素、属性或节点文本
