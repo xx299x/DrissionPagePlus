@@ -165,19 +165,20 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 timeout = self.timeouts.page_load if self._has_driver else self.timeout
             return super().get(url, show_errmsg, retry, interval, timeout, **kwargs)
 
-    def post(self, url: str, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
+    def post(self, url, show_errmsg=False, retry=None, interval=None, **kwargs):
         """用post方式跳转到url，会切换到s模式
         :param url: 目标url
-        :param data: post方式时提交的数据
         :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象retry_interval属性值
         :param kwargs: 连接参数
-        :return: url是否可用
+        :return: s模式时返回url是否可用，d模式时返回获取到的Response对象
         """
         if self.mode == 'd':
             self.cookies_to_session()
-        return super().post(url, data, show_errmsg, retry, interval, **kwargs)
+            super().post(url, show_errmsg, retry, interval, **kwargs)
+            return self.response
+        return super().post(url, show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
         """返回第一个符合条件的元素、属性或节点文本

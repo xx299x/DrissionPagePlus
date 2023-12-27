@@ -485,17 +485,14 @@ class ChromiumBase(BasePage):
         self.wait.load_complete()
         return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
 
-    def run_async_js(self, script, *args, as_expr=False, timeout=None):
+    def run_async_js(self, script, *args, as_expr=False):
         """以异步方式执行js代码
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
-        :param timeout: js超时时间（秒），为None则使用页面timeouts.script属性值
         :return: None
         """
-        from threading import Thread
-        Thread(target=run_js, args=(self, script, as_expr, self.timeouts.script if timeout is None else timeout,
-                                    args)).start()
+        run_js(self, script, as_expr, 0, args)
 
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问url

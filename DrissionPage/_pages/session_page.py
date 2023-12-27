@@ -25,7 +25,7 @@ class SessionPage(BasePage):
     def __init__(self, session_or_options=None, timeout=None):
         """
         :param session_or_options: Session对象或SessionOptions对象
-        :param timeout: 连接超时时间（秒），为None时从ini文件读取
+        :param timeout: 连接超时时间（秒），为None时从ini文件读取或默认10
         """
         super(SessionPage, SessionPage).__init__(self)
         self._headers = None
@@ -41,7 +41,7 @@ class SessionPage(BasePage):
 
     def _s_set_start_options(self, session_or_options):
         """启动配置
-        :param session_or_options: Session、SessionOptions
+        :param session_or_options: Session、SessionOptions对象
         :return: None
         """
         if not session_or_options or isinstance(session_or_options, SessionOptions):
@@ -117,12 +117,12 @@ class SessionPage(BasePage):
 
     @property
     def session(self):
-        """返回session对象"""
+        """返回Session对象"""
         return self._session
 
     @property
     def response(self):
-        """返回访问url得到的response对象"""
+        """返回访问url得到的Response对象"""
         return self._response
 
     @property
@@ -159,7 +159,18 @@ class SessionPage(BasePage):
                     r.status_code = 200
                     self._response = r
                 return
-        return self._s_connect(url, 'get', None, show_errmsg, retry, interval, **kwargs)
+        return self._s_connect(url, 'get', show_errmsg, retry, interval, **kwargs)
+
+    def post(self, url, show_errmsg=False, retry=None, interval=None, **kwargs):
+        """用post方式跳转到url
+        :param url: 目标url
+        :param show_errmsg: 是否显示和抛出异常
+        :param retry: 重试次数，为None时使用页面对象retry_times属性值
+        :param interval: 重试间隔（秒），为None时使用页面对象timeout属性值
+        :param kwargs: 连接参数
+        :return: url是否可用
+        """
+        return self._s_connect(url, 'post', show_errmsg, retry, interval, **kwargs)
 
     def ele(self, loc_or_ele, timeout=None):
         """返回页面中符合条件的第一个元素、属性或节点文本
@@ -230,18 +241,6 @@ class SessionPage(BasePage):
                 r.append({'name': c['name'], 'value': c['value'], 'domain': c['domain']})
             return r
 
-    def post(self, url, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
-        """用post方式跳转到url
-        :param url: 目标url
-        :param data: 提交的数据
-        :param show_errmsg: 是否显示和抛出异常
-        :param retry: 重试次数
-        :param interval: 重试间隔（秒）
-        :param kwargs: 连接参数
-        :return: url是否可用
-        """
-        return self._s_connect(url, 'post', data, show_errmsg, retry, interval, **kwargs)
-
     def close(self):
         """关闭Session对象"""
         self._session.close()
@@ -260,11 +259,10 @@ class SessionPage(BasePage):
         interval = interval if interval is not None else self.retry_interval
         return retry, interval
 
-    def _s_connect(self, url, mode, data=None, show_errmsg=False, retry=None, interval=None, **kwargs):
+    def _s_connect(self, url, mode, show_errmsg=False, retry=None, interval=None, **kwargs):
         """执行get或post连接
         :param url: 目标url
         :param mode: 'get' 或 'post'
-        :param data: 提交的数据
         :param show_errmsg: 是否显示和抛出异常
         :param retry: 重试次数
         :param interval: 重试间隔（秒）
@@ -272,7 +270,7 @@ class SessionPage(BasePage):
         :return: url是否可用
         """
         retry, interval = self._before_connect(url, retry, interval)
-        self._response, info = self._make_response(self._url, mode, data, retry, interval, show_errmsg, **kwargs)
+        self._response, info = self._make_response(self._url, mode, retry, interval, show_errmsg, **kwargs)
 
         if self._response is None:
             self._url_available = False
@@ -288,11 +286,10 @@ class SessionPage(BasePage):
 
         return self._url_available
 
-    def _make_response(self, url, mode='get', data=None, retry=None, interval=None, show_errmsg=False, **kwargs):
+    def _make_response(self, url, mode='get', retry=None, interval=None, show_errmsg=False, **kwargs):
         """生成Response对象
         :param url: 目标url
         :param mode: 'get' 或 'post'
-        :param data: post方式要提交的数据
         :param show_errmsg: 是否显示和抛出异常
         :param kwargs: 其它参数
         :return: tuple，第一位为Response或None，第二位为出错信息或 'Success'
@@ -325,7 +322,7 @@ class SessionPage(BasePage):
                 if mode == 'get':
                     r = self.session.get(url, **kwargs)
                 elif mode == 'post':
-                    r = self.session.post(url, data=data, **kwargs)
+                    r = self.session.post(url, **kwargs)
 
                 if r and r.content:
                     if self._encoding:
@@ -344,18 +341,19 @@ class SessionPage(BasePage):
                 if show_errmsg:
                     print(f'重试 {url}')
 
-        if r is None:
-            if show_errmsg:
-                if err:
-                    raise err
-                else:
-                    raise ConnectionError('连接失败')
-            return None, '连接失败' if err is None else err
+        if show_errmsg:
+            if err:
+                raise err
+            elif r is not None:
+                raise ConnectionError(f'状态码：{r.status_code}') if r.content else ConnectionError('返回内容为空。')
+            else:
+                raise ConnectionError('连接失败')
 
-        if not r.ok:
-            if show_errmsg:
-                raise ConnectionError(f'状态码：{r.status_code}')
-            return r, f'状态码：{r.status_code}'
+        else:
+            if r is not None:
+                return (r, f'状态码：{r.status_code}') if r.content else (None, '返回内容为空')
+            else:
+                return None, '连接失败' if err is None else err
 
     def __repr__(self):
         return f'<SessionPage url={self.url}>'

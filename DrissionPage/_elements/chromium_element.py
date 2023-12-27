@@ -1409,7 +1409,8 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
             res = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=script, objectId=obj_id,
                                arguments=[convert_argument(arg) for arg in args], returnByValue=False,
                                awaitPromise=True, userGesture=True, _timeout=timeout, _ignore=AlertExistsError)
-
+    except TimeoutError:
+        raise TimeoutError('执行js超时。')
     except ContextLostError:
         if is_page:
             raise ContextLostError('页面已被刷新，请尝试等待页面加载完成再执行操作。')

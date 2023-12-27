@@ -81,6 +81,7 @@ class Scroller(object):
         self._run_js(f'{{}}.scrollBy({pixel}, 0);')
 
     def _wait_scrolled(self):
+        """等待滚动结束"""
         if not self._wait_complete:
             return
 
@@ -89,7 +90,7 @@ class Scroller(object):
         x = r['layoutViewport']['pageX']
         y = r['layoutViewport']['pageY']
 
-        end_time = perf_counter() + self._driver.page.timeout
+        end_time = perf_counter() + page.timeout
         while perf_counter() < end_time:
             sleep(.1)
             r = page.run_cdp('Page.getLayoutMetrics')
