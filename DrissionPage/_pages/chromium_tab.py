@@ -46,7 +46,7 @@ class ChromiumTab(ChromiumBase):
 
     @property
     def set(self):
-        """返回用于等待的对象"""
+        """返回用于设置的对象"""
         if self._set is None:
             self._set = TabSetter(self)
         return self._set
@@ -97,7 +97,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
 
     @property
     def set(self):
-        """返回用于等待的对象"""
+        """返回用于设置的对象"""
         if self._set is None:
             self._set = WebPageTabSetter(self)
         return self._set

@@ -102,7 +102,7 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def set(self):
-        """返回用于等待的对象"""
+        """返回用于设置的对象"""
         if self._set is None:
             self._set = ChromiumPageSetter(self)
         return self._set

@@ -217,7 +217,7 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def scroll(self):
-        """返回用于等待的对象"""
+        """返回用于滚动的对象"""
         self.wait.load_complete()
         if self._scroll is None:
             self._scroll = FrameScroller(self)
@@ -225,7 +225,7 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def set(self):
-        """返回用于等待的对象"""
+        """返回用于设置的对象"""
         if self._set is None:
             self._set = ChromiumFrameSetter(self)
         return self._set
