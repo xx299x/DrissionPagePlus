@@ -438,8 +438,7 @@ class ChromiumBase(BasePage):
     def _js_ready_state(self):
         """返回js获取的ready state信息"""
         try:
-            return self.run_cdp('Runtime.evaluate', expression='document.readyState;',
-                                _timeout=3)['result']['value']
+            return self.run_cdp('Runtime.evaluate', expression='document.readyState;', _timeout=3)['result']['value']
         except ContextLostError:
             return None
         except TimeoutError:

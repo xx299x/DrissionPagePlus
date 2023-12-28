@@ -207,7 +207,7 @@ class ChromiumPage(ChromiumBase):
         if bid:
             kwargs['browserContextId'] = bid
 
-        return self.run_cdp('Target.createTarget', **kwargs)['targetId']
+        return self.browser.run_cdp('Target.createTarget', **kwargs)['targetId']
 
     def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个

@@ -219,7 +219,7 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
             break
 
     if raise_err:
-        raise TimeoutError('等待超时')
+        raise TimeoutError(f'等待超时（{timeout}秒）')
     else:
         return False
 

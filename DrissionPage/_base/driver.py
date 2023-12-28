@@ -77,7 +77,7 @@ class Driver(object):
 
         except (OSError, WebSocketConnectionClosedException):
             self.method_results.pop(ws_id, None)
-            return {'error': {'message': 'page closed'}}
+            return {'error': {'message': 'page closed'}, 'type': 'page_closed'}
 
         while not self._stopped.is_set():
             try:
@@ -87,14 +87,16 @@ class Driver(object):
 
             except Empty:
                 if self.alert_flag and message['method'].startswith(('Input.', 'Runtime.')):
-                    return {'error': {'message': 'alert exists.'}}
+                    return {'error': {'message': 'alert exists.'}, 'type': 'alert_exists'}
 
                 if timeout is not None and perf_counter() > end_time:
                     self.method_results.pop(ws_id, None)
-                    return {'error': {'message': 'alert exists.'}} \
-                        if self.alert_flag else {'error': {'message': 'timeout'}}
+                    return {'error': {'message': 'alert exists.'}, 'type': 'alert_exists'} \
+                        if self.alert_flag else {'error': {'message': 'timeout'}, 'type': 'timeout'}
 
                 continue
+
+        return {'error': 'page closed', 'type': 'page_closed'}
 
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""
@@ -161,11 +163,9 @@ class Driver(object):
 
         timeout = kwargs.pop('_timeout', 15)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
-        if result is None:
-            return {'error': {'message': 'page closed'}}
-        elif 'result' not in result and 'error' in result:
+        if 'result' not in result and 'error' in result:
             return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
-                    'method': _method, 'args': kwargs}
+                    'method': _method, 'args': kwargs, 'timeout': timeout}
         else:
             return result['result']
 
