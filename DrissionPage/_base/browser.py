@@ -8,7 +8,7 @@ from time import sleep, perf_counter
 from .driver import BrowserDriver, Driver
 from .._functions.tools import stop_process_on_port, raise_error
 from .._units.downloader import DownloadManager
-from ..errors import PageClosedError
+from ..errors import PageDisconnectedError
 
 __ERROR__ = 'error'
 
@@ -143,7 +143,7 @@ class Browser(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self.run_cdp('Target.closeTarget', targetId=tab_id, _ignore=PageClosedError)
+        self.run_cdp('Target.closeTarget', targetId=tab_id, _ignore=PageDisconnectedError)
 
     def activate_tab(self, tab_id):
         """使标签页变为活动状态
@@ -168,7 +168,7 @@ class Browser(object):
         try:
             self.run_cdp('Browser.close')
             self.driver.stop()
-        except PageClosedError:
+        except PageDisconnectedError:
             self.driver.stop()
             return
 

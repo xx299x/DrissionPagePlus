@@ -12,8 +12,8 @@ from time import perf_counter, sleep
 from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
 from .._configs.options_manage import OptionsManager
-from ..errors import (ContextLostError, ElementLostError, CDPError, PageClosedError, NoRectError, AlertExistsError,
-                      WrongURLError, StorageError, CookieFormatError)
+from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
+                      AlertExistsError, WrongURLError, StorageError, CookieFormatError)
 
 
 def get_usable_path(path, is_file=True, parents=True):
@@ -267,8 +267,8 @@ def raise_error(result, ignore=None):
                    'No node with given id found', 'Node with given id does not belong to the document',
                    'No node found for given backend id'):
         r = ElementLostError()
-    elif error in ('page closed', 'No target with given id found'):
-        r = PageClosedError()
+    elif error in ('connection disconnected', 'No target with given id found'):
+        r = PageDisconnectedError()
     elif error == 'timeout':
         r = TimeoutError(f'超时。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
                          f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'

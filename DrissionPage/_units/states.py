@@ -4,7 +4,7 @@
 @Contact :   g1879@qq.com
 """
 from .._functions.web import location_in_viewport
-from ..errors import CDPError, NoRectError, PageClosedError, ElementLostError
+from ..errors import CDPError, NoRectError, PageDisconnectedError, ElementLostError
 
 
 class ElementStates(object):
@@ -120,7 +120,7 @@ class PageStates(object):
         try:
             self._page.run_cdp('Page.getLayoutMetrics')
             return True
-        except PageClosedError:
+        except PageDisconnectedError:
             return False
 
     @property
@@ -152,7 +152,7 @@ class FrameStates(object):
         try:
             node = self._frame._target_page.run_cdp('DOM.describeNode',
                                                     backendNodeId=self._frame._frame_ele._backend_id)['node']
-        except (ElementLostError, PageClosedError):
+        except (ElementLostError, PageDisconnectedError):
             return False
         return 'frameId' in node
 

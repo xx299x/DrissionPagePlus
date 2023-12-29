@@ -12,7 +12,7 @@ from requests import get
 from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
                        WebSocketException)
 
-from ..errors import PageClosedError
+from ..errors import PageDisconnectedError
 
 
 class Driver(object):
@@ -77,7 +77,7 @@ class Driver(object):
 
         except (OSError, WebSocketConnectionClosedException):
             self.method_results.pop(ws_id, None)
-            return {'error': {'message': 'page closed'}, 'type': 'page_closed'}
+            return {'error': {'message': 'connection disconnected'}, 'type': 'connection_error'}
 
         while not self._stopped.is_set():
             try:
@@ -96,7 +96,7 @@ class Driver(object):
 
                 continue
 
-        return {'error': 'page closed', 'type': 'page_closed'}
+        return {'error': {'message': 'connection disconnected'}, 'type': 'connection_error'}
 
     def _recv_loop(self):
         """接收浏览器信息的守护线程方法"""
@@ -159,7 +159,7 @@ class Driver(object):
         :return: 执行结果
         """
         if self._stopped.is_set():
-            return {'error': 'page closed', 'type': 'page_closed'}
+            return {'error': 'connection disconnected', 'type': 'connection_error'}
 
         timeout = kwargs.pop('_timeout', 15)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
@@ -258,5 +258,5 @@ class BrowserDriver(Driver):
 def run_function(function, kwargs):
     try:
         function(**kwargs)
-    except PageClosedError:
+    except PageDisconnectedError:
         pass

@@ -45,8 +45,8 @@ class CDPError(BaseError):
     _info = '方法调用错误。'
 
 
-class PageClosedError(BaseError):
-    _info = '页面已关闭。'
+class PageDisconnectedError(BaseError):
+    _info = '与页面的连接已断开。'
 
 
 class JavaScriptError(BaseError):

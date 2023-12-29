@@ -27,7 +27,7 @@ from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
-from ..errors import ContextLostError, CDPError, PageClosedError, ElementNotFoundError
+from ..errors import ContextLostError, CDPError, PageDisconnectedError, ElementNotFoundError
 
 __ERROR__ = 'error'
 
@@ -672,7 +672,7 @@ class ChromiumBase(BasePage):
             print('停止页面加载')
         try:
             self.run_cdp('Page.stopLoading')
-        except (PageClosedError, CDPError):
+        except (PageDisconnectedError, CDPError):
             pass
         end_time = perf_counter() + self.timeouts.page_load
         while self._ready_state != 'complete' and perf_counter() < end_time:

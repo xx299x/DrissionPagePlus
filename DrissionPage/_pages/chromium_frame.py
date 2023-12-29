@@ -15,7 +15,7 @@ from .._units.scroller import FrameScroller
 from .._units.setter import ChromiumFrameSetter
 from .._units.states import FrameStates
 from .._units.waiter import FrameWaiter
-from ..errors import ContextLostError, ElementLostError, PageClosedError, JavaScriptError
+from ..errors import ContextLostError, ElementLostError, PageDisconnectedError, JavaScriptError
 
 
 class ChromiumFrame(ChromiumBase):
@@ -119,7 +119,7 @@ class ChromiumFrame(ChromiumBase):
             else:
                 return
 
-        except (ElementLostError, PageClosedError):
+        except (ElementLostError, PageDisconnectedError):
             return
 
         if self._is_inner_frame():
