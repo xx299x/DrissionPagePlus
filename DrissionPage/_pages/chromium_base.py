@@ -1153,13 +1153,15 @@ def close_privacy_dialog(page, tid):
 
 
 def get_mhtml(page, path=None, name=None):
-    """把当前页面保存为mhtml文件
+    """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
     :param page: 要保存的页面对象
-    :param path: 保存路径，为None保存在当前路径
-    :param name: 文件名，为None则用title属性值
+    :param path: 保存路径，为None且name不为None时保存在当前路径
+        :param name: 文件名，为None且path不为None时用title属性值
     :return: mhtml文本
     """
     r = page.run_cdp('Page.captureSnapshot')['data']
+    if path is None and name is None:
+        return r
     path = path or '.'
     Path(path).mkdir(parents=True, exist_ok=True)
     name = make_valid_name(name or page.title)

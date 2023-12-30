@@ -85,6 +85,9 @@ class ChromiumElement(DrissionElement):
         """
         return self.ele(loc_or_str, timeout)
 
+    def __eq__(self, other):
+        return self._backend_id == getattr(other, '_backend_id', None)
+
     @property
     def tag(self):
         """返回元素tag"""
@@ -793,6 +796,9 @@ class ShadowRoot(BaseElement):
         :return: 元素对象或属性、文本
         """
         return self.ele(loc_or_str, timeout)
+
+    def __eq__(self, other):
+        return self._backend_id == getattr(other, '_backend_id', None)
 
     @property
     def tag(self):

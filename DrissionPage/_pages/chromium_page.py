@@ -142,9 +142,9 @@ class ChromiumPage(ChromiumBase):
         return self.browser.process_id
 
     def save(self, path=None, name=None):
-        """把当前页面保存为mhtml文件
-        :param path: 保存路径，为None保存在当前路径
-        :param name: 文件名，为None则用title属性值
+        """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
+        :param path: 保存路径，为None且name不为None时保存在当前路径
+        :param name: 文件名，为None且path不为None时用title属性值
         :return: mhtml文本
         """
         return get_mhtml(self, path, name)

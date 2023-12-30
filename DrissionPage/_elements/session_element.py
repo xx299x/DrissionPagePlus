@@ -43,6 +43,9 @@ class SessionElement(DrissionElement):
         """
         return self.ele(loc_or_str)
 
+    def __eq__(self, other):
+        return self.xpath == getattr(other, 'xpath', None)
+
     @property
     def tag(self):
         """返回元素类型"""

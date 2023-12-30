@@ -71,6 +71,9 @@ class ChromiumFrame(ChromiumBase):
         """
         return self.ele(loc_or_str, timeout)
 
+    def __eq__(self, other):
+        return self._frame_id == getattr(other, '_frame_id', None)
+
     def __repr__(self):
         attrs = self._frame_ele.attrs
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
