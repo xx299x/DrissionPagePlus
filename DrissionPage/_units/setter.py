@@ -7,10 +7,9 @@ from pathlib import Path
 
 from requests.structures import CaseInsensitiveDict
 
-from .cookies_setter import SessionCookiesSetter, CookiesSetter
+from .cookies_setter import SessionCookiesSetter, CookiesSetter, WebPageCookiesSetter
 from .._functions.tools import show_or_hide_browser
 
-__ERROR__ = 'error'
 
 class BasePageSetter(object):
     def __init__(self, page):
@@ -199,19 +198,6 @@ class TabSetter(ChromiumBaseSetter):
         """使标签页处于最前面"""
         self._page.browser.activate_tab(self._page.tab_id)
 
-    def add_init_script(self, script: str, raise_error=True):
-        '''添加初始化脚本，在页面加载任何脚本前执行
-        :param script: js文本
-        :return: identifier 添加的脚本的标识符，失败时返回False，或raise Error
-        '''
-        result = self.driver.run('Page.addScriptToEvaluateOnNewDocument', source=script)
-        if not result or __ERROR__ not in result:
-            return result['identifier']
-        else:
-            if raise_error:
-                raise_error(str(result))
-            return False
-
 
 class ChromiumPageSetter(TabSetter):
 
@@ -384,15 +370,12 @@ class WebPageSetter(ChromiumPageSetter):
         self._session_setter = SessionPageSetter(self._page)
         self._chromium_setter = ChromiumPageSetter(self._page)
 
-    def cookies(self, cookies):
-        """添加cookies信息到浏览器或session对象
-        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
-        :return: None
-        """
-        if self._page.mode == 'd' and self._page._has_driver:
-            self._chromium_setter.cookies(cookies)
-        elif self._page.mode == 's' and self._page._has_session:
-            self._session_setter.cookies(cookies)
+    @property
+    def cookies(self):
+        """返回用于设置cookies的对象"""
+        if self._cookies_setter is None:
+            self._cookies_setter = WebPageCookiesSetter(self._page)
+        return self._cookies_setter
 
     def headers(self, headers) -> None:
         """设置固定发送的headers
@@ -418,15 +401,12 @@ class WebPageTabSetter(TabSetter):
         self._session_setter = SessionPageSetter(self._page)
         self._chromium_setter = ChromiumBaseSetter(self._page)
 
-    def cookies(self, cookies):
-        """添加多个cookies信息到浏览器或session对象，注意不要传入单个
-        :param cookies: 可以接收`CookieJar`、`list`、`tuple`、`str`、`dict`格式的`cookies`
-        :return: None
-        """
-        if self._page.mode == 'd' and self._page._has_driver:
-            self._chromium_setter.cookies(cookies)
-        elif self._page.mode == 's' and self._page._has_session:
-            self._session_setter.cookies(cookies)
+    @property
+    def cookies(self):
+        """返回用于设置cookies的对象"""
+        if self._cookies_setter is None:
+            self._cookies_setter = WebPageCookiesSetter(self._page)
+        return self._cookies_setter
 
     def headers(self, headers) -> None:
         """设置固定发送的headers

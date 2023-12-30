@@ -58,6 +58,7 @@ class ChromiumBase(BasePage):
         self._doc_got = False  # 用于在LoadEventFired和FrameStoppedLoading间标记是否已获取doc
         self._download_path = None
         self._load_end_time = 0
+        self._init_jss = []
         if not hasattr(self, '_listener'):
             self._listener = None
 
@@ -492,7 +493,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         run_js(self, script, as_expr, 0, args)
-        
+
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问url
         :param url: 目标url
@@ -795,6 +796,30 @@ class ChromiumBase(BasePage):
         """
         return self._get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
                                     full_page=full_page, left_top=left_top, right_bottom=right_bottom)
+
+    def add_init_js(self, js):
+        """添加初始化脚本，在页面加载任何脚本前执行
+        :param js: js文本
+        :return: 添加的脚本的id
+        """
+        js_id = self.run_cdp('Page.addScriptToEvaluateOnNewDocument', source=js,
+                             includeCommandLineAPI=True)['identifier']
+        self._init_jss.append(js_id)
+        return js_id
+
+    def remove_init_js(self, js_id=None):
+        """删除初始化脚本，js_id传入None时删除所有
+        :param js_id: 脚本的id
+        :return: None
+        """
+        if js_id is None:
+            for js_id in self._init_jss:
+                self.run_cdp('Page.removeScriptToEvaluateOnNewDocument', identifier=js_id)
+            self._init_jss.clear()
+
+        elif js_id in self._init_jss:
+            self.run_cdp('Page.removeScriptToEvaluateOnNewDocument', identifier=js_id)
+            self._init_jss.remove(js_id)
 
     def clear_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
         """清除缓存，可选要清除的项

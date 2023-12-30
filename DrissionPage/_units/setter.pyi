@@ -9,7 +9,7 @@ from typing import Union, Tuple, Literal, Any, Optional
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
 
-from .cookies_setter import SessionCookiesSetter, CookiesSetter
+from .cookies_setter import SessionCookiesSetter, CookiesSetter, WebPageCookiesSetter
 from .scroller import PageScroller
 from .._base.base import BasePage
 from .._elements.chromium_element import ChromiumElement
@@ -143,7 +143,8 @@ class WebPageSetter(ChromiumPageSetter):
 
     def headers(self, headers: dict) -> None: ...
 
-    def cookies(self, cookies) -> None: ...
+    @property
+    def cookies(self) -> WebPageCookiesSetter: ...
 
 
 class WebPageTabSetter(TabSetter):
@@ -155,7 +156,8 @@ class WebPageTabSetter(TabSetter):
 
     def headers(self, headers: dict) -> None: ...
 
-    def cookies(self, cookies) -> None: ...
+    @property
+    def cookies(self) -> WebPageCookiesSetter: ...
 
 
 class ChromiumElementSetter(object):

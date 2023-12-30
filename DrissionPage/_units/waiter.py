@@ -412,7 +412,7 @@ class ElementWaiter(object):
 
         while perf_counter() < end_time:
             sleep(gap)
-            if self._ele.rect.size == size and location == self._ele.rect.location:
+            if self._ele.rect.size == size and self._ele.rect.location == location:
                 return True
             size = self._ele.rect.size
             location = self._ele.rect.location

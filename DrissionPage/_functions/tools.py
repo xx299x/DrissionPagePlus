@@ -269,10 +269,6 @@ def raise_error(result, ignore=None):
         r = ElementLostError()
     elif error in ('connection disconnected', 'No target with given id found'):
         r = PageDisconnectedError()
-    elif error == 'timeout':
-        r = TimeoutError(f'超时（等待{result["timeout"]}秒）。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：'
-                         f'{result["args"]}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
-                         '报告网站：https://gitee.com/g1879/DrissionPage/issues')
     elif error == 'alert exists.':
         r = AlertExistsError()
     elif error in ('Node does not have a layout object', 'Could not compute box model.'):
@@ -283,10 +279,12 @@ def raise_error(result, ignore=None):
         r = StorageError()
     elif error == 'Sanitizing cookie failed':
         r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
-    elif result['type'] == 'call_method_error':
+    elif result['type'] in ('call_method_error', 'timeout'):
+        from DrissionPage import __version__
+        from time import process_time
         r = CDPError(f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
-                     f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。'
-                     f'\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
+                     f'版本：{__version__}\n运行时间：{process_time()}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法'
+                     '告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
     else:
         r = RuntimeError(result)
 
