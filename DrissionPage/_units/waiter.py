@@ -43,7 +43,7 @@ class BaseWaiter(object):
         timeout = end_time - perf_counter()
         if timeout <= 0:
             if raise_err is True or Settings.raise_when_wait_failed is True:
-                raise WaitTimeoutError('等待元素显示失败。')
+                raise WaitTimeoutError(f'等待元素显示失败（等待{timeout}秒）。')
             else:
                 return False
         return ele.wait.displayed(timeout, raise_err=raise_err)
@@ -62,7 +62,7 @@ class BaseWaiter(object):
         timeout = end_time - perf_counter()
         if timeout <= 0:
             if raise_err is True or Settings.raise_when_wait_failed is True:
-                raise WaitTimeoutError('等待元素显示失败。')
+                raise WaitTimeoutError(f'等待元素显示失败（等待{timeout}秒）。')
             else:
                 return False
         return ele.wait.hidden(timeout, raise_err=raise_err)
@@ -78,7 +78,7 @@ class BaseWaiter(object):
         if ele:
             return ele
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素加载失败。')
+            raise WaitTimeoutError(f'等待元素加载失败（等待{timeout}秒）。')
         else:
             return False
 
@@ -173,7 +173,7 @@ class BaseWaiter(object):
             sleep(.05)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError(f'等待{arg}改变失败。')
+            raise WaitTimeoutError(f'等待{arg}改变失败（等待{timeout}秒）。')
         else:
             return False
 
@@ -195,7 +195,7 @@ class BaseWaiter(object):
                 sleep(gap)
 
             if raise_err is True or Settings.raise_when_wait_failed is True:
-                raise WaitTimeoutError('等待页面加载失败。')
+                raise WaitTimeoutError(f'等待页面加载失败（等待{timeout}秒）。')
             else:
                 return False
 
@@ -266,7 +266,7 @@ class PageWaiter(TabWaiter):
             sleep(.01)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待新标签页失败。')
+            raise WaitTimeoutError(f'等待新标签页失败（等待{timeout}秒）。')
         else:
             return False
 
@@ -386,7 +386,7 @@ class ElementWaiter(object):
             sleep(.05)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素隐藏或被删除失败。')
+            raise WaitTimeoutError(f'等待元素隐藏或被删除失败（等待{timeout}秒）。')
         else:
             return False
 
@@ -418,7 +418,7 @@ class ElementWaiter(object):
             location = self._ele.rect.location
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError('等待元素停止运动失败。')
+            raise WaitTimeoutError(f'等待元素停止运动失败（等待{timeout}秒）。')
         else:
             return False
 
@@ -428,7 +428,7 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('has_rect', True, timeout, raise_err, err_text='等待元素拥有大小及位置属性失败。')
+        return self._wait_state('has_rect', True, timeout, raise_err, err_text='等待元素拥有大小及位置属性失败（等待{}秒）。')
 
     def _wait_state(self, attr, mode=False, timeout=None, raise_err=None, err_text=None):
         """等待元素某个元素状态到达指定状态
@@ -439,7 +439,7 @@ class ElementWaiter(object):
         :param err_text: 抛出错误时显示的信息
         :return: 是否等待成功
         """
-        err_text = err_text or '等待元素状态改变失败。'
+        err_text = err_text or '等待元素状态改变失败（等待{}秒）。'
         if timeout is None:
             timeout = self._page.timeout
         end_time = perf_counter() + timeout
@@ -449,7 +449,7 @@ class ElementWaiter(object):
             sleep(.05)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError(err_text)
+            raise WaitTimeoutError(err_text.format(timeout))
         else:
             return False
 

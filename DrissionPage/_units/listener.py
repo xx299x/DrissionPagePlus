@@ -118,7 +118,7 @@ class Listener(object):
         if fail:
             if fit_count or not self._caught.qsize():
                 if raise_err is True or Settings.raise_when_wait_failed is True:
-                    raise WaitTimeoutError('等待数据包失败。')
+                    raise WaitTimeoutError(f'等待数据包失败（等待{timeout}秒）。')
                 else:
                     return False
             else:

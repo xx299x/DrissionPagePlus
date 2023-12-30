@@ -219,7 +219,7 @@ def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
             break
 
     if raise_err:
-        raise TimeoutError(f'等待超时（{timeout}秒）')
+        raise TimeoutError(f'等待超时（等待{timeout}秒）。')
     else:
         return False
 
@@ -270,8 +270,8 @@ def raise_error(result, ignore=None):
     elif error in ('connection disconnected', 'No target with given id found'):
         r = PageDisconnectedError()
     elif error == 'timeout':
-        r = TimeoutError(f'超时。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
-                         f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
+        r = TimeoutError(f'超时（等待{result["timeout"]}秒）。\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：'
+                         f'{result["args"]}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
                          '报告网站：https://gitee.com/g1879/DrissionPage/issues')
     elif error == 'alert exists.':
         r = AlertExistsError()

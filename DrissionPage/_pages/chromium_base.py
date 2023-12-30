@@ -944,7 +944,7 @@ class ChromiumBase(BasePage):
                 if 'errorText' in result:
                     err = ConnectionError(result['errorText'])
             except TimeoutError:
-                err = TimeoutError('页面连接超时。')
+                err = TimeoutError(f'页面连接超时（等待{timeout}秒）。')
 
             if err:
                 if t < times:
@@ -963,7 +963,7 @@ class ChromiumBase(BasePage):
             yu = end_time - perf_counter()
             ok = self._wait_loaded(1 if yu <= 0 else yu)
             if not ok:
-                err = TimeoutError('页面连接超时。')
+                err = TimeoutError(f'页面连接超时（等待{timeout}秒）。')
                 if t < times:
                     sleep(interval)
                     if self._debug or show_errmsg:

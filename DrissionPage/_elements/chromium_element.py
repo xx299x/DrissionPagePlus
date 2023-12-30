@@ -1413,7 +1413,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
                                arguments=[convert_argument(arg) for arg in args], returnByValue=False,
                                awaitPromise=True, userGesture=True, _timeout=timeout, _ignore=AlertExistsError)
     except TimeoutError:
-        raise TimeoutError(f'执行js超时（{timeout}秒）。')
+        raise TimeoutError(f'执行js超时（等待{timeout}秒）。')
     except ContextLostError:
         if is_page:
             raise ContextLostError('页面已被刷新，请尝试等待页面加载完成再执行操作。')

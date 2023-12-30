@@ -161,7 +161,7 @@ class Driver(object):
         if self._stopped.is_set():
             return {'error': 'connection disconnected', 'type': 'connection_error'}
 
-        timeout = kwargs.pop('_timeout', 15)
+        timeout = kwargs.pop('_timeout', 30)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
         if 'result' not in result and 'error' in result:
             return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
