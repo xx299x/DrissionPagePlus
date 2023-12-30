@@ -10,6 +10,7 @@ from requests.structures import CaseInsensitiveDict
 from .cookies_setter import SessionCookiesSetter, CookiesSetter
 from .._functions.tools import show_or_hide_browser
 
+__ERROR__ = 'error'
 
 class BasePageSetter(object):
     def __init__(self, page):
@@ -197,6 +198,19 @@ class TabSetter(ChromiumBaseSetter):
     def activate(self):
         """使标签页处于最前面"""
         self._page.browser.activate_tab(self._page.tab_id)
+
+    def add_init_script(self, script: str, raise_error=True):
+        '''添加初始化脚本，在页面加载任何脚本前执行
+        :param script: js文本
+        :return: identifier 添加的脚本的标识符，失败时返回False，或raise Error
+        '''
+        result = self.driver.run('Page.addScriptToEvaluateOnNewDocument', source=script)
+        if not result or __ERROR__ not in result:
+            return result['identifier']
+        else:
+            if raise_error:
+                raise_error(str(result))
+            return False
 
 
 class ChromiumPageSetter(TabSetter):

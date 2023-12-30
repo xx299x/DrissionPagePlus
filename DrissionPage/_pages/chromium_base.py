@@ -492,19 +492,6 @@ class ChromiumBase(BasePage):
         :return: None
         """
         run_js(self, script, as_expr, 0, args)
-
-    def add_init_script(self, script: str, raise_error=True):
-        '''添加初始化脚本，在页面加载任何脚本前执行
-        :param script: js文本
-        :return: identifier 添加的脚本的标识符，用于删除，失败时返回False，或raise Error
-        '''
-        result = self.driver.run('Page.addScriptToEvaluateOnNewDocument', source=script)
-        if not result or __ERROR__ not in result:
-            return result['identifier']
-        else:
-            if raise_error:
-                raise_error(str(result))
-            return False
         
     def get(self, url, show_errmsg=False, retry=None, interval=None, timeout=None):
         """访问url
