@@ -65,12 +65,12 @@ class ChromiumPage(ChromiumBase):
         try:
             ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
             if not ws:
-                raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
+                raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
             ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
         except KeyError:
             raise BrowserConnectError('浏览器版本太旧，请升级。')
         except:
-            raise BrowserConnectError('\n浏览器连接失败，请检查是否启用全局代理。如是，须设置不代理127.0.0.1地址。')
+            raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
 
         self._browser = Browser(self._chromium_options.address, ws, self)
         if (is_exist and self._chromium_options._headless is False and

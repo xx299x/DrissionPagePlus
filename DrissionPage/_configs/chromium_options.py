@@ -32,6 +32,7 @@ class ChromiumOptions(object):
 
             options = om.chromium_options
             self._download_path = om.paths.get('download_path', None) or None
+            self._tmp_path = om.paths.get('tmp_path', None) or None
             self._arguments = options.get('arguments', [])
             self._browser_path = options.get('browser_path', '')
             self._extensions = options.get('extensions', [])
@@ -76,6 +77,7 @@ class ChromiumOptions(object):
         self._browser_path = "chrome"
         self._arguments = []
         self._download_path = None
+        self._tmp_path = None
         self._extensions = []
         self._prefs = {}
         self._flags = {}
@@ -445,6 +447,14 @@ class ChromiumOptions(object):
         self._download_path = str(path)
         return self
 
+    def set_tmp_path(self, path):
+        """设置临时文件文件保存路径
+        :param path: 下载路径
+        :return: 当前对象
+        """
+        self._tmp_path = str(path)
+        return self
+
     def set_user_data_path(self, path):
         """设置用户文件夹路径
         :param path: 用户文件夹路径
@@ -472,13 +482,15 @@ class ChromiumOptions(object):
         self._system_user_path = on_off
         return self
 
-    def auto_port(self, on_off=True):
+    def auto_port(self, on_off=True, tmp_path=None):
         """自动获取可用端口
         :param on_off: 是否开启自动获取端口号
+        :param tmp_path: 临时文件保存路径，为None时保存到系统临时文件夹
         :return: 当前对象
         """
         if on_off:
-            port, path = PortFinder().get_port()
+            tmp_path = tmp_path or self._tmp_path
+            port, path = PortFinder(tmp_path).get_port()
             self.set_paths(local_port=port, user_data_path=path)
             self._auto_port = True
         else:
@@ -527,6 +539,7 @@ class ChromiumOptions(object):
         om.set_item('proxies', 'https', self._proxy)
         # 设置路径
         om.set_item('paths', 'download_path', self._download_path or '')
+        om.set_item('paths', 'tmp_path', self._tmp_path or '')
         # 设置timeout
         om.set_item('timeouts', 'base', self._timeouts['base'])
         om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
@@ -545,6 +558,9 @@ class ChromiumOptions(object):
     def save_to_default(self):
         """保存当前配置到默认ini文件"""
         return self.save('default')
+
+    def __repr__(self):
+        return f'<ChromiumOptions at {id(self)}>'
 
     # ---------------即将废弃--------------
 
@@ -593,16 +609,16 @@ class ChromiumOptions(object):
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
 
-    def __repr__(self):
-        return f'<ChromiumOptions at {id(self)}>'
-
 
 class PortFinder(object):
     used_port = {}
     lock = Lock()
 
-    def __init__(self):
-        self.tmp_dir = Path(gettempdir()) / 'DrissionPage' / 'TempFolder'
+    def __init__(self, path=None):
+        """
+        :param path: 临时文件保存路径，为None时使用系统临时文件夹
+        """
+        self.tmp_dir = Path(path) if path else Path(gettempdir()) / 'DrissionPage' / 'UserTempFolder'
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
         if not PortFinder.used_port:
             clean_folder(self.tmp_dir)
