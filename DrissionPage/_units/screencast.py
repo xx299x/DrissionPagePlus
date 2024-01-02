@@ -8,6 +8,7 @@ from os.path import sep
 from pathlib import Path
 from random import randint
 from shutil import rmtree
+from tempfile import gettempdir
 from threading import Thread
 from time import sleep, time
 
@@ -36,7 +37,11 @@ class Screencast(object):
             raise ValueError('save_path必须设置。')
 
         if self._mode in ('frugal_video', 'video'):
-            self._tmp_path = self._path / f'screencast_tmp_{time()}_{randint(0, 100)}'
+            if self._page.browser.page._chromium_options.tmp_path:
+                self._tmp_path = Path(
+                    self._page.browser.page._chromium_options.tmp_path) / f'screencast_tmp_{time()}_{randint(0, 100)}'
+            else:
+                self._tmp_path = Path(gettempdir()) / 'DrissionPage' / f'screencast_tmp_{time()}_{randint(0, 100)}'
             self._tmp_path.mkdir(parents=True, exist_ok=True)
 
         if self._mode.startswith('frugal'):

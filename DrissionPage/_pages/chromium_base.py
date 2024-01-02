@@ -753,29 +753,29 @@ class ChromiumBase(BasePage):
         return self._get_screenshot(path=path, name=name, as_bytes=as_bytes, as_base64=as_base64,
                                     full_page=full_page, left_top=left_top, right_bottom=right_bottom)
 
-    def add_init_js(self, js):
+    def add_init_js(self, script):
         """添加初始化脚本，在页面加载任何脚本前执行
-        :param js: js文本
+        :param script: js文本
         :return: 添加的脚本的id
         """
-        js_id = self.run_cdp('Page.addScriptToEvaluateOnNewDocument', source=js,
+        js_id = self.run_cdp('Page.addScriptToEvaluateOnNewDocument', source=script,
                              includeCommandLineAPI=True)['identifier']
         self._init_jss.append(js_id)
         return js_id
 
-    def remove_init_js(self, js_id=None):
+    def remove_init_js(self, script_id=None):
         """删除初始化脚本，js_id传入None时删除所有
-        :param js_id: 脚本的id
+        :param script_id: 脚本的id
         :return: None
         """
-        if js_id is None:
+        if script_id is None:
             for js_id in self._init_jss:
                 self.run_cdp('Page.removeScriptToEvaluateOnNewDocument', identifier=js_id)
             self._init_jss.clear()
 
-        elif js_id in self._init_jss:
-            self.run_cdp('Page.removeScriptToEvaluateOnNewDocument', identifier=js_id)
-            self._init_jss.remove(js_id)
+        elif script_id in self._init_jss:
+            self.run_cdp('Page.removeScriptToEvaluateOnNewDocument', identifier=script_id)
+            self._init_jss.remove(script_id)
 
     def clear_cache(self, session_storage=True, local_storage=True, cache=True, cookies=True):
         """清除缓存，可选要清除的项
