@@ -36,6 +36,7 @@ class Driver(object):
         self._handle_event_th = Thread(target=self._handle_event_loop)
         self._recv_th.daemon = True
         self._handle_event_th.daemon = True
+        self._handle_immediate_event_th = None
 
         self._stopped = Event()
 
@@ -43,6 +44,7 @@ class Driver(object):
         self.immediate_event_handlers = {}
         self.method_results = {}
         self.event_queue = Queue()
+        self.immediate_event_queue = Queue()
 
         self.start()
 
@@ -126,8 +128,7 @@ class Driver(object):
                     self.alert_flag = msg['method'].endswith('Opening')
                 function = self.immediate_event_handlers.get(msg['method'])
                 if function:
-                    Thread(target=run_function, args=(function, msg['params'])).start()
-                    # function(**msg['params'])
+                    self._handle_immediate_event(function, msg['params'])
                 else:
                     self.event_queue.put(msg)
 
@@ -150,6 +151,26 @@ class Driver(object):
                 function(**event['params'])
 
             self.event_queue.task_done()
+
+    def _handle_immediate_event_loop(self):
+        while not self._stopped.is_set() and not self.immediate_event_queue.empty():
+            function, kwargs = self.immediate_event_queue.get(timeout=1)
+            try:
+                function(**kwargs)
+            except PageDisconnectedError:
+                pass
+
+    def _handle_immediate_event(self, function, kwargs):
+        """处理立即执行的动作
+        :param function: 要运行下方法
+        :param kwargs: 方法参数
+        :return: None
+        """
+        self.immediate_event_queue.put((function, kwargs))
+        if self._handle_immediate_event_th is None or not self._handle_immediate_event_th.is_alive():
+            self._handle_immediate_event_th = Thread(target=self._handle_immediate_event_loop)
+            self._handle_immediate_event_th.daemon = True
+            self._handle_immediate_event_th.start()
 
     def run(self, _method, **kwargs):
         """执行cdp方法
@@ -220,11 +241,6 @@ class Driver(object):
         else:
             handler.pop(event, None)
 
-    def __str__(self):
-        return f'<Driver {self.id}>'
-
-    __repr__ = __str__
-
 
 class BrowserDriver(Driver):
     BROWSERS = {}
@@ -253,10 +269,3 @@ class BrowserDriver(Driver):
     def stop(self):
         super().stop()
         self.browser._on_quit()
-
-
-def run_function(function, kwargs):
-    try:
-        function(**kwargs)
-    except PageDisconnectedError:
-        pass

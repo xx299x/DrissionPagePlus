@@ -99,16 +99,15 @@ class ChromiumFrame(ChromiumBase):
             self.browser.driver.get(f'http://{self.address}/json')
             super()._driver_init(tab_id)
         self._driver.set_callback('Inspector.detached', self._onInspectorDetached, immediate=True)
+        self._driver.set_callback('Page.frameDetached', None)
+        self._driver.set_callback('Page.frameDetached', self._onFrameDetached, immediate=True)
 
     def _reload(self):
         """重新获取document"""
         self._is_loading = True
-        debug = self._debug
         d_debug = self.driver._debug
         self._reloading = True
         self._doc_got = False
-        if debug:
-            print(f'{self._frame_id} reload 开始')
 
         self._driver.stop()
         try:
@@ -132,7 +131,6 @@ class ChromiumFrame(ChromiumBase):
             if self._listener:
                 self._listener._to_target(self._target_page.tab_id, self.address, self)
             super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
-            self._debug = debug
             self.driver._debug = d_debug
 
         else:
@@ -156,14 +154,10 @@ class ChromiumFrame(ChromiumBase):
             #             print(f'获取doc失败，重试 {e}')
             # else:
             #     raise GetDocumentError
-            self._debug = debug
             self.driver._debug = d_debug
 
         self._is_loading = False
         self._reloading = False
-
-        if self._debug:
-            print(f'{self._frame_id} reload 完毕')
 
     def _get_document(self, timeout=10):
         """刷新cdp使用的document数据
@@ -172,9 +166,6 @@ class ChromiumFrame(ChromiumBase):
         """
         if self._is_reading:
             return
-
-        if self._debug:
-            print('获取文档开始')
 
         self._is_reading = True
         try:
@@ -192,13 +183,9 @@ class ChromiumFrame(ChromiumBase):
             r = self.run_cdp('Page.getFrameTree')
             for i in findall(r"'id': '(.*?)'", str(r)):
                 self.browser._frames[i] = self.tab_id
-                if self._debug:
-                    print('获取文档结束')
                 return True
 
         except:
-            if self._debug:
-                print('获取文档失败')
             return False
 
         finally:

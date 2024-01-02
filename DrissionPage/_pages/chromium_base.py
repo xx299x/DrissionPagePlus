@@ -44,7 +44,6 @@ class ChromiumBase(BasePage):
         super().__init__()
         self._is_loading = None
         self._root_id = None  # object id
-        self._debug = False
         self._set = None
         self._screencast = None
         self._actions = None
@@ -114,8 +113,6 @@ class ChromiumBase(BasePage):
         if self._js_ready_state == 'complete' and self._ready_state is None:
             self._get_document()
             self._ready_state = 'complete'
-            if self._debug:
-                print(f'{self._frame_id}在connect_browser变成complete')
 
     def _driver_init(self, tab_id):
         """新建页面、页面刷新、切换标签页后要进行的cdp参数初始化
@@ -145,15 +142,13 @@ class ChromiumBase(BasePage):
         self._driver.set_callback('Page.loadEventFired', self._onLoadEventFired)
         self._driver.set_callback('Page.frameStoppedLoading', self._onFrameStoppedLoading)
         self._driver.set_callback('Page.frameAttached', self._onFrameAttached)
-        self._driver.set_callback('Page.frameDetached', self._onFrameDetached, immediate=True)
+        self._driver.set_callback('Page.frameDetached', self._onFrameDetached)
 
     def _get_document(self, timeout=10):
         """获取页面文档
         :param timeout: 超时时间（秒）
         :return: 是否获取成功
         """
-        if self._debug:
-            print('获取文档开始')
         if self._is_reading:
             return
         timeout = timeout if timeout >= .5 else .5
@@ -169,8 +164,6 @@ class ChromiumBase(BasePage):
                 r = self.run_cdp('Page.getFrameTree')
                 for i in findall(r"'id': '(.*?)'", str(r)):
                     self.browser._frames[i] = self.tab_id
-                if self._debug:
-                    print('获取文档结束')
                 result = True
                 break
 
@@ -195,10 +188,6 @@ class ChromiumBase(BasePage):
         """页面开始加载时执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._frame_id:
-            if self._debug:
-                print(f'{self._frame_id}触发FrameStartedLoading')
-                print('在FrameStartedLoading变成loading')
-
             self._doc_got = False
             self._ready_state = 'connecting'
             self._is_loading = True
@@ -208,65 +197,34 @@ class ChromiumBase(BasePage):
                 t.daemon = True
                 t.start()
 
-            if self._debug:
-                print(f'{self._frame_id}执行FrameStartedLoading完毕')
-
     def _onFrameNavigated(self, **kwargs):
         """页面跳转时执行"""
         if kwargs['frame']['id'] == self._frame_id:
-            if self._debug:
-                print(f'{self._frame_id}触发FrameNavigated')
-                print('在FrameNavigated变成loading')
-
             self._doc_got = False
             self._ready_state = 'loading'
             self._is_loading = True
 
-            if self._debug:
-                print(f'>>> FrameNavigated {kwargs}')
-
     def _onDomContentEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        if self._debug:
-            print(f'{self._frame_id}触发DomContentEventFired')
-            print('在DomContentEventFired变成interactive')
-
         if self._load_mode == 'eager':
             self.run_cdp('Page.stopLoading')
         if self._get_document(self._load_end_time - perf_counter() - .1):
             self._doc_got = True
         self._ready_state = 'interactive'
 
-        if self._debug:
-            print(f'{self._frame_id}执行DomContentEventFired完毕')
-
     def _onLoadEventFired(self, **kwargs):
         """在页面刷新、变化后重新读取页面内容"""
-        if self._debug:
-            print(f'{self._frame_id}触发LoadEventFired')
-            print('在LoadEventFired变成complete')
-
         if self._doc_got is False and self._get_document(self._load_end_time - perf_counter() - .1):
             self._doc_got = True
         self._ready_state = 'complete'
-
-        if self._debug:
-            print(f'{self._frame_id}执行LoadEventFired完毕')
 
     def _onFrameStoppedLoading(self, **kwargs):
         """页面加载完成后执行"""
         self.browser._frames[kwargs['frameId']] = self.tab_id
         if kwargs['frameId'] == self._frame_id:
-            if self._debug:
-                print(f'{self._frame_id}触发FrameStoppedLoading')
-                print('在FrameStoppedLoading变成complete')
-
             if self._doc_got is False:
                 self._get_document(self._load_end_time - perf_counter() - .1)
             self._ready_state = 'complete'
-
-            if self._debug:
-                print(f'{self._frame_id}执行FrameStoppedLoading完毕')
 
     def _onFileChooserOpened(self, **kwargs):
         """文件选择框打开时执行"""
@@ -669,8 +627,6 @@ class ChromiumBase(BasePage):
 
     def stop_loading(self):
         """页面停止加载"""
-        if self._debug:
-            print('停止页面加载')
         try:
             self.run_cdp('Page.stopLoading')
         except (PageDisconnectedError, CDPError):
@@ -974,7 +930,7 @@ class ChromiumBase(BasePage):
             if err:
                 if t < times:
                     sleep(interval)
-                    if self._debug or show_errmsg:
+                    if show_errmsg:
                         print(f'重试{t + 1} {to_url}')
                 end_time1 = end_time - perf_counter()
                 while self._ready_state not in ('loading', 'complete') and perf_counter() < end_time1:  # 等待出错信息显示
@@ -991,7 +947,7 @@ class ChromiumBase(BasePage):
                 err = TimeoutError(f'页面连接超时（等待{timeout}秒）。')
                 if t < times:
                     sleep(interval)
-                    if self._debug or show_errmsg:
+                    if show_errmsg:
                         print(f'重试{t + 1} {to_url}')
                 continue
 

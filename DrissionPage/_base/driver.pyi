@@ -25,18 +25,20 @@ class Driver(object):
     id: str
     address: str
     type: str
-    _debug: bool
+    # _debug: bool
     alert_flag: bool
     _websocket_url: str
     _cur_id: int
     _ws: Optional[WebSocket]
     _recv_th: Thread
     _handle_event_th: Thread
+    _handle_immediate_event_th: Optional[Thread]
     _stopped: Event
     event_handlers: dict
     immediate_event_handlers: dict
     method_results: dict
     event_queue: Queue
+    immediate_event_queue: Queue
 
     def __init__(self, tab_id: str, tab_type: str, address: str): ...
 
@@ -46,7 +48,9 @@ class Driver(object):
 
     def _handle_event_loop(self) -> None: ...
 
-    def __getattr__(self, item: str) -> Callable: ...
+    def _handle_immediate_event_loop(self): ...
+
+    def _handle_immediate_event(self, function: Callable, kwargs: dict): ...
 
     def run(self, _method: str, **kwargs) -> dict: ...
 
@@ -57,8 +61,6 @@ class Driver(object):
     def _stop(self) -> None: ...
 
     def set_callback(self, event: str, callback: Union[Callable, None], immediate: bool = False) -> None: ...
-
-    def __str__(self) -> str: ...
 
 
 class BrowserDriver(Driver):
