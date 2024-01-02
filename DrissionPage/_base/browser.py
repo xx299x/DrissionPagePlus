@@ -3,6 +3,8 @@
 @Author  :   g1879
 @Contact :   g1879@qq.com
 """
+from pathlib import Path
+from shutil import rmtree
 from time import sleep, perf_counter
 
 from .driver import BrowserDriver, Driver
@@ -196,3 +198,14 @@ class Browser(object):
 
     def _on_quit(self):
         Browser.BROWSERS.pop(self.id, None)
+        if self.page._chromium_options.is_auto_port and self.page._chromium_options.user_data_path:
+            path = Path(self.page._chromium_options.user_data_path)
+            end_time = perf_counter() + 7
+            while perf_counter() < end_time:
+                if not path.exists():
+                    break
+                try:
+                    rmtree(path)
+                    break
+                except (PermissionError, FileNotFoundError):
+                    pass

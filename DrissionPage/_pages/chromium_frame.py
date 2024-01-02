@@ -105,7 +105,7 @@ class ChromiumFrame(ChromiumBase):
     def _reload(self):
         """重新获取document"""
         self._is_loading = True
-        d_debug = self.driver._debug
+        # d_debug = self.driver._debug
         self._reloading = True
         self._doc_got = False
 
@@ -131,7 +131,7 @@ class ChromiumFrame(ChromiumBase):
             if self._listener:
                 self._listener._to_target(self._target_page.tab_id, self.address, self)
             super().__init__(self.address, self._target_page.tab_id, self._target_page.timeout)
-            self.driver._debug = d_debug
+            # self.driver._debug = d_debug
 
         else:
             self._is_diff_domain = True
@@ -154,7 +154,8 @@ class ChromiumFrame(ChromiumBase):
             #             print(f'获取doc失败，重试 {e}')
             # else:
             #     raise GetDocumentError
-            self.driver._debug = d_debug
+
+            # self.driver._debug = d_debug
 
         self._is_loading = False
         self._reloading = False

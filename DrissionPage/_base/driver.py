@@ -59,15 +59,15 @@ class Driver(object):
         message['id'] = ws_id
         message_json = dumps(message)
 
-        if self._debug:
-            if self._debug is True or (isinstance(self._debug, str) and
-                                       message.get('method', '').startswith(self._debug)):
-                print(f'发> {message_json}')
-            elif isinstance(self._debug, (list, tuple, set)):
-                for m in self._debug:
-                    if message.get('method', '').startswith(m):
-                        print(f'发> {message_json}')
-                        break
+        # if self._debug:
+        #     if self._debug is True or (isinstance(self._debug, str) and
+        #                                message.get('method', '').startswith(self._debug)):
+        #         print(f'发> {message_json}')
+        #     elif isinstance(self._debug, (list, tuple, set)):
+        #         for m in self._debug:
+        #             if message.get('method', '').startswith(m):
+        #                 print(f'发> {message_json}')
+        #                 break
 
         end_time = perf_counter() + timeout if timeout is not None else None
         self.method_results[ws_id] = Queue()
@@ -113,15 +113,15 @@ class Driver(object):
                 self._stop()
                 return
 
-            if self._debug:
-                if self._debug is True or 'id' in msg or (isinstance(self._debug, str)
-                                                          and msg.get('method', '').startswith(self._debug)):
-                    print(f'<收 {msg_json}')
-                elif isinstance(self._debug, (list, tuple, set)):
-                    for m in self._debug:
-                        if msg.get('method', '').startswith(m):
-                            print(f'<收 {msg_json}')
-                            break
+            # if self._debug:
+            #     if self._debug is True or 'id' in msg or (isinstance(self._debug, str)
+            #                                               and msg.get('method', '').startswith(self._debug)):
+            #         print(f'<收 {msg_json}')
+            #     elif isinstance(self._debug, (list, tuple, set)):
+            #         for m in self._debug:
+            #             if msg.get('method', '').startswith(m):
+            #                 print(f'<收 {msg_json}')
+            #                 break
 
             if 'method' in msg:
                 if msg['method'].startswith('Page.javascriptDialog'):
@@ -135,8 +135,8 @@ class Driver(object):
             elif msg.get('id') in self.method_results:
                 self.method_results[msg['id']].put(msg)
 
-            elif self._debug:
-                print(f'未知信息：{msg}')
+            # elif self._debug:
+            #     print(f'未知信息：{msg}')
 
     def _handle_event_loop(self):
         """当接收到浏览器信息，执行已绑定的方法"""
@@ -266,6 +266,6 @@ class BrowserDriver(Driver):
         r.close()
         return r
 
-    def stop(self):
-        super().stop()
+    def _stop(self):
+        super()._stop()
         self.browser._on_quit()

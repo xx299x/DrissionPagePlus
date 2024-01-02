@@ -5,7 +5,7 @@
 """
 from pathlib import Path
 from threading import Lock
-from typing import Union, Tuple, Any, Literal
+from typing import Union, Tuple, Any, Literal, Optional
 
 
 class ChromiumOptions(object):
@@ -44,6 +44,9 @@ class ChromiumOptions(object):
     def user_data_path(self) -> str: ...
 
     @property
+    def tmp_path(self) -> Optional[str]: ...
+
+    @property
     def user(self) -> str: ...
 
     @property
@@ -75,6 +78,9 @@ class ChromiumOptions(object):
 
     @property
     def is_existing_only(self) -> bool: ...
+
+    @property
+    def is_auto_port(self) -> bool: ...
 
     @property
     def retry_times(self) -> int: ...

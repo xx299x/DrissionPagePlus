@@ -107,6 +107,11 @@ class ChromiumOptions(object):
         return self._user_data_path
 
     @property
+    def tmp_path(self):
+        """返回临时文件夹路径"""
+        return self._tmp_path
+
+    @property
     def user(self):
         """返回用户配置文件夹名称"""
         return self._user
@@ -160,6 +165,11 @@ class ChromiumOptions(object):
     def is_existing_only(self):
         """返回是否只接管现有浏览器方式"""
         return self._existing_only
+
+    @property
+    def is_auto_port(self):
+        """返回是否使用自动端口和用户文件"""
+        return self._auto_port
 
     @property
     def retry_times(self):
@@ -485,14 +495,13 @@ class ChromiumOptions(object):
     def auto_port(self, on_off=True, tmp_path=None):
         """自动获取可用端口
         :param on_off: 是否开启自动获取端口号
-        :param tmp_path: 临时文件保存路径，为None时保存到系统临时文件夹
+        :param tmp_path: 临时文件保存路径，为None时保存到系统临时文件夹，on_off为False时此参数无效
         :return: 当前对象
         """
         if on_off:
-            tmp_path = tmp_path or self._tmp_path
-            port, path = PortFinder(tmp_path).get_port()
-            self.set_paths(local_port=port, user_data_path=path)
             self._auto_port = True
+            if tmp_path:
+                self._tmp_path = str(tmp_path)
         else:
             self._auto_port = False
         return self
@@ -618,7 +627,8 @@ class PortFinder(object):
         """
         :param path: 临时文件保存路径，为None时使用系统临时文件夹
         """
-        self.tmp_dir = Path(path) if path else Path(gettempdir()) / 'DrissionPage' / 'UserTempFolder'
+        tmp = Path(path) if path else Path(gettempdir()) / 'DrissionPage'
+        self.tmp_dir = tmp / 'UserTempFolder'
         self.tmp_dir.mkdir(parents=True, exist_ok=True)
         if not PortFinder.used_port:
             clean_folder(self.tmp_dir)

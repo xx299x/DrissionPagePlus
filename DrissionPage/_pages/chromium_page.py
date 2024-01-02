@@ -10,7 +10,7 @@ from requests import get
 
 from .._base.browser import Browser
 from .._functions.browser import connect_browser
-from .._configs.chromium_options import ChromiumOptions
+from .._configs.chromium_options import ChromiumOptions, PortFinder
 from .._pages.chromium_base import ChromiumBase, get_mhtml, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
@@ -44,6 +44,11 @@ class ChromiumPage(ChromiumBase):
             self._chromium_options = ChromiumOptions(addr_or_opts)
 
         elif isinstance(addr_or_opts, ChromiumOptions):
+            if addr_or_opts.is_auto_port:
+                port, path = PortFinder(addr_or_opts.tmp_path).get_port()
+                addr_or_opts.set_address(f'127.0.0.1:{port}')
+                addr_or_opts.set_user_data_path(path)
+                addr_or_opts.auto_port()
             self._chromium_options = addr_or_opts
 
         elif isinstance(addr_or_opts, str):

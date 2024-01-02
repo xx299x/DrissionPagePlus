@@ -283,7 +283,6 @@ class Actions:
                 if character in ('\ue009', '\ue008', '\ue00a', '\ue03d'):
                     modifiers.append(character)
                 else:
-                    sleep(.01)
                     self.key_up(character)
         for m in modifiers:
             self.key_up(m)
