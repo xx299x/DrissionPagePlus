@@ -13,7 +13,7 @@ from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
 from .._configs.options_manage import OptionsManager
 from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
-                      AlertExistsError, WrongURLError, StorageError, CookieFormatError)
+                      AlertExistsError, WrongURLError, StorageError, CookieFormatError, JavaScriptError)
 
 
 def get_usable_path(path, is_file=True, parents=True):
@@ -279,12 +279,15 @@ def raise_error(result, ignore=None):
         r = StorageError()
     elif error == 'Sanitizing cookie failed':
         r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
+    elif error == 'Given expression does not evaluate to a function':
+        r = JavaScriptError(f'传入的js无法解析成函数：\n{result["args"]["functionDeclaration"]}')
     elif result['type'] in ('call_method_error', 'timeout'):
         from DrissionPage import __version__
         from time import process_time
-        r = CDPError(f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n'
-                     f'版本：{__version__}\n运行时间：{process_time()}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法'
-                     '告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues')
+        txt = f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n' \
+              f'版本：{__version__}\n运行时间：{process_time()}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法' \
+              '告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues'
+        r = TimeoutError(txt) if result['type'] == 'timeout' else CDPError(txt)
     else:
         r = RuntimeError(result)
 
