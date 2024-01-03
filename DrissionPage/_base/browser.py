@@ -169,9 +169,7 @@ class Browser(object):
         """
         try:
             self.run_cdp('Browser.close')
-            self.driver.stop()
         except PageDisconnectedError:
-            self.driver.stop()
             return
 
         if force:

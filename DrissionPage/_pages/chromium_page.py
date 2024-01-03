@@ -214,6 +214,10 @@ class ChromiumPage(ChromiumBase):
 
         return self.browser.run_cdp('Target.createTarget', **kwargs)['targetId']
 
+    def close(self):
+        """关闭Page管理的标签页"""
+        self.browser.close_tab(self.tab_id)
+
     def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个
         :param tabs_or_ids: 要关闭的标签页对象或id，可传入列表或元组，为None时关闭当前页
@@ -247,13 +251,6 @@ class ChromiumPage(ChromiumBase):
         while self.tabs_count != end_len and perf_counter() < end_time:
             sleep(.1)
 
-    def close_other_tabs(self, tabs_or_ids=None):
-        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
-        :param tabs_or_ids: 要保留的标签页对象或id，可传入列表或元组，为None时保存当前页
-        :return: None
-        """
-        self.close_tabs(tabs_or_ids, True)
-
     def quit(self, timeout=5, force=True):
         """关闭浏览器
         :param timeout: 等待浏览器关闭超时时间（秒）
@@ -264,6 +261,14 @@ class ChromiumPage(ChromiumBase):
 
     def __repr__(self):
         return f'<ChromiumPage browser_id={self.browser.id} tab_id={self.tab_id}>'
+
+    # ----------即将废弃-----------
+    def close_other_tabs(self, tabs_or_ids=None):
+        """关闭传入的标签页以外标签页，默认保留当前页。可传入多个
+        :param tabs_or_ids: 要保留的标签页对象或id，可传入列表或元组，为None时保存当前页
+        :return: None
+        """
+        self.close_tabs(tabs_or_ids, True)
 
 
 def get_rename(original, rename):
