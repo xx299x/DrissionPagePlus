@@ -87,7 +87,8 @@ def get_launch_args(opt):
 
     if not has_user_path and not opt.system_user_path:
         port = opt.address.split(':')[-1] if opt.address else '0'
-        path = Path(gettempdir()) / 'DrissionPage' / f'userData_{port}'
+        p = Path(opt.tmp_path) if opt.tmp_path else Path(gettempdir()) / 'DrissionPage'
+        path = p / f'userData_{port}'
         path.mkdir(parents=True, exist_ok=True)
         opt.set_user_data_path(path)
         result.add(f'--user-data-dir={path}')

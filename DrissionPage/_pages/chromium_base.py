@@ -6,7 +6,7 @@
 from json import loads, JSONDecodeError
 from os.path import sep
 from pathlib import Path
-from re import findall, match
+from re import findall
 from threading import Thread
 from time import perf_counter, sleep
 from urllib.parse import quote
@@ -894,13 +894,7 @@ class ChromiumBase(BasePage):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
-        if not url:
-            self._url = 'chrome://newtab/'
-        elif not match(r'.*?://', url):
-            self._url = f'http://{url}'
-        else:
-            self._url = url
+        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval
