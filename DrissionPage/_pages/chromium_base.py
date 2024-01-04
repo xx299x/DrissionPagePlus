@@ -151,28 +151,30 @@ class ChromiumBase(BasePage):
         """
         if self._is_reading:
             return
-        timeout = timeout if timeout >= .5 else .5
         self._is_reading = True
+        timeout = timeout if timeout >= .5 else .5
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             try:
                 b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
                 timeout = end_time - perf_counter()
-                timeout = .5 if timeout < 0 else timeout
-                self._root_id = self.run_cdp('DOM.resolveNode',
-                                             backendNodeId=b_id, _timeout=timeout)['object']['objectId']
-                r = self.run_cdp('Page.getFrameTree')
-                for i in findall(r"'id': '(.*?)'", str(r)):
-                    self.browser._frames[i] = self.tab_id
+                timeout = .5 if timeout <= 0 else timeout
+                self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id,
+                                             _timeout=timeout)['object']['objectId']
                 result = True
                 break
 
             except:
                 timeout = end_time - perf_counter()
-                timeout = .5 if timeout < 0 else timeout
+                timeout = .5 if timeout <= 0 else timeout
 
         else:
             result = False
+
+        if result:
+            r = self.run_cdp('Page.getFrameTree')
+            for i in findall(r"'id': '(.*?)'", str(r)):
+                self.browser._frames[i] = self.tab_id
 
         self._is_loading = False
         self._is_reading = False
