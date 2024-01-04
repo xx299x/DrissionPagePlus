@@ -145,6 +145,18 @@ class ChromiumBaseSetter(BasePageSetter):
         """
         self._page._alert.auto = accept if on_off else None
 
+    def blocked_urls(self, urls):
+        """设置要忽略的url，传入None时清空已设置的内容。
+        :param urls:
+        :return: None
+        """
+        if not urls:
+            urls = []
+        if not isinstance(urls, (list, tuple)):
+            raise TypeError('urls需传入list或tuple类型。')
+        self._page.run_cdp('Network.enable')
+        self._page.run_cdp('Network.setBlockedURLs', urls=urls)
+
     # --------------即将废弃---------------
 
     @property

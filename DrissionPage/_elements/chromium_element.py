@@ -201,13 +201,26 @@ class ChromiumElement(DrissionElement):
 
         return self._select
 
-    def check(self, uncheck=False):
+    def check(self, uncheck=False, by_js=False):
         """选中或取消选中当前元素
         :param uncheck: 是否取消选中
+        :param by_js: 是否用js执行
         :return: None
         """
-        js = 'this.checked=false' if uncheck else 'this.checked=true'
-        self.run_js(js)
+        is_checked = self.states.is_checked
+        if by_js:
+            js = None
+            if is_checked and uncheck:
+                js = 'this.checked=false'
+            elif not is_checked and not uncheck:
+                js = 'this.checked=true'
+            if js:
+                self.run_js(js)
+                self.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
+
+        else:
+            if (is_checked and uncheck) or (not is_checked and not uncheck):
+                self.click()
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
@@ -598,6 +611,7 @@ class ChromiumElement(DrissionElement):
             if isinstance(vals, (list, tuple)):
                 vals = ''.join([str(i) for i in vals])
             self.set.prop('value', str(vals))
+            self.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
             return
 
         if clear and vals not in ('\n', '\ue007'):
@@ -614,6 +628,7 @@ class ChromiumElement(DrissionElement):
         """
         if by_js:
             self.run_js("this.value='';")
+            self.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
             return
 
         self._input_focus()
