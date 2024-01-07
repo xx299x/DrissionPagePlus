@@ -46,10 +46,10 @@ def connect_browser(option):
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        chrome_path = get_chrome_path(show_msg=False)
+        chrome_path = get_chrome_path()
 
         if not chrome_path:
-            raise FileNotFoundError('无法找到chrome路径，请手动配置。')
+            raise FileNotFoundError('无法找到浏览器可执行文件路径，请手动配置。')
 
         _run_browser(port, chrome_path, args)
 
@@ -281,34 +281,26 @@ def _remove_arg_from_dict(target_dict: dict, arg: str) -> None:
         pass
 
 
-def get_chrome_path(ini_path=None, show_msg=True, from_ini=True,
-                    from_regedit=True, from_system_path=True):
-    """从ini文件或系统变量中获取chrome.exe的路径
-    :param ini_path: ini文件路径
-    :param show_msg: 是否打印信息
-    :param from_ini: 是否从ini文件获取
-    :param from_regedit: 是否从注册表获取
-    :param from_system_path: 是否从系统路径获取
-    :return: chrome.exe路径
-    """
+def get_chrome_path():
+    """从ini文件或系统变量中获取chrome可执行文件的路径"""
     # -----------从ini文件中获取--------------
-    if ini_path and from_ini:
-        try:
-            path = OptionsManager(ini_path).chromium_options['browser_path']
-        except KeyError:
-            path = None
-    else:
-        path = None
-
+    path = OptionsManager().chromium_options.get('browser_path', None)
     if path and Path(path).is_file():
-        if show_msg:
-            print('ini文件中', end='')
         return str(path)
 
+    # -----------使用which获取-----------
+    from shutil import which
+    path = (which('chrome') or which('chromium') or which('google-chrome') or which('google-chrome-stable')
+            or which('google-chrome-unstable') or which('google-chrome-beta'))
+    if path:
+        return path
+
+    # -----------从MAC和Linux默认路径获取-----------
     from platform import system
     sys = system().lower()
     if sys in ('macos', 'darwin'):
-        return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        p = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        return p if Path(p).exists() else None
 
     elif sys == 'linux':
         paths = ('/usr/bin/google-chrome', '/opt/google/chrome/google-chrome',
@@ -322,48 +314,39 @@ def get_chrome_path(ini_path=None, show_msg=True, from_ini=True,
         return None
 
     # -----------从注册表中获取--------------
-    if from_regedit:
-        import winreg
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                 r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
-                                 reserved=0, access=winreg.KEY_READ)
-            k = winreg.EnumValue(key, 0)
-            winreg.CloseKey(key)
+    import winreg
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                             r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                             reserved=0, access=winreg.KEY_READ)
+        k = winreg.EnumValue(key, 0)
+        winreg.CloseKey(key)
 
-            if show_msg:
-                print('注册表中', end='')
+        return k[1]
 
-            return k[1]
-
-        except FileNotFoundError:
-            pass
+    except FileNotFoundError:
+        pass
 
     # -----------从系统变量中获取--------------
-    if from_system_path:
+    try:
+        paths = popen('set path').read().lower()
+    except:
+        return None
+    r = search(r'[^;]*chrome[^;]*', paths)
+
+    if r:
+        path = Path(r.group(0)) if 'chrome.exe' in r.group(0) else Path(r.group(0)) / 'chrome.exe'
+
+        if path.exists():
+            return str(path)
+
+    paths = paths.split(';')
+
+    for path in paths:
+        path = Path(path) / 'chrome.exe'
+
         try:
-            paths = popen('set path').read().lower()
-        except:
-            return None
-        r = search(r'[^;]*chrome[^;]*', paths)
-
-        if r:
-            path = Path(r.group(0)) if 'chrome.exe' in r.group(0) else Path(r.group(0)) / 'chrome.exe'
-
             if path.exists():
-                if show_msg:
-                    print('系统变量中', end='')
                 return str(path)
-
-        paths = paths.split(';')
-
-        for path in paths:
-            path = Path(path) / 'chrome.exe'
-
-            try:
-                if path.exists():
-                    if show_msg:
-                        print('系统变量中', end='')
-                    return str(path)
-            except OSError:
-                pass
+        except OSError:
+            pass

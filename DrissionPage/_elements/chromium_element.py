@@ -8,13 +8,14 @@ from pathlib import Path
 from re import search
 from time import perf_counter, sleep
 
+from DataRecorder.tools import get_usable_path
+
 from .none_element import NoneElement
 from .session_element import make_session_ele
 from .._base.base import DrissionElement, BaseElement
 from .._functions.keys import input_text_or_keys
 from .._functions.locator import get_loc
 from .._functions.settings import Settings
-from .._functions.tools import get_usable_path
 from .._functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect

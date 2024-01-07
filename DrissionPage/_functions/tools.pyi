@@ -11,15 +11,6 @@ from types import FunctionType
 from .._pages.chromium_page import ChromiumPage
 
 
-def get_usable_path(path: Union[str, Path], is_file: bool = True, parents: bool = True) -> Path: ...
-
-
-def make_valid_name(full_name: str) -> str: ...
-
-
-def get_long(txt) -> int: ...
-
-
 def port_is_using(ip: str, port: Union[str, int]) -> bool: ...
 
 

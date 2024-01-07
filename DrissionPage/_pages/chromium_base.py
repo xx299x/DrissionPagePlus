@@ -11,13 +11,15 @@ from threading import Thread
 from time import perf_counter, sleep
 from urllib.parse import quote
 
+from DataRecorder.tools import make_valid_name
+
 from .._base.base import BasePage
 from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_eles
 from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
 from .._functions.settings import Settings
-from .._functions.tools import raise_error, make_valid_name
+from .._functions.tools import raise_error
 from .._functions.web import location_in_viewport
 from .._units.actions import Actions
 from .._units.listener import Listener

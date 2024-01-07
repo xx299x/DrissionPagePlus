@@ -29,56 +29,76 @@ class Listener(object):
         self._driver = None
         self._running_requests = 0
 
-        self._caught = None  # 临存捕捉到的数据
-        self._request_ids = None  # 暂存须要拦截的请求id
+        self._caught = None
+        self._request_ids = None
         self._extra_info_ids = None
 
         self.listening = False
-        self._targets = None  # 默认监听所有
-        self.tab_id = None  # 当前tab的id
+        self.tab_id = None
 
+        self._targets = True
         self._is_regex = False
-        self._method = None
+        self._method = ('GET', 'POST')
+        self._res_type = True
 
     @property
     def targets(self):
         """返回监听目标"""
         return self._targets
 
-    def set_targets(self, targets=True, is_regex=False, method=('GET', 'POST')):
+    def set_targets(self, targets=True, is_regex=False, method=('GET', 'POST'), res_type=True):
         """指定要等待的数据包
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
         :param is_regex: 设置的target是否正则表达式
-        :param method: 设置监听的请求类型，可指定多个，为None时监听全部
+        :param method: 设置监听的请求类型，可指定多个，为True时监听全部
+        :param res_type: 设置监听的资源类型，可指定多个，为True时监听全部，可指定的值有：
+        Document, Stylesheet, Image, Media, Font, Script, TextTrack, XHR, Fetch, Prefetch, EventSource, WebSocket,
+        Manifest, SignedExchange, Ping, CSPViolationReport, Preflight, Other
         :return: None
         """
         if targets is not None:
             if not isinstance(targets, (str, list, tuple, set)) and targets is not True:
                 raise TypeError('targets只能是str、list、tuple、set、True。')
             if targets is True:
-                targets = ''
+                self._targets = True
+            else:
+                self._targets = {targets} if isinstance(targets, str) else set(targets)
 
-            self._targets = {targets} if isinstance(targets, str) else set(targets)
-
-        self._is_regex = is_regex
+        if is_regex is not None:
+            self._is_regex = is_regex
 
         if method is not None:
             if isinstance(method, str):
                 self._method = {method.upper()}
             elif isinstance(method, (list, tuple, set)):
                 self._method = set(i.upper() for i in method)
+            elif method is True:
+                self._method = True
             else:
-                raise TypeError('method参数只能是str、list、tuple、set类型。')
+                raise TypeError('method参数只能是str、list、tuple、set、True类型。')
 
-    def start(self, targets=None, is_regex=False, method=('GET', 'POST')):
+        if res_type is not None:
+            if isinstance(res_type, str):
+                self._res_type = {res_type.upper()}
+            elif isinstance(res_type, (list, tuple, set)):
+                self._res_type = set(i.upper() for i in res_type)
+            elif res_type is True:
+                self._res_type = True
+            else:
+                raise TypeError('res_type参数只能是str、list、tuple、set、True类型。')
+
+    def start(self, targets=None, is_regex=None, method=None, res_type=None):
         """拦截目标请求，每次拦截前清空结果
         :param targets: 要匹配的数据包url特征，可用list等传入多个，为True时获取所有
-        :param is_regex: 设置的target是否正则表达式
-        :param method: 设置监听的请求类型，可指定多个，为None时监听全部
+        :param is_regex: 设置的target是否正则表达式，为None时保持原来设置
+        :param method: 设置监听的请求类型，可指定多个，默认('GET', 'POST')，为True时监听全部，为None时保持原来设置
+        :param res_type: 设置监听的资源类型，可指定多个，默认为True时监听全部，为None时保持原来设置，可指定的值有：
+        Document, Stylesheet, Image, Media, Font, Script, TextTrack, XHR, Fetch, Prefetch, EventSource, WebSocket,
+        Manifest, SignedExchange, Ping, CSPViolationReport, Preflight, Other
         :return: None
         """
-        if targets or method:
-            self.set_targets(targets, is_regex, method)
+        if targets or is_regex is not None or method or res_type:
+            self.set_targets(targets, is_regex, method, res_type)
         self.clear()
 
         if self.listening:
@@ -240,10 +260,11 @@ class Listener(object):
         """接收到请求时的回调函数"""
         self._running_requests += 1
         p = None
-        if not self._targets:
-            if not self._method or kwargs['request']['method'] in self._method:
+        if self._targets is True:
+            if ((self._method is True or kwargs['request']['method'] in self._method)
+                    and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
                 rid = kwargs['requestId']
-                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, None))
+                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, True))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     p._raw_post_data = self._driver.run('Network.getRequestPostData',
@@ -252,9 +273,10 @@ class Listener(object):
         else:
             rid = kwargs['requestId']
             for target in self._targets:
-                if ((self._is_regex and search(target, kwargs['request']['url'])) or
-                    (not self._is_regex and target in kwargs['request']['url'])) and (
-                        not self._method or kwargs['request']['method'] in self._method):
+                if (((self._is_regex and search(target, kwargs['request']['url']))
+                     or (not self._is_regex and target in kwargs['request']['url']))
+                        and (self._method is True or kwargs['request']['method'] in self._method)
+                        and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
                     p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                     p._raw_request = kwargs
                     break
@@ -329,8 +351,9 @@ class Listener(object):
         r_id = kwargs['requestId']
         dp = self._request_ids.get(r_id, None)
         if dp:
-            dp.errorText = kwargs['errorText']
+            dp._raw_fail_info = kwargs
             dp._resource_type = kwargs['type']
+            dp.is_failed = True
 
         r = self._extra_info_ids.get(kwargs['requestId'], None)
         if r:
@@ -374,23 +397,25 @@ class DataPacket(object):
         """
         self.tab_id = tab_id
         self.target = target
+        self.is_failed = False
 
         self._raw_request = None
         self._raw_post_data = None
-
         self._raw_response = None
         self._raw_body = None
-        self._base64_body = False
-        self._requestExtraInfo = None
-        self._responseExtraInfo = None
+        self._raw_fail_info = None
 
         self._request = None
         self._response = None
-        self.errorText = None
+        self._fail_info = None
+
+        self._base64_body = False
+        self._requestExtraInfo = None
+        self._responseExtraInfo = None
         self._resource_type = None
 
     def __repr__(self):
-        t = f'"{self.target}"' if self.target is not None else None
+        t = f'"{self.target}"' if self.target is not True else True
         return f'<DataPacket target={t} url="{self.url}">'
 
     @property
@@ -428,6 +453,12 @@ class DataPacket(object):
         if self._response is None:
             self._response = Response(self, self._raw_response, self._raw_body, self._base64_body)
         return self._response
+
+    @property
+    def fail_info(self):
+        if self._fail_info is None:
+            self._fail_info = FailInfo(self, self._raw_fail_info)
+        return self._fail_info
 
     def wait_extra_info(self, timeout=None):
         """等待额外的信息加载完成
@@ -498,7 +529,7 @@ class Response(object):
         self._headers = None
 
     def __getattr__(self, item):
-        return self._response.get(item, None)
+        return self._response.get(item, None) if self._response else None
 
     @property
     def headers(self):
@@ -551,3 +582,12 @@ class RequestExtraInfo(ExtraInfo):
 
 class ResponseExtraInfo(ExtraInfo):
     pass
+
+
+class FailInfo(object):
+    def __init__(self, data_packet, fail_info):
+        self._data_packet = data_packet
+        self._fail_info = fail_info
+
+    def __getattr__(self, item):
+        return self._fail_info.get(item, None) if self._fail_info else None
