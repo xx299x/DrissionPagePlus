@@ -1,23 +1,17 @@
 # -*- coding:utf-8 -*-
 """
-@Author  :   g1879
-@Contact :   g1879@qq.com
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
 """
-# 常用页面类
-from .chromium_page import ChromiumPage
-from .session_page import SessionPage
-from .web_page import WebPage
+from ._pages.chromium_page import ChromiumPage
+from ._pages.session_page import SessionPage
+from ._pages.web_page import WebPage
 
 # 启动配置类
-from .configs.chromium_options import ChromiumOptions
-from .configs.session_options import SessionOptions
+from ._configs.chromium_options import ChromiumOptions
+from ._configs.session_options import SessionOptions
 
-# 旧版页面类和启动配置类
-try:
-    from .mixpage.mix_page import MixPage
-    from .mixpage.drission import Drission
-    from .configs.driver_options import DriverOptions
-except ModuleNotFoundError:
-    pass
-
-__version__ = '3.2.35'
+__all__ = ['ChromiumPage', 'ChromiumOptions', 'SessionOptions', 'SessionPage', 'WebPage', '__version__']
+__version__ = '4.0.1'

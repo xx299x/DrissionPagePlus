@@ -6,7 +6,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
     name="DrissionPage",
-    version="3.2.35",
+    version="4.0.1",
     author="g1879",
     author_email="g1879@qq.com",
     description="Python based web automation tool. It can control the browser and send and receive data packets.",
@@ -22,19 +22,19 @@ setup(
         'lxml',
         'requests',
         'cssselect',
-        'DownloadKit>=1.0.0',
-        'FlowViewer>=0.3.0',
-        'websocket-client',
+        'DownloadKit>=2.0.0',
+        'websocket-client>=1.7.0',
         'click',
-        'tldextract'
+        'tldextract',
+        'psutil'
     ],
     classifiers=[
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.8",
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
             'dp = DrissionPage.commons.cli:main',
