@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 """
-@Author  :   g1879
-@Contact :   g1879@qq.com
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
 """
 from json import loads, JSONDecodeError
 from os.path import sep
@@ -651,7 +653,7 @@ class ChromiumBase(BasePage):
             self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
 
     def get_frame(self, loc_ind_ele, timeout=None):
-        """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从1开始
+        """获取页面中一个frame对象，可传入定位符、iframe序号、ChromiumFrame对象，序号从0开始
         :param loc_ind_ele: 定位符、iframe序号、ChromiumFrame对象
         :param timeout: 查找元素超时时间（秒）
         :return: ChromiumFrame对象
@@ -674,9 +676,9 @@ class ChromiumBase(BasePage):
             r = ele
 
         elif isinstance(loc_ind_ele, int):
-            if loc_ind_ele < 1:
-                raise ValueError('序号必须大于0。')
-            xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
+            if loc_ind_ele < 0:
+                raise ValueError('序号必须大于等于0。')
+            xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele + 1}]'
             r = self._ele(xpath, timeout=timeout)
 
         elif str(type(loc_ind_ele)).endswith(".ChromiumFrame'>"):
@@ -1135,7 +1137,7 @@ def get_mhtml(page, path=None, name=None):
     """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
     :param page: 要保存的页面对象
     :param path: 保存路径，为None且name不为None时保存在当前路径
-        :param name: 文件名，为None且path不为None时用title属性值
+    :param name: 文件名，为None且path不为None时用title属性值
     :return: mhtml文本
     """
     r = page.run_cdp('Page.captureSnapshot')['data']
@@ -1145,5 +1147,34 @@ def get_mhtml(page, path=None, name=None):
     Path(path).mkdir(parents=True, exist_ok=True)
     name = make_valid_name(name or page.title)
     with open(f'{path}{sep}{name}.mhtml', 'w', encoding='utf-8') as f:
+        f.write(r)
+    return r
+
+
+def get_pdf(page, path=None, name=None, kwargs=None):
+    """把当前页面保存为pdf文件，如果path和name参数都为None，只返回字节
+    :param page: 要保存的页面对象
+    :param path: 保存路径，为None且name不为None时保存在当前路径
+    :param name: 文件名，为None且path不为None时用title属性值
+    :param kwargs: pdf生成参数
+    :return: pdf文本
+    """
+    if not kwargs:
+        kwargs = {}
+    kwargs['transferMode'] = 'ReturnAsBase64'
+    if 'printBackground' not in kwargs:
+        kwargs['printBackground'] = True
+    try:
+        r = page.run_cdp('Page.printToPDF', **kwargs)['data']
+    except:
+        raise RuntimeError('保存失败，可能浏览器版本不支持。')
+    from base64 import b64decode
+    r = b64decode(r)
+    if path is None and name is None:
+        return r
+    path = path or '.'
+    Path(path).mkdir(parents=True, exist_ok=True)
+    name = make_valid_name(name or page.title)
+    with open(f'{path}{sep}{name}.pdf', 'wb') as f:
         f.write(r)
     return r

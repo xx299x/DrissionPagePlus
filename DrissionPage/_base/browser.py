@@ -1,11 +1,15 @@
 # -*- coding:utf-8 -*-
 """
-@Author  :   g1879
-@Contact :   g1879@qq.com
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
 """
 from pathlib import Path
 from shutil import rmtree
 from time import sleep, perf_counter
+
+from websocket import WebSocketBadStatusException
 
 from .driver import BrowserDriver, Driver
 from .._functions.tools import stop_process_on_port, raise_error
@@ -70,8 +74,11 @@ class Browser(object):
         """标签页创建时执行"""
         if (kwargs['targetInfo']['type'] in ('page', 'webview')
                 and not kwargs['targetInfo']['url'].startswith('devtools://')):
-            self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'],
-                                                                     'page', self.address)
+            try:
+                self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'],
+                                                                         'page', self.address)
+            except WebSocketBadStatusException:
+                pass
 
     def _onTargetDestroyed(self, **kwargs):
         """标签页关闭时执行"""
@@ -205,5 +212,5 @@ class Browser(object):
                 try:
                     rmtree(path)
                     break
-                except (PermissionError, FileNotFoundError):
+                except (PermissionError, FileNotFoundError, OSError):
                     pass

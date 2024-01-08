@@ -1,4 +1,10 @@
 # -*- coding:utf-8 -*-
+"""
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
+"""
 from http.cookiejar import Cookie
 from typing import Union
 

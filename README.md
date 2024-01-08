@@ -22,7 +22,7 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 支持系统：Windows、Linux、Mac
 
-python 版本：3.6 及以上
+python 版本：3.8 及以上
 
 支持浏览器：Chromium 内核浏览器(如 Chrome 和 Edge)，electron 应用
 
@@ -108,7 +108,7 @@ python 版本：3.6 及以上
 
 # 🔖 版本历史
 
-[点击查看版本历史](https://g1879.gitee.io/drissionpagedocs/history/)
+[点击查看版本历史](https://g1879.gitee.io/drissionpagedocs/history/introduction/)
 
 --- 
 

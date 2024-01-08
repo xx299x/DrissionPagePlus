@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 """
-@Author  :   g1879
-@Contact :   g1879@qq.com
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
 """
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Optional, Literal
@@ -270,4 +272,11 @@ class Alert(object):
         self.auto: Optional[bool] = ...
 
 
-def get_mhtml(page: Union[ChromiumPage, ChromiumTab], path: Union[str, Path] = None, name: str = None) -> str: ...
+def get_mhtml(page: Union[ChromiumPage, ChromiumTab],
+              path: Union[str, Path] = None,
+              name: str = None) -> str: ...
+
+
+def get_pdf(page: Union[ChromiumPage, ChromiumTab],
+            path: Union[str, Path] = None,
+            name: str = None, kwargs: dict=None) -> bytes: ...

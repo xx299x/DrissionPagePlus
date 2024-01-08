@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 """
-@Author  :   g1879
-@Contact :   g1879@qq.com
+@Author   : g1879
+@Contact  : g1879@qq.com
+@Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
+@License  : BSD 3-Clause.
 """
 from pathlib import Path
 from time import sleep, perf_counter
@@ -11,7 +13,7 @@ from requests import get
 from .._base.browser import Browser
 from .._functions.browser import connect_browser
 from .._configs.chromium_options import ChromiumOptions, PortFinder
-from .._pages.chromium_base import ChromiumBase, get_mhtml, Timeout
+from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
 from .._units.waiter import PageWaiter
@@ -146,13 +148,15 @@ class ChromiumPage(ChromiumBase):
         """返回浏览器进程id"""
         return self.browser.process_id
 
-    def save(self, path=None, name=None):
-        """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
+    def save(self, path=None, name=None, as_pdf=False, **kwargs):
+        """把当前页面保存为文件，如果path和name参数都为None，只返回文本
         :param path: 保存路径，为None且name不为None时保存在当前路径
         :param name: 文件名，为None且path不为None时用title属性值
-        :return: mhtml文本
+        :param as_pdf: 为Ture保存为pdf，否则为mhtml且忽略kwargs参数
+        :param kwargs: pdf生成参数
+        :return: as_pdf为True时返回bytes，否则返回文件文本
         """
-        return get_mhtml(self, path, name)
+        return get_pdf(self, path, name, kwargs)if as_pdf else get_mhtml(self, path, name)
 
     def get_tab(self, id_or_num=None):
         """获取一个标签页对象
