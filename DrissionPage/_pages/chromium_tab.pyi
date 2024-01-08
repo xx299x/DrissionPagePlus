@@ -44,7 +44,26 @@ class ChromiumTab(ChromiumBase):
     @property
     def wait(self) -> TabWaiter: ...
 
-    def save(self, path: Union[str, Path] = None, name: str = None) -> str: ...
+    def save(self,
+             path: Union[str, Path] = None,
+             name: str = None,
+             as_pdf: bool = False,
+             landscape: bool = ...,
+             displayHeaderFooter: bool = ...,
+             printBackground: bool = ...,
+             scale: float = ...,
+             paperWidth: float = ...,
+             paperHeight: float = ...,
+             marginTop: float = ...,
+             marginBottom: float = ...,
+             marginLeft: float = ...,
+             marginRight: float = ...,
+             pageRanges: str = ...,
+             headerTemplate: str = ...,
+             footerTemplate: str = ...,
+             preferCSSPageSize: bool = ...,
+             generateTaggedPDF: bool = ...,
+             generateDocumentOutline: bool = ...) -> Union[bytes, str]: ...
 
 
 class WebPageTab(SessionPage, ChromiumTab):

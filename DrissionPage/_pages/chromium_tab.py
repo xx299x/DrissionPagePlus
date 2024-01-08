@@ -10,7 +10,7 @@ from copy import copy
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
 from .._functions.web import set_session_cookies, set_browser_cookies
-from .._pages.chromium_base import ChromiumBase, get_mhtml
+from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf
 from .._pages.session_page import SessionPage
 from .._units.setter import TabSetter, WebPageTabSetter
 from .._units.waiter import TabWaiter
@@ -60,13 +60,15 @@ class ChromiumTab(ChromiumBase):
             self._wait = TabWaiter(self)
         return self._wait
 
-    def save(self, path=None, name=None):
-        """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
+    def save(self, path=None, name=None, as_pdf=False, **kwargs):
+        """把当前页面保存为文件，如果path和name参数都为None，只返回文本
         :param path: 保存路径，为None且name不为None时保存在当前路径
         :param name: 文件名，为None且path不为None时用title属性值
-        :return: mhtml文本
+        :param as_pdf: 为Ture保存为pdf，否则为mhtml且忽略kwargs参数
+        :param kwargs: pdf生成参数
+        :return: as_pdf为True时返回bytes，否则返回文件文本
         """
-        return get_mhtml(self, path, name)
+        return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
 
     def __repr__(self):
         return f'<ChromiumTab browser_id={self.browser.id} tab_id={self.tab_id}>'
