@@ -38,17 +38,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         super(SessionPage, self).__init__(addr_or_opts=chromium_options, timeout=timeout)
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=0, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :param timeout: 超时时间（秒）
         :return: 子元素对象
         """
         if self._mode == 'd':
-            return super(SessionPage, self).__call__(loc_or_str, timeout)
+            return super(SessionPage, self).__call__(loc_or_str, index=index, timeout=timeout)
         elif self._mode == 's':
-            return super().__call__(loc_or_str)
+            return super().__call__(loc_or_str, index=index)
 
     @property
     def set(self):
@@ -360,20 +361,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             if self._response is not None:
                 self._response.close()
 
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=0, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super()._find_elements(loc_or_ele, single=single)
+            return super()._find_elements(loc_or_ele, index=index)
         elif self._mode == 'd':
-            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
-                                                           relative=relative)
+            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, index=index, relative=relative)
 
     def quit(self, timeout=5, force=True):
         """关闭浏览器和Session

@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
-from typing import Union, Tuple, List, Any, Literal
+from typing import Union, Tuple, List, Any, Literal, Optional
 
 from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
@@ -47,7 +47,9 @@ class ChromiumElement(DrissionElement):
 
     def __repr__(self) -> str: ...
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str],
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str],
+                 index: int = 0,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def __eq__(self, other: ChromiumElement) -> bool: ...
@@ -175,20 +177,23 @@ class ChromiumElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
+            index: int = 0,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, NoneElement]: ...
+    def s_ele(self,
+              loc_or_str: Union[Tuple[str, str], str] = None,
+              index: int = 0) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
                        timeout: float = None,
-                       single: bool = True,
+                       index: Optional[int] = True,
                        relative: bool = False,
                        raise_err: bool = False) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
     List[Union[ChromiumElement, ChromiumFrame]]]: ...
@@ -286,20 +291,28 @@ class ShadowRoot(BaseElement):
 
     def afters(self, filter_loc: Union[tuple, str] = '') -> List[ChromiumElement]: ...
 
-    def ele(self, loc_or_str: Union[Tuple[str, str], str],
+    def ele(self,
+            loc_or_str: Union[Tuple[str, str], str],
+            index: int = 0,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str],
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
-    def s_ele(self, loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, NoneElement]: ...
+    def s_ele(self,
+              loc_or_str: Union[Tuple[str, str], str] = None,
+              index: int = 0) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
-    def _find_elements(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None,
-                       single: bool = True, relative: bool = False, raise_err: bool = None) \
-            -> Union[ChromiumElement, ChromiumFrame, NoneElement, str, List[Union[ChromiumElement,
-            ChromiumFrame, str]]]: ...
+    def _find_elements(self,
+                       loc_or_str: Union[Tuple[str, str], str],
+                       timeout: float = None,
+                       index: Optional[int] = 0,
+                       relative: bool = False,
+                       raise_err: bool = None) -> Union[ChromiumElement, ChromiumFrame, NoneElement, str,
+    List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 
     def _get_node_id(self, obj_id: str) -> int: ...
 
@@ -308,37 +321,42 @@ class ShadowRoot(BaseElement):
     def _get_backend_id(self, node_id: int) -> int: ...
 
 
-def find_in_chromium_ele(ele: ChromiumElement, loc: Union[str, Tuple[str, str]],
-                         single: bool = True, timeout: float = None, relative: bool = True) \
-        -> Union[ChromiumElement, NoneElement, List[ChromiumElement]]: ...
+def find_in_chromium_ele(ele: ChromiumElement,
+                         loc: Union[str, Tuple[str, str]],
+                         index: Optional[int] = 0,
+                         timeout: float = None,
+                         relative: bool = True) -> Union[ChromiumElement, NoneElement, List[ChromiumElement]]: ...
 
 
-def find_by_xpath(ele: ChromiumElement, xpath: str, single: bool, timeout: float,
+def find_by_xpath(ele: ChromiumElement,
+                  xpath: str,
+                  index: Optional[int],
+                  timeout: float,
                   relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
-def find_by_css(ele: ChromiumElement, selector: str, single: bool,
+def find_by_css(ele: ChromiumElement,
+                selector: str,
+                index: Optional[int],
                 timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
 
 
-def make_chromium_ele(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
-                      node_id: int = ...,
-                      obj_id: str = ...) -> Union[ChromiumElement, ChromiumFrame, str]: ...
-
-
 def make_chromium_eles(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
-                       node_ids: Union[tuple, list] = None,
-                       obj_ids: Union[tuple, list] = None,
-                       single: bool = True,
-                       ele_only: bool = True) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
+                       _ids: Union[tuple, list, str, int],
+                       index: Optional[int] = 0,
+                       is_obj_id: bool = True
+                       ) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
 List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
 
 def make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str: ...
 
 
-def run_js(page_or_ele: Union[ChromiumBase, ChromiumElement, ShadowRoot], script: str,
-           as_expr: bool = False, timeout: float = None, args: tuple = ...) -> Any: ...
+def run_js(page_or_ele: Union[ChromiumBase, ChromiumElement, ShadowRoot],
+           script: str,
+           as_expr: bool = False,
+           timeout: float = None,
+           args: tuple = ...) -> Any: ...
 
 
 def parse_js_result(page: ChromiumBase, ele: ChromiumElement, result: dict): ...

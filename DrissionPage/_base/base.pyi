@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from abc import abstractmethod
-from typing import Union, Tuple, List, Any
+from typing import Union, Tuple, List, Any, Optional
 
 from DownloadKit import DownloadKit
 
@@ -15,9 +15,12 @@ from .._elements.none_element import NoneElement
 
 class BaseParser(object):
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str]): ...
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str], index: int = 0): ...
 
-    def ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement], timeout: float = None): ...
+    def ele(self,
+            loc_or_ele: Union[Tuple[str, str], str, BaseElement],
+            index: int = 0,
+            timeout: float = None): ...
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None): ...
 
@@ -25,15 +28,23 @@ class BaseParser(object):
     @property
     def html(self) -> str: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement]): ...
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement], index: int = 0): ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]): ...
 
-    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True,
-             raise_err: bool = None, method: str = None): ...
+    def _ele(self,
+             loc_or_ele,
+             timeout: float = None,
+             index: Optional[int] = 0,
+             raise_err: bool = None,
+             method: str = None): ...
 
     @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+    def _find_elements(self,
+                       loc_or_ele,
+                       timeout: float = None,
+                       index: Optional[int] = 0,
+                       raise_err: bool = None): ...
 
 
 class BaseElement(BaseParser):
@@ -45,11 +56,19 @@ class BaseElement(BaseParser):
     @property
     def tag(self) -> str: ...
 
-    def _ele(self, loc_or_str: Union[Tuple[str, str], str], timeout: float = None, single: bool = True,
-             relative: bool = False, raise_err: bool = None, method: str = None): ...
+    def _ele(self,
+             loc_or_str: Union[Tuple[str, str], str],
+             timeout: float = None,
+             index: Optional[int] = 0,
+             relative: bool = False,
+             raise_err: bool = None,
+             method: str = None): ...
 
     @abstractmethod
-    def _find_elements(self, loc_or_str, timeout: float = None, single: bool = True, relative: bool = False,
+    def _find_elements(self, loc_or_str,
+                       timeout: float = None,
+                       index: Optional[int] = 0,
+                       relative: bool = False,
                        raise_err: bool = None): ...
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1): ...
@@ -83,41 +102,80 @@ class DrissionElement(BaseElement):
 
     def texts(self, text_node_only: bool = False) -> list: ...
 
-    def parent(self, level_or_loc: Union[tuple, str, int] = 1, index: int = 1) -> Union[DrissionElement, None]: ...
+    def parent(self,
+               level_or_loc: Union[tuple, str, int] = 1,
+               index: int = 1) -> Union[DrissionElement, None]: ...
 
-    def child(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
-              timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def child(self,
+              filter_loc: Union[tuple, str, int] = '',
+              index: int = 1,
+              timeout: float = None,
+              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def prev(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
-             timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def prev(self,
+             filter_loc: Union[tuple, str, int] = '',
+             index: int = 1,
+             timeout: float = None,
+             ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def next(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
-             timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def next(self,
+             filter_loc: Union[tuple, str, int] = '',
+             index: int = 1,
+             timeout: float = None,
+             ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def before(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
-               timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def before(self,
+               filter_loc: Union[tuple, str, int] = '',
+               index: int = 1,
+               timeout: float = None,
+               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def after(self, filter_loc: Union[tuple, str, int] = '', index: int = 1,
-              timeout: float = None, ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
+    def after(self,
+              filter_loc: Union[tuple, str, int] = '',
+              index: int = 1,
+              timeout: float = None,
+              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
-    def children(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
+    def children(self,
+                 filter_loc: Union[tuple, str] = '',
+                 timeout: float = None,
                  ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def prevs(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
+    def prevs(self,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def nexts(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
+    def nexts(self,
+              filter_loc: Union[tuple, str] = '',
+              timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def befores(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
+    def befores(self,
+                filter_loc: Union[tuple, str] = '',
+                timeout: float = None,
                 ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def afters(self, filter_loc: Union[tuple, str] = '', timeout: float = None,
+    def afters(self,
+               filter_loc: Union[tuple, str] = '',
+               timeout: float = None,
                ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def _get_brothers(self, index: int = None, filter_loc: Union[tuple, str] = '',
-                      direction: str = 'following', brother: bool = True,
-                      timeout: float = 0.5, ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
+    def _do_relative_find(self,
+                          func: str,
+                          direction: str,
+                          filter_loc: Union[tuple, str] ='',
+                          index: int =1,
+                          timeout: float =None,
+                          ele_only: bool =True) -> DrissionElement: ...
+
+    def _get_relatives(self,
+                       index: int = None,
+                       filter_loc: Union[tuple, str] = '',
+                       direction: str = 'following',
+                       brother: bool = True,
+                       timeout: float = 0.5,
+                       ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -184,8 +242,16 @@ class BasePage(BaseParser):
     @abstractmethod
     def get(self, url: str, show_errmsg: bool = False, retry: int = None, interval: float = None): ...
 
-    def _ele(self, loc_or_ele, timeout: float = None, single: bool = True,
-             raise_err: bool = None, method: str = None): ...
+    def _ele(self,
+             loc_or_ele,
+             timeout: float = None,
+             index: Optional[int] = 0,
+             raise_err: bool = None,
+             method: str = None): ...
 
     @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout: float = None, single: bool = True, raise_err: bool = None): ...
+    def _find_elements(self,
+                       loc_or_ele,
+                       timeout: float = None,
+                       index: Optional[int] = 0,
+                       raise_err: bool = None): ...

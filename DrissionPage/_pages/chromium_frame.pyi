@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
-from typing import Union, Tuple, List, Any
+from typing import Union, Tuple, List, Any, Optional
 
 from .chromium_base import ChromiumBase
 from .chromium_page import ChromiumPage
@@ -44,6 +44,7 @@ class ChromiumFrame(ChromiumBase):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
+                 index: int = 0,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def __eq__(self, other: ChromiumFrame) -> bool: ...
@@ -209,7 +210,7 @@ class ChromiumFrame(ChromiumBase):
     def _find_elements(self,
                        loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None,
-                       single: bool = True,
+                       index: Optional[int] = 0,
                        relative: bool = False,
                        raise_err: bool = None) \
             -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...

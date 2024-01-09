@@ -355,20 +355,19 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         if self._response is not None:
             self._response.close()
 
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=0, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒），d模式专用
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super()._find_elements(loc_or_ele, single=single)
+            return super()._find_elements(loc_or_ele, index=index)
         elif self._mode == 'd':
-            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
-                                                           relative=relative)
+            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, index=index, relative=relative)
 
     def __repr__(self):
         return f'<WebPageTab browser_id={self.browser.id} tab_id={self.tab_id}>'

@@ -106,7 +106,7 @@ class SessionPage(BasePage):
     def _find_elements(self,
                        loc_or_ele: Union[Tuple[str, str], str, SessionElement],
                        timeout: float = None,
-                       single: bool = True,
+                       index: Optional[int] = 0,
                        raise_err: bool = None) \
             -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 

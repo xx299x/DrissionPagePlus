@@ -191,7 +191,11 @@ class WebPageTab(SessionPage, ChromiumTab):
     @property
     def set(self) -> WebPageTabSetter: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
-                       timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
+    def _find_elements(self,
+                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       timeout: float = None,
+                       index: Optional[int] = 0,
+                       relative: bool = False,
+                       raise_err: bool = None) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement], List[
                 Union[ChromiumElement, ChromiumFrame]]]: ...

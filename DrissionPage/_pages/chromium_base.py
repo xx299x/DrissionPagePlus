@@ -244,14 +244,15 @@ class ChromiumBase(BasePage):
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=0, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个元素，0开始
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象
         """
-        return self.ele(loc_or_str, timeout)
+        return self.ele(loc_or_str, index, timeout)
 
     def _wait_to_stop(self):
         """eager策略超时时使页面停止加载"""
@@ -490,13 +491,14 @@ class ChromiumBase(BasePage):
             return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
                     for cookie in cookies]
 
-    def ele(self, loc_or_ele, timeout=None):
-        """获取第一个符合条件的元素对象
+    def ele(self, loc_or_ele, index=0, timeout=None):
+        """获取一个符合条件的元素对象
         :param loc_or_ele: 定位符或元素对象
+        :param index: 获取第几个元素，0开始
         :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象
         """
-        return self._ele(loc_or_ele, timeout=timeout, method='ele()')
+        return self._ele(loc_or_ele, timeout=timeout, index=index, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """获取所有符合条件的元素对象
@@ -504,14 +506,15 @@ class ChromiumBase(BasePage):
         :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, single=False)
+        return self._ele(loc_or_str, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_ele=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
+    def s_ele(self, loc_or_ele=None, index=0):
+        """查找一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :return: SessionElement对象或属性、文本
         """
-        r = make_session_ele(self, loc_or_ele)
+        r = make_session_ele(self, loc_or_ele, index=index)
         if isinstance(r, NoneElement):
             if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError(None, 's_ele()', {'loc_or_ele': loc_or_ele})
@@ -525,13 +528,13 @@ class ChromiumBase(BasePage):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
-        return make_session_ele(self, loc_or_str, single=False)
+        return make_session_ele(self, loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=0, relative=False, raise_err=None):
         """执行元素查找
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间（秒）
-        :param single: 是否只返回第一个
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或元素对象组成的列表
@@ -558,16 +561,28 @@ class ChromiumBase(BasePage):
 
         while True:
             if num > 0:
-                num = 1 if single else num
-                nIds = self._driver.run('DOM.getSearchResults', searchId=result['searchId'], fromIndex=0, toIndex=num)
-                if __ERROR__ not in nIds:
-                    if nIds['nodeIds'][0] != 0:
-                        r = make_chromium_eles(self, node_ids=nIds['nodeIds'], single=single)
-                        if r is not False:
-                            break
+                from_index = index_arg = 0
+                if index is None:
+                    end_index = num
+                    index_arg = None
+                elif index < 0:
+                    from_index = index + num
+                    end_index = from_index + 1
+                else:
+                    from_index = index
+                    end_index = from_index + 1
+
+                if from_index <= num - 1:
+                    nIds = self._driver.run('DOM.getSearchResults', searchId=result['searchId'],
+                                            fromIndex=from_index, toIndex=end_index)
+                    if __ERROR__ not in nIds:
+                        if nIds['nodeIds'][0] != 0:
+                            r = make_chromium_eles(self, _ids=nIds['nodeIds'], index=index_arg, is_obj_id=False)
+                            if r is not False:
+                                break
 
             if perf_counter() >= end_time:
-                return NoneElement(self) if single else []
+                return NoneElement(self) if index is not None else []
 
             sleep(.1)
             timeout = end_time - perf_counter()
@@ -699,7 +714,7 @@ class ChromiumBase(BasePage):
         :return: ChromiumFrame对象组成的列表
         """
         loc = loc or 'xpath://*[name()="iframe" or name()="frame"]'
-        frames = self._ele(loc, timeout=timeout, single=False, raise_err=False)
+        frames = self._ele(loc, timeout=timeout, index=None, raise_err=False)
         return [i for i in frames if str(type(i)).endswith(".ChromiumFrame'>")]
 
     def get_session_storage(self, item=None):

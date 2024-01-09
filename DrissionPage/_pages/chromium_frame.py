@@ -64,14 +64,15 @@ class ChromiumFrame(ChromiumBase):
                 break
             sleep(.1)
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=0, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
-        return self.ele(loc_or_str, timeout)
+        return self.ele(loc_or_str, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._frame_id == getattr(other, '_frame_id', None)
@@ -388,8 +389,8 @@ class ChromiumFrame(ChromiumBase):
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
-        :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
+        :param level_or_loc: 第几级父元素，1开始，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果，1开始
         :return: 上级元素对象
         """
         return self.frame_ele.parent(level_or_loc, index)
@@ -415,7 +416,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.next(filter_loc, index, timeout, ele_only=ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
-        """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
@@ -426,7 +427,7 @@ class ChromiumFrame(ChromiumBase):
         return self.frame_ele.before(filter_loc, index, timeout, ele_only=ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
-        """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
@@ -561,11 +562,11 @@ class ChromiumFrame(ChromiumBase):
         self.tab.remove_ele(new_ele)
         return r
 
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=0, relative=False, raise_err=None):
         """在frame内查找单个元素
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
@@ -574,7 +575,7 @@ class ChromiumFrame(ChromiumBase):
             return loc_or_ele
         self.wait.load_complete()
         return self.doc_ele._ele(loc_or_ele, timeout,
-                                 raise_err=raise_err) if single else self.doc_ele.eles(loc_or_ele, timeout)
+                                 raise_err=raise_err) if index is not None else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""

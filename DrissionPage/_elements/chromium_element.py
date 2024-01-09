@@ -80,13 +80,13 @@ class ChromiumElement(DrissionElement):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=0, timeout=None):
         """在内部查找元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
-        return self.ele(loc_or_str, timeout)
+        return self.ele(loc_or_str, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._backend_id == getattr(other, '_backend_id', None)
@@ -227,8 +227,8 @@ class ChromiumElement(DrissionElement):
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
-        :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
+        :param level_or_loc: 第几级父元素，1开始，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果，1开始
         :return: 上级元素对象
         """
         return super().parent(level_or_loc, index)
@@ -264,7 +264,7 @@ class ChromiumElement(DrissionElement):
         return super().next(filter_loc, index, timeout, ele_only=ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
-        """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
@@ -275,7 +275,7 @@ class ChromiumElement(DrissionElement):
         return super().before(filter_loc, index, timeout, ele_only=ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
-        """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
@@ -400,13 +400,14 @@ class ChromiumElement(DrissionElement):
         """
         run_js(self, script, as_expr, 0, args)
 
-    def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素、属性或节点文本
+    def ele(self, loc_or_str, index=0, timeout=None):
+        """返回当前元素下级符合条件的一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个元素，0开始
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本
         """
-        return self._ele(loc_or_str, timeout, method='ele()')
+        return self._ele(loc_or_str, timeout, index=index, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
@@ -414,17 +415,18 @@ class ChromiumElement(DrissionElement):
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, single=False)
+        return self._ele(loc_or_str, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素，以SessionElement形式返回
+    def s_ele(self, loc_or_str=None, index=0):
+        """查找一个符合条件的元素，以SessionElement形式返回
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :return: SessionElement对象或属性、文本
         """
         if self.tag in __FRAME_ELEMENT__:
-            r = make_session_ele(self.inner_html, loc_or_str)
+            r = make_session_ele(self.inner_html, loc_or_str, index=index)
         else:
-            r = make_session_ele(self, loc_or_str)
+            r = make_session_ele(self, loc_or_str, index=index)
         if isinstance(r, NoneElement):
             if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError(None, 's_ele()', {'loc_or_str': loc_or_str})
@@ -439,19 +441,19 @@ class ChromiumElement(DrissionElement):
         :return: SessionElement或属性、文本组成的列表
         """
         if self.tag in __FRAME_ELEMENT__:
-            return make_session_ele(self.inner_html, loc_or_str, single=False)
-        return make_session_ele(self, loc_or_str, single=False)
+            return make_session_ele(self.inner_html, loc_or_str, index=None)
+        return make_session_ele(self, loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=0, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或文本、属性或其组成的列表
         """
-        return find_in_chromium_ele(self, loc_or_str, single, timeout, relative=relative)
+        return find_in_chromium_ele(self, loc_or_str, index, timeout, relative=relative)
 
     def style(self, style, pseudo_ele=''):
         """返回元素样式属性值，可获取伪元素属性值
@@ -806,14 +808,15 @@ class ShadowRoot(BaseElement):
     def __repr__(self):
         return f'<ShadowRoot in {self.parent_ele}>'
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=0, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :param timeout: 超时时间（秒）
         :return: 元素对象或属性、文本
         """
-        return self.ele(loc_or_str, timeout)
+        return self.ele(loc_or_str, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._backend_id == getattr(other, '_backend_id', None)
@@ -920,7 +923,7 @@ class ShadowRoot(BaseElement):
             return NoneElement(self.page, 'next()', {'filter_loc': filter_loc, 'index': index})
 
     def before(self, filter_loc='', index=1):
-        """返回文档中当前元素前面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
@@ -935,7 +938,7 @@ class ShadowRoot(BaseElement):
             return NoneElement(self.page, 'before()', {'filter_loc': filter_loc, 'index': index})
 
     def after(self, filter_loc='', index=1):
-        """返回文档中此当前元素后面符合条件的第一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
+        """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
         :param filter_loc: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
@@ -963,7 +966,7 @@ class ShadowRoot(BaseElement):
             loc = loc[1].lstrip('./')
 
         loc = f'xpath:./{loc}'
-        return self._ele(loc, single=False, relative=True)
+        return self._ele(loc, index=None, relative=True)
 
     def nexts(self, filter_loc=''):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
@@ -976,7 +979,7 @@ class ShadowRoot(BaseElement):
 
         loc = loc[1].lstrip('./')
         xpath = f'xpath:./{loc}'
-        return self.parent_ele._ele(xpath, single=False, relative=True)
+        return self.parent_ele._ele(xpath, index=None, relative=True)
 
     def befores(self, filter_loc=''):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
@@ -990,7 +993,7 @@ class ShadowRoot(BaseElement):
 
         loc = loc[1].lstrip('./')
         xpath = f'xpath:./preceding::{loc}'
-        return self.parent_ele._ele(xpath, single=False, relative=True)
+        return self.parent_ele._ele(xpath, index=None, relative=True)
 
     def afters(self, filter_loc=''):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
@@ -1001,15 +1004,16 @@ class ShadowRoot(BaseElement):
         eles1 = self.nexts(filter_loc)
         loc = get_loc(filter_loc, True)[1].lstrip('./')
         xpath = f'xpath:./following::{loc}'
-        return eles1 + self.parent_ele._ele(xpath, single=False, relative=True)
+        return eles1 + self.parent_ele._ele(xpath, index=None, relative=True)
 
-    def ele(self, loc_or_str, timeout=None):
-        """返回当前元素下级符合条件的第一个元素
+    def ele(self, loc_or_str, index=0, timeout=None):
+        """返回当前元素下级符合条件的一个元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个元素，0开始
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象
         """
-        return self._ele(loc_or_str, timeout, method='ele()')
+        return self._ele(loc_or_str, timeout, index=index, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
         """返回当前元素下级所有符合条件的子元素
@@ -1017,14 +1021,15 @@ class ShadowRoot(BaseElement):
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, single=False)
+        return self._ele(loc_or_str, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None):
-        """查找第一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
+    def s_ele(self, loc_or_str=None, index=0):
+        """查找一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，0开始
         :return: SessionElement对象或属性、文本
         """
-        r = make_session_ele(self, loc_or_str)
+        r = make_session_ele(self, loc_or_str, index=index)
         if isinstance(r, NoneElement):
             r.method = 's_ele()'
             r.args = {'loc_or_str': loc_or_str}
@@ -1035,13 +1040,13 @@ class ShadowRoot(BaseElement):
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象
         """
-        return make_session_ele(self, loc_or_str, single=False)
+        return make_session_ele(self, loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=0, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，0开始，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或其组成的列表
@@ -1052,15 +1057,15 @@ class ShadowRoot(BaseElement):
 
         def do_find():
             if loc[0] == 'css selector':
-                if single:
+                if index == 0:
                     nod_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=loc[1])['nodeId']
                     if nod_id:
-                        r = make_chromium_ele(self.page, node_id=nod_id)
+                        r = make_chromium_eles(self.page, _ids=nod_id, is_obj_id=False)
                         return None if r is False else r
 
                 else:
                     nod_ids = self.page.run_cdp('DOM.querySelectorAll', nodeId=self._node_id, selector=loc[1])['nodeId']
-                    r = make_chromium_eles(self.page, node_ids=nod_ids, single=False)
+                    r = make_chromium_eles(self.page, _ids=nod_ids, index=index, is_obj_id=False)
                     return None if r is False else r
 
             else:
@@ -1069,16 +1074,20 @@ class ShadowRoot(BaseElement):
                     return None
 
                 css = [i.css_path[61:] for i in eles]
-                if single:
-                    node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=css[0])['nodeId']
-                    r = make_chromium_ele(self.page, node_id=node_id)
+                if index is not None:
+                    try:
+                        node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id,
+                                                    selector=css[index])['nodeId']
+                    except IndexError:
+                        return None
+                    r = make_chromium_eles(self.page, _ids=node_id, is_obj_id=False)
                     return None if r is False else r
                 else:
                     node_ids = [self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
                                 for i in css]
                     if 0 in node_ids:
                         return None
-                    r = make_chromium_eles(self.page, node_ids=node_ids, single=False)
+                    r = make_chromium_eles(self.page, _ids=node_ids, index=index, is_obj_id=False)
                     return None if r is False else r
 
         timeout = timeout if timeout is not None else self.page.timeout
@@ -1090,7 +1099,7 @@ class ShadowRoot(BaseElement):
 
         if result:
             return result
-        return NoneElement(self.page) if single else []
+        return NoneElement(self.page) if index is not None else []
 
     def _get_node_id(self, obj_id):
         """返回元素node id"""
@@ -1107,11 +1116,11 @@ class ShadowRoot(BaseElement):
         return r['backendNodeId']
 
 
-def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
+def find_in_chromium_ele(ele, loc, index=0, timeout=None, relative=True):
     """在chromium元素中查找
     :param ele: ChromiumElement对象
     :param loc: 元素定位元组
-    :param single: True则返回第一个，False则返回全部
+    :param index: 第几个结果，为None返回所有
     :param timeout: 查找元素超时时间（秒）
     :param relative: WebPage用于标记是否相对定位使用
     :return: 返回ChromiumElement元素或它们组成的列表
@@ -1133,22 +1142,22 @@ def find_in_chromium_ele(ele, loc, single=True, timeout=None, relative=True):
 
     # ---------------执行查找-----------------
     if loc[0] == 'xpath':
-        return find_by_xpath(ele, loc[1], single, timeout, relative=relative)
+        return find_by_xpath(ele, loc[1], index, timeout, relative=relative)
 
     else:
-        return find_by_css(ele, loc[1], single, timeout)
+        return find_by_css(ele, loc[1], index, timeout)
 
 
-def find_by_xpath(ele, xpath, single, timeout, relative=True):
+def find_by_xpath(ele, xpath, index, timeout, relative=True):
     """执行用xpath在元素中查找元素
     :param ele: 在此元素中查找
     :param xpath: 查找语句
-    :param single: 是否只返回第一个结果
+    :param index: 第几个结果，为None返回所有
     :param timeout: 超时时间（秒）
     :param relative: 是否相对定位
     :return: ChromiumElement或其组成的列表
     """
-    type_txt = '9' if single else '7'
+    type_txt = '9' if index == 0 else '7'
     node_txt = 'this.contentDocument' if ele.tag in __FRAME_ELEMENT__ and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     ele.page.wait.load_complete()
@@ -1170,21 +1179,28 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
         if res['result']['subtype'] == 'null' or res['result']['description'] in ('NodeList(0)', 'Array(0)'):
             return None
 
-        if single:
-            r = make_chromium_ele(ele.page, obj_id=res['result']['objectId'])
+        if index == 0:
+            r = make_chromium_eles(ele.page, _ids=res['result']['objectId'], is_obj_id=True)
             return None if r is False else r
 
         else:
-            # from pprint import pprint
-            # for i in ele.page.run_cdp('Runtime.getProperties',
-            #                           objectId=res['result']['objectId'],
-            #                           ownProperties=True)['result'][:-1]:
-            #     pprint(i)
-            r = [make_chromium_ele(ele.page, obj_id=i['value']['objectId']) if i['value']['type'] == 'object' else
-                 i['value']['value'] for i in ele.page.run_cdp('Runtime.getProperties',
-                                                               objectId=res['result']['objectId'],
-                                                               ownProperties=True)['result'][:-1]]
-            return None if not r or r is False in r else r
+            res = ele.page.run_cdp('Runtime.getProperties', objectId=res['result']['objectId'],
+                                   ownProperties=True)['result'][:-1]
+            if index is None:
+                r = [make_chromium_eles(ele.page, _ids=i['value']['objectId'], is_obj_id=True)
+                     if i['value']['type'] == 'object' else i['value']['value'] for i in res]
+                return None if False in r else r
+
+            else:
+                try:
+                    res = res[index]
+                except IndexError:
+                    return None
+                if res['value']['type'] == 'object':
+                    r = make_chromium_eles(ele.page, _ids=res['value']['objectId'], is_obj_id=True)
+                else:
+                    r = res['value']['value']
+                return None if r is False else r
 
     end_time = perf_counter() + timeout
     result = do_find()
@@ -1194,19 +1210,19 @@ def find_by_xpath(ele, xpath, single, timeout, relative=True):
 
     if result:
         return result
-    return NoneElement(ele.page) if single else []
+    return NoneElement(ele.page) if index is not None else []
 
 
-def find_by_css(ele, selector, single, timeout):
+def find_by_css(ele, selector, index, timeout):
     """执行用css selector在元素中查找元素
     :param ele: 在此元素中查找
     :param selector: 查找语句
-    :param single: 是否只返回第一个结果
+    :param index: 第几个结果，为None返回所有
     :param timeout: 超时时间（秒）
     :return: ChromiumElement或其组成的列表
     """
     selector = selector.replace('"', r'\"')
-    find_all = '' if single else 'All'
+    find_all = '' if index == 0 else 'All'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
 
@@ -1221,15 +1237,15 @@ def find_by_css(ele, selector, single, timeout):
         if res['result']['subtype'] == 'null' or res['result']['description'] in ('NodeList(0)', 'Array(0)'):
             return None
 
-        if single:
-            r = make_chromium_ele(ele.page, obj_id=res['result']['objectId'])
+        if index == 0:
+            r = make_chromium_eles(ele.page, _ids=res['result']['objectId'], is_obj_id=True)
             return None if r is False else r
 
         else:
-            node_ids = [i['value']['objectId'] for i in ele.page.run_cdp('Runtime.getProperties',
-                                                                         objectId=res['result']['objectId'],
-                                                                         ownProperties=True)['result'][:-1]]
-            r = make_chromium_eles(ele.page, obj_ids=node_ids, single=False, ele_only=False)
+            obj_ids = [i['value']['objectId'] for i in ele.page.run_cdp('Runtime.getProperties',
+                                                                        objectId=res['result']['objectId'],
+                                                                        ownProperties=True)['result'][:-1]]
+            r = make_chromium_eles(ele.page, _ids=obj_ids, index=index, is_obj_id=True)
             return None if r is False else r
 
     end_time = perf_counter() + timeout
@@ -1240,113 +1256,115 @@ def find_by_css(ele, selector, single, timeout):
 
     if result:
         return result
-    return NoneElement(ele.page) if single else []
+    return NoneElement(ele.page) if index is not None else []
 
 
-def make_chromium_ele(page, node_id=None, obj_id=None):
+def make_chromium_eles(page, _ids, index=0, is_obj_id=True):
     """根据node id或object id生成相应元素对象
     :param page: ChromiumPage对象
-    :param node_id: 元素的node id
-    :param obj_id: 元素的object id
-    :return: ChromiumElement对象或ChromiumFrame对象，生成失败返回False
+    :param _ids: 元素的id列表
+    :param index: 获取第几个，为None返回全部
+    :param is_obj_id: 传入的id是obj id还是node id
+    :return: 浏览器元素对象或它们组成的列表，生成失败返回False
     """
-    if node_id:
-        node = page.driver.run('DOM.describeNode', nodeId=node_id)
-        if 'error' in node:
-            return False
-        if node['node']['nodeName'] in ('#text', '#comment'):
-            # todo: Node()
-            return node['node']['nodeValue']
-        backend_id = node['node']['backendNodeId']
-        obj_id = page.run_cdp('DOM.resolveNode', nodeId=node_id)['object']['objectId']
+    if is_obj_id:
+        get_node_func = _get_node_by_obj_id
+        # id_txt = 'objectId'
+    else:
+        get_node_func = _get_node_by_node_id
+        # id_txt = 'nodeId'
+    if not isinstance(_ids, (list, tuple)):
+        _ids = (_ids,)
+
+    # if not ele_only:
+    if index is not None:  # 获取一个
+        obj_id = _ids[index]
+        return get_node_func(page, obj_id)
+
+    else:  # 获取全部
+        nodes = []
+        for obj_id in _ids:
+            tmp = get_node_func(page, obj_id)
+            if tmp is False:
+                return False
+            nodes.append(tmp)
+        return nodes
+
+    # if index is None:
+    #     nodes = []
+    #     for obj_id in _ids:
+    #         tmp = get_node_func(page, obj_id)
+    #         if tmp is False:
+    #             return False
+    #         if not isinstance(tmp, str):
+    #             nodes.append(tmp)
+    #     return nodes
+    #
+    # ids_count = len(_ids)
+    # if index < 0:
+    #     index = ids_count + index
+    # if index > ids_count - 1:
+    #     return False
+    #
+    # tmp = get_node_func(page, _ids[index])
+    # if not isinstance(tmp, str):
+    #     return tmp
+    #
+    # num = -1
+    # for obj_id in _ids:
+    #     node = _get_node_info(page, id_txt, obj_id)
+    #     if node is False:
+    #         return False
+    #     if node['node']['nodeName'] in ('#text', '#comment'):
+    #         continue
+    #     num += 1
+    #     if num == index:
+    #         return _make_ele(page, obj_id, node)
+
+    # return NoneElement(page)
+
+
+def _get_node_info(page, id_type, _id):
+    if not _id:
+        return False
+    arg = {id_type: _id}
+    node = page.driver.run('DOM.describeNode', **arg)
+    if 'error' in node:
+        return False
+    return node
+
+
+def _get_node_by_obj_id(page, obj_id):
+    node = _get_node_info(page, 'objectId', obj_id)
+    if node is False:
+        return False
+    if node['node']['nodeName'] in ('#text', '#comment'):
+        return node['node']['nodeValue']
+    else:
+        return _make_ele(page, obj_id, node)
+
+
+def _get_node_by_node_id(page, node_id):
+    node = _get_node_info(page, 'nodeId', node_id)
+    if node is False:
+        return False
+    if node['node']['nodeName'] in ('#text', '#comment'):
+        return node['node']['nodeValue']
+    else:
+        obj_id = page.driver.run('DOM.resolveNode', nodeId=node_id)
         if 'error' in obj_id:
             return False
+        obj_id = obj_id['object']['objectId']
+        return _make_ele(page, obj_id, node)
 
-    elif obj_id:
-        node = page.driver.run('DOM.describeNode', objectId=obj_id)
-        if 'error' in node:
-            return False
-        if node['node']['nodeName'] in ('#text', '#comment'):
-            # todo: Node()
-            return node['node']['nodeValue']
-        backend_id = node['node']['backendNodeId']
-        node_id = node['node']['nodeId']
 
-    else:
-        return False
-
-    ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=backend_id)
+def _make_ele(page, obj_id, node):
+    ele = ChromiumElement(page, obj_id=obj_id, node_id=node['node']['nodeId'],
+                          backend_id=node['node']['backendNodeId'])
     if ele.tag in __FRAME_ELEMENT__:
         from .._pages.chromium_frame import ChromiumFrame
         ele = ChromiumFrame(page, ele, node)
-
     return ele
-
-
-def make_chromium_eles(page, node_ids=None, obj_ids=None, single=True, ele_only=True):
-    """根据node id或object id生成相应元素对象
-    :param page: ChromiumPage对象
-    :param node_ids: 元素的node id
-    :param obj_ids: 元素的object id
-    :param single: 是否获取但个元素
-    :param ele_only: 是否只要ele
-    :return: ChromiumElement对象或ChromiumFrame对象，生成失败返回False
-    """
-    nodes = []
-    if node_ids:
-        for node_id in node_ids:
-            if not node_id:
-                return False
-            node = page.driver.run('DOM.describeNode', nodeId=node_id)
-            if 'error' in node:
-                return False
-            if node['node']['nodeName'] in ('#text', '#comment'):
-                if ele_only:
-                    continue
-                else:
-                    if single:
-                        return node['node']['nodeValue']
-                    else:
-                        nodes.append(node['node']['nodeValue'])
-
-            obj_id = page.driver.run('DOM.resolveNode', nodeId=node_id)
-            if 'error' in obj_id:
-                return False
-            obj_id = obj_id['object']['objectId']
-            ele = ChromiumElement(page, obj_id=obj_id, node_id=node_id, backend_id=node['node']['backendNodeId'])
-            if ele.tag in __FRAME_ELEMENT__:
-                from .._pages.chromium_frame import ChromiumFrame
-                ele = ChromiumFrame(page, ele, node)
-            if single:
-                return ele
-            nodes.append(ele)
-
-    if obj_ids:
-        for obj_id in obj_ids:
-            if not obj_id:
-                return False
-            node = page.driver.run('DOM.describeNode', objectId=obj_id)
-            if 'error' in node:
-                return False
-            if node['node']['nodeName'] in ('#text', '#comment'):
-                if ele_only:
-                    continue
-                else:
-                    if single:
-                        return node['node']['nodeValue']
-                    else:
-                        nodes.append(node['node']['nodeValue'])
-
-            ele = ChromiumElement(page, obj_id=obj_id, node_id=node['node']['nodeId'],
-                                  backend_id=node['node']['backendNodeId'])
-            if ele.tag in __FRAME_ELEMENT__:
-                from .._pages.chromium_frame import ChromiumFrame
-                ele = ChromiumFrame(page, ele, node)
-            if single:
-                return ele
-            nodes.append(ele)
-
-    return NoneElement(page) if single and not nodes else nodes
 
 
 def make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt):
@@ -1470,7 +1488,7 @@ def parse_js_result(page, ele, result):
             elif class_name == 'HTMLDocument':
                 return result
             else:
-                r = make_chromium_ele(page, obj_id=result['objectId'])
+                r = make_chromium_eles(page, _ids=result['objectId'])
                 if r is False:
                     raise ElementLostError
                 return r
