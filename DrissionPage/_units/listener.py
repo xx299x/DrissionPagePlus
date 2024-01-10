@@ -30,6 +30,7 @@ class Listener(object):
         self._target_id = page._target_id
         self._driver = None
         self._running_requests = 0
+        self._running_targets = 0
 
         self._caught = None
         self._request_ids = None
@@ -208,22 +209,24 @@ class Listener(object):
         self._extra_info_ids = {}
         self._caught = Queue(maxsize=0)
         self._running_requests = 0
+        self._running_targets = 0
 
-    def wait_silent(self, timeout=None):
+    def wait_silent(self, timeout=None, targets_only=False):
         """等待所有请求结束
         :param timeout: 超时，为None时无限等待
+        :param targets_only: 是否只等待targets指定的请求结束
         :return: 返回是否等待成功
         """
         if not self.listening:
             raise RuntimeError('监听未启动，用listen.start()启动。')
         if timeout is None:
-            while self._running_requests > 0:
+            while (not targets_only and self._running_requests > 0) or (targets_only and self._running_targets > 0):
                 sleep(.1)
             return True
 
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._running_requests <= 0:
+            if (not targets_only and self._running_requests <= 0) or (targets_only and self._running_targets <= 0):
                 return True
             sleep(.1)
         else:
@@ -265,6 +268,7 @@ class Listener(object):
         if self._targets is True:
             if ((self._method is True or kwargs['request']['method'] in self._method)
                     and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
+                self._running_targets += 1
                 rid = kwargs['requestId']
                 p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, True))
                 p._raw_request = kwargs
@@ -279,6 +283,7 @@ class Listener(object):
                      or (not self._is_regex and target in kwargs['request']['url']))
                         and (self._method is True or kwargs['request']['method'] in self._method)
                         and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
+                    self._running_targets += 1
                     p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
                     p._raw_request = kwargs
                     break
@@ -346,16 +351,17 @@ class Listener(object):
 
         if packet:
             self._caught.put(packet)
+            self._running_targets -= 1
 
     def _loading_failed(self, **kwargs):
         """请求失败时的回调方法"""
         self._running_requests -= 1
         r_id = kwargs['requestId']
-        dp = self._request_ids.get(r_id, None)
-        if dp:
-            dp._raw_fail_info = kwargs
-            dp._resource_type = kwargs['type']
-            dp.is_failed = True
+        data_packet = self._request_ids.get(r_id, None)
+        if data_packet:
+            data_packet._raw_fail_info = kwargs
+            data_packet._resource_type = kwargs['type']
+            data_packet.is_failed = True
 
         r = self._extra_info_ids.get(kwargs['requestId'], None)
         if r:
@@ -371,8 +377,9 @@ class Listener(object):
 
         self._request_ids.pop(r_id, None)
 
-        if dp:
-            self._caught.put(dp)
+        if data_packet:
+            self._caught.put(data_packet)
+            self._running_targets -= 1
 
 
 class FrameListener(Listener):
