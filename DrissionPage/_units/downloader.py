@@ -22,6 +22,7 @@ class DownloadManager(object):
         self._browser = browser
         self._page = browser.page
         self._when_download_file_exists = 'rename'
+        self._save_path = None
 
         t = TabDownloadSettings(self._page.tab_id)
         t.path = self._page.download_path
@@ -46,18 +47,19 @@ class DownloadManager(object):
         """返回所有未完成的下载任务"""
         return self._missions
 
-    def set_path(self, tab_id, path):
+    def set_path(self, tab, path):
         """设置某个tab的下载路径
-        :param tab_id: tab id
+        :param tab: 页面对象
         :param path: 下载路径（绝对路径str）
         :return: None
         """
-        TabDownloadSettings(tab_id).path = path
-        if tab_id == self._page.tab_id or not self._running:
+        TabDownloadSettings(tab.tab_id).path = path
+        if tab is self._page or not self._running:
             self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
             self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
             r = self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=path,
                                       behavior='allowAndName', eventsEnabled=True)
+            self._save_path = path
             if 'error' in r:
                 print('浏览器版本太低无法使用下载管理功能。')
         self._running = True
@@ -182,7 +184,7 @@ class DownloadManager(object):
             elif settings.when_file_exists == 'overwrite':
                 goal_path.unlink()
 
-        m = DownloadMission(self, tab_id, guid, settings.path, name, kwargs['url'], self._page.download_path)
+        m = DownloadMission(self, tab_id, guid, settings.path, name, kwargs['url'], self._save_path)
         self._missions[guid] = m
 
         if self.get_flag(tab_id) is False:  # 取消该任务
@@ -210,7 +212,7 @@ class DownloadManager(object):
                     return
                 mission.received_bytes = kwargs['receivedBytes']
                 mission.total_bytes = kwargs['totalBytes']
-                form_path = f'{mission.path}{sep}{mission.id}'
+                form_path = f'{mission.save_path}{sep}{mission.id}'
                 to_path = str(get_usable_path(f'{mission.path}{sep}{mission.name}'))
                 move(form_path, to_path)
                 self.set_done(mission, 'completed', final_path=to_path)

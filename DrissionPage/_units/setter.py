@@ -185,7 +185,7 @@ class TabSetter(ChromiumBaseSetter):
         """
         path = str(Path(path).absolute())
         self._page._download_path = path
-        self._page.browser._dl_mgr.set_path(self._page.tab_id, path)
+        self._page.browser._dl_mgr.set_path(self._page, path)
         if self._page._DownloadKit:
             self._page._DownloadKit.set.goal_path(path)
 
