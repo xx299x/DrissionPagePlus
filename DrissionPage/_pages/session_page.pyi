@@ -42,6 +42,7 @@ class SessionPage(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, SessionElement],
+                 index: int = 1,
                  timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     # -----------------共有属性和方法-------------------
@@ -91,6 +92,7 @@ class SessionPage(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+            index: int = 1,
             timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
@@ -98,15 +100,15 @@ class SessionPage(BasePage):
              timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None) \
-            -> Union[SessionElement, NoneElement]: ...
+              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None,
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_ele: Union[Tuple[str, str], str, SessionElement],
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        raise_err: bool = None) \
             -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 

@@ -68,14 +68,15 @@ class SessionPage(BasePage):
         if not self._session:
             self._session, self._headers = self._session_options.make_session()
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性文本
         """
-        return self.ele(loc_or_str)
+        return self.ele(loc_or_str, index=index)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -174,10 +175,10 @@ class SessionPage(BasePage):
         """
         return self._s_connect(url, 'post', show_errmsg, retry, interval, **kwargs)
 
-    def ele(self, loc_or_ele, index=0, timeout=None):
+    def ele(self, loc_or_ele, index=1, timeout=None):
         """返回页面中符合条件的一个元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
@@ -191,10 +192,10 @@ class SessionPage(BasePage):
         """
         return self._ele(loc_or_str, index=None)
 
-    def s_ele(self, loc_or_ele=None, index=0):
+    def s_ele(self, loc_or_ele=None, index=1):
         """返回页面中符合条件的一个元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele,
@@ -207,11 +208,11 @@ class SessionPage(BasePage):
         """
         return self._ele(loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=0, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=1, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
-        :param index: 第几个结果，0开始，为None返回所有
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """

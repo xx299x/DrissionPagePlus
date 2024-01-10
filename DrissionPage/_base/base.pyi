@@ -15,11 +15,11 @@ from .._elements.none_element import NoneElement
 
 class BaseParser(object):
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str], index: int = 0): ...
+    def __call__(self, loc_or_str: Union[Tuple[str, str], str], index: int = 1): ...
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, BaseElement],
-            index: int = 0,
+            index: int = 1,
             timeout: float = None): ...
 
     def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None): ...
@@ -28,14 +28,14 @@ class BaseParser(object):
     @property
     def html(self) -> str: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement], index: int = 0): ...
+    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement], index: int = 1): ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]): ...
 
     def _ele(self,
              loc_or_ele,
              timeout: float = None,
-             index: Optional[int] = 0,
+             index: Optional[int] = 1,
              raise_err: bool = None,
              method: str = None): ...
 
@@ -43,7 +43,7 @@ class BaseParser(object):
     def _find_elements(self,
                        loc_or_ele,
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        raise_err: bool = None): ...
 
 
@@ -59,7 +59,7 @@ class BaseElement(BaseParser):
     def _ele(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None,
-             index: Optional[int] = 0,
+             index: Optional[int] = 1,
              relative: bool = False,
              raise_err: bool = None,
              method: str = None): ...
@@ -67,7 +67,7 @@ class BaseElement(BaseParser):
     @abstractmethod
     def _find_elements(self, loc_or_str,
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None): ...
 
@@ -161,13 +161,14 @@ class DrissionElement(BaseElement):
                timeout: float = None,
                ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
-    def _do_relative_find(self,
-                          func: str,
-                          direction: str,
-                          filter_loc: Union[tuple, str] ='',
-                          index: int =1,
-                          timeout: float =None,
-                          ele_only: bool =True) -> DrissionElement: ...
+    def _get_relative(self,
+                      func: str,
+                      direction: str,
+                      brother: bool,
+                      filter_loc: Union[tuple, str] = '',
+                      index: int = 1,
+                      timeout: float = None,
+                      ele_only: bool = True) -> DrissionElement: ...
 
     def _get_relatives(self,
                        index: int = None,
@@ -245,7 +246,7 @@ class BasePage(BaseParser):
     def _ele(self,
              loc_or_ele,
              timeout: float = None,
-             index: Optional[int] = 0,
+             index: Optional[int] = 1,
              raise_err: bool = None,
              method: str = None): ...
 
@@ -253,5 +254,5 @@ class BasePage(BaseParser):
     def _find_elements(self,
                        loc_or_ele,
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        raise_err: bool = None): ...

@@ -80,7 +80,7 @@ class ChromiumElement(DrissionElement):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str, index=0, timeout=None):
+    def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间（秒）
@@ -400,10 +400,10 @@ class ChromiumElement(DrissionElement):
         """
         run_js(self, script, as_expr, 0, args)
 
-    def ele(self, loc_or_str, index=0, timeout=None):
+    def ele(self, loc_or_str, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个元素，0开始
+        :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本
         """
@@ -417,10 +417,10 @@ class ChromiumElement(DrissionElement):
         """
         return self._ele(loc_or_str, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None, index=0):
+    def s_ele(self, loc_or_str=None, index=1):
         """查找一个符合条件的元素，以SessionElement形式返回
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         if self.tag in __FRAME_ELEMENT__:
@@ -444,11 +444,11 @@ class ChromiumElement(DrissionElement):
             return make_session_ele(self.inner_html, loc_or_str, index=None)
         return make_session_ele(self, loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=0, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
-        :param index: 第几个结果，0开始，为None返回所有
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或文本、属性或其组成的列表
@@ -808,11 +808,11 @@ class ShadowRoot(BaseElement):
     def __repr__(self):
         return f'<ShadowRoot in {self.parent_ele}>'
 
-    def __call__(self, loc_or_str, index=0, timeout=None):
+    def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: 元素对象或属性、文本
         """
@@ -893,20 +893,23 @@ class ShadowRoot(BaseElement):
         :param index: 第几个查询结果，1开始
         :return: 直接子元素或节点文本组成的列表
         """
-        nodes = self.children(filter_loc=filter_loc)
-        if not nodes:
-            if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
-            else:
-                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
+        if not filter_loc:
+            loc = '*'
+        else:
+            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+            loc = loc[1].lstrip('./')
 
-        try:
-            return nodes[index - 1]
-        except IndexError:
-            if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
-            else:
-                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
+        loc = f'xpath:./{loc}'
+        ele = self._ele(loc, index=index, relative=True)
+        if ele:
+            return ele
+
+        if Settings.raise_when_ele_not_found:
+            raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
+        else:
+            return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
 
     def next(self, filter_loc='', index=1):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -914,9 +917,16 @@ class ShadowRoot(BaseElement):
         :param index: 第几个查询结果，1开始
         :return: ChromiumElement对象
         """
-        nodes = self.nexts(filter_loc=filter_loc)
-        if nodes:
-            return nodes[index - 1]
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./{loc}'
+        ele = self.parent_ele._ele(xpath, index=index, relative=True)
+        if ele:
+            return ele
+
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc, 'index': index})
         else:
@@ -929,9 +939,16 @@ class ShadowRoot(BaseElement):
         :param index: 前面第几个查询结果，1开始
         :return: 本元素前面的某个元素或节点
         """
-        nodes = self.befores(filter_loc=filter_loc)
-        if nodes:
-            return nodes[index - 1]
+        loc = get_loc(filter_loc, True)
+        if loc[0] == 'css selector':
+            raise ValueError('此css selector语法不受支持，请换成xpath。')
+
+        loc = loc[1].lstrip('./')
+        xpath = f'xpath:./preceding::{loc}'
+        ele = self.parent_ele._ele(xpath, index=index, relative=True)
+        if ele:
+            return ele
+
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc, 'index': index})
         else:
@@ -1006,10 +1023,10 @@ class ShadowRoot(BaseElement):
         xpath = f'xpath:./following::{loc}'
         return eles1 + self.parent_ele._ele(xpath, index=None, relative=True)
 
-    def ele(self, loc_or_str, index=0, timeout=None):
+    def ele(self, loc_or_str, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个元素，0开始
+        :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象
         """
@@ -1023,10 +1040,10 @@ class ShadowRoot(BaseElement):
         """
         return self._ele(loc_or_str, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None, index=0):
+    def s_ele(self, loc_or_str=None, index=1):
         """查找一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         r = make_session_ele(self, loc_or_str, index=index)
@@ -1042,11 +1059,11 @@ class ShadowRoot(BaseElement):
         """
         return make_session_ele(self, loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=0, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
-        :param index: 第几个结果，0开始，为None返回所有
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或其组成的列表
@@ -1057,7 +1074,7 @@ class ShadowRoot(BaseElement):
 
         def do_find():
             if loc[0] == 'css selector':
-                if index == 0:
+                if index == 1:
                     nod_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=loc[1])['nodeId']
                     if nod_id:
                         r = make_chromium_eles(self.page, _ids=nod_id, is_obj_id=False)
@@ -1077,7 +1094,7 @@ class ShadowRoot(BaseElement):
                 if index is not None:
                     try:
                         node_id = self.page.run_cdp('DOM.querySelector', nodeId=self._node_id,
-                                                    selector=css[index])['nodeId']
+                                                    selector=css[index - 1])['nodeId']
                     except IndexError:
                         return None
                     r = make_chromium_eles(self.page, _ids=node_id, is_obj_id=False)
@@ -1116,11 +1133,11 @@ class ShadowRoot(BaseElement):
         return r['backendNodeId']
 
 
-def find_in_chromium_ele(ele, loc, index=0, timeout=None, relative=True):
+def find_in_chromium_ele(ele, loc, index=1, timeout=None, relative=True):
     """在chromium元素中查找
     :param ele: ChromiumElement对象
     :param loc: 元素定位元组
-    :param index: 第几个结果，为None返回所有
+    :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
     :param timeout: 查找元素超时时间（秒）
     :param relative: WebPage用于标记是否相对定位使用
     :return: 返回ChromiumElement元素或它们组成的列表
@@ -1152,12 +1169,12 @@ def find_by_xpath(ele, xpath, index, timeout, relative=True):
     """执行用xpath在元素中查找元素
     :param ele: 在此元素中查找
     :param xpath: 查找语句
-    :param index: 第几个结果，为None返回所有
+    :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
     :param timeout: 超时时间（秒）
     :param relative: 是否相对定位
     :return: ChromiumElement或其组成的列表
     """
-    type_txt = '9' if index == 0 else '7'
+    type_txt = '9' if index == 1 else '7'
     node_txt = 'this.contentDocument' if ele.tag in __FRAME_ELEMENT__ and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
     ele.page.wait.load_complete()
@@ -1179,7 +1196,7 @@ def find_by_xpath(ele, xpath, index, timeout, relative=True):
         if res['result']['subtype'] == 'null' or res['result']['description'] in ('NodeList(0)', 'Array(0)'):
             return None
 
-        if index == 0:
+        if index == 1:
             r = make_chromium_eles(ele.page, _ids=res['result']['objectId'], is_obj_id=True)
             return None if r is False else r
 
@@ -1192,10 +1209,12 @@ def find_by_xpath(ele, xpath, index, timeout, relative=True):
                 return None if False in r else r
 
             else:
-                try:
-                    res = res[index]
-                except IndexError:
+                eles_count = len(res)
+                if eles_count == 0 or abs(index) > eles_count:
                     return None
+
+                index1 = eles_count + index + 1 if index < 0 else index
+                res = res[index1 - 1]
                 if res['value']['type'] == 'object':
                     r = make_chromium_eles(ele.page, _ids=res['value']['objectId'], is_obj_id=True)
                 else:
@@ -1217,12 +1236,12 @@ def find_by_css(ele, selector, index, timeout):
     """执行用css selector在元素中查找元素
     :param ele: 在此元素中查找
     :param selector: 查找语句
-    :param index: 第几个结果，为None返回所有
+    :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
     :param timeout: 超时时间（秒）
     :return: ChromiumElement或其组成的列表
     """
     selector = selector.replace('"', r'\"')
-    find_all = '' if index == 0 else 'All'
+    find_all = '' if index == 1 else 'All'
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
 
@@ -1237,7 +1256,7 @@ def find_by_css(ele, selector, index, timeout):
         if res['result']['subtype'] == 'null' or res['result']['description'] in ('NodeList(0)', 'Array(0)'):
             return None
 
-        if index == 0:
+        if index == 1:
             r = make_chromium_eles(ele.page, _ids=res['result']['objectId'], is_obj_id=True)
             return None if r is False else r
 
@@ -1259,7 +1278,7 @@ def find_by_css(ele, selector, index, timeout):
     return NoneElement(ele.page) if index is not None else []
 
 
-def make_chromium_eles(page, _ids, index=0, is_obj_id=True):
+def make_chromium_eles(page, _ids, index=1, is_obj_id=True):
     """根据node id或object id生成相应元素对象
     :param page: ChromiumPage对象
     :param _ids: 元素的id列表
@@ -1269,16 +1288,13 @@ def make_chromium_eles(page, _ids, index=0, is_obj_id=True):
     """
     if is_obj_id:
         get_node_func = _get_node_by_obj_id
-        # id_txt = 'objectId'
     else:
         get_node_func = _get_node_by_node_id
-        # id_txt = 'nodeId'
     if not isinstance(_ids, (list, tuple)):
         _ids = (_ids,)
 
-    # if not ele_only:
     if index is not None:  # 获取一个
-        obj_id = _ids[index]
+        obj_id = _ids[index - 1]
         return get_node_func(page, obj_id)
 
     else:  # 获取全部
@@ -1289,39 +1305,6 @@ def make_chromium_eles(page, _ids, index=0, is_obj_id=True):
                 return False
             nodes.append(tmp)
         return nodes
-
-    # if index is None:
-    #     nodes = []
-    #     for obj_id in _ids:
-    #         tmp = get_node_func(page, obj_id)
-    #         if tmp is False:
-    #             return False
-    #         if not isinstance(tmp, str):
-    #             nodes.append(tmp)
-    #     return nodes
-    #
-    # ids_count = len(_ids)
-    # if index < 0:
-    #     index = ids_count + index
-    # if index > ids_count - 1:
-    #     return False
-    #
-    # tmp = get_node_func(page, _ids[index])
-    # if not isinstance(tmp, str):
-    #     return tmp
-    #
-    # num = -1
-    # for obj_id in _ids:
-    #     node = _get_node_info(page, id_txt, obj_id)
-    #     if node is False:
-    #         return False
-    #     if node['node']['nodeName'] in ('#text', '#comment'):
-    #         continue
-    #     num += 1
-    #     if num == index:
-    #         return _make_ele(page, obj_id, node)
-
-    # return NoneElement(page)
 
 
 def _get_node_info(page, id_type, _id):

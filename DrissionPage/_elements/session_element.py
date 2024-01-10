@@ -220,10 +220,10 @@ class SessionElement(DrissionElement):
         else:
             return self.inner_ele.get(attr)
 
-    def ele(self, loc_or_str, index=0, timeout=None):
+    def ele(self, loc_or_str, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 第几个元素，0开始
+        :param index: 第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
@@ -237,10 +237,10 @@ class SessionElement(DrissionElement):
         """
         return self._ele(loc_or_str, index=None)
 
-    def s_ele(self, loc_or_str=None, index=0):
+    def s_ele(self, loc_or_str=None, index=1):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         return self._ele(loc_or_str, index=index, method='s_ele()')
@@ -252,11 +252,11 @@ class SessionElement(DrissionElement):
         """
         return self._ele(loc_or_str, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=0, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
-        :param index: 第几个结果，0开始，为None返回所有
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
@@ -284,12 +284,12 @@ class SessionElement(DrissionElement):
         return f'{path_str[1:]}' if mode == 'css' else path_str
 
 
-def make_session_ele(html_or_ele, loc=None, index=0):
+def make_session_ele(html_or_ele, loc=None, index=1):
     """从接收到的对象或html文本中查找元素，返回SessionElement对象
     如要直接从html生成SessionElement而不在下级查找，loc输入None即可
     :param html_or_ele: html文本、BaseParser对象
     :param loc: 定位元组或字符串，为None时不在下级查找，返回根元素
-    :param index: 获取第几个元素，None获取所有
+    :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个，None获取所有
     :return: 返回SessionElement元素或列表，或属性文本
     """
     # ---------------处理定位符---------------
@@ -382,12 +382,12 @@ def make_session_ele(html_or_ele, loc=None, index=0):
 
         else:
             eles_count = len(eles)
-            if index < 0:
-                index = eles_count + index
-            if index > eles_count - 1:
+            if eles_count == 0 or abs(index) > eles_count:
                 return NoneElement(page)
+            if index < 0:
+                index = eles_count + index + 1
 
-            ele = eles[index]
+            ele = eles[index - 1]
             if isinstance(ele, HtmlElement):
                 return SessionElement(ele, page)
             elif isinstance(ele, str):

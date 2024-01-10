@@ -97,7 +97,7 @@ class SelectElement(object):
 
     def by_index(self, index, timeout=None):
         """此方法用于根据index值选择项。当元素是多选列表时，可以接收list或tuple
-        :param index: 序号，0开始，传入list或tuple可选择多项
+        :param index: 序号，从1开始，可传入负数获取倒数第几个，传入list或tuple可选择多项
         :param timeout: 超时时间，为None默认使用页面超时时间
         :return: 是否选择成功
         """
@@ -136,7 +136,7 @@ class SelectElement(object):
 
     def cancel_by_index(self, index, timeout=None):
         """此方法用于根据index值取消选择项。当元素是多选列表时，可以接收list或tuple
-        :param index: 序号，0开始，传入list或tuple可取消多项
+        :param index: 序号，从1开始，可传入负数获取倒数第几个，传入list或tuple可取消多项
         :param timeout: 超时时间，不输入默认实用页面超时时间
         :return: 是否取消成功
         """
@@ -231,7 +231,7 @@ class SelectElement(object):
         """
         ok = False
         condition = [int(i) for i in condition]
-        text_len = max(condition)
+        text_len = abs(max(condition, key=abs))
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if len(self.options) >= text_len:
@@ -240,7 +240,7 @@ class SelectElement(object):
 
         if ok:
             eles = self.options
-            eles = [eles[i - 1] for i in condition]
+            eles = [eles[i - 1] if i > 0 else eles[i] for i in condition]
             self._select_options(eles, mode)
             return True
 

@@ -44,7 +44,7 @@ class ChromiumFrame(ChromiumBase):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 index: int = 0,
+                 index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def __eq__(self, other: ChromiumFrame) -> bool: ...
@@ -210,7 +210,7 @@ class ChromiumFrame(ChromiumBase):
     def _find_elements(self,
                        loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) \
             -> Union[ChromiumElement, ChromiumFrame, None, List[Union[ChromiumElement, ChromiumFrame]]]: ...

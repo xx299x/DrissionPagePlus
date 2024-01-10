@@ -30,7 +30,7 @@ class SessionElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 index: int = 0,
+                 index: int = 1,
                  timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def __eq__(self, other: SessionElement) -> bool: ...
@@ -116,7 +116,7 @@ class SessionElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            index: int = 0,
+            index: int = 1,
             timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
@@ -125,14 +125,14 @@ class SessionElement(DrissionElement):
 
     def s_ele(self,
               loc_or_str: Union[Tuple[str, str], str] = None,
-              index: int = 0) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 
@@ -142,4 +142,4 @@ class SessionElement(DrissionElement):
 def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, BaseElement, ChromiumFrame,
 ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
-                     index: Optional[int] = 0) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+                     index: Optional[int] = 1) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...

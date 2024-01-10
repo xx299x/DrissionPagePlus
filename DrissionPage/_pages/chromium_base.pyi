@@ -95,7 +95,7 @@ class ChromiumBase(BasePage):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
-                 index: int = 0,
+                 index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     @property
@@ -181,7 +181,7 @@ class ChromiumBase(BasePage):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-            index: int = 0,
+            index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
@@ -190,14 +190,14 @@ class ChromiumBase(BasePage):
 
     def s_ele(self,
               loc_or_ele: Union[Tuple[str, str], str] = None,
-              index:int = 0) -> Union[SessionElement, NoneElement]: ...
+              index:int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) \
             -> Union[ChromiumElement, ChromiumFrame, NoneElement, List[Union[ChromiumElement, ChromiumFrame]]]: ...

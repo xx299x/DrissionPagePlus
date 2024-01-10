@@ -156,17 +156,17 @@ class ChromiumPage(ChromiumBase):
         :param kwargs: pdf生成参数
         :return: as_pdf为True时返回bytes，否则返回文件文本
         """
-        return get_pdf(self, path, name, kwargs)if as_pdf else get_mhtml(self, path, name)
+        return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
 
     def get_tab(self, id_or_num=None):
         """获取一个标签页对象
-        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号不是视觉排列顺序，而是激活顺序
+        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
         :return: 标签页对象
         """
         if isinstance(id_or_num, str):
             return ChromiumTab(self, id_or_num)
         elif isinstance(id_or_num, int):
-            return ChromiumTab(self, self.tabs[id_or_num])
+            return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num < 0 else id_or_num])
         elif id_or_num is None:
             return ChromiumTab(self, self.tab_id)
         elif isinstance(id_or_num, ChromiumTab):

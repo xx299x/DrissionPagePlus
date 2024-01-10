@@ -64,11 +64,11 @@ class ChromiumFrame(ChromiumBase):
                 break
             sleep(.1)
 
-    def __call__(self, loc_or_str, index=0, timeout=None):
+    def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param index: 获取第几个，0开始
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
@@ -562,11 +562,11 @@ class ChromiumFrame(ChromiumBase):
         self.tab.remove_ele(new_ele)
         return r
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=0, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=1, relative=False, raise_err=None):
         """在frame内查找单个元素
         :param loc_or_ele: 定位符或元素对象
         :param timeout: 查找超时时间
-        :param index: 第几个结果，0开始，为None返回所有
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
@@ -574,7 +574,7 @@ class ChromiumFrame(ChromiumBase):
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
         self.wait.load_complete()
-        return self.doc_ele._ele(loc_or_ele, timeout,
+        return self.doc_ele._ele(loc_or_ele, index=index, timeout=timeout,
                                  raise_err=raise_err) if index is not None else self.doc_ele.eles(loc_or_ele, timeout)
 
     def _is_inner_frame(self):

@@ -49,7 +49,7 @@ class ChromiumElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
-                 index: int = 0,
+                 index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def __eq__(self, other: ChromiumElement) -> bool: ...
@@ -177,7 +177,7 @@ class ChromiumElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            index: int = 0,
+            index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
@@ -186,14 +186,14 @@ class ChromiumElement(DrissionElement):
 
     def s_ele(self,
               loc_or_str: Union[Tuple[str, str], str] = None,
-              index: int = 0) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
                        timeout: float = None,
-                       index: Optional[int] = True,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = False) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
     List[Union[ChromiumElement, ChromiumFrame]]]: ...
@@ -293,7 +293,7 @@ class ShadowRoot(BaseElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
-            index: int = 0,
+            index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
@@ -302,14 +302,14 @@ class ShadowRoot(BaseElement):
 
     def s_ele(self,
               loc_or_str: Union[Tuple[str, str], str] = None,
-              index: int = 0) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
                        timeout: float = None,
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) -> Union[ChromiumElement, ChromiumFrame, NoneElement, str,
     List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
@@ -323,7 +323,7 @@ class ShadowRoot(BaseElement):
 
 def find_in_chromium_ele(ele: ChromiumElement,
                          loc: Union[str, Tuple[str, str]],
-                         index: Optional[int] = 0,
+                         index: Optional[int] = 1,
                          timeout: float = None,
                          relative: bool = True) -> Union[ChromiumElement, NoneElement, List[ChromiumElement]]: ...
 
@@ -343,7 +343,7 @@ def find_by_css(ele: ChromiumElement,
 
 def make_chromium_eles(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                        _ids: Union[tuple, list, str, int],
-                       index: Optional[int] = 0,
+                       index: Optional[int] = 1,
                        is_obj_id: bool = True
                        ) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
 List[Union[ChromiumElement, ChromiumFrame]]]: ...
