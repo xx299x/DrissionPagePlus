@@ -202,6 +202,7 @@ class Browser(object):
                     pass
 
     def _on_quit(self):
+        self.page._on_quit()
         Browser.BROWSERS.pop(self.id, None)
         if self.page._chromium_options.is_auto_port and self.page._chromium_options.user_data_path:
             path = Path(self.page._chromium_options.user_data_path)
