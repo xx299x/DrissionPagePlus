@@ -5,6 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
+from json import loads
 from os.path import basename, sep
 from pathlib import Path
 from re import search
@@ -1458,7 +1459,6 @@ def parse_js_result(page, ele, result):
         return result['unserializableValue']
 
     the_type = result['type']
-
     if the_type == 'object':
         sub_type = result.get('subtype', None)
         if sub_type == 'null':
@@ -1484,8 +1484,14 @@ def parse_js_result(page, ele, result):
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'], ownProperties=True)['result']
             return {i['name']: parse_js_result(page, ele, result=i['value']) for i in r}
 
+        elif 'objectId' in result:
+            js = 'function(){return JSON.stringify(this);}'
+            r = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, objectId=result['objectId'],
+                             returnByValue=False, awaitPromise=True, userGesture=True, _ignore=AlertExistsError)
+            return loads(parse_js_result(page, ele, r['result']))
+
         else:
-            return result['value']
+            return result.get('value', result)
 
     elif the_type == 'undefined':
         return None

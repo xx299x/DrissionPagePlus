@@ -264,7 +264,7 @@ class ChromiumPage(ChromiumBase):
 def _handle_options(addr_or_opts):
     """设置浏览器启动属性
     :param addr_or_opts: 'ip:port'、ChromiumOptions、Driver
-    :return: 返回浏览器地址
+    :return: 返回ChromiumOptions对象
     """
     if not addr_or_opts:
         _chromium_options = ChromiumOptions(addr_or_opts)
@@ -291,11 +291,11 @@ def _handle_options(addr_or_opts):
     return _chromium_options
 
 
-def _run_browser(_chromium_options):
+def _run_browser(chromium_options):
     """连接浏览器"""
-    is_exist = connect_browser(_chromium_options)
+    is_exist = connect_browser(chromium_options)
     try:
-        ws = get(f'http://{_chromium_options.address}/json/version', headers={'Connection': 'close'})
+        ws = get(f'http://{chromium_options.address}/json/version', headers={'Connection': 'close'})
         if not ws:
             raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
         browser_id = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
