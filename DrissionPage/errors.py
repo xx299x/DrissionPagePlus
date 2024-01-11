@@ -89,3 +89,7 @@ class StorageError(BaseError):
 
 class CookieFormatError(BaseError):
     _info = 'cookie格式不正确。'
+
+
+class TargetNotFoundError(BaseError):
+    _info = '找不到指定页面。'

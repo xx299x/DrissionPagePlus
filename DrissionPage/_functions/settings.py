@@ -11,3 +11,4 @@ class Settings(object):
     raise_when_ele_not_found = False
     raise_when_click_failed = False
     raise_when_wait_failed = False
+    singleton_tab_obj = True

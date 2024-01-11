@@ -63,12 +63,13 @@ class Browser(object):
         self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)
         self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
 
-    def _get_driver(self, tab_id):
+    def _get_driver(self, tab_id, owner=None):
         """获取对应tab id的Driver
         :param tab_id: 标签页id
+        :param owner: 使用该驱动的对象
         :return: Driver对象
         """
-        return self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address))
+        return self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address, owner))
 
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
@@ -201,8 +202,8 @@ class Browser(object):
                 except TypeError:
                     pass
 
-    def _on_quit(self):
-        self.page._on_quit()
+    def _on_disconnect(self):
+        self.page._on_disconnect()
         Browser.BROWSERS.pop(self.id, None)
         if self.page._chromium_options.is_auto_port and self.page._chromium_options.user_data_path:
             path = Path(self.page._chromium_options.user_data_path)

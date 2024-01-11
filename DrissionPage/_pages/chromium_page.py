@@ -245,7 +245,7 @@ class ChromiumPage(ChromiumBase):
         """
         self.browser.quit(timeout, force)
 
-    def _on_quit(self):
+    def _on_disconnect(self):
         """浏览器退出时执行"""
         ChromiumPage.PAGES.pop(self._browser_id, None)
 

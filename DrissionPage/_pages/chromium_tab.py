@@ -9,6 +9,7 @@ from copy import copy
 
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
+from .._functions.settings import Settings
 from .._functions.web import set_session_cookies, set_browser_cookies
 from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf
 from .._pages.session_page import SessionPage
@@ -18,12 +19,28 @@ from .._units.waiter import TabWaiter
 
 class ChromiumTab(ChromiumBase):
     """实现浏览器标签页的类"""
+    TABS = {}
 
-    def __init__(self, page, tab_id=None):
+    def __new__(cls, page, tab_id):
         """
         :param page: ChromiumPage对象
-        :param tab_id: 要控制的标签页id，不指定默认为激活的
+        :param tab_id: 要控制的标签页id
         """
+        if Settings.singleton_tab_obj and tab_id in cls.TABS:
+            return cls.TABS[tab_id]
+        r = object.__new__(cls)
+        cls.TABS[tab_id] = r
+        return r
+
+    def __init__(self, page, tab_id):
+        """
+        :param page: ChromiumPage对象
+        :param tab_id: 要控制的标签页id
+        """
+        if Settings.singleton_tab_obj and hasattr(self, '_created'):
+            return
+        self._created = True
+
         self._page = page
         self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
@@ -72,6 +89,9 @@ class ChromiumTab(ChromiumBase):
 
     def __repr__(self):
         return f'<ChromiumTab browser_id={self.browser.id} tab_id={self.tab_id}>'
+
+    def _on_disconnect(self):
+        ChromiumTab.TABS.pop(self.tab_id, None)
 
 
 class WebPageTab(SessionPage, ChromiumTab, BasePage):

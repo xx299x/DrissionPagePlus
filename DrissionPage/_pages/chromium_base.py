@@ -124,7 +124,7 @@ class ChromiumBase(BasePage):
         :return: None
         """
         self._is_loading = True
-        self._driver = self.browser._get_driver(tab_id)
+        self._driver = self.browser._get_driver(tab_id, self)
 
         self._alert = Alert()
         self._driver.set_callback('Page.javascriptDialogOpening', self._on_alert_open, immediate=True)
