@@ -212,7 +212,7 @@ class ChromiumFrame(ChromiumBase):
     @property
     def scroll(self):
         """返回用于滚动的对象"""
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         if self._scroll is None:
             self._scroll = FrameScroller(self)
         return self._scroll
@@ -573,7 +573,7 @@ class ChromiumFrame(ChromiumBase):
         """
         if isinstance(loc_or_ele, ChromiumElement):
             return loc_or_ele
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         return self.doc_ele._ele(loc_or_ele, index=index, timeout=timeout,
                                  raise_err=raise_err) if index is not None else self.doc_ele.eles(loc_or_ele, timeout)
 

@@ -96,7 +96,7 @@ class BaseWaiter(object):
         """
         return self._loading(timeout=timeout, gap=.002, raise_err=raise_err)
 
-    def load_complete(self, timeout=None, raise_err=None):
+    def doc_loaded(self, timeout=None, raise_err=None):
         """等待页面加载完成
         :param timeout: 超时时间，为None时使用页面timeout属性
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
@@ -214,6 +214,14 @@ class BaseWaiter(object):
         :param fix_count: 是否必须满足总数要求，发生超时，为True返回False，为False返回已捕捉到的数据包
         :return: count为1时返回数据包对象，大于1时返回列表，超时且fix_count为True时返回False"""
         return self._driver.listen.wait(count, timeout, fix_count)
+
+    def load_complete(self, timeout=None, raise_err=None):
+        """等待页面加载完成
+        :param timeout: 超时时间，为None时使用页面timeout属性
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 是否等待成功
+        """
+        return self._loading(timeout=timeout, start=False, raise_err=raise_err)
 
 
 class TabWaiter(BaseWaiter):

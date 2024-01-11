@@ -1177,7 +1177,7 @@ def find_by_xpath(ele, xpath, index, timeout, relative=True):
     type_txt = '9' if index == 1 else '7'
     node_txt = 'this.contentDocument' if ele.tag in __FRAME_ELEMENT__ and not relative else 'this'
     js = make_js_for_find_ele_by_xpath(xpath, type_txt, node_txt)
-    ele.page.wait.load_complete()
+    ele.page.wait.doc_loaded()
 
     def do_find():
         res = ele.page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,
@@ -1245,7 +1245,7 @@ def find_by_css(ele, selector, index, timeout):
     node_txt = 'this.contentDocument' if ele.tag in ('iframe', 'frame', 'shadow-root') else 'this'
     js = f'function(){{return {node_txt}.querySelector{find_all}("{selector}");}}'
 
-    ele.page.wait.load_complete()
+    ele.page.wait.doc_loaded()
 
     def do_find():
         res = ele.page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, objectId=ele._obj_id,

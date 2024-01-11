@@ -290,7 +290,7 @@ class ChromiumBase(BasePage):
         """返回用于执行动作链的对象"""
         if self._actions is None:
             self._actions = Actions(self)
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         return self._actions
 
     @property
@@ -310,7 +310,7 @@ class ChromiumBase(BasePage):
     @property
     def scroll(self):
         """返回用于滚动滚动条的对象"""
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         if self._scroll is None:
             self._scroll = PageScroller(self)
         return self._scroll
@@ -318,7 +318,7 @@ class ChromiumBase(BasePage):
     @property
     def rect(self):
         """返回获取窗口坐标和大小的对象"""
-        # self.wait.load_complete()
+        # self.wait.doc_loaded()
         if self._rect is None:
             self._rect = TabRect(self)
         return self._rect
@@ -359,7 +359,7 @@ class ChromiumBase(BasePage):
     @property
     def html(self):
         """返回当前页面html文本"""
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         return self.run_cdp('DOM.getOuterHTML', objectId=self._root_id)['outerHTML']
 
     @property
@@ -426,7 +426,7 @@ class ChromiumBase(BasePage):
         :param cmd_args: 参数
         :return: 执行的结果
         """
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         return self.run_cdp(cmd, **cmd_args)
 
     def run_js(self, script, *args, as_expr=False, timeout=None):
@@ -447,7 +447,7 @@ class ChromiumBase(BasePage):
         :param timeout: js超时时间（秒），为None则使用页面timeouts.script属性值
         :return: 运行的结果
         """
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
 
     def run_async_js(self, script, *args, as_expr=False):
@@ -546,7 +546,7 @@ class ChromiumBase(BasePage):
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
 
-        self.wait.load_complete()
+        self.wait.doc_loaded()
         timeout = timeout if timeout is not None else self.timeout
         end_time = perf_counter() + timeout
 
