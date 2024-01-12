@@ -1393,7 +1393,7 @@ else{a.push(e.snapshotItem(i));}}"""
     return js
 
 
-def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
+def run_js(page_or_ele, script, as_expr, timeout, args=None):
     """运行javascript代码
     :param page_or_ele: 页面对象或元素对象
     :param script: js文本
@@ -1420,6 +1420,7 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
     if page.states.has_alert:
         raise AlertExistsError
 
+    end_time = perf_counter() + timeout
     try:
         if as_expr:
             res = page.run_cdp('Runtime.evaluate', expression=script, returnByValue=False,
@@ -1448,12 +1449,12 @@ def run_js(page_or_ele, script, as_expr=False, timeout=None, args=None):
         raise JavaScriptError(f'\njavascript运行错误：\n{script}\n错误信息: \n{exceptionDetails}')
 
     try:
-        return parse_js_result(page, page_or_ele, res.get('result'))
+        return parse_js_result(page, page_or_ele, res.get('result'), end_time)
     except Exception:
         return res
 
 
-def parse_js_result(page, ele, result):
+def parse_js_result(page, ele, result, end_time):
     """解析js返回的结果"""
     if 'unserializableValue' in result:
         return result['unserializableValue']
@@ -1478,17 +1479,21 @@ def parse_js_result(page, ele, result):
 
         elif sub_type == 'array':
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'], ownProperties=True)['result']
-            return [parse_js_result(page, ele, result=i['value']) for i in r[:-1]]
+            return [parse_js_result(page, ele, result=i['value'], end_time=end_time) for i in r[:-1]]
 
         elif 'objectId' in result and result['className'].lower() == 'object':  # dict
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'], ownProperties=True)['result']
-            return {i['name']: parse_js_result(page, ele, result=i['value']) for i in r}
+            return {i['name']: parse_js_result(page, ele, result=i['value'], end_time=end_time) for i in r}
 
         elif 'objectId' in result:
+            timeout = end_time - perf_counter()
+            if timeout < 0:
+                return
             js = 'function(){return JSON.stringify(this);}'
             r = page.run_cdp('Runtime.callFunctionOn', functionDeclaration=js, objectId=result['objectId'],
-                             returnByValue=False, awaitPromise=True, userGesture=True, _ignore=AlertExistsError)
-            return loads(parse_js_result(page, ele, r['result']))
+                             returnByValue=False, awaitPromise=True, userGesture=True, _ignore=AlertExistsError,
+                             _timeout=timeout)
+            return loads(parse_js_result(page, ele, r['result'], end_time))
 
         else:
             return result.get('value', result)

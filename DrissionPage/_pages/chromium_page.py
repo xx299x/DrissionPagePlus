@@ -31,8 +31,8 @@ class ChromiumPage(ChromiumBase):
         :param timeout: 超时时间（秒）
         """
         addr_or_opts = addr_or_opts or addr_driver_opts
-        opt = _handle_options(addr_or_opts)
-        is_exist, browser_id = _run_browser(opt)
+        opt = handle_options(addr_or_opts)
+        is_exist, browser_id = run_browser(opt)
         if browser_id in cls.PAGES:
             return cls.PAGES[browser_id]
         r = object.__new__(cls)
@@ -261,7 +261,7 @@ class ChromiumPage(ChromiumBase):
         self.close_tabs(tabs_or_ids, True)
 
 
-def _handle_options(addr_or_opts):
+def handle_options(addr_or_opts):
     """设置浏览器启动属性
     :param addr_or_opts: 'ip:port'、ChromiumOptions、Driver
     :return: 返回ChromiumOptions对象
@@ -291,7 +291,7 @@ def _handle_options(addr_or_opts):
     return _chromium_options
 
 
-def _run_browser(chromium_options):
+def run_browser(chromium_options):
     """连接浏览器"""
     is_exist = connect_browser(chromium_options)
     try:

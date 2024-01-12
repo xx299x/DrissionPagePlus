@@ -354,12 +354,15 @@ def make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> s
 
 def run_js(page_or_ele: Union[ChromiumBase, ChromiumElement, ShadowRoot],
            script: str,
-           as_expr: bool = False,
-           timeout: float = None,
+           as_expr: bool,
+           timeout: float,
            args: tuple = ...) -> Any: ...
 
 
-def parse_js_result(page: ChromiumBase, ele: ChromiumElement, result: dict): ...
+def parse_js_result(page: ChromiumBase,
+                    ele: ChromiumElement,
+                    result: dict,
+                    end_time: float): ...
 
 
 def convert_argument(arg: Any) -> dict: ...
