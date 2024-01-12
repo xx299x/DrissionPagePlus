@@ -130,7 +130,10 @@ class ChromiumElement(DrissionElement):
         self.__tree(ele=self)
 
     def __tree(self,ele, layer=5, last_one=False, body=''):
-        list_ele = ele.children(timeout=0.1)
+        try:
+            list_ele = ele.children(timeout=0.1)
+        except:
+            list_ele = []
         length = len(list_ele)
         body_unit = '    ' if last_one else '│   '
         tail = '├───'
