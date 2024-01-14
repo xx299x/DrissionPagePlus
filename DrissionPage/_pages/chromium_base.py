@@ -694,7 +694,7 @@ class ChromiumBase(BasePage):
             if loc_ind_ele == 0:
                 loc_ind_ele = 1
             elif loc_ind_ele < 0:
-                loc_ind_ele = f'last()-{-loc_ind_ele}'
+                loc_ind_ele = f'last()+{loc_ind_ele}+1'
             xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
             r = self._ele(xpath, timeout=timeout)
 

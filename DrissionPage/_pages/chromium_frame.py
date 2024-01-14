@@ -58,7 +58,7 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
         self._rect = None
-        end_time = perf_counter() + 5
+        end_time = perf_counter() + 2
         while perf_counter() < end_time:
             if self.url not in (None, 'about:blank'):
                 break

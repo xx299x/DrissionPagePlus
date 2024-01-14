@@ -148,7 +148,7 @@ class ChromiumPage(ChromiumBase):
         if isinstance(id_or_num, str):
             return ChromiumTab(self, id_or_num)
         elif isinstance(id_or_num, int):
-            return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num < 0 else id_or_num])
+            return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num > 0 else id_or_num])
         elif id_or_num is None:
             return ChromiumTab(self, self.tab_id)
         elif isinstance(id_or_num, ChromiumTab):
