@@ -126,7 +126,10 @@ class DownloadManager(object):
         :return: None
         """
         mission.state = 'canceled'
-        self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
+        try:
+            self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
+        except:
+            pass
         if mission.final_path:
             Path(mission.final_path).unlink(True)
 
@@ -136,7 +139,10 @@ class DownloadManager(object):
         :return: None
         """
         mission.state = 'skipped'
-        self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
+        try:
+            self._browser.run_cdp('Browser.cancelDownload', guid=mission.id)
+        except:
+            pass
 
     def clear_tab_info(self, tab_id):
         """当tab关闭时清除有关信息
