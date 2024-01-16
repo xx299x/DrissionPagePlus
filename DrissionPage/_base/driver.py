@@ -12,21 +12,23 @@ from time import perf_counter, sleep
 
 from requests import get
 from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
-                       WebSocketException)
+                       WebSocketException, WebSocketBadStatusException)
 
-from ..errors import PageDisconnectedError
+from ..errors import PageDisconnectedError, TargetNotFoundError
 
 
 class Driver(object):
-    def __init__(self, tab_id, tab_type, address):
+    def __init__(self, tab_id, tab_type, address, owner=None):
         """
         :param tab_id: 标签页id
         :param tab_type: 标签页类型
         :param address: 浏览器连接地址
+        :param owner: 创建这个驱动的对象
         """
         self.id = tab_id
         self.address = address
         self.type = tab_type
+        self.owner = owner
         self._debug = False
         self.alert_flag = False  # 标记alert出现，跳过一条请求后复原
 
@@ -195,7 +197,10 @@ class Driver(object):
     def start(self):
         """启动连接"""
         self._stopped.clear()
-        self._ws = create_connection(self._websocket_url, enable_multithread=True, suppress_origin=True)
+        try:
+            self._ws = create_connection(self._websocket_url, enable_multithread=True, suppress_origin=True)
+        except WebSocketBadStatusException as e:
+            raise TargetNotFoundError(f'找不到页面：{self.id}。') if 'No such target id' in str(e) else e
         self._recv_th.start()
         self._handle_event_th.start()
         return True
@@ -230,6 +235,9 @@ class Driver(object):
         self.method_results.clear()
         self.event_queue.queue.clear()
 
+        if hasattr(self.owner, '_on_disconnect'):
+            self.owner._on_disconnect()
+
     def set_callback(self, event, callback, immediate=False):
         """绑定cdp event和回调方法
         :param event: cdp event
@@ -247,18 +255,17 @@ class Driver(object):
 class BrowserDriver(Driver):
     BROWSERS = {}
 
-    def __new__(cls, tab_id, tab_type, address, browser):
+    def __new__(cls, tab_id, tab_type, address, owner):
         if tab_id in cls.BROWSERS:
             return cls.BROWSERS[tab_id]
         return object.__new__(cls)
 
-    def __init__(self, tab_id, tab_type, address, browser):
+    def __init__(self, tab_id, tab_type, address, owner):
         if hasattr(self, '_created'):
             return
         self._created = True
         BrowserDriver.BROWSERS[tab_id] = self
-        super().__init__(tab_id, tab_type, address)
-        self.browser = browser
+        super().__init__(tab_id, tab_type, address, owner)
 
     def __repr__(self):
         return f'<BrowserDriver {self.id}>'
@@ -267,7 +274,3 @@ class BrowserDriver(Driver):
         r = get(url, headers={'Connection': 'close'})
         r.close()
         return r
-
-    def _stop(self):
-        super()._stop()
-        self.browser._on_quit()

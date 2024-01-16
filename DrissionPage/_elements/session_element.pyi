@@ -30,6 +30,7 @@ class SessionElement(DrissionElement):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str],
+                 index: int = 1,
                  timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def __eq__(self, other: SessionElement) -> bool: ...
@@ -115,6 +116,7 @@ class SessionElement(DrissionElement):
 
     def ele(self,
             loc_or_str: Union[Tuple[str, str], str],
+            index: int = 1,
             timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
@@ -122,18 +124,17 @@ class SessionElement(DrissionElement):
              timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None) -> Union[SessionElement, NoneElement]: ...
+              loc_or_str: Union[Tuple[str, str], str] = None,
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self,
-               loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
                        loc_or_str: Union[Tuple[str, str], str],
                        timeout: float = None,
-                       single: bool = True,
+                       index: Optional[int] = 1,
                        relative: bool = False,
-                       raise_err: bool = None) \
-            -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+                       raise_err: bool = None) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
 
     def _get_ele_path(self, mode: str) -> str: ...
 
@@ -141,5 +142,4 @@ class SessionElement(DrissionElement):
 def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, BaseElement, ChromiumFrame,
 ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
-                     single: bool = True) -> Union[
-    SessionElement, NoneElement, List[SessionElement]]: ...
+                     index: Optional[int] = 1) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...

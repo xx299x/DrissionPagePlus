@@ -2,7 +2,7 @@ requests
 lxml
 cssselect
 DownloadKit>=2.0.0
-websocket-client>=1.7.0
+websocket-client
 click
 tldextract
 psutil

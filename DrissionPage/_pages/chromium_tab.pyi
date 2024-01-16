@@ -25,8 +25,11 @@ from .._units.waiter import TabWaiter
 
 
 class ChromiumTab(ChromiumBase):
+    TABS: dict = ...
 
-    def __init__(self, page: ChromiumPage, tab_id: str = None):
+    def __new__(cls, page: ChromiumPage, tab_id: str): ...
+
+    def __init__(self, page: ChromiumPage, tab_id: str):
         self._page: ChromiumPage = ...
         self._browser: Browser = ...
         self._rect: Optional[TabRect] = ...
@@ -76,6 +79,7 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def __call__(self,
                  loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+                 index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
     @property
@@ -145,14 +149,16 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def ele(self,
             loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+            index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
     def eles(self,
              loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, SessionElement]]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) \
-            -> Union[SessionElement, NoneElement]: ...
+    def s_ele(self,
+              loc_or_ele: Union[Tuple[str, str], str] = None,
+              index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
@@ -191,7 +197,11 @@ class WebPageTab(SessionPage, ChromiumTab):
     @property
     def set(self) -> WebPageTabSetter: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
-                       timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
+    def _find_elements(self,
+                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       timeout: float = None,
+                       index: Optional[int] = 1,
+                       relative: bool = False,
+                       raise_err: bool = None) \
             -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement], List[
                 Union[ChromiumElement, ChromiumFrame]]]: ...

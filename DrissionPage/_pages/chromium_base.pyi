@@ -93,7 +93,9 @@ class ChromiumBase(BasePage):
 
     def _d_set_runtime_settings(self) -> None: ...
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
+    def __call__(self,
+                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
+                 index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     @property
@@ -177,19 +179,27 @@ class ChromiumBase(BasePage):
     def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
                     all_info: bool = False) -> Union[list, dict]: ...
 
-    def ele(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+    def ele(self,
+            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+            index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str],
+    def eles(self,
+             loc_or_str: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str] = None) \
-            -> Union[SessionElement, NoneElement]: ...
+    def s_ele(self,
+              loc_or_ele: Union[Tuple[str, str], str] = None,
+              index:int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
-    def _find_elements(self, loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
-                       timeout: float = None, single: bool = True, relative: bool = False, raise_err: bool = None) \
+    def _find_elements(self,
+                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+                       timeout: float = None,
+                       index: Optional[int] = 1,
+                       relative: bool = False,
+                       raise_err: bool = None) \
             -> Union[ChromiumElement, ChromiumFrame, NoneElement, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def refresh(self, ignore_cache: bool = False) -> None: ...
@@ -279,4 +289,4 @@ def get_mhtml(page: Union[ChromiumPage, ChromiumTab],
 
 def get_pdf(page: Union[ChromiumPage, ChromiumTab],
             path: Union[str, Path] = None,
-            name: str = None, kwargs: dict=None) -> bytes: ...
+            name: str = None, kwargs: dict = None) -> bytes: ...

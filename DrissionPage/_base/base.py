@@ -23,11 +23,11 @@ class BaseParser(object):
     def __call__(self, loc_or_str):
         return self.ele(loc_or_str)
 
-    def ele(self, loc_or_ele, timeout=None):
-        return self._ele(loc_or_ele, timeout, True, method='ele()')
+    def ele(self, loc_or_ele, index=1, timeout=None):
+        return self._ele(loc_or_ele, timeout, index=index, method='ele()')
 
     def eles(self, loc_or_str, timeout=None):
-        return self._ele(loc_or_str, timeout, False)
+        return self._ele(loc_or_str, timeout, index=None)
 
     # ----------------以下属性或方法待后代实现----------------
     @property
@@ -40,11 +40,11 @@ class BaseParser(object):
     def s_eles(self, loc_or_str):
         pass
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None, method=None):
+    def _ele(self, loc_or_ele, timeout=None, index=1, raise_err=None, method=None):
         pass
 
     @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=1, raise_err=None):
         pass
 
 
@@ -68,19 +68,28 @@ class BaseElement(BaseParser):
     def nexts(self):
         pass
 
-    def _ele(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None, method=None):
-        r = self._find_elements(loc_or_str, timeout=timeout, single=single, relative=relative, raise_err=raise_err)
+    def _ele(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None, method=None):
+        """调用获取元素的方法
+        :param loc_or_str: 定位符
+        :param timeout: 超时时间（秒）
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
+        :param relative: 是否相对定位
+        :param raise_err: 找不到时是否抛出异常
+        :param method: 调用的方法名
+        :return: 元素对象或它们组成的列表
+        """
+        r = self._find_elements(loc_or_str, timeout=timeout, index=index, relative=relative, raise_err=raise_err)
         if r or isinstance(r, list):
             return r
         if Settings.raise_when_ele_not_found or raise_err is True:
-            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_str})
+            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_str, 'index': index})
 
         r.method = method
-        r.args = {'loc_or_str': loc_or_str}
+        r.args = {'loc_or_str': loc_or_str, 'index': index}
         return r
 
     @abstractmethod
-    def _find_elements(self, loc_or_str, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
         pass
 
 
@@ -122,8 +131,8 @@ class DrissionElement(BaseElement):
 
     def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
-        :param level_or_loc: 第几级父元素，或定位符
-        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
+        :param level_or_loc: 第几级父元素，1开始，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果，1开始
         :return: 上级元素对象
         """
         if isinstance(level_or_loc, int):
@@ -153,24 +162,23 @@ class DrissionElement(BaseElement):
         if isinstance(filter_loc, int):
             index = filter_loc
             filter_loc = ''
-        nodes = self.children(filter_loc=filter_loc, timeout=timeout, ele_only=ele_only)
-        if not nodes:
-            if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc,
-                                                             'index': index, 'ele_only': ele_only})
-            else:
-                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc,
-                                                          'index': index, 'ele_only': ele_only})
+        if not filter_loc:
+            loc = '*' if ele_only else 'node()'
+        else:
+            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
+            if loc[0] == 'css selector':
+                raise ValueError('此css selector语法不受支持，请换成xpath。')
+            loc = loc[1].lstrip('./')
 
-        try:
-            return nodes[index - 1]
-        except IndexError:
-            if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc,
-                                                             'index': index, 'ele_only': ele_only})
-            else:
-                return NoneElement(self.page, 'child()', {'filter_loc': filter_loc,
-                                                          'index': index, 'ele_only': ele_only})
+        node = self._ele(f'xpath:./{loc}', timeout=timeout, index=index, relative=True, raise_err=False)
+        if node:
+            return node
+
+        if Settings.raise_when_ele_not_found:
+            raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index,
+                                                         'ele_only': ele_only})
+        else:
+            return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
 
     def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -180,17 +188,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
-        if isinstance(filter_loc, int):
-            index = filter_loc
-            filter_loc = ''
-        nodes = self._get_brothers(index, filter_loc, 'preceding', timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[-1]
-        if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'prev()', {'filter_loc': filter_loc,
-                                                        'index': index, 'ele_only': ele_only})
-        else:
-            return NoneElement(self.page, 'prev()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+        return self._get_relative('prev()', 'preceding', True, filter_loc, index, timeout, ele_only)
 
     def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -200,17 +198,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素
         """
-        if isinstance(filter_loc, int):
-            index = filter_loc
-            filter_loc = ''
-        nodes = self._get_brothers(index, filter_loc, 'following', timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[0]
-        if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc,
-                                                        'index': index, 'ele_only': ele_only})
-        else:
-            return NoneElement(self.page, 'next()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+        return self._get_relative('next()', 'following', True, filter_loc, index, timeout, ele_only)
 
     def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -220,17 +208,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        if isinstance(filter_loc, int):
-            index = filter_loc
-            filter_loc = ''
-        nodes = self._get_brothers(index, filter_loc, 'preceding', False, timeout=timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[-1]
-        if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc,
-                                                          'index': index, 'ele_only': ele_only})
-        else:
-            return NoneElement(self.page, 'before()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+        return self._get_relative('before()', 'preceding', False, filter_loc, index, timeout, ele_only)
 
     def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
         """返回后面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -240,17 +218,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        if isinstance(filter_loc, int):
-            index = filter_loc
-            filter_loc = ''
-        nodes = self._get_brothers(index, filter_loc, 'following', False, timeout, ele_only=ele_only)
-        if nodes:
-            return nodes[0]
-        if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'after()', {'filter_loc': filter_loc,
-                                                         'index': index, 'ele_only': ele_only})
-        else:
-            return NoneElement(self.page, 'after()', {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+        return self._get_relative('after()', 'following', False, filter_loc, index, timeout, ele_only)
 
     def children(self, filter_loc='', timeout=None, ele_only=True):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
@@ -268,7 +236,7 @@ class DrissionElement(BaseElement):
             loc = loc[1].lstrip('./')
 
         loc = f'xpath:./{loc}'
-        nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
+        nodes = self._ele(loc, timeout=timeout, index=None, relative=True)
         return [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
 
     def prevs(self, filter_loc='', timeout=None, ele_only=True):
@@ -278,7 +246,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding', timeout=timeout, ele_only=ele_only)
+        return self._get_relatives(filter_loc=filter_loc, direction='preceding', timeout=timeout, ele_only=ele_only)
 
     def nexts(self, filter_loc='', timeout=None, ele_only=True):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -287,7 +255,7 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following', timeout=timeout, ele_only=ele_only)
+        return self._get_relatives(filter_loc=filter_loc, direction='following', timeout=timeout, ele_only=ele_only)
 
     def befores(self, filter_loc='', timeout=None, ele_only=True):
         """返回后面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -296,8 +264,8 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='preceding',
-                                  brother=False, timeout=timeout, ele_only=ele_only)
+        return self._get_relatives(filter_loc=filter_loc, direction='preceding',
+                                   brother=False, timeout=timeout, ele_only=ele_only)
 
     def afters(self, filter_loc='', timeout=None, ele_only=True):
         """返回前面全部兄弟元素或节点组成的列表，可用查询语法筛选
@@ -306,11 +274,31 @@ class DrissionElement(BaseElement):
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
-        return self._get_brothers(filter_loc=filter_loc, direction='following',
-                                  brother=False, timeout=timeout, ele_only=ele_only)
+        return self._get_relatives(filter_loc=filter_loc, direction='following',
+                                   brother=False, timeout=timeout, ele_only=ele_only)
 
-    def _get_brothers(self, index=None, filter_loc='', direction='following',
-                      brother=True, timeout=.5, ele_only=True):
+    def _get_relative(self, func, direction, brother, filter_loc='', index=1, timeout=None, ele_only=True):
+        """获取一个亲戚元素或节点，可用查询语法筛选，可指定返回筛选结果的第几个
+        :param func: 方法名称
+        :param direction: 方向，'following' 或 'preceding'
+        :param filter_loc: 用于筛选的查询语法
+        :param index: 前面第几个查询结果，1开始
+        :param timeout: 查找节点的超时时间（秒）
+        :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
+        :return: 本元素前面的某个元素或节点
+        """
+        if isinstance(filter_loc, int):
+            index = filter_loc
+            filter_loc = ''
+        node = self._get_relatives(index, filter_loc, direction, brother, timeout, ele_only)
+        if node:
+            return node
+        if Settings.raise_when_ele_not_found:
+            raise ElementNotFoundError(None, func, {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+        else:
+            return NoneElement(self.page, func, {'filter_loc': filter_loc, 'index': index, 'ele_only': ele_only})
+
+    def _get_relatives(self, index=None, filter_loc='', direction='following', brother=True, timeout=.5, ele_only=True):
         """按要求返回兄弟元素或节点组成的列表
         :param index: 获取第几个，该参数不为None时只获取该编号的元素
         :param filter_loc: 用于筛选的查询语法
@@ -319,9 +307,6 @@ class DrissionElement(BaseElement):
         :param timeout: 查找等待时间（秒）
         :return: 元素对象或字符串
         """
-        if index is not None and index < 1:
-            raise ValueError('index必须大于等于1。')
-
         brother = '-sibling' if brother else ''
 
         if not filter_loc:
@@ -335,17 +320,12 @@ class DrissionElement(BaseElement):
 
         loc = f'xpath:./{direction}{brother}::{loc}'
 
-        nodes = self._ele(loc, timeout=timeout, single=False, relative=True)
-        nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
-
-        if nodes and index is not None:
-            index = index - 1 if direction == 'following' else -index
-            try:
-                return [nodes[index]]
-            except IndexError:
-                return []
-        else:
-            return nodes
+        if index is not None:
+            index = index if direction == 'following' else -index
+        nodes = self._ele(loc, timeout=timeout, index=index, relative=True, raise_err=False)
+        if isinstance(nodes, list):
+            nodes = [e for e in nodes if not (isinstance(e, str) and sub('[ \n\t\r]', '', e) == '')]
+        return nodes
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -442,21 +422,29 @@ class BasePage(BaseParser):
     def get(self, url, show_errmsg=False, retry=None, interval=None):
         pass
 
-    def _ele(self, loc_or_ele, timeout=None, single=True, raise_err=None, method=None):
+    def _ele(self, loc_or_ele, timeout=None, index=1, raise_err=None, method=None):
+        """调用获取元素的方法
+        :param loc_or_ele: 定位符
+        :param timeout: 超时时间（秒）
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
+        :param raise_err: 找不到时是否抛出异常
+        :param method: 调用的方法名
+        :return: 元素对象或它们组成的列表
+        """
         if not loc_or_ele:
             raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
 
-        r = self._find_elements(loc_or_ele, timeout=timeout, single=single, raise_err=raise_err)
+        r = self._find_elements(loc_or_ele, timeout=timeout, index=index, raise_err=raise_err)
 
         if r or isinstance(r, list):
             return r
         if Settings.raise_when_ele_not_found or raise_err is True:
-            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele})
+            raise ElementNotFoundError(None, method, {'loc_or_str': loc_or_ele, 'index': index})
 
         r.method = method
-        r.args = {'loc_or_str': loc_or_ele}
+        r.args = {'loc_or_str': loc_or_ele, 'index': index}
         return r
 
     @abstractmethod
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=1, raise_err=None):
         pass

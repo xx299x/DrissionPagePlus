@@ -22,6 +22,26 @@ from ..errors import BrowserConnectError
 
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
+    PAGES = {}
+
+    def __new__(cls, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
+        """
+        :param addr_or_opts: 浏览器地址:端口、ChromiumOptions对象或端口数字（int）
+        :param tab_id: 要控制的标签页id，不指定默认为激活的
+        :param timeout: 超时时间（秒）
+        """
+        addr_or_opts = addr_or_opts or addr_driver_opts
+        opt = handle_options(addr_or_opts)
+        is_exist, browser_id = run_browser(opt)
+        if browser_id in cls.PAGES:
+            return cls.PAGES[browser_id]
+        r = object.__new__(cls)
+        r._chromium_options = opt
+        r._is_exist = is_exist
+        r._browser_id = browser_id
+        r.address = opt.address
+        cls.PAGES[browser_id] = r
+        return r
 
     def __init__(self, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
         """
@@ -29,58 +49,20 @@ class ChromiumPage(ChromiumBase):
         :param tab_id: 要控制的标签页id，不指定默认为激活的
         :param timeout: 超时时间（秒）
         """
-        addr_or_opts = addr_or_opts or addr_driver_opts
+        if hasattr(self, '_created'):
+            return
+        self._created = True
+
         self._page = self
-        address = self._handle_options(addr_or_opts)
         self._run_browser()
-        super().__init__(address, tab_id)
+        super().__init__(self.address, tab_id)
         self.set.timeouts(base=timeout)
         self._page_init()
 
-    def _handle_options(self, addr_or_opts):
-        """设置浏览器启动属性
-        :param addr_or_opts: 'ip:port'、ChromiumOptions、Driver
-        :return: 返回浏览器地址
-        """
-        if not addr_or_opts:
-            self._chromium_options = ChromiumOptions(addr_or_opts)
-
-        elif isinstance(addr_or_opts, ChromiumOptions):
-            if addr_or_opts.is_auto_port:
-                port, path = PortFinder(addr_or_opts.tmp_path).get_port()
-                addr_or_opts.set_address(f'127.0.0.1:{port}')
-                addr_or_opts.set_user_data_path(path)
-                addr_or_opts.auto_port()
-            self._chromium_options = addr_or_opts
-
-        elif isinstance(addr_or_opts, str):
-            self._chromium_options = ChromiumOptions()
-            self._chromium_options.set_address(addr_or_opts)
-
-        elif isinstance(addr_or_opts, int):
-            self._chromium_options = ChromiumOptions()
-            self._chromium_options.set_local_port(addr_or_opts)
-
-        else:
-            raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
-
-        return self._chromium_options.address
-
     def _run_browser(self):
         """连接浏览器"""
-        is_exist = connect_browser(self._chromium_options)
-        try:
-            ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
-            if not ws:
-                raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
-            ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-        except KeyError:
-            raise BrowserConnectError('浏览器版本太旧，请升级。')
-        except:
-            raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
-
-        self._browser = Browser(self._chromium_options.address, ws, self)
-        if (is_exist and self._chromium_options._headless is False and
+        self._browser = Browser(self._chromium_options.address, self._browser_id, self)
+        if (self._is_exist and self._chromium_options._headless is False and
                 'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
             self._browser.quit(3)
             connect_browser(self._chromium_options)
@@ -156,17 +138,17 @@ class ChromiumPage(ChromiumBase):
         :param kwargs: pdf生成参数
         :return: as_pdf为True时返回bytes，否则返回文件文本
         """
-        return get_pdf(self, path, name, kwargs)if as_pdf else get_mhtml(self, path, name)
+        return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
 
     def get_tab(self, id_or_num=None):
         """获取一个标签页对象
-        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号不是视觉排列顺序，而是激活顺序
+        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
         :return: 标签页对象
         """
         if isinstance(id_or_num, str):
             return ChromiumTab(self, id_or_num)
         elif isinstance(id_or_num, int):
-            return ChromiumTab(self, self.tabs[id_or_num])
+            return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num > 0 else id_or_num])
         elif id_or_num is None:
             return ChromiumTab(self, self.tab_id)
         elif isinstance(id_or_num, ChromiumTab):
@@ -263,6 +245,10 @@ class ChromiumPage(ChromiumBase):
         """
         self.browser.quit(timeout, force)
 
+    def _on_disconnect(self):
+        """浏览器退出时执行"""
+        ChromiumPage.PAGES.pop(self._browser_id, None)
+
     def __repr__(self):
         return f'<ChromiumPage browser_id={self.browser.id} tab_id={self.tab_id}>'
 
@@ -273,6 +259,51 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         self.close_tabs(tabs_or_ids, True)
+
+
+def handle_options(addr_or_opts):
+    """设置浏览器启动属性
+    :param addr_or_opts: 'ip:port'、ChromiumOptions、Driver
+    :return: 返回ChromiumOptions对象
+    """
+    if not addr_or_opts:
+        _chromium_options = ChromiumOptions(addr_or_opts)
+
+    elif isinstance(addr_or_opts, ChromiumOptions):
+        if addr_or_opts.is_auto_port:
+            port, path = PortFinder(addr_or_opts.tmp_path).get_port()
+            addr_or_opts.set_address(f'127.0.0.1:{port}')
+            addr_or_opts.set_user_data_path(path)
+            addr_or_opts.auto_port()
+        _chromium_options = addr_or_opts
+
+    elif isinstance(addr_or_opts, str):
+        _chromium_options = ChromiumOptions()
+        _chromium_options.set_address(addr_or_opts)
+
+    elif isinstance(addr_or_opts, int):
+        _chromium_options = ChromiumOptions()
+        _chromium_options.set_local_port(addr_or_opts)
+
+    else:
+        raise TypeError('只能接收ip:port格式或ChromiumOptions类型参数。')
+
+    return _chromium_options
+
+
+def run_browser(chromium_options):
+    """连接浏览器"""
+    is_exist = connect_browser(chromium_options)
+    try:
+        ws = get(f'http://{chromium_options.address}/json/version', headers={'Connection': 'close'})
+        if not ws:
+            raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
+        browser_id = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
+    except KeyError:
+        raise BrowserConnectError('浏览器版本太旧，请升级。')
+    except:
+        raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
+    return is_exist, browser_id
 
 
 def get_rename(original, rename):

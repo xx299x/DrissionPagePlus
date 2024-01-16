@@ -17,6 +17,16 @@ from .._units.setter import WebPageSetter
 class WebPage(SessionPage, ChromiumPage, BasePage):
     """整合浏览器和request的页面类"""
 
+    def __new__(cls, mode='d', timeout=None, chromium_options=None, session_or_options=None, driver_or_options=None):
+        """初始化函数
+        :param mode: 'd' 或 's'，即driver模式和session模式
+        :param timeout: 超时时间（秒），d模式时为寻找元素时间，s模式时为连接时间，默认10秒
+        :param chromium_options: Driver对象，只使用s模式时应传入False
+        :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
+        """
+        opts = chromium_options or driver_or_options
+        return super().__new__(cls, opts)
+
     def __init__(self, mode='d', timeout=None, chromium_options=None, session_or_options=None, driver_or_options=None):
         """初始化函数
         :param mode: 'd' 或 's'，即driver模式和session模式
@@ -24,7 +34,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param chromium_options: Driver对象，只使用s模式时应传入False
         :param session_or_options: Session对象或SessionOptions对象，只使用d模式时应传入False
         """
-        chromium_options = chromium_options or driver_or_options
+        if hasattr(self, '_created'):
+            return
+
         self._mode = mode.lower()
         if self._mode not in ('s', 'd'):
             raise ValueError('mode参数只能是s或d。')
@@ -38,17 +50,18 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         super(SessionPage, self).__init__(addr_or_opts=chromium_options, timeout=timeout)
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
         :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: 子元素对象
         """
         if self._mode == 'd':
-            return super(SessionPage, self).__call__(loc_or_str, timeout)
+            return super(SessionPage, self).__call__(loc_or_str, index=index, timeout=timeout)
         elif self._mode == 's':
-            return super().__call__(loc_or_str)
+            return super().__call__(loc_or_str, index=index)
 
     @property
     def set(self):
@@ -182,16 +195,17 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             return self.response
         return super().post(url, show_errmsg, retry, interval, **kwargs)
 
-    def ele(self, loc_or_ele, timeout=None):
+    def ele(self, loc_or_ele, index=1, timeout=None):
         """返回第一个符合条件的元素、属性或节点文本
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找元素超时时间（秒），默认与页面等待时间一致
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super().ele(loc_or_ele)
+            return super().ele(loc_or_ele, index=index)
         elif self._mode == 'd':
-            return super(SessionPage, self).ele(loc_or_ele, timeout=timeout)
+            return super(SessionPage, self).ele(loc_or_ele, index=index, timeout=timeout)
 
     def eles(self, loc_or_str, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本
@@ -204,15 +218,16 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         elif self._mode == 'd':
             return super(SessionPage, self).eles(loc_or_str, timeout=timeout)
 
-    def s_ele(self, loc_or_ele=None):
+    def s_ele(self, loc_or_ele=None, index=1):
         """查找第一个符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
         :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         if self._mode == 's':
-            return super().s_ele(loc_or_ele)
+            return super().s_ele(loc_or_ele, index=index)
         elif self._mode == 'd':
-            return super(SessionPage, self).s_ele(loc_or_ele)
+            return super(SessionPage, self).s_ele(loc_or_ele, index=index)
 
     def s_eles(self, loc_or_str):
         """查找所有符合条件的元素以SessionElement形式返回，d模式处理复杂页面时效率很高
@@ -360,20 +375,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             if self._response is not None:
                 self._response.close()
 
-    def _find_elements(self, loc_or_ele, timeout=None, single=True, relative=False, raise_err=None):
+    def _find_elements(self, loc_or_ele, timeout=None, index=1, relative=False, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 查找元素超时时间，d模式专用
-        :param single: True则返回第一个，False则返回全部
+        :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: 元素对象或属性、文本节点文本
         """
         if self._mode == 's':
-            return super()._find_elements(loc_or_ele, single=single)
+            return super()._find_elements(loc_or_ele, index=index)
         elif self._mode == 'd':
-            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, single=single,
-                                                           relative=relative)
+            return super(SessionPage, self)._find_elements(loc_or_ele, timeout=timeout, index=index, relative=relative)
 
     def quit(self, timeout=5, force=True):
         """关闭浏览器和Session
