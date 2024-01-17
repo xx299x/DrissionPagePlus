@@ -19,7 +19,7 @@ from .._base.base import DrissionElement, BaseElement
 from .._functions.keys import input_text_or_keys
 from .._functions.locator import get_loc
 from .._functions.settings import Settings
-from .._functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll
+from .._functions.web import make_absolute_link, get_ele_txt, format_html, is_js_func, offset_scroll, get_blob
 from .._units.clicker import Clicker
 from .._units.rect import ElementRect
 from .._units.scroller import ElementScroller
@@ -495,26 +495,9 @@ class ChromiumElement(DrissionElement):
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if is_blob:
-                js = """
-                           function fetchData(url) {
-                          return new Promise((resolve, reject) => {
-                            var xhr = new XMLHttpRequest();
-                            xhr.responseType = 'blob';
-                            xhr.onload = function() {
-                              var reader  = new FileReader();
-                              reader.onloadend = function() {resolve(reader.result);}
-                              reader.readAsDataURL(xhr.response);
-                            };
-                            xhr.open('GET', url, true);
-                            xhr.send();
-                          });
-                        }
-                    """
-                try:
-                    result = self.page.run_js(js, src)
+                result = get_blob(self.page, src, base64_to_bytes)
+                if result:
                     break
-                except:
-                    continue
 
             else:
                 src = self.prop('currentSrc')
@@ -534,18 +517,13 @@ class ChromiumElement(DrissionElement):
             return None
 
         if is_blob:
-            if base64_to_bytes:
-                from base64 import b64decode
-                return b64decode(result.split(',', 1)[-1])
-            else:
-                return result
+            return result
 
+        if result['base64Encoded'] and base64_to_bytes:
+            from base64 import b64decode
+            return b64decode(result['content'])
         else:
-            if result['base64Encoded'] and base64_to_bytes:
-                from base64 import b64decode
-                return b64decode(result['content'])
-            else:
-                return result['content']
+            return result['content']
 
     def save(self, path=None, name=None, timeout=None):
         """保存图片或其它有src属性的元素的资源

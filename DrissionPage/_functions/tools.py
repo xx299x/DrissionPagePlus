@@ -215,6 +215,8 @@ def raise_error(result, ignore=None):
         r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
     elif error == 'Given expression does not evaluate to a function':
         r = JavaScriptError(f'传入的js无法解析成函数：\n{result["args"]["functionDeclaration"]}')
+    elif error.endswith("' wasn't found"):
+        r = RuntimeError(f'你的浏览器可能太旧。\nmethod：{result["method"]}\nargs：{result["args"]}')
     elif result['type'] in ('call_method_error', 'timeout'):
         from DrissionPage import __version__
         from time import process_time

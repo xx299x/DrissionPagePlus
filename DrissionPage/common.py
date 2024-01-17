@@ -10,6 +10,7 @@ from ._functions.by import By
 from ._functions.keys import Keys
 from ._functions.settings import Settings
 from ._functions.tools import wait_until, configs_to_here
+from ._functions.web import get_blob
 from ._units.actions import Actions
 
-__all__ = ['make_session_ele', 'Actions', 'Keys', 'By', 'Settings', 'wait_until', 'configs_to_here']
+__all__ = ['make_session_ele', 'Actions', 'Keys', 'By', 'Settings', 'wait_until', 'configs_to_here', 'get_blob']

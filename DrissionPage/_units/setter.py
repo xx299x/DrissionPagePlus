@@ -6,6 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
+from time import sleep
 
 from requests.structures import CaseInsensitiveDict
 
@@ -608,7 +609,11 @@ class WindowSetter(object):
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
-        return self._page.run_cdp('Browser.getWindowForTarget')
+        for _ in range(50):
+            try:
+                return self._page.run_cdp('Browser.getWindowForTarget')
+            except:
+                sleep(.1)
 
     def _perform(self, bounds):
         """执行改变窗口大小操作

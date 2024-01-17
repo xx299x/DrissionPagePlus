@@ -328,3 +328,30 @@ def is_cookie_in_driver(page, cookie):
             if cookie['name'] == c['name'] and cookie['value'] == c['value']:
                 return True
     return False
+
+
+def get_blob(page, url, base64_to_bytes=True):
+    if not url.startswith('blob'):
+        return None
+    js = """
+       function fetchData(url) {
+      return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+          var reader  = new FileReader();
+          reader.onloadend = function(){resolve(reader.result);}
+          reader.readAsDataURL(xhr.response);
+        };
+        xhr.open('GET', url, true);
+        xhr.send();
+      });
+    }
+"""
+    try:
+        result = page.run_js(js, url)
+    except:
+        return None
+    if base64_to_bytes:
+        from base64 import b64decode
+        return b64decode(result.split(',', 1)[-1])

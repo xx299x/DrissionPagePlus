@@ -8,6 +8,7 @@
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
 from pprint import pprint
+from time import sleep
 
 
 class OptionsManager(object):
@@ -28,8 +29,9 @@ class OptionsManager(object):
             self.ini_path = str(path)
 
         if not Path(self.ini_path).exists():
-            input('\nini文件不存在。\n如果是打包使用，请查看打包注意事项\nhttps://g1879.gitee.io/drission'
-                  'pagedocs/advance/packaging/')
+            print('\nini文件不存在。\n如果是打包使用，请查看打包注意事项\n'
+                  'https://g1879.gitee.io/drissionpagedocs/advance/packaging/')
+            sleep(10)
         self._conf = RawConfigParser()
         self._conf.read(self.ini_path, encoding='utf-8')
 
