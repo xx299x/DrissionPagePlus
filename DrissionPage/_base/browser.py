@@ -49,7 +49,7 @@ class Browser(object):
         self.id = browser_id
         self._frames = {}
         self._drivers = {}
-        # self._drivers = {t: Driver(t, 'page', address) for t in self.tabs}
+        self._all_drivers = {}
         self._connected = False
 
         self._process_id = None
@@ -64,20 +64,24 @@ class Browser(object):
         self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
 
     def _get_driver(self, tab_id, owner=None):
-        """获取对应tab id的Driver
+        """新建并返回指定tab id的Driver
         :param tab_id: 标签页id
         :param owner: 使用该驱动的对象
         :return: Driver对象
         """
-        return self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address, owner))
+        d = self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address, owner))
+        self._all_drivers.setdefault(tab_id, set()).add(d)
+        return d
 
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
         if (kwargs['targetInfo']['type'] in ('page', 'webview')
                 and not kwargs['targetInfo']['url'].startswith('devtools://')):
             try:
-                self._drivers[kwargs['targetInfo']['targetId']] = Driver(kwargs['targetInfo']['targetId'],
-                                                                         'page', self.address)
+                tab_id = kwargs['targetInfo']['targetId']
+                d = Driver(tab_id, 'page', self.address)
+                self._drivers[tab_id] = d
+                self._all_drivers.setdefault(tab_id, set()).add(d)
             except WebSocketBadStatusException:
                 pass
 
@@ -88,7 +92,10 @@ class Browser(object):
             self._dl_mgr.clear_tab_info(tab_id)
         for key in [k for k, i in self._frames.items() if i == tab_id]:
             self._frames.pop(key, None)
+        for d in self._all_drivers.get(tab_id, tuple()):
+            d.stop()
         self._drivers.pop(tab_id, None)
+        self._all_drivers.pop(tab_id, None)
 
     def connect_to_page(self):
         """执行与page相关的逻辑"""
@@ -153,7 +160,16 @@ class Browser(object):
         :param tab_id: 标签页id
         :return: None
         """
-        self.run_cdp('Target.closeTarget', targetId=tab_id, _ignore=PageDisconnectedError)
+        self._onTargetDestroyed(targetId=tab_id)
+        self.driver.run('Target.closeTarget', targetId=tab_id)
+
+    def stop_driver(self, driver):
+        """停止一个Driver
+        :param driver: Driver对象
+        :return: None
+        """
+        driver.stop()
+        self._all_drivers.get(driver.id, set()).discard(driver)
 
     def activate_tab(self, tab_id):
         """使标签页变为活动状态
@@ -175,10 +191,15 @@ class Browser(object):
         :param force: 是否立刻强制终止进程
         :return: None
         """
+        for tab in self._all_drivers.values():
+            for driver in tab:
+                driver.stop()
         try:
             self.run_cdp('Browser.close')
         except PageDisconnectedError:
+            self.driver.stop()
             return
+        self.driver.stop()
 
         if force:
             ip, port = self.address.split(':')

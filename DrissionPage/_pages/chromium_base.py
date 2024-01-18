@@ -827,7 +827,16 @@ class ChromiumBase(BasePage):
     def disconnect(self):
         """断开与页面的连接，不关闭页面"""
         if self._driver:
-            self.driver.stop()
+            self.browser.stop_driver(self._driver)
+
+    def reconnect(self, wait=0):
+        """断开与页面原来的页面，重新建立连接
+        :param wait: 断开后等待若干秒再连接
+        :return: None
+        """
+        self.disconnect()
+        sleep(wait)
+        self._driver = self.browser._get_driver(self._target_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)

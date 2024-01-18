@@ -203,7 +203,7 @@ class ChromiumPage(ChromiumBase):
 
     def close(self):
         """关闭Page管理的标签页"""
-        self.browser.close_tab(self.tab_id)
+        self.close_tabs(self.tab_id)
 
     def close_tabs(self, tabs_or_ids=None, others=False):
         """关闭传入的标签页，默认关闭当前页。可传入多个

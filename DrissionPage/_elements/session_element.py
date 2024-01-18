@@ -27,6 +27,7 @@ class SessionElement(DrissionElement):
         """
         super().__init__(page)
         self._inner_ele = ele
+        self._type = 'SessionElement'
 
     @property
     def inner_ele(self):
