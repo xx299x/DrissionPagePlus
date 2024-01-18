@@ -834,9 +834,10 @@ class ChromiumBase(BasePage):
         :param wait: 断开后等待若干秒再连接
         :return: None
         """
+        t_id = self._target_id
         self.disconnect()
         sleep(wait)
-        self._driver = self.browser._get_driver(self._target_id, self)
+        self._driver = self.browser._get_driver(t_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
