@@ -53,6 +53,7 @@ class BaseElement(BaseParser):
 
     def __init__(self, page=None):
         self.page = page
+        self._type = 'BaseElement'
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -362,6 +363,7 @@ class BasePage(BaseParser):
         self._download_path = None
         self._none_ele_return_value = False
         self._none_ele_value = None
+        self._type = 'BasePage'
 
     @property
     def title(self):

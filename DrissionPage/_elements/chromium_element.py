@@ -53,6 +53,7 @@ class ChromiumElement(DrissionElement):
         self._clicker = None
         self._tag = None
         self._wait = None
+        self._type = 'ChromiumElement'
 
         if node_id and obj_id and backend_id:
             self._node_id = node_id
@@ -783,6 +784,7 @@ class ShadowRoot(BaseElement):
             self._node_id = self._get_node_id(obj_id)
             self._backend_id = self._get_backend_id(self._node_id)
         self._states = None
+        self._type = 'ShadowRoot'
 
     def __repr__(self):
         return f'<ShadowRoot in {self.parent_ele}>'

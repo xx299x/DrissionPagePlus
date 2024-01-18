@@ -14,6 +14,7 @@ from .._elements.none_element import NoneElement
 
 
 class BaseParser(object):
+    _type: str
 
     def __call__(self, loc_or_str: Union[Tuple[str, str], str], index: int = 1): ...
 

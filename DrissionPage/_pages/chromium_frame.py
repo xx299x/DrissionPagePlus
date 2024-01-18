@@ -27,15 +27,14 @@ class ChromiumFrame(ChromiumBase):
         :param ele: frame所在元素
         :param info: frame所在元素信息
         """
-        page_type = str(type(page))
-        if 'ChromiumPage' in page_type or 'WebPage' in page_type:
+        if page._type in ('ChromiumPage', 'WebPage'):
             self._page = self._target_page = self.tab = page
             self._browser = page.browser
         else:  # Tab、Frame
             self._page = page.page
             self._browser = self._page.browser
             self._target_page = page
-            self.tab = page.tab if 'ChromiumFrame' in page_type else page
+            self.tab = page.tab if page._type == 'ChromiumFrame' else page
 
         self.address = page.address
         self._tab_id = page.tab_id
@@ -58,6 +57,7 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
         self._rect = None
+        self._type = 'ChromiumFrame'
         end_time = perf_counter() + 2
         while perf_counter() < end_time:
             if self.url not in (None, 'about:blank'):

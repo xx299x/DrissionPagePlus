@@ -16,7 +16,7 @@ from urllib.parse import quote
 from DataRecorder.tools import make_valid_name
 
 from .._base.base import BasePage
-from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_eles
+from .._elements.chromium_element import run_js, make_chromium_eles
 from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
@@ -62,6 +62,7 @@ class ChromiumBase(BasePage):
         self._download_path = None
         self._load_end_time = 0
         self._init_jss = []
+        self._type = 'ChromiumBase'
         if not hasattr(self, '_listener'):
             self._listener = None
 
@@ -541,7 +542,7 @@ class ChromiumBase(BasePage):
         """
         if isinstance(loc_or_ele, (str, tuple)):
             loc = get_loc(loc_or_ele)[1]
-        elif isinstance(loc_or_ele, ChromiumElement) or str(type(loc_or_ele)).endswith(".ChromiumFrame'>"):
+        elif loc_or_ele._type in ('ChromiumElement', 'ChromiumFrame'):
             return loc_or_ele
         else:
             raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
@@ -680,13 +681,13 @@ class ChromiumBase(BasePage):
             else:
                 xpath = loc_ind_ele
             ele = self._ele(xpath, timeout=timeout)
-            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+            if ele and ele._type != 'ChromiumFrame':
                 raise TypeError('该定位符不是指向frame元素。')
             r = ele
 
         elif isinstance(loc_ind_ele, tuple):
             ele = self._ele(loc_ind_ele, timeout=timeout)
-            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+            if ele and ele._type != 'ChromiumFrame':
                 raise TypeError('该定位符不是指向frame元素。')
             r = ele
 
@@ -698,7 +699,7 @@ class ChromiumBase(BasePage):
             xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
             r = self._ele(xpath, timeout=timeout)
 
-        elif str(type(loc_ind_ele)).endswith(".ChromiumFrame'>"):
+        elif loc_ind_ele._type == 'ChromiumFrame':
             r = loc_ind_ele
 
         else:
@@ -717,7 +718,7 @@ class ChromiumBase(BasePage):
         """
         loc = loc or 'xpath://*[name()="iframe" or name()="frame"]'
         frames = self._ele(loc, timeout=timeout, index=None, raise_err=False)
-        return [i for i in frames if str(type(i)).endswith(".ChromiumFrame'>")]
+        return [i for i in frames if i._type == 'ChromiumFrame']
 
     def get_session_storage(self, item=None):
         """获取sessionStorage信息，不设置item则获取全部

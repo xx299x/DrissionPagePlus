@@ -56,6 +56,7 @@ class ChromiumPage(ChromiumBase):
         self._page = self
         self._run_browser()
         super().__init__(self.address, tab_id)
+        self._type = 'ChromiumPage'
         self.set.timeouts(base=timeout)
         self._page_init()
 

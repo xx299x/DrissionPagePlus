@@ -48,6 +48,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             chromium_options = ChromiumOptions(read_file=chromium_options)
             chromium_options.set_timeouts(base=self._timeout).set_paths(download_path=self.download_path)
         super(SessionPage, self).__init__(addr_or_opts=chromium_options, timeout=timeout)
+        self._type = 'WebPage'
         self.change_mode(self._mode, go=False, copy_cookies=False)
 
     def __call__(self, loc_or_str, index=1, timeout=None):

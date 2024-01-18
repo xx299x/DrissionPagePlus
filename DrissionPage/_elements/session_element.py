@@ -305,9 +305,13 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         raise ValueError("定位符必须为str或长度为2的tuple。")
 
     # ---------------根据传入对象类型获取页面对象和lxml元素对象---------------
-    the_type = str(type(html_or_ele))
+    # 直接传入html文本
+    if isinstance(html_or_ele, str):
+        page = None
+        html_or_ele = fromstring(html_or_ele)
+
     # SessionElement
-    if the_type.endswith(".SessionElement'>"):
+    elif html_or_ele._type == 'SessionElement':
         page = html_or_ele.page
 
         loc_str = loc[1]
@@ -328,7 +332,7 @@ def make_session_ele(html_or_ele, loc=None, index=1):
 
         loc = loc[0], loc_str
 
-    elif the_type.endswith(".ChromiumElement'>"):
+    elif html_or_ele._type == 'ChromiumElement':
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'
@@ -352,11 +356,6 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         if html.startswith('<?xml '):
             html = sub(r'^<\?xml.*?>', '', html)
         html_or_ele = fromstring(html)
-
-    # 直接传入html文本
-    elif isinstance(html_or_ele, str):
-        page = None
-        html_or_ele = fromstring(html_or_ele)
 
     # ShadowRoot
     elif isinstance(html_or_ele, BaseElement):

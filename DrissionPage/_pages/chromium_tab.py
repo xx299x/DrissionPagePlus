@@ -45,6 +45,7 @@ class ChromiumTab(ChromiumBase):
         self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
         self._rect = None
+        self._type = 'ChromiumTab'
 
     def _d_set_runtime_settings(self):
         """重写设置浏览器运行参数方法"""
@@ -106,6 +107,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         super().__init__(session_or_options=SessionOptions(read_file=False).from_session(copy(page.session),
                                                                                          page._headers))
         super(SessionPage, self).__init__(page=page, tab_id=tab_id)
+        self._type = 'WebPageTab'
 
     def __call__(self, loc_or_str, index=1, timeout=None):
         """在内部查找元素
