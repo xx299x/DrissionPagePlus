@@ -332,7 +332,7 @@ def is_cookie_in_driver(page, cookie):
 
 def get_blob(page, url, base64_to_bytes=True):
     if not url.startswith('blob'):
-        return None
+        raise TypeError('该链接非blob类型。')
     js = """
        function fetchData(url) {
       return new Promise((resolve, reject) => {
@@ -351,7 +351,7 @@ def get_blob(page, url, base64_to_bytes=True):
     try:
         result = page.run_js(js, url)
     except:
-        return None
+        raise RuntimeError('无法获取该资源。')
     if base64_to_bytes:
         from base64 import b64decode
         return b64decode(result.split(',', 1)[-1])

@@ -517,10 +517,10 @@ class ChromiumElement(DrissionElement):
         if not result:
             return None
 
-        if is_blob:
+        elif is_blob:
             return result
 
-        if result['base64Encoded'] and base64_to_bytes:
+        elif result['base64Encoded'] and base64_to_bytes:
             from base64 import b64decode
             return b64decode(result['content'])
         else:
