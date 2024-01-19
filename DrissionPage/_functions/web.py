@@ -330,7 +330,13 @@ def is_cookie_in_driver(page, cookie):
     return False
 
 
-def get_blob(page, url, base64_to_bytes=True):
+def get_blob(page, url, as_bytes=True):
+    """获取知道blob资源
+    :param page: 资源所在页面对象
+    :param url: 资源url
+    :param as_bytes: 是否以字节形式返回
+    :return: 资源内容
+    """
     if not url.startswith('blob'):
         raise TypeError('该链接非blob类型。')
     js = """
@@ -352,6 +358,6 @@ def get_blob(page, url, base64_to_bytes=True):
         result = page.run_js(js, url)
     except:
         raise RuntimeError('无法获取该资源。')
-    if base64_to_bytes:
+    if as_bytes:
         from base64 import b64decode
         return b64decode(result.split(',', 1)[-1])

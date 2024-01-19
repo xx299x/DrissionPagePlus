@@ -122,40 +122,21 @@ def get_chrome_hwnds_from_pid(pid, title):
     return hwnds
 
 
-def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
-    """等待返回值不为False或空，直到超时
-    :param page: DrissionPage对象
-    :param condition: 等待条件，返回值不为False则停止等待
+def wait_until(function, kwargs=None, timeout=10):
+    """等待传入的方法返回值不为假
+    :param function: 要执行的方法
+    :param kwargs: 方法参数
     :param timeout: 超时时间（秒）
-    :param poll: 轮询间隔
-    :param raise_err: 是否抛出异常
-    :return: DP Element or bool
+    :return: 执行结果，超时抛出TimeoutError
     """
+    if kwargs is None:
+        kwargs = {}
     end_time = perf_counter() + timeout
-    if isinstance(condition, str) or isinstance(condition, tuple):
-        if not callable(getattr(page, 's_ele', None)):
-            raise AttributeError('page对象缺少s_ele方法')
-        condition_method = lambda page: page.s_ele(condition)
-    elif callable(condition):
-        condition_method = condition
-    else:
-        raise ValueError('condition必须是函数或者字符串或者元组')
     while perf_counter() < end_time:
-        try:
-            value = condition_method(page)
-            if value:
-                return value
-        except Exception:
-            pass
-
-        sleep(poll)
-        if perf_counter() > end_time:
-            break
-
-    if raise_err:
-        raise TimeoutError(f'等待超时（等待{timeout}秒）。')
-    else:
-        return False
+        value = function(**kwargs)
+        if value:
+            return value
+    raise TimeoutError
 
 
 def stop_process_on_port(port):

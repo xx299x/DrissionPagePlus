@@ -448,7 +448,6 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         self._browser_path = str(path)
-        self._auto_port = False
         return self
 
     def set_download_path(self, path):
