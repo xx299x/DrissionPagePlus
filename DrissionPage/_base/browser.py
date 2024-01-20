@@ -53,11 +53,14 @@ class Browser(object):
         self._connected = False
 
         self._process_id = None
-        r = self.run_cdp('SystemInfo.getProcessInfo')
-        for i in r.get('processInfo', []):
-            if i['type'] == 'browser':
-                self._process_id = i['id']
-                break
+        try:
+            r = self.run_cdp('SystemInfo.getProcessInfo')
+            for i in r.get('processInfo', []):
+                if i['type'] == 'browser':
+                    self._process_id = i['id']
+                    break
+        except:
+            pass
 
         self.run_cdp('Target.setDiscoverTargets', discover=True)
         self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)
@@ -69,13 +72,15 @@ class Browser(object):
         :param owner: 使用该驱动的对象
         :return: Driver对象
         """
-        d = self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address, owner))
+        d = self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address))
+        d.owner = owner
         self._all_drivers.setdefault(tab_id, set()).add(d)
         return d
 
     def _onTargetCreated(self, **kwargs):
         """标签页创建时执行"""
         if (kwargs['targetInfo']['type'] in ('page', 'webview')
+                and kwargs['targetInfo']['targetId'] not in self._all_drivers
                 and not kwargs['targetInfo']['url'].startswith('devtools://')):
             try:
                 tab_id = kwargs['targetInfo']['targetId']

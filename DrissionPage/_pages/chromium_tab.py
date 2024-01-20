@@ -6,6 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from copy import copy
+from time import sleep
 
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
@@ -27,7 +28,10 @@ class ChromiumTab(ChromiumBase):
         :param tab_id: 要控制的标签页id
         """
         if Settings.singleton_tab_obj and tab_id in cls.TABS:
-            return cls.TABS[tab_id]
+            r = cls.TABS[tab_id]
+            while not hasattr(r, '_frame_id'):
+                sleep(.1)
+            return r
         r = object.__new__(cls)
         cls.TABS[tab_id] = r
         return r

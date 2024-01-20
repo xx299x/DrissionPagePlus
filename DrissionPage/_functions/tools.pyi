@@ -7,10 +7,21 @@
 """
 from os import popen
 from pathlib import Path
-from typing import Union
-from types import FunctionType
+from threading import Lock
+from typing import Union, Tuple
 
 from .._pages.chromium_page import ChromiumPage
+
+
+class PortFinder(object):
+    used_port: dict = ...
+    lock: Lock = ...
+    tmp_dir: Path = ...
+
+    def __init__(self, path: Union[str, Path] = None): ...
+
+    @staticmethod
+    def get_port(scope: Tuple[int, int] = None) -> Tuple[int, str]: ...
 
 
 def port_is_using(ip: str, port: Union[str, int]) -> bool: ...

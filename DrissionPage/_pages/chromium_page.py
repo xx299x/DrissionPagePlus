@@ -6,13 +6,15 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
+from threading import Lock
 from time import sleep, perf_counter
 
 from requests import get
 
 from .._base.browser import Browser
+from .._configs.chromium_options import ChromiumOptions
 from .._functions.browser import connect_browser
-from .._configs.chromium_options import ChromiumOptions, PortFinder
+from .._functions.tools import PortFinder
 from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
@@ -34,7 +36,10 @@ class ChromiumPage(ChromiumBase):
         opt = handle_options(addr_or_opts)
         is_exist, browser_id = run_browser(opt)
         if browser_id in cls.PAGES:
-            return cls.PAGES[browser_id]
+            r = cls.PAGES[browser_id]
+            while not hasattr(r, '_frame_id'):
+                sleep(.1)
+            return r
         r = object.__new__(cls)
         r._chromium_options = opt
         r._is_exist = is_exist
@@ -57,6 +62,7 @@ class ChromiumPage(ChromiumBase):
         self._run_browser()
         super().__init__(self.address, tab_id)
         self._type = 'ChromiumPage'
+        self._lock = Lock()
         self.set.timeouts(base=timeout)
         self._page_init()
 
@@ -146,16 +152,17 @@ class ChromiumPage(ChromiumBase):
         :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
         :return: 标签页对象
         """
-        if isinstance(id_or_num, str):
-            return ChromiumTab(self, id_or_num)
-        elif isinstance(id_or_num, int):
-            return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num > 0 else id_or_num])
-        elif id_or_num is None:
-            return ChromiumTab(self, self.tab_id)
-        elif isinstance(id_or_num, ChromiumTab):
-            return id_or_num
-        else:
-            raise TypeError(f'id_or_num需传入tab id或序号，非{id_or_num}。')
+        with self._lock:
+            if isinstance(id_or_num, str):
+                return ChromiumTab(self, id_or_num)
+            elif isinstance(id_or_num, int):
+                return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num > 0 else id_or_num])
+            elif id_or_num is None:
+                return ChromiumTab(self, self.tab_id)
+            elif isinstance(id_or_num, ChromiumTab):
+                return id_or_num
+            else:
+                raise TypeError(f'id_or_num需传入tab id或序号，非{id_or_num}。')
 
     def find_tabs(self, title=None, url=None, tab_type=None, single=True):
         """查找符合条件的tab，返回它们的id组成的列表
@@ -269,13 +276,18 @@ def handle_options(addr_or_opts):
     """
     if not addr_or_opts:
         _chromium_options = ChromiumOptions(addr_or_opts)
+        if _chromium_options.is_auto_port:
+            port, path = PortFinder(_chromium_options.tmp_path).get_port(_chromium_options.is_auto_port)
+            _chromium_options.set_address(f'127.0.0.1:{port}')
+            _chromium_options.set_user_data_path(path)
+            _chromium_options.auto_port(scope=_chromium_options.is_auto_port)
 
     elif isinstance(addr_or_opts, ChromiumOptions):
         if addr_or_opts.is_auto_port:
-            port, path = PortFinder(addr_or_opts.tmp_path).get_port()
+            port, path = PortFinder(addr_or_opts.tmp_path).get_port(addr_or_opts.is_auto_port)
             addr_or_opts.set_address(f'127.0.0.1:{port}')
             addr_or_opts.set_user_data_path(path)
-            addr_or_opts.auto_port()
+            addr_or_opts.auto_port(scope=addr_or_opts.is_auto_port)
         _chromium_options = addr_or_opts
 
     elif isinstance(addr_or_opts, str):

@@ -6,10 +6,9 @@
 @License  : BSD 3-Clause.
 """
 from json import load, dump, JSONDecodeError
-from os import popen
+from os import environ
 from pathlib import Path
 from platform import system
-from re import search
 from subprocess import Popen, DEVNULL
 from tempfile import gettempdir
 from time import perf_counter, sleep
@@ -330,23 +329,8 @@ def get_chrome_path():
         pass
 
     # -----------从系统变量中获取--------------
-    try:
-        paths = popen('set path').read().lower()
-    except:
-        return None
-    r = search(r'[^;]*chrome[^;]*', paths)
-
-    if r:
-        path = Path(r.group(0)) if 'chrome.exe' in r.group(0) else Path(r.group(0)) / 'chrome.exe'
-
-        if path.exists():
-            return str(path)
-
-    paths = paths.split(';')
-
-    for path in paths:
+    for path in environ.get('PATH', '').split(';'):
         path = Path(path) / 'chrome.exe'
-
         try:
             if path.exists():
                 return str(path)

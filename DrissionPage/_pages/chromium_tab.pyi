@@ -6,6 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
+from threading import Lock
 from typing import Union, Tuple, Any, List, Optional
 
 from requests import Session, Response
@@ -26,6 +27,7 @@ from .._units.waiter import TabWaiter
 
 class ChromiumTab(ChromiumBase):
     TABS: dict = ...
+    LOCK: Lock = ...
 
     def __new__(cls, page: ChromiumPage, tab_id: str): ...
 

@@ -651,11 +651,13 @@ class ChromiumBase(BasePage):
         """页面停止加载"""
         try:
             self.run_cdp('Page.stopLoading')
+            end_time = perf_counter() + 5
+            while self._ready_state != 'complete' and perf_counter() < end_time:
+                sleep(.1)
         except (PageDisconnectedError, CDPError):
             pass
-        end_time = perf_counter() + self.timeouts.page_load
-        while self._ready_state != 'complete' and perf_counter() < end_time:
-            sleep(.1)
+        finally:
+            self._ready_state = 'complete'
 
     def remove_ele(self, loc_or_ele):
         """从页面上删除一个元素

@@ -7,12 +7,8 @@
 """
 from pathlib import Path
 from re import search
-from shutil import rmtree
-from tempfile import gettempdir, TemporaryDirectory
-from threading import Lock
 
 from .options_manage import OptionsManager
-from .._functions.tools import port_is_using, clean_folder
 
 
 class ChromiumOptions(object):
@@ -64,10 +60,6 @@ class ChromiumOptions(object):
                               'script': timeouts['script']}
 
             self._auto_port = options.get('auto_port', False)
-            if self._auto_port:
-                port, path = PortFinder().get_port()
-                self._address = f'127.0.0.1:{port}'
-                self.set_argument('--user-data-dir', path)
 
             others = om.others
             self._retry_times = others.get('retry_times', 3)
@@ -170,7 +162,7 @@ class ChromiumOptions(object):
 
     @property
     def is_auto_port(self):
-        """返回是否使用自动端口和用户文件"""
+        """返回是否使用自动端口和用户文件，如指定范围则返回范围tuple"""
         return self._auto_port
 
     @property
@@ -493,14 +485,15 @@ class ChromiumOptions(object):
         self._system_user_path = on_off
         return self
 
-    def auto_port(self, on_off=True, tmp_path=None):
+    def auto_port(self, on_off=True, tmp_path=None, scope=None):
         """自动获取可用端口
         :param on_off: 是否开启自动获取端口号
         :param tmp_path: 临时文件保存路径，为None时保存到系统临时文件夹，on_off为False时此参数无效
+        :param scope: 指定端口范围，不含最后的数字，为None则使用[9600-19600)
         :return: 当前对象
         """
         if on_off:
-            self._auto_port = True
+            self._auto_port = scope if scope else True
             if tmp_path:
                 self._tmp_path = str(tmp_path)
         else:
@@ -618,41 +611,3 @@ class ChromiumOptions(object):
         """
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
-
-
-class PortFinder(object):
-    used_port = {}
-    lock = Lock()
-
-    def __init__(self, path=None):
-        """
-        :param path: 临时文件保存路径，为None时使用系统临时文件夹
-        """
-        tmp = Path(path) if path else Path(gettempdir()) / 'DrissionPage'
-        self.tmp_dir = tmp / 'UserTempFolder'
-        self.tmp_dir.mkdir(parents=True, exist_ok=True)
-        if not PortFinder.used_port:
-            clean_folder(self.tmp_dir)
-
-    def get_port(self):
-        """查找一个可用端口
-        :return: 可以使用的端口和用户文件夹路径组成的元组
-        """
-        with PortFinder.lock:
-            for i in range(9600, 19600):
-                if i in PortFinder.used_port:
-                    continue
-                elif port_is_using('127.0.0.1', i):
-                    PortFinder.used_port[i] = None
-                    continue
-                path = TemporaryDirectory(dir=self.tmp_dir).name
-                PortFinder.used_port[i] = path
-                return i, path
-
-            for i in range(9600, 19600):
-                if port_is_using('127.0.0.1', i):
-                    continue
-                rmtree(PortFinder.used_port[i], ignore_errors=True)
-                return i, TemporaryDirectory(dir=self.tmp_dir).name
-
-        raise OSError('未找到可用端口。')
