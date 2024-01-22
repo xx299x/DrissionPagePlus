@@ -37,14 +37,14 @@ class SessionElement(DrissionElement):
         attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, locator, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self.ele(loc_or_str)
+        return self.ele(locator)
 
     def __eq__(self, other):
         return self.xpath == getattr(other, 'xpath', None)
@@ -89,104 +89,104 @@ class SessionElement(DrissionElement):
         """
         return super().parent(level_or_loc, index)
 
-    def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def child(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本
         """
-        return super().child(filter_loc, index, timeout, ele_only=ele_only)
+        return super().child(locator, index, timeout, ele_only=ele_only)
 
-    def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def prev(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().prev(filter_loc, index, timeout, ele_only=ele_only)
+        return super().prev(locator, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def next(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().next(filter_loc, index, timeout, ele_only=ele_only)
+        return super().next(locator, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def before(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return super().before(filter_loc, index, timeout, ele_only=ele_only)
+        return super().before(locator, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def after(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return super().after(filter_loc, index, timeout, ele_only=ele_only)
+        return super().after(locator, index, timeout, ele_only=ele_only)
 
-    def children(self, filter_loc='', timeout=0, ele_only=True):
+    def children(self, locator='', timeout=0, ele_only=True):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本组成的列表
         """
-        return super().children(filter_loc, timeout, ele_only=ele_only)
+        return super().children(locator, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=None, ele_only=True):
+    def prevs(self, locator='', timeout=None, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return super().prevs(filter_loc, timeout, ele_only=ele_only)
+        return super().prevs(locator, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=None, ele_only=True):
+    def nexts(self, locator='', timeout=None, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return super().nexts(filter_loc, timeout, ele_only=ele_only)
+        return super().nexts(locator, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return super().befores(filter_loc, timeout, ele_only=ele_only)
+        return super().befores(locator, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
-        return super().afters(filter_loc, timeout, ele_only=ele_only)
+        return super().afters(locator, timeout, ele_only=ele_only)
 
     def attr(self, attr):
         """返回attribute属性值
@@ -221,48 +221,48 @@ class SessionElement(DrissionElement):
         else:
             return self.inner_ele.get(attr)
 
-    def ele(self, loc_or_str, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str, index=index, method='ele()')
+        return self._ele(locator, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def s_ele(self, loc_or_str=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str, index=index, method='s_ele()')
+        return self._ele(locator, index=index, method='s_ele()')
 
-    def s_eles(self, loc_or_str):
+    def s_eles(self, locator):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """
-        return make_session_ele(self, loc_or_str, index=index)
+        return make_session_ele(self, locator, index=index)
 
     def _get_ele_path(self, mode):
         """获取css路径或xpath路径

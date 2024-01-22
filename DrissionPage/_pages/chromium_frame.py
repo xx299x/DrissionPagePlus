@@ -64,15 +64,15 @@ class ChromiumFrame(ChromiumBase):
                 break
             sleep(.1)
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
-        return self.ele(loc_or_str, index=index, timeout=timeout)
+        return self.ele(locator, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._frame_id == getattr(other, '_frame_id', None)
@@ -395,85 +395,85 @@ class ChromiumFrame(ChromiumBase):
         """
         return self.frame_ele.parent(level_or_loc, index)
 
-    def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def prev(self, locator='', index=1, timeout=0, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        return self.frame_ele.prev(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.prev(locator, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def next(self, locator='', index=1, timeout=0, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        return self.frame_ele.next(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.next(locator, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def before(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return self.frame_ele.before(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.before(locator, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def after(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return self.frame_ele.after(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.after(locator, index, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=0, ele_only=True):
+    def prevs(self, locator='', timeout=0, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return self.frame_ele.prevs(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.prevs(locator, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=0, ele_only=True):
+    def nexts(self, locator='', timeout=0, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return self.frame_ele.nexts(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.nexts(locator, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self.frame_ele.befores(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.befores(locator, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self.frame_ele.afters(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.afters(locator, timeout, ele_only=ele_only)
 
     def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
@@ -562,20 +562,20 @@ class ChromiumFrame(ChromiumBase):
         self.tab.remove_ele(new_ele)
         return r
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """在frame内查找单个元素
-        :param loc_or_ele: 定位符或元素对象
+        :param locator: 定位符或元素对象
         :param timeout: 查找超时时间
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
         """
-        if isinstance(loc_or_ele, ChromiumElement):
-            return loc_or_ele
+        if isinstance(locator, ChromiumElement):
+            return locator
         self.wait.doc_loaded()
-        return self.doc_ele._ele(loc_or_ele, index=index, timeout=timeout,
-                                 raise_err=raise_err) if index is not None else self.doc_ele.eles(loc_or_ele, timeout)
+        return self.doc_ele._ele(locator, index=index, timeout=timeout,
+                                 raise_err=raise_err) if index is not None else self.doc_ele.eles(locator, timeout)
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""

@@ -41,7 +41,7 @@ class SessionPage(BasePage):
     def _create_session(self) -> None: ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, SessionElement],
+                 locator: Union[Tuple[str, str], str, SessionElement],
                  index: int = 1,
                  timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
@@ -91,22 +91,22 @@ class SessionPage(BasePage):
             cert: Any | None = ...) -> bool: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+            locator: Union[Tuple[str, str], str, SessionElement],
             index: int = 1,
             timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None,
+              locator: Union[Tuple[str, str], str, SessionElement] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, loc: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+                       locator: Union[Tuple[str, str], str, SessionElement],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        raise_err: bool = None) \

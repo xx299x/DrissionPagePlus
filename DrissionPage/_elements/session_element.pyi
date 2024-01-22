@@ -29,7 +29,7 @@ class SessionElement(DrissionElement):
     def __repr__(self) -> str: ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str],
+                 locator: Union[Tuple[str, str], str],
                  index: int = 1,
                  timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
@@ -58,79 +58,79 @@ class SessionElement(DrissionElement):
                index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
     def child(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
     def prev(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
     def next(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
     def before(self,
-               filter_loc: Union[tuple, str, int] = '',
+               locator: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
     def after(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
 
     def children(self,
-                 filter_loc: Union[tuple, str] = '',
+                 locator: Union[tuple, str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def prevs(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def nexts(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def befores(self,
-                filter_loc: Union[tuple, str] = '',
+                locator: Union[tuple, str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def afters(self,
-               filter_loc: Union[tuple, str] = '',
+               locator: Union[tuple, str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def attr(self, attr: str) -> Optional[str]: ...
 
     def ele(self,
-            loc_or_str: Union[Tuple[str, str], str],
+            locator: Union[Tuple[str, str], str],
             index: int = 1,
             timeout: float = None) -> Union[SessionElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None,
+              locator: Union[Tuple[str, str], str] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_str: Union[Tuple[str, str], str],
+                       locator: Union[Tuple[str, str], str],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,

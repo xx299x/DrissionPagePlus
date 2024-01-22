@@ -16,25 +16,25 @@ from .._elements.none_element import NoneElement
 class BaseParser(object):
     _type: str
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str], index: int = 1): ...
+    def __call__(self, locator: Union[Tuple[str, str], str], index: int = 1): ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, BaseElement],
+            locator: Union[Tuple[str, str], str, BaseElement],
             index: int = 1,
             timeout: float = None): ...
 
-    def eles(self, loc_or_str: Union[Tuple[str, str], str], timeout=None): ...
+    def eles(self, locator: Union[Tuple[str, str], str], timeout=None): ...
 
     # ----------------以下属性或方法待后代实现----------------
     @property
     def html(self) -> str: ...
 
-    def s_ele(self, loc_or_ele: Union[Tuple[str, str], str, BaseElement], index: int = 1): ...
+    def s_ele(self, locator: Union[Tuple[str, str], str, BaseElement], index: int = 1): ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]): ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]): ...
 
     def _ele(self,
-             loc_or_ele,
+             locator,
              timeout: float = None,
              index: Optional[int] = 1,
              raise_err: bool = None,
@@ -42,7 +42,7 @@ class BaseParser(object):
 
     @abstractmethod
     def _find_elements(self,
-                       loc_or_ele,
+                       locator,
                        timeout: float = None,
                        index: Optional[int] = 1,
                        raise_err: bool = None): ...
@@ -58,7 +58,7 @@ class BaseElement(BaseParser):
     def tag(self) -> str: ...
 
     def _ele(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None,
              index: Optional[int] = 1,
              relative: bool = False,
@@ -66,7 +66,8 @@ class BaseElement(BaseParser):
              method: str = None): ...
 
     @abstractmethod
-    def _find_elements(self, loc_or_str,
+    def _find_elements(self,
+                       locator,
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
@@ -108,57 +109,57 @@ class DrissionElement(BaseElement):
                index: int = 1) -> Union[DrissionElement, None]: ...
 
     def child(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def prev(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def next(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def before(self,
-               filter_loc: Union[tuple, str, int] = '',
+               locator: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def after(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def children(self,
-                 filter_loc: Union[tuple, str] = '',
+                 locator: Union[tuple, str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def prevs(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def nexts(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def befores(self,
-                filter_loc: Union[tuple, str] = '',
+                locator: Union[tuple, str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def afters(self,
-               filter_loc: Union[tuple, str] = '',
+               locator: Union[tuple, str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
@@ -166,14 +167,14 @@ class DrissionElement(BaseElement):
                       func: str,
                       direction: str,
                       brother: bool,
-                      filter_loc: Union[tuple, str] = '',
+                      locator: Union[tuple, str] = '',
                       index: int = 1,
                       timeout: float = None,
                       ele_only: bool = True) -> DrissionElement: ...
 
     def _get_relatives(self,
                        index: int = None,
-                       filter_loc: Union[tuple, str] = '',
+                       locator: Union[tuple, str] = '',
                        direction: str = 'following',
                        brother: bool = True,
                        timeout: float = 0.5,
@@ -245,7 +246,7 @@ class BasePage(BaseParser):
     def get(self, url: str, show_errmsg: bool = False, retry: int = None, interval: float = None): ...
 
     def _ele(self,
-             loc_or_ele,
+             locator,
              timeout: float = None,
              index: Optional[int] = 1,
              raise_err: bool = None,
@@ -253,7 +254,7 @@ class BasePage(BaseParser):
 
     @abstractmethod
     def _find_elements(self,
-                       loc_or_ele,
+                       locator,
                        timeout: float = None,
                        index: Optional[int] = 1,
                        raise_err: bool = None): ...

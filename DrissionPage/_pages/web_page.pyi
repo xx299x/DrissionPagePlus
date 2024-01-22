@@ -37,7 +37,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         self._chromium_options: Union[ChromiumOptions, None] = ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+                 locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
                  index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
@@ -105,19 +105,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+            locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
             index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, SessionElement]]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str] = None,
+              locator: Union[Tuple[str, str], str] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
@@ -169,7 +169,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def set(self) -> WebPageSetter: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,

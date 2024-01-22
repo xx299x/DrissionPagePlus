@@ -103,13 +103,13 @@ class SelectElement(object):
         """
         return self._select(index, 'index', False, timeout)
 
-    def by_loc(self, loc, timeout=None):
+    def by_locator(self, locator, timeout=None):
         """用定位符选择指定的项
-        :param loc: 定位符
+        :param locator: 定位符
         :param timeout: 超时时间
         :return: 是否选择成功
         """
-        return self._by_loc(loc, timeout)
+        return self._by_loc(locator, timeout)
 
     def by_option(self, option):
         """选中单个或多个option元素
@@ -142,13 +142,13 @@ class SelectElement(object):
         """
         return self._select(index, 'index', True, timeout)
 
-    def cancel_by_loc(self, loc, timeout=None):
+    def cancel_by_locator(self, locator, timeout=None):
         """用定位符取消选择指定的项
-        :param loc: 定位符
+        :param locator: 定位符
         :param timeout: 超时时间
         :return: 是否选择成功
         """
-        return self._by_loc(loc, timeout, True)
+        return self._by_loc(locator, timeout, True)
 
     def cancel_by_option(self, option):
         """取消选中单个或多个option元素

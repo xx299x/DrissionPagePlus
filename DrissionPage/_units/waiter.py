@@ -73,14 +73,14 @@ class BaseWaiter(object):
                 return False
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
-    def ele_loaded(self, loc, timeout=None, raise_err=None):
+    def ele_loaded(self, locator, timeout=None, raise_err=None):
         """等待元素加载到DOM
-        :param loc: 要等待的元素，输入定位符
+        :param locator: 要等待的元素，输入定位符
         :param timeout: 超时时间，默认读取页面超时时间
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 成功返回元素对象，失败返回False
         """
-        ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
+        ele = self._driver._ele(locator, raise_err=False, timeout=timeout)
         if ele:
             return ele
         if raise_err is True or Settings.raise_when_wait_failed is True:

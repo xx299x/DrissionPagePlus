@@ -34,7 +34,7 @@ class BaseWaiter(object):
                    raise_err: bool = None) -> bool: ...
 
     def ele_loaded(self,
-                   loc: Union[str, tuple],
+                   locator: Union[str, tuple],
                    timeout: float = None,
                    raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
 

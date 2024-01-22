@@ -82,13 +82,13 @@ class ChromiumElement(DrissionElement):
         attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
         return f'<ChromiumElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
-        return self.ele(loc_or_str, index=index, timeout=timeout)
+        return self.ele(locator, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._backend_id == getattr(other, '_backend_id', None)
@@ -235,104 +235,104 @@ class ChromiumElement(DrissionElement):
         """
         return super().parent(level_or_loc, index)
 
-    def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def child(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本
         """
-        return super().child(filter_loc, index, timeout, ele_only=ele_only)
+        return super().child(locator, index, timeout, ele_only=ele_only)
 
-    def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def prev(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本
         """
-        return super().prev(filter_loc, index, timeout, ele_only=ele_only)
+        return super().prev(locator, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def next(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本
         """
-        return super().next(filter_loc, index, timeout, ele_only=ele_only)
+        return super().next(locator, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def before(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return super().before(filter_loc, index, timeout, ele_only=ele_only)
+        return super().before(locator, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def after(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return super().after(filter_loc, index, timeout, ele_only=ele_only)
+        return super().after(locator, index, timeout, ele_only=ele_only)
 
-    def children(self, filter_loc='', timeout=None, ele_only=True):
+    def children(self, locator='', timeout=None, ele_only=True):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本组成的列表
         """
-        return super().children(filter_loc, timeout, ele_only=ele_only)
+        return super().children(locator, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=None, ele_only=True):
+    def prevs(self, locator='', timeout=None, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return super().prevs(filter_loc, timeout, ele_only=ele_only)
+        return super().prevs(locator, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=None, ele_only=True):
+    def nexts(self, locator='', timeout=None, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 兄弟元素或节点文本组成的列表
         """
-        return super().nexts(filter_loc, timeout, ele_only=ele_only)
+        return super().nexts(locator, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return super().befores(filter_loc, timeout, ele_only=ele_only)
+        return super().befores(locator, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
-        return super().afters(filter_loc, timeout, ele_only=ele_only)
+        return super().afters(locator, timeout, ele_only=ele_only)
 
     def attr(self, attr):
         """返回一个attribute属性值
@@ -402,60 +402,60 @@ class ChromiumElement(DrissionElement):
         """
         run_js(self, script, as_expr, 0, args)
 
-    def ele(self, loc_or_str, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本
         """
-        return self._ele(loc_or_str, timeout, index=index, method='ele()')
+        return self._ele(locator, timeout, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, index=None)
+        return self._ele(locator, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """查找一个符合条件的元素，以SessionElement形式返回
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
         if self.tag in __FRAME_ELEMENT__:
-            r = make_session_ele(self.inner_html, loc_or_str, index=index)
+            r = make_session_ele(self.inner_html, locator, index=index)
         else:
-            r = make_session_ele(self, loc_or_str, index=index)
+            r = make_session_ele(self, locator, index=index)
         if isinstance(r, NoneElement):
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 's_ele()', {'loc_or_str': loc_or_str})
+                raise ElementNotFoundError(None, 's_ele()', {'locator': locator})
             else:
                 r.method = 's_ele()'
-                r.args = {'loc_or_str': loc_or_str}
+                r.args = {'locator': locator}
         return r
 
-    def s_eles(self, loc_or_str=None):
+    def s_eles(self, locator=None):
         """查找所有符合条件的元素，以SessionElement列表形式返回
-        :param loc_or_str: 定位符
+        :param locator: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
         if self.tag in __FRAME_ELEMENT__:
-            return make_session_ele(self.inner_html, loc_or_str, index=None)
-        return make_session_ele(self, loc_or_str, index=None)
+            return make_session_ele(self.inner_html, locator, index=None)
+        return make_session_ele(self, locator, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或文本、属性或其组成的列表
         """
-        return find_in_chromium_ele(self, loc_or_str, index, timeout, relative=relative)
+        return find_in_chromium_ele(self, locator, index, timeout, relative=relative)
 
     def style(self, style, pseudo_ele=''):
         """返回元素样式属性值，可获取伪元素属性值
@@ -789,15 +789,15 @@ class ShadowRoot(BaseElement):
     def __repr__(self):
         return f'<ShadowRoot in {self.parent_ele}>'
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: 元素对象或属性、文本
         """
-        return self.ele(loc_or_str, index=index, timeout=timeout)
+        return self.ele(locator, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._backend_id == getattr(other, '_backend_id', None)
@@ -868,16 +868,16 @@ class ShadowRoot(BaseElement):
 
         return self.parent_ele._ele(loc, timeout=0, relative=True, raise_err=False, method='parent()')
 
-    def child(self, filter_loc='', index=1):
+    def child(self, locator='', index=1):
         """返回直接子元素元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :return: 直接子元素或节点文本组成的列表
         """
-        if not filter_loc:
+        if not locator:
             loc = '*'
         else:
-            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
+            loc = get_loc(locator, True)  # 把定位符转换为xpath
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
             loc = loc[1].lstrip('./')
@@ -888,17 +888,17 @@ class ShadowRoot(BaseElement):
             return ele
 
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'child()', {'filter_loc': filter_loc, 'index': index})
+            raise ElementNotFoundError(None, 'child()', {'locator': locator, 'index': index})
         else:
-            return NoneElement(self.page, 'child()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'child()', {'locator': locator, 'index': index})
 
-    def next(self, filter_loc='', index=1):
+    def next(self, locator='', index=1):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :return: ChromiumElement对象
         """
-        loc = get_loc(filter_loc, True)
+        loc = get_loc(locator, True)
         if loc[0] == 'css selector':
             raise ValueError('此css selector语法不受支持，请换成xpath。')
 
@@ -909,18 +909,18 @@ class ShadowRoot(BaseElement):
             return ele
 
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'next()', {'filter_loc': filter_loc, 'index': index})
+            raise ElementNotFoundError(None, 'next()', {'locator': locator, 'index': index})
         else:
-            return NoneElement(self.page, 'next()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'next()', {'locator': locator, 'index': index})
 
-    def before(self, filter_loc='', index=1):
+    def before(self, locator='', index=1):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :return: 本元素前面的某个元素或节点
         """
-        loc = get_loc(filter_loc, True)
+        loc = get_loc(locator, True)
         if loc[0] == 'css selector':
             raise ValueError('此css selector语法不受支持，请换成xpath。')
 
@@ -931,34 +931,34 @@ class ShadowRoot(BaseElement):
             return ele
 
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'before()', {'filter_loc': filter_loc, 'index': index})
+            raise ElementNotFoundError(None, 'before()', {'locator': locator, 'index': index})
         else:
-            return NoneElement(self.page, 'before()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'before()', {'locator': locator, 'index': index})
 
-    def after(self, filter_loc='', index=1):
+    def after(self, locator='', index=1):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
         :return: 本元素后面的某个元素或节点
         """
-        nodes = self.afters(filter_loc=filter_loc)
+        nodes = self.afters(locator=locator)
         if nodes:
             return nodes[index - 1]
         if Settings.raise_when_ele_not_found:
-            raise ElementNotFoundError(None, 'after()', {'filter_loc': filter_loc, 'index': index})
+            raise ElementNotFoundError(None, 'after()', {'locator': locator, 'index': index})
         else:
-            return NoneElement(self.page, 'after()', {'filter_loc': filter_loc, 'index': index})
+            return NoneElement(self.page, 'after()', {'locator': locator, 'index': index})
 
-    def children(self, filter_loc=''):
+    def children(self, locator=''):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :return: 直接子元素或节点文本组成的列表
         """
-        if not filter_loc:
+        if not locator:
             loc = '*'
         else:
-            loc = get_loc(filter_loc, True)  # 把定位符转换为xpath
+            loc = get_loc(locator, True)  # 把定位符转换为xpath
             if loc[0] == 'css selector':
                 raise ValueError('此css selector语法不受支持，请换成xpath。')
             loc = loc[1].lstrip('./')
@@ -966,12 +966,12 @@ class ShadowRoot(BaseElement):
         loc = f'xpath:./{loc}'
         return self._ele(loc, index=None, relative=True)
 
-    def nexts(self, filter_loc=''):
+    def nexts(self, locator=''):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :return: ChromiumElement对象组成的列表
         """
-        loc = get_loc(filter_loc, True)
+        loc = get_loc(locator, True)
         if loc[0] == 'css selector':
             raise ValueError('此css selector语法不受支持，请换成xpath。')
 
@@ -979,13 +979,13 @@ class ShadowRoot(BaseElement):
         xpath = f'xpath:./{loc}'
         return self.parent_ele._ele(xpath, index=None, relative=True)
 
-    def befores(self, filter_loc=''):
+    def befores(self, locator=''):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :return: 本元素前面的元素或节点组成的列表
         """
-        loc = get_loc(filter_loc, True)
+        loc = get_loc(locator, True)
         if loc[0] == 'css selector':
             raise ValueError('此css selector语法不受支持，请换成xpath。')
 
@@ -993,63 +993,63 @@ class ShadowRoot(BaseElement):
         xpath = f'xpath:./preceding::{loc}'
         return self.parent_ele._ele(xpath, index=None, relative=True)
 
-    def afters(self, filter_loc=''):
+    def afters(self, locator=''):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :return: 本元素后面的元素或节点组成的列表
         """
-        eles1 = self.nexts(filter_loc)
-        loc = get_loc(filter_loc, True)[1].lstrip('./')
+        eles1 = self.nexts(locator)
+        loc = get_loc(locator, True)[1].lstrip('./')
         xpath = f'xpath:./following::{loc}'
         return eles1 + self.parent_ele._ele(xpath, index=None, relative=True)
 
-    def ele(self, loc_or_str, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象
         """
-        return self._ele(loc_or_str, timeout, index=index, method='ele()')
+        return self._ele(locator, timeout, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """返回当前元素下级所有符合条件的子元素
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒），默认与元素所在页面等待时间一致
         :return: ChromiumElement对象组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, index=None)
+        return self._ele(locator, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_str=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """查找一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        r = make_session_ele(self, loc_or_str, index=index)
+        r = make_session_ele(self, locator, index=index)
         if isinstance(r, NoneElement):
             r.method = 's_ele()'
-            r.args = {'loc_or_str': loc_or_str}
+            r.args = {'locator': locator}
         return r
 
-    def s_eles(self, loc_or_str):
+    def s_eles(self, locator):
         """查找所有符合条件的元素以SessionElement列表形式返回，处理复杂页面时效率很高
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象
         """
-        return make_session_ele(self, loc_or_str, index=None)
+        return make_session_ele(self, locator, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本，默认返回第一个
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 查找元素超时时间（秒）
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或其组成的列表
         """
-        loc = get_loc(loc_or_str, css_mode=False)
+        loc = get_loc(locator, css_mode=False)
         if loc[0] == 'css selector' and str(loc[1]).startswith(':root'):
             loc = loc[0], loc[1][5:]
 
@@ -1114,20 +1114,20 @@ class ShadowRoot(BaseElement):
         return r['backendNodeId']
 
 
-def find_in_chromium_ele(ele, loc, index=1, timeout=None, relative=True):
+def find_in_chromium_ele(ele, locator, index=1, timeout=None, relative=True):
     """在chromium元素中查找
     :param ele: ChromiumElement对象
-    :param loc: 元素定位元组
+    :param locator: 元素定位元组
     :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
     :param timeout: 查找元素超时时间（秒）
     :param relative: WebPage用于标记是否相对定位使用
     :return: 返回ChromiumElement元素或它们组成的列表
     """
     # ---------------处理定位符---------------
-    if isinstance(loc, (str, tuple)):
-        loc = get_loc(loc)
+    if isinstance(locator, (str, tuple)):
+        loc = get_loc(locator)
     else:
-        raise ValueError(f"定位符必须为str或长度为2的tuple对象。现在是：{loc}")
+        raise ValueError(f"定位符必须为str或长度为2的tuple对象。现在是：{locator}")
 
     loc_str = loc[1]
     if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):

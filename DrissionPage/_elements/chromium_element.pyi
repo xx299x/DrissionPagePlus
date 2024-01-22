@@ -48,7 +48,7 @@ class ChromiumElement(DrissionElement):
     def __repr__(self) -> str: ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str],
+                 locator: Union[Tuple[str, str], str],
                  index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
@@ -103,57 +103,57 @@ class ChromiumElement(DrissionElement):
                index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
 
     def child(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def prev(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def next(self,
-             filter_loc: Union[tuple, str, int] = '',
+             locator: Union[tuple, str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def before(self,
-               filter_loc: Union[tuple, str, int] = '',
+               locator: Union[tuple, str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def after(self,
-              filter_loc: Union[tuple, str, int] = '',
+              locator: Union[tuple, str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
 
     def children(self,
-                 filter_loc: Union[tuple, str] = '',
+                 locator: Union[tuple, str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def prevs(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def nexts(self,
-              filter_loc: Union[tuple, str] = '',
+              locator: Union[tuple, str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def befores(self,
-                filter_loc: Union[tuple, str] = '',
+                locator: Union[tuple, str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def afters(self,
-               filter_loc: Union[tuple, str] = '',
+               locator: Union[tuple, str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
@@ -176,22 +176,22 @@ class ChromiumElement(DrissionElement):
     def run_async_js(self, script: str, *args, as_expr: bool = False) -> None: ...
 
     def ele(self,
-            loc_or_str: Union[Tuple[str, str], str],
+            locator: Union[Tuple[str, str], str],
             index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None,
+              locator: Union[Tuple[str, str], str] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str] = None) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str] = None) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_str: Union[Tuple[str, str], str],
+                       locator: Union[Tuple[str, str], str],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
@@ -248,7 +248,8 @@ class ShadowRoot(BaseElement):
 
     def __repr__(self) -> str: ...
 
-    def __call__(self, loc_or_str: Union[Tuple[str, str], str],
+    def __call__(self,
+                 locator: Union[Tuple[str, str], str],
                  timeout: float = None) -> ChromiumElement: ...
 
     def __eq__(self, other: ShadowRoot) -> bool: ...
@@ -271,43 +272,47 @@ class ShadowRoot(BaseElement):
 
     def parent(self, level_or_loc: Union[str, int] = 1, index: int = 1) -> ChromiumElement: ...
 
-    def child(self, filter_loc: Union[tuple, str] = '',
+    def child(self,
+              locator: Union[tuple, str] = '',
               index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
 
-    def next(self, filter_loc: Union[tuple, str] = '',
+    def next(self,
+             locator: Union[tuple, str] = '',
              index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
 
-    def before(self, filter_loc: Union[tuple, str] = '',
+    def before(self,
+               locator: Union[tuple, str] = '',
                index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
 
-    def after(self, filter_loc: Union[tuple, str] = '',
+    def after(self,
+              locator: Union[tuple, str] = '',
               index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
 
-    def children(self, filter_loc: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def children(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
 
-    def nexts(self, filter_loc: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def nexts(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
 
-    def befores(self, filter_loc: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def befores(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
 
-    def afters(self, filter_loc: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def afters(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
 
     def ele(self,
-            loc_or_str: Union[Tuple[str, str], str],
+            locator: Union[Tuple[str, str], str],
             index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
     def s_ele(self,
-              loc_or_str: Union[Tuple[str, str], str] = None,
+              locator: Union[Tuple[str, str], str] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_str: Union[Tuple[str, str], str],
+                       locator: Union[Tuple[str, str], str],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,

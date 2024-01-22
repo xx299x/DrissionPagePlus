@@ -95,7 +95,7 @@ class ChromiumBase(BasePage):
     def _d_set_runtime_settings(self) -> None: ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement],
+                 locator: Union[Tuple[str, str], str, ChromiumElement],
                  index: int = 1,
                  timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
@@ -181,22 +181,22 @@ class ChromiumBase(BasePage):
                     all_info: bool = False) -> Union[list, dict]: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+            locator: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
             index: int = 1,
             timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[ChromiumElement]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str] = None,
+              locator: Union[Tuple[str, str], str] = None,
               index: int = 1) -> Union[SessionElement, NoneElement]: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
+                       locator: Union[Tuple[str, str], str, ChromiumElement, ChromiumFrame],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
@@ -217,7 +217,7 @@ class ChromiumBase(BasePage):
 
     def get_frame(self, loc_ind_ele: Union[str, int, tuple, ChromiumFrame], timeout: float = None) -> ChromiumFrame: ...
 
-    def get_frames(self, loc: Union[str, tuple] = None, timeout: float = None) -> List[ChromiumFrame]: ...
+    def get_frames(self, locator: Union[str, tuple] = None, timeout: float = None) -> List[ChromiumFrame]: ...
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict: ...
 
