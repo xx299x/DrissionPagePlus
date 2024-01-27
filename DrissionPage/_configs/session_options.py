@@ -27,6 +27,18 @@ class SessionOptions(object):
         self._timeout = 10
         self._del_set = set()  # 记录要从ini文件删除的参数
 
+        if read_file is False:
+            ini_path = False
+            self.ini_path = None
+        elif ini_path:
+            ini_path = Path(ini_path).absolute()
+            if not ini_path.exists():
+                raise ValueError(f'文件不存在：{ini_path}')
+            self.ini_path = str(ini_path)
+        else:
+            self.ini_path = str(Path(__file__).parent / 'configs.ini')
+        om = OptionsManager(ini_path)
+
         self._headers = None
         self._cookies = None
         self._auth = None
@@ -39,15 +51,6 @@ class SessionOptions(object):
         self._stream = None
         self._trust_env = None
         self._max_redirects = None
-        self._retry_times = 3
-        self._retry_interval = 2
-
-        if read_file is False:
-            return
-
-        ini_path = str(ini_path) if ini_path else None
-        om = OptionsManager(ini_path)
-        self.ini_path = om.ini_path
 
         options = om.session_options
         if options.get('headers', None) is not None:
@@ -381,8 +384,8 @@ class SessionOptions(object):
 
         om.set_item('paths', 'download_path', self.download_path or '')
         om.set_item('timeouts', 'base', self.timeout)
-        om.set_item('proxies', 'http', self.proxies.get('http', None))
-        om.set_item('proxies', 'https', self.proxies.get('https', None))
+        om.set_item('proxies', 'http', self.proxies.get('http', ''))
+        om.set_item('proxies', 'https', self.proxies.get('https', ''))
         om.set_item('others', 'retry_times', self.retry_times)
         om.set_item('others', 'retry_interval', self.retry_interval)
 

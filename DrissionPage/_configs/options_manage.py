@@ -8,7 +8,6 @@
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 from pathlib import Path
 from pprint import pprint
-from time import sleep
 
 
 class OptionsManager(object):
@@ -18,22 +17,63 @@ class OptionsManager(object):
         """初始化，读取配置文件，如没有设置临时文件夹，则设置并新建
         :param path: ini文件的路径，为None则找项目文件夹下的，找不到则读取模块文件夹下的
         """
-        if path is None:
-            if Path('dp_configs.ini').exists():
-                self.ini_path = 'dp_configs.ini'
-            else:
-                self.ini_path = str(Path(__file__).parent / 'configs.ini')
-        elif path == 'default':
-            self.ini_path = str(Path(__file__).parent / 'configs.ini')
+        if path is False:
+            self.ini_path = None
         else:
-            self.ini_path = str(path)
+            default_configs = Path(__file__).parent / 'configs.ini'
+            if path is None:
+                dp_configs = Path('dp_configs.ini')
+                if dp_configs.exists():
+                    self.ini_path = dp_configs
+                else:
+                    self.ini_path = default_configs
+            elif path == 'default':
+                self.ini_path = default_configs
+            else:
+                self.ini_path = Path(path)
 
-        if not Path(self.ini_path).exists():
-            print('\nini文件不存在。\n如果是打包使用，请查看打包注意事项\n'
-                  'https://g1879.gitee.io/drissionpagedocs/advance/packaging/')
-            sleep(10)
         self._conf = RawConfigParser()
-        self._conf.read(self.ini_path, encoding='utf-8')
+        if path is not False and self.ini_path.exists():
+            self.file_exists = True
+            self._conf.read(self.ini_path, encoding='utf-8')
+        else:
+            self.file_exists = False
+            self._conf.add_section('paths')
+            self._conf.add_section('chromium_options')
+            self._conf.add_section('session_options')
+            self._conf.add_section('timeouts')
+            self._conf.add_section('proxies')
+            self._conf.add_section('others')
+            self.set_item('paths', 'download_path', '')
+            self.set_item('paths', 'tmp_path', '')
+            self.set_item('chromium_options', 'address', '127.0.0.1:9222')
+            self.set_item('chromium_options', 'browser_path', 'chrome')
+            self.set_item('chromium_options', 'arguments', "['--no-default-browser-check', '--disable-suggestions-ui', "
+                                                           "'--no-first-run', '--disable-infobars', "
+                                                           "'--disable-popup-blocking', '--hide-crash-restore-bubble', "
+                                                           "'--disable-features=PrivacySandboxSettings4']")
+            self.set_item('chromium_options', 'extensions', '[]')
+            self.set_item('chromium_options', 'prefs', "{'profile.default_content_settings.popups': 0, "
+                                                       "'profile.default_content_setting_values': "
+                                                       "{'notifications': 2}}")
+            self.set_item('chromium_options', 'flags', '{}')
+            self.set_item('chromium_options', 'load_mode', 'normal')
+            self.set_item('chromium_options', 'user', 'Default')
+            self.set_item('chromium_options', 'auto_port', 'False')
+            self.set_item('chromium_options', 'system_user_path', 'False')
+            self.set_item('chromium_options', 'existing_only', 'False')
+            self.set_item('session_options', 'headers', "{'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X "
+                                                        "10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10."
+                                                        "1.2 Safari/603.3.8', 'accept': 'text/html,application/xhtml"
+                                                        "+xml,application/xml;q=0.9,*/*;q=0.8', 'connection': "
+                                                        "'keep-alive', 'accept-charset': 'GB2312,utf-8;q=0.7,*;q=0.7'}")
+            self.set_item('timeouts', 'base', '10')
+            self.set_item('timeouts', 'page_load', '30')
+            self.set_item('timeouts', 'script', '30')
+            self.set_item('proxies', 'http', '')
+            self.set_item('proxies', 'https', '')
+            self.set_item('others', 'retry_times', '3')
+            self.set_item('others', 'retry_interval', '2')
 
     def __getattr__(self, item):
         """以dict形似返回获取大项信息
@@ -100,7 +140,9 @@ class OptionsManager(object):
         if path == 'default':
             path = default_path
         elif path is None:
-            path = Path(self.ini_path).absolute()
+            if self.ini_path is None:
+                raise ValueError('ini_path未设置。')
+            path = self.ini_path.absolute()
         else:
             path = Path(path).absolute()
 
@@ -113,6 +155,7 @@ class OptionsManager(object):
         if path == str(default_path):
             print('以后程序可自动从文件加载配置。')
 
+        self.file_exists = True
         return path
 
     def save_to_default(self):

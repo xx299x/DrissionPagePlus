@@ -285,7 +285,7 @@ def _remove_arg_from_dict(target_dict: dict, arg: str) -> None:
 def get_chrome_path(ini_path):
     """从ini文件或系统变量中获取chrome可执行文件的路径"""
     # -----------从ini文件中获取--------------
-    if ini_path:
+    if ini_path and Path(ini_path).exists():
         path = OptionsManager(ini_path).chromium_options.get('browser_path', None)
         if path and Path(path).is_file():
             return str(path)

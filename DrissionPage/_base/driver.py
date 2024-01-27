@@ -14,6 +14,7 @@ from requests import get
 from websocket import (WebSocketTimeoutException, WebSocketConnectionClosedException, create_connection,
                        WebSocketException, WebSocketBadStatusException)
 
+from .._functions.settings import Settings
 from ..errors import PageDisconnectedError, TargetNotFoundError
 
 
@@ -186,7 +187,7 @@ class Driver(object):
         if self._stopped.is_set():
             return {'error': 'connection disconnected', 'type': 'connection_error'}
 
-        timeout = kwargs.pop('_timeout', 30)
+        timeout = kwargs.pop('_timeout', Settings.cdp_timeout)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
         if 'result' not in result and 'error' in result:
             kwargs['_timeout'] = timeout
