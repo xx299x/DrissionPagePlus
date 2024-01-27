@@ -34,7 +34,7 @@ class SessionElement(DrissionElement):
         return self._inner_ele
 
     def __repr__(self):
-        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        attrs = [f"{k}='{v}'" for k, v in self.attrs.items()]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, locator, timeout=None):
@@ -188,13 +188,13 @@ class SessionElement(DrissionElement):
         """
         return super().afters(locator, timeout, ele_only=ele_only)
 
-    def attr(self, attr):
+    def attr(self, name):
         """返回attribute属性值
-        :param attr: 属性名
+        :param name: 属性名
         :return: 属性值文本，没有该属性返回None
         """
         # 获取href属性时返回绝对url
-        if attr == 'href':
+        if name == 'href':
             link = self.inner_ele.get('href')
             # 若为链接为None、js或邮件，直接返回
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
@@ -203,23 +203,23 @@ class SessionElement(DrissionElement):
             else:  # 其它情况直接返回绝对url
                 return make_absolute_link(link, self.page.url)
 
-        elif attr == 'src':
+        elif name == 'src':
             return make_absolute_link(self.inner_ele.get('src'), self.page.url)
 
-        elif attr == 'text':
+        elif name == 'text':
             return self.text
 
-        elif attr == 'innerText':
+        elif name == 'innerText':
             return self.raw_text
 
-        elif attr in ('html', 'outerHTML'):
+        elif name in ('html', 'outerHTML'):
             return self.html
 
-        elif attr == 'innerHTML':
+        elif name == 'innerHTML':
             return self.inner_html
 
         else:
-            return self.inner_ele.get(attr)
+            return self.inner_ele.get(name)
 
     def ele(self, locator, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本

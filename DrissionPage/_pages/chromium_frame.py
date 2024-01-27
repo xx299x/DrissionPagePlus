@@ -78,8 +78,7 @@ class ChromiumFrame(ChromiumBase):
         return self._frame_id == getattr(other, '_frame_id', None)
 
     def __repr__(self):
-        attrs = self._frame_ele.attrs
-        attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
+        attrs = [f"{k}='{v}'" for k, v in self._frame_ele.attrs.items()]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
     def _d_set_runtime_settings(self):
@@ -146,19 +145,6 @@ class ChromiumFrame(ChromiumBase):
             if timeout <= 0:
                 timeout = .5
             self._wait_loaded(timeout)
-            # while perf_counter() < end_time:
-            #     try:
-            #         obj_id = super().run_js('document;', as_expr=True)['objectId']
-            #         self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-            #         break
-            #     except Exception as e:
-            #         sleep(.1)
-            #         if self._debug:
-            #             print(f'获取doc失败，重试 {e}')
-            # else:
-            #     raise GetDocumentError
-
-            # self.driver._debug = d_debug
 
         self._is_loading = False
         self._reloading = False
@@ -208,7 +194,6 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
     # ----------挂件----------
-
     @property
     def scroll(self):
         """返回用于滚动的对象"""
@@ -252,7 +237,7 @@ class ChromiumFrame(ChromiumBase):
             self._listener = FrameListener(self)
         return self._listener
 
-    # ----------挂件----------
+    # ----------挂件结束----------
 
     @property
     def _obj_id(self):
@@ -306,11 +291,6 @@ class ChromiumFrame(ChromiumBase):
         return r.text if r else None
 
     @property
-    def cookies(self):
-        """以dict格式返回cookies"""
-        return super().cookies if self._is_diff_domain else self.doc_ele.run_js('return this.cookie;')
-
-    @property
     def attrs(self):
         """返回frame元素所有attribute属性"""
         return self.frame_ele.attrs
@@ -356,23 +336,57 @@ class ChromiumFrame(ChromiumBase):
                 except:
                     return None
 
+    # ----------------即将废弃-----------------
+    @property
+    def is_alive(self):
+        """返回是否仍可用"""
+        return self.states.is_alive
+
+    @property
+    def page_size(self):
+        """返回frame内页面尺寸，格式：(宽,, 高)"""
+        return self.rect.size
+
+    @property
+    def size(self):
+        """返回frame元素大小"""
+        return self.frame_ele.rect.size
+
+    @property
+    def location(self):
+        """返回frame元素左上角的绝对坐标"""
+        return self.frame_ele.rect.location
+
+    @property
+    def locations(self):
+        """返回用于获取元素位置的对象"""
+        return self.frame_ele.rect
+    # ----------------即将废弃结束-----------------
+
     def refresh(self):
         """刷新frame页面"""
         self.doc_ele.run_js('this.location.reload();')
 
-    def attr(self, attr):
-        """返回frame元素attribute属性值
-        :param attr: 属性名
+    def property(self, name):
+        """返回frame元素一个property属性值
+        :param name: 属性名
         :return: 属性值文本，没有该属性返回None
         """
-        return self.frame_ele.attr(attr)
+        return self.frame_ele.property(name)
 
-    def remove_attr(self, attr):
+    def attr(self, name):
+        """返回frame元素一个attribute属性值
+        :param name: 属性名
+        :return: 属性值文本，没有该属性返回None
+        """
+        return self.frame_ele.attr(name)
+
+    def remove_attr(self, name):
         """删除frame元素attribute属性
-        :param attr: 属性名
+        :param name: 属性名
         :return: None
         """
-        self.frame_ele.remove_attr(attr)
+        self.frame_ele.remove_attr(name)
 
     def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
@@ -580,30 +594,3 @@ class ChromiumFrame(ChromiumBase):
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
         return self._frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])
-
-    # ----------------即将废弃-----------------
-
-    @property
-    def is_alive(self):
-        """返回是否仍可用"""
-        return self.states.is_alive
-
-    @property
-    def page_size(self):
-        """返回frame内页面尺寸，格式：(宽,, 高)"""
-        return self.rect.size
-
-    @property
-    def size(self):
-        """返回frame元素大小"""
-        return self.frame_ele.rect.size
-
-    @property
-    def location(self):
-        """返回frame元素左上角的绝对坐标"""
-        return self.frame_ele.rect.location
-
-    @property
-    def locations(self):
-        """返回用于获取元素位置的对象"""
-        return self.frame_ele.rect

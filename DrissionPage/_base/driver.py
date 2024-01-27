@@ -189,8 +189,9 @@ class Driver(object):
         timeout = kwargs.pop('_timeout', 30)
         result = self._send({'method': _method, 'params': kwargs}, timeout=timeout)
         if 'result' not in result and 'error' in result:
+            kwargs['_timeout'] = timeout
             return {'error': result['error']['message'], 'type': result.get('type', 'call_method_error'),
-                    'method': _method, 'args': kwargs, 'timeout': timeout}
+                    'method': _method, 'args': kwargs}
         else:
             return result['result']
 

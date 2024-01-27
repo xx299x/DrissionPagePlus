@@ -43,8 +43,7 @@ class BaseParser(object):
     def _ele(self, locator, timeout=None, index=1, raise_err=None, method=None):
         pass
 
-    @abstractmethod
-    def _find_elements(self, locator, timeout=None, index=1, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         pass
 
 
@@ -88,10 +87,6 @@ class BaseElement(BaseParser):
         r.method = method
         r.args = {'locator': locator, 'index': index}
         return r
-
-    @abstractmethod
-    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
-        pass
 
 
 class DrissionElement(BaseElement):
@@ -341,11 +336,14 @@ class DrissionElement(BaseElement):
         return
 
     @abstractmethod
-    def attr(self, attr: str):
+    def attr(self, name: str):
         return ''
 
     def _get_ele_path(self, mode):
         return ''
+
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
+        pass
 
 
 class BasePage(BaseParser):
@@ -381,11 +379,6 @@ class BasePage(BaseParser):
         self._timeout = second
 
     @property
-    def cookies(self):
-        """返回cookies"""
-        return self.get_cookies(True)
-
-    @property
     def url_available(self):
         """返回当前访问的url有效性"""
         return self._url_available
@@ -416,7 +409,7 @@ class BasePage(BaseParser):
         return
 
     @abstractmethod
-    def get_cookies(self, as_dict=False, all_info=False):
+    def cookies(self, as_dict=False, all_info=False):
         return {}
 
     @abstractmethod
@@ -445,7 +438,3 @@ class BasePage(BaseParser):
         r.method = method
         r.args = {'locator': locator, 'index': index}
         return r
-
-    @abstractmethod
-    def _find_elements(self, locator, timeout=None, index=1, raise_err=None):
-        pass

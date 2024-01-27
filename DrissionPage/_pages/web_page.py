@@ -127,11 +127,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         return self._mode
 
     @property
-    def cookies(self):
-        """以dict方式返回cookies"""
-        return super().cookies
-
-    @property
     def user_agent(self):
         """返回user agent"""
         if self._mode == 's':
@@ -281,7 +276,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 if go:
                     url = super(SessionPage, self).url
                     if url.startswith('http'):
-                        self.get(url)
+                        r = self.get(url)
+                        if not r:
+                            raise ConnectionError('s模式访问失败，请设置go=False，自行构造连接参数进行访问。')
 
     def cookies_to_session(self, copy_user_agent=True):
         """把driver对象的cookies复制到session对象
@@ -295,15 +292,15 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self._headers.update({"User-Agent": user_agent})
 
-        set_session_cookies(self.session, super(SessionPage, self).get_cookies())
+        set_session_cookies(self.session, super(SessionPage, self).cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
-        set_browser_cookies(self, super().get_cookies())
+        set_browser_cookies(self, super().cookies())
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
         :param as_dict: 是否以字典方式返回，False以list形式返回
         :param all_domains: 是否返回所有域的cookies
@@ -311,9 +308,9 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :return: cookies信息
         """
         if self._mode == 's':
-            return super().get_cookies(as_dict, all_domains, all_info)
+            return super().cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
+            return super(SessionPage, self).cookies(as_dict, all_domains, all_info)
 
     def get_tab(self, id_or_num=None):
         """获取一个标签页对象
@@ -408,3 +405,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def __repr__(self):
         return f'<WebPage browser_id={self.browser.id} tab_id={self.tab_id}>'
+
+    # -------即将废弃--------
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)

@@ -26,7 +26,7 @@ def connect_browser(option):
     :return: 返回是否接管的浏览器
     """
     address = option.address.replace('localhost', '127.0.0.1').lstrip('http://').lstrip('https://')
-    chrome_path = option.browser_path
+    browser_path = option.browser_path
 
     ip, port = address.split(':')
     if ip != '127.0.0.1' or port_is_using(ip, port) or option.is_existing_only:
@@ -43,16 +43,16 @@ def connect_browser(option):
     set_prefs(option)
     set_flags(option)
     try:
-        _run_browser(port, chrome_path, args)
+        _run_browser(port, browser_path, args)
 
     # 传入的路径找不到，主动在ini文件、注册表、系统变量中找
     except FileNotFoundError:
-        chrome_path = get_chrome_path()
+        browser_path = get_chrome_path(option.ini_path)
 
-        if not chrome_path:
+        if not browser_path:
             raise FileNotFoundError('无法找到浏览器可执行文件路径，请手动配置。')
 
-        _run_browser(port, chrome_path, args)
+        _run_browser(port, browser_path, args)
 
     test_connect(ip, port)
     return False
@@ -219,7 +219,7 @@ def test_connect(ip, port, timeout=30):
 
 
 def _run_browser(port, path: str, args) -> Popen:
-    """创建chrome进程
+    """创建浏览器进程
     :param port: 端口号
     :param path: 浏览器路径
     :param args: 启动参数
@@ -282,12 +282,13 @@ def _remove_arg_from_dict(target_dict: dict, arg: str) -> None:
         pass
 
 
-def get_chrome_path():
+def get_chrome_path(ini_path):
     """从ini文件或系统变量中获取chrome可执行文件的路径"""
     # -----------从ini文件中获取--------------
-    path = OptionsManager().chromium_options.get('browser_path', None)
-    if path and Path(path).is_file():
-        return str(path)
+    if ini_path:
+        path = OptionsManager(ini_path).chromium_options.get('browser_path', None)
+        if path and Path(path).is_file():
+            return str(path)
 
     # -----------使用which获取-----------
     from shutil import which

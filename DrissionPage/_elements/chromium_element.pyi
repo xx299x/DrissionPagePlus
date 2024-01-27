@@ -8,7 +8,6 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Literal, Optional
 
-from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
 from .._elements.session_element import SessionElement
 from .._pages.chromium_base import ChromiumBase
@@ -50,7 +49,7 @@ class ChromiumElement(DrissionElement):
     def __call__(self,
                  locator: Union[Tuple[str, str], str],
                  index: int = 1,
-                 timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
+                 timeout: float = None) -> ChromiumElement: ...
 
     def __eq__(self, other: ChromiumElement) -> bool: ...
 
@@ -73,7 +72,6 @@ class ChromiumElement(DrissionElement):
     def raw_text(self) -> str: ...
 
     # -----------------d模式独有属性-------------------
-
     @property
     def set(self) -> ChromiumElementSetter: ...
 
@@ -100,60 +98,60 @@ class ChromiumElement(DrissionElement):
 
     def parent(self,
                level_or_loc: Union[tuple, str, int] = 1,
-               index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+               index: int = 1) -> ChromiumElement: ...
 
     def child(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
+              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def prev(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
+             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def next(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
+             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def before(self,
-               locator: Union[tuple, str, int] = '',
+               locator: Union[Tuple[str, str], str, int] = '',
                index: int = 1,
                timeout: float = None,
-               ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
+               ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def after(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union[ChromiumElement, str, NoneElement]: ...
+              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def children(self,
-                 locator: Union[tuple, str] = '',
+                 locator: Union[Tuple[str, str], str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def prevs(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def nexts(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def befores(self,
-                locator: Union[tuple, str] = '',
+                locator: Union[Tuple[str, str], str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def afters(self,
-               locator: Union[tuple, str] = '',
+               locator: Union[Tuple[str, str], str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
@@ -163,13 +161,16 @@ class ChromiumElement(DrissionElement):
     @property
     def select(self) -> SelectElement: ...
 
+    @property
+    def value(self) -> None: ...
+
     def check(self, uncheck: bool = False, by_js: bool = False) -> None: ...
 
-    def attr(self, attr: str) -> Union[str, None]: ...
+    def attr(self, name: str) -> Union[str, None]: ...
 
-    def remove_attr(self, attr: str) -> None: ...
+    def remove_attr(self, name: str) -> None: ...
 
-    def prop(self, prop: str) -> Union[str, int, None]: ...
+    def property(self, name: str) -> Union[str, int, None]: ...
 
     def run_js(self, script: str, *args, as_expr: bool = False, timeout: float = None) -> Any: ...
 
@@ -178,7 +179,7 @@ class ChromiumElement(DrissionElement):
     def ele(self,
             locator: Union[Tuple[str, str], str],
             index: int = 1,
-            timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
+            timeout: float = None) -> ChromiumElement: ...
 
     def eles(self,
              locator: Union[Tuple[str, str], str],
@@ -186,7 +187,7 @@ class ChromiumElement(DrissionElement):
 
     def s_ele(self,
               locator: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> SessionElement: ...
 
     def s_eles(self, locator: Union[Tuple[str, str], str] = None) -> List[SessionElement]: ...
 
@@ -195,12 +196,12 @@ class ChromiumElement(DrissionElement):
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
-                       raise_err: bool = False) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
+                       raise_err: bool = False) -> Union[ChromiumElement, ChromiumFrame,
     List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def style(self, style: str, pseudo_ele: str = '') -> str: ...
 
-    def get_src(self, timeout: float = None, base64_to_bytes: bool = True) -> Union[bytes, str, None]: ...
+    def src(self, timeout: float = None, base64_to_bytes: bool = True) -> Union[bytes, str, None]: ...
 
     def save(self, path: [str, bool] = None, name: str = None, timeout: float = None) -> str: ...
 
@@ -273,33 +274,33 @@ class ShadowRoot(BaseElement):
     def parent(self, level_or_loc: Union[str, int] = 1, index: int = 1) -> ChromiumElement: ...
 
     def child(self,
-              locator: Union[tuple, str] = '',
-              index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+              locator: Union[Tuple[str, str], str] = '',
+              index: int = 1) -> ChromiumElement: ...
 
     def next(self,
-             locator: Union[tuple, str] = '',
-             index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+             locator: Union[Tuple[str, str], str] = '',
+             index: int = 1) -> ChromiumElement: ...
 
     def before(self,
-               locator: Union[tuple, str] = '',
-               index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+               locator: Union[Tuple[str, str], str] = '',
+               index: int = 1) -> ChromiumElement: ...
 
     def after(self,
-              locator: Union[tuple, str] = '',
-              index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+              locator: Union[Tuple[str, str], str] = '',
+              index: int = 1) -> ChromiumElement: ...
 
-    def children(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def children(self, locator: Union[Tuple[str, str], str] = '') -> List[ChromiumElement]: ...
 
-    def nexts(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def nexts(self, locator: Union[Tuple[str, str], str] = '') -> List[ChromiumElement]: ...
 
-    def befores(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def befores(self, locator: Union[Tuple[str, str], str] = '') -> List[ChromiumElement]: ...
 
-    def afters(self, locator: Union[tuple, str] = '') -> List[ChromiumElement]: ...
+    def afters(self, locator: Union[Tuple[str, str], str] = '') -> List[ChromiumElement]: ...
 
     def ele(self,
             locator: Union[Tuple[str, str], str],
             index: int = 1,
-            timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
+            timeout: float = None) -> ChromiumElement: ...
 
     def eles(self,
              locator: Union[Tuple[str, str], str],
@@ -307,7 +308,7 @@ class ShadowRoot(BaseElement):
 
     def s_ele(self,
               locator: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> SessionElement: ...
 
     def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
@@ -316,7 +317,7 @@ class ShadowRoot(BaseElement):
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
-                       raise_err: bool = None) -> Union[ChromiumElement, ChromiumFrame, NoneElement, str,
+                       raise_err: bool = None) -> Union[ChromiumElement, ChromiumFrame, str,
     List[Union[ChromiumElement, ChromiumFrame, str]]]: ...
 
     def _get_node_id(self, obj_id: str) -> int: ...
@@ -330,28 +331,27 @@ def find_in_chromium_ele(ele: ChromiumElement,
                          loc: Union[str, Tuple[str, str]],
                          index: Optional[int] = 1,
                          timeout: float = None,
-                         relative: bool = True) -> Union[ChromiumElement, NoneElement, List[ChromiumElement]]: ...
+                         relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement]]: ...
 
 
 def find_by_xpath(ele: ChromiumElement,
                   xpath: str,
                   index: Optional[int],
                   timeout: float,
-                  relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
+                  relative: bool = True) -> Union[ChromiumElement, List[ChromiumElement]]: ...
 
 
 def find_by_css(ele: ChromiumElement,
                 selector: str,
                 index: Optional[int],
-                timeout: float) -> Union[ChromiumElement, List[ChromiumElement], NoneElement]: ...
+                timeout: float) -> Union[ChromiumElement, List[ChromiumElement],]: ...
 
 
 def make_chromium_eles(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                        _ids: Union[tuple, list, str, int],
                        index: Optional[int] = 1,
                        is_obj_id: bool = True
-                       ) -> Union[ChromiumElement, ChromiumFrame, NoneElement,
-List[Union[ChromiumElement, ChromiumFrame]]]: ...
+                       ) -> Union[ChromiumElement, ChromiumFrame, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
 
 def make_js_for_find_ele_by_xpath(xpath: str, type_txt: str, node_txt: str) -> str: ...

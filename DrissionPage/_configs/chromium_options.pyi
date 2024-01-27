@@ -109,7 +109,9 @@ class ChromiumOptions(object):
 
     def clear_flags_in_file(self) -> ChromiumOptions: ...
 
-    def set_timeouts(self, base: float = None, pageLoad: float = None,
+    def set_timeouts(self, 
+                     base: float = None, 
+                     page_load: float = None,
                      script: float = None) -> ChromiumOptions: ...
 
     def set_user(self, user: str = 'Default') -> ChromiumOptions: ...

@@ -47,8 +47,11 @@ class SessionPage(BasePage):
         :param session_or_options: Session、SessionOptions对象
         :return: None
         """
-        if not session_or_options or isinstance(session_or_options, SessionOptions):
-            self._session_options = session_or_options or SessionOptions(session_or_options)
+        if not session_or_options:
+            self._session_options = SessionOptions(session_or_options)
+
+        elif isinstance(session_or_options, SessionOptions):
+            self._session_options = session_or_options
 
         elif isinstance(session_or_options, Session):
             self._session_options = SessionOptions()
@@ -208,7 +211,7 @@ class SessionPage(BasePage):
         """
         return self._ele(locator, index=None)
 
-    def _find_elements(self, locator, timeout=None, index=1, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=True, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
         :param locator: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
@@ -218,7 +221,7 @@ class SessionPage(BasePage):
         """
         return locator if isinstance(locator, SessionElement) else make_session_ele(self, locator, index=index)
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
         :param as_dict: 是否以字典方式返回，False则以list返回
         :param all_domains: 是否返回所有域的cookies
@@ -310,7 +313,7 @@ class SessionPage(BasePage):
         parsed_url = urlparse(url)
         hostname = parsed_url.hostname
         scheme = parsed_url.scheme
-        if not check_headers(kwargs, self._headers, 'Referer'):
+        if not check_headers(kwargs['headers'], self._headers, 'Referer'):
             kwargs['headers']['Referer'] = self.url if self.url else f'{scheme}://{hostname}'
         if 'Host' not in kwargs['headers']:
             kwargs['headers']['Host'] = hostname
@@ -364,10 +367,14 @@ class SessionPage(BasePage):
     def __repr__(self):
         return f'<SessionPage url={self.url}>'
 
+    # ---------即将废弃---------
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
+
 
 def check_headers(kwargs, headers, arg):
     """检查kwargs或headers中是否有arg所示属性"""
-    return arg in kwargs['headers'] or arg in headers
+    return arg in kwargs or arg in headers
 
 
 def set_charset(response):

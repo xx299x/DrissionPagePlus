@@ -19,7 +19,7 @@ from .._units.waiter import PageWaiter
 
 
 class ChromiumPage(ChromiumBase):
-    PAGES: dict = ...
+    _PAGES: dict = ...
 
     def __new__(cls,
                 addr_or_opts: Union[str, int, ChromiumOptions] = None,
@@ -54,9 +54,6 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def wait(self) -> PageWaiter: ...
-
-    @property
-    def main_tab(self) -> str: ...
 
     @property
     def latest_tab(self) -> str: ...

@@ -6,7 +6,6 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
-from threading import Lock
 from typing import Union, Tuple, Any, List, Optional
 
 from requests import Session, Response
@@ -18,7 +17,6 @@ from .session_page import SessionPage
 from .web_page import WebPage
 from .._base.browser import Browser
 from .._elements.chromium_element import ChromiumElement
-from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.rect import TabRect
 from .._units.setter import TabSetter, WebPageTabSetter
@@ -26,8 +24,7 @@ from .._units.waiter import TabWaiter
 
 
 class ChromiumTab(ChromiumBase):
-    TABS: dict = ...
-    LOCK: Lock = ...
+    _TABS: dict = ...
 
     def __new__(cls, page: ChromiumPage, tab_id: str): ...
 
@@ -82,7 +79,7 @@ class WebPageTab(SessionPage, ChromiumTab):
     def __call__(self,
                  locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
                  index: int = 1,
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     @property
     def page(self) -> WebPage: ...
@@ -110,9 +107,6 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     @property
     def mode(self) -> str: ...
-
-    @property
-    def cookies(self) -> dict: ...
 
     @property
     def user_agent(self) -> str: ...
@@ -152,7 +146,7 @@ class WebPageTab(SessionPage, ChromiumTab):
     def ele(self,
             locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
             index: int = 1,
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+            timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     def eles(self,
              locator: Union[Tuple[str, str], str],
@@ -160,7 +154,7 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def s_ele(self,
               locator: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> SessionElement: ...
 
     def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
@@ -170,8 +164,8 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def cookies_to_browser(self) -> None: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
-                    all_info: bool = False) -> Union[dict, list]: ...
+    def cookies(self, as_dict: bool = False, all_domains: bool = False,
+                all_info: bool = False) -> Union[dict, list]: ...
 
     def close(self) -> None: ...
 
@@ -205,5 +199,5 @@ class WebPageTab(SessionPage, ChromiumTab):
                        index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) \
-            -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement], List[
+            -> Union[ChromiumElement, SessionElement, ChromiumFrame, List[SessionElement], List[
                 Union[ChromiumElement, ChromiumFrame]]]: ...

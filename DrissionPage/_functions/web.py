@@ -161,8 +161,8 @@ def is_js_func(func):
     func = func.strip()
     if (func.startswith('function') or func.startswith('async ')) and func.endswith('}'):
         return True
-    elif '=>' in func:
-        return True
+    # elif '=>' in func:
+    #     return True
     return False
 
 
@@ -361,3 +361,5 @@ def get_blob(page, url, as_bytes=True):
     if as_bytes:
         from base64 import b64decode
         return b64decode(result.split(',', 1)[-1])
+    else:
+        return result

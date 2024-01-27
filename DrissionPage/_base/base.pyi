@@ -34,17 +34,17 @@ class BaseParser(object):
     def s_eles(self, locator: Union[Tuple[str, str], str]): ...
 
     def _ele(self,
-             locator,
+             locator: Union[Tuple[str, str], str],
              timeout: float = None,
              index: Optional[int] = 1,
              raise_err: bool = None,
              method: str = None): ...
 
-    @abstractmethod
     def _find_elements(self,
-                       locator,
+                       locator: Union[Tuple[str, str], str],
                        timeout: float = None,
                        index: Optional[int] = 1,
+                       relative: bool = False,
                        raise_err: bool = None): ...
 
 
@@ -64,14 +64,6 @@ class BaseElement(BaseParser):
              relative: bool = False,
              raise_err: bool = None,
              method: str = None): ...
-
-    @abstractmethod
-    def _find_elements(self,
-                       locator,
-                       timeout: float = None,
-                       index: Optional[int] = 1,
-                       relative: bool = False,
-                       raise_err: bool = None): ...
 
     def parent(self, level_or_loc: Union[tuple, str, int] = 1): ...
 
@@ -109,57 +101,57 @@ class DrissionElement(BaseElement):
                index: int = 1) -> Union[DrissionElement, None]: ...
 
     def child(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def prev(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def next(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
              ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def before(self,
-               locator: Union[tuple, str, int] = '',
+               locator: Union[Tuple[str, str], str, int] = '',
                index: int = 1,
                timeout: float = None,
                ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def after(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
               ele_only: bool = True) -> Union[DrissionElement, str, NoneElement]: ...
 
     def children(self,
-                 locator: Union[tuple, str] = '',
+                 locator: Union[Tuple[str, str], str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def prevs(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def nexts(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def befores(self,
-                locator: Union[tuple, str] = '',
+                locator: Union[Tuple[str, str], str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
     def afters(self,
-               locator: Union[tuple, str] = '',
+               locator: Union[Tuple[str, str], str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[DrissionElement, str]]: ...
 
@@ -167,14 +159,14 @@ class DrissionElement(BaseElement):
                       func: str,
                       direction: str,
                       brother: bool,
-                      locator: Union[tuple, str] = '',
+                      locator: Union[Tuple[str, str], str] = '',
                       index: int = 1,
                       timeout: float = None,
                       ele_only: bool = True) -> DrissionElement: ...
 
     def _get_relatives(self,
                        index: int = None,
-                       locator: Union[tuple, str] = '',
+                       locator: Union[Tuple[str, str], str] = '',
                        direction: str = 'following',
                        brother: bool = True,
                        timeout: float = 0.5,
@@ -191,7 +183,7 @@ class DrissionElement(BaseElement):
     def raw_text(self) -> str: ...
 
     @abstractmethod
-    def attr(self, attr: str) -> str: ...
+    def attr(self, name: str) -> str: ...
 
     def _get_ele_path(self, mode) -> str: ...
 
@@ -218,9 +210,6 @@ class BasePage(BaseParser):
     def timeout(self, second: float) -> None: ...
 
     @property
-    def cookies(self) -> dict: ...
-
-    @property
     def url_available(self) -> bool: ...
 
     @property
@@ -240,7 +229,7 @@ class BasePage(BaseParser):
     def user_agent(self) -> str: ...
 
     @abstractmethod
-    def get_cookies(self, as_dict: bool = False, all_info: bool = False) -> Union[list, dict]: ...
+    def cookies(self, as_dict: bool = False, all_info: bool = False) -> Union[list, dict]: ...
 
     @abstractmethod
     def get(self, url: str, show_errmsg: bool = False, retry: int = None, interval: float = None): ...
@@ -251,10 +240,3 @@ class BasePage(BaseParser):
              index: Optional[int] = 1,
              raise_err: bool = None,
              method: str = None): ...
-
-    @abstractmethod
-    def _find_elements(self,
-                       locator,
-                       timeout: float = None,
-                       index: Optional[int] = 1,
-                       raise_err: bool = None): ...

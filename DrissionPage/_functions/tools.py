@@ -112,7 +112,7 @@ def show_or_hide_browser(page, hide=True):
     pid = page.process_id
     if not pid:
         return None
-    hds = get_chrome_hwnds_from_pid(pid, page.title)
+    hds = get_hwnds_from_pid(pid, page.title)
     sw = SW_HIDE if hide else SW_SHOW
     for hd in hds:
         ShowWindow(hd, sw)
@@ -141,7 +141,7 @@ def get_browser_progress_id(progress, address):
     return txt.split(' ')[-1]
 
 
-def get_chrome_hwnds_from_pid(pid, title):
+def get_hwnds_from_pid(pid, title):
     """通过PID查询句柄ID
     :param pid: 进程id
     :param title: 窗口标题
@@ -240,11 +240,11 @@ def raise_error(result, ignore=None):
     elif error == 'Given expression does not evaluate to a function':
         r = JavaScriptError(f'传入的js无法解析成函数：\n{result["args"]["functionDeclaration"]}')
     elif error.endswith("' wasn't found"):
-        r = RuntimeError(f'你的浏览器可能太旧。\nmethod：{result["method"]}\nargs：{result["args"]}')
+        r = RuntimeError(f'你的浏览器可能太旧。\n方法：{result["method"]}\n参数：{result["args"]}')
     elif result['type'] in ('call_method_error', 'timeout'):
         from DrissionPage import __version__
         from time import process_time
-        txt = f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n' \
+        txt = f'\n错误：{result["error"]}\n方法：{result["method"]}\n参数：{result["args"]}\n' \
               f'版本：{__version__}\n运行时间：{process_time()}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法' \
               '告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues'
         r = TimeoutError(txt) if result['type'] == 'timeout' else CDPError(txt)

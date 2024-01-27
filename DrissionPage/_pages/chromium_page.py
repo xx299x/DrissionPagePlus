@@ -24,7 +24,7 @@ from ..errors import BrowserConnectError
 
 class ChromiumPage(ChromiumBase):
     """用于管理浏览器的类"""
-    PAGES = {}
+    _PAGES = {}
 
     def __new__(cls, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
         """
@@ -35,8 +35,8 @@ class ChromiumPage(ChromiumBase):
         addr_or_opts = addr_or_opts or addr_driver_opts
         opt = handle_options(addr_or_opts)
         is_exist, browser_id = run_browser(opt)
-        if browser_id in cls.PAGES:
-            r = cls.PAGES[browser_id]
+        if browser_id in cls._PAGES:
+            r = cls._PAGES[browser_id]
             while not hasattr(r, '_frame_id'):
                 sleep(.1)
             return r
@@ -45,7 +45,7 @@ class ChromiumPage(ChromiumBase):
         r._is_exist = is_exist
         r._browser_id = browser_id
         r.address = opt.address
-        cls.PAGES[browser_id] = r
+        cls._PAGES[browser_id] = r
         return r
 
     def __init__(self, addr_or_opts=None, tab_id=None, timeout=None, addr_driver_opts=None):
@@ -79,7 +79,7 @@ class ChromiumPage(ChromiumBase):
 
     def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""
-        self._timeouts = Timeout(self, page_load=self._chromium_options.timeouts['pageLoad'],
+        self._timeouts = Timeout(self, page_load=self._chromium_options.timeouts['page_load'],
                                  script=self._chromium_options.timeouts['script'],
                                  base=self._chromium_options.timeouts['base'])
         if self._chromium_options.timeouts['base'] is not None:
@@ -255,7 +255,7 @@ class ChromiumPage(ChromiumBase):
 
     def _on_disconnect(self):
         """浏览器退出时执行"""
-        ChromiumPage.PAGES.pop(self._browser_id, None)
+        ChromiumPage._PAGES.pop(self._browser_id, None)
 
     def __repr__(self):
         return f'<ChromiumPage browser_id={self.browser.id} tab_id={self.tab_id}>'

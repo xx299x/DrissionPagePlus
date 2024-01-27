@@ -26,7 +26,7 @@ class ChromiumOptions(object):
         if read_file is not False:
             ini_path = str(ini_path) if ini_path else None
             om = OptionsManager(ini_path)
-            self.ini_path = om.ini_path
+            self.ini_path = str(Path(om.ini_path).absolute())
 
             options = om.chromium_options
             self._download_path = om.paths.get('download_path', None) or None
@@ -56,7 +56,7 @@ class ChromiumOptions(object):
 
             timeouts = om.timeouts
             self._timeouts = {'base': timeouts['base'],
-                              'pageLoad': timeouts['page_load'],
+                              'page_load': timeouts['page_load'],
                               'script': timeouts['script']}
 
             self._auto_port = options.get('auto_port', False)
@@ -75,7 +75,7 @@ class ChromiumOptions(object):
         self._extensions = []
         self._prefs = {}
         self._flags = {}
-        self._timeouts = {'base': 10, 'pageLoad': 30, 'script': 30}
+        self._timeouts = {'base': 10, 'page_load': 30, 'script': 30}
         self._address = '127.0.0.1:9222'
         self._load_mode = 'normal'
         self._proxy = None
@@ -278,18 +278,18 @@ class ChromiumOptions(object):
         self.clear_file_flags = True
         return self
 
-    def set_timeouts(self, base=None, pageLoad=None, script=None, implicit=None):
+    def set_timeouts(self, base=None, page_load=None, script=None, implicit=None):
         """设置超时时间，单位为秒
         :param base: 默认超时时间
-        :param pageLoad: 页面加载超时时间
+        :param page_load: 页面加载超时时间
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
         base = base if base is not None else implicit
         if base is not None:
             self._timeouts['base'] = base
-        if pageLoad is not None:
-            self._timeouts['pageLoad'] = pageLoad
+        if page_load is not None:
+            self._timeouts['page_load'] = page_load
         if script is not None:
             self._timeouts['script'] = script
 
@@ -545,7 +545,7 @@ class ChromiumOptions(object):
         om.set_item('paths', 'tmp_path', self._tmp_path or '')
         # 设置timeout
         om.set_item('timeouts', 'base', self._timeouts['base'])
-        om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
+        om.set_item('timeouts', 'page_load', self._timeouts['page_load'])
         om.set_item('timeouts', 'script', self._timeouts['script'])
         # 设置重试
         om.set_item('others', 'retry_times', self.retry_times)

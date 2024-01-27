@@ -5,7 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
-from typing import Union, Optional
+from typing import Optional
 
 from .._elements.chromium_element import ChromiumElement
 

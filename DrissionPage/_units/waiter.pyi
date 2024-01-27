@@ -5,7 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
-from typing import Union
+from typing import Union, Tuple
 
 from .downloader import DownloadMission
 from .._elements.chromium_element import ChromiumElement
@@ -34,7 +34,7 @@ class BaseWaiter(object):
                    raise_err: bool = None) -> bool: ...
 
     def ele_loaded(self,
-                   locator: Union[str, tuple],
+                   locator: Union[Tuple[str, str], str],
                    timeout: float = None,
                    raise_err: bool = None) -> Union[bool, ChromiumElement]: ...
 

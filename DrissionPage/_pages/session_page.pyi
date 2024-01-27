@@ -13,7 +13,6 @@ from requests.structures import CaseInsensitiveDict
 
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
-from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.setter import SessionPageSetter
 
@@ -43,7 +42,7 @@ class SessionPage(BasePage):
     def __call__(self,
                  locator: Union[Tuple[str, str], str, SessionElement],
                  index: int = 1,
-                 timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+                 timeout: float = None) -> SessionElement: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -93,7 +92,7 @@ class SessionPage(BasePage):
     def ele(self,
             locator: Union[Tuple[str, str], str, SessionElement],
             index: int = 1,
-            timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+            timeout: float = None) -> SessionElement: ...
 
     def eles(self,
              locator: Union[Tuple[str, str], str],
@@ -101,7 +100,7 @@ class SessionPage(BasePage):
 
     def s_ele(self,
               locator: Union[Tuple[str, str], str, SessionElement] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> SessionElement: ...
 
     def s_eles(self, loc: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
@@ -109,10 +108,11 @@ class SessionPage(BasePage):
                        locator: Union[Tuple[str, str], str, SessionElement],
                        timeout: float = None,
                        index: Optional[int] = 1,
+                       relative: bool = True,
                        raise_err: bool = None) \
-            -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+            -> Union[SessionElement, List[SessionElement]]: ...
 
-    def get_cookies(self,
+    def cookies(self,
                     as_dict: bool = False,
                     all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...

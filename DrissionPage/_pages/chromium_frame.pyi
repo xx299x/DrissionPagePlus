@@ -13,7 +13,6 @@ from .chromium_page import ChromiumPage
 from .chromium_tab import ChromiumTab
 from .web_page import WebPage
 from .._elements.chromium_element import ChromiumElement
-from .._elements.none_element import NoneElement
 from .._units.listener import FrameListener
 from .._units.rect import FrameRect
 from .._units.scroller import FrameScroller
@@ -32,6 +31,7 @@ class ChromiumFrame(ChromiumBase):
         self._target_page: ChromiumBase = ...
         self.tab: ChromiumTab = ...
         self._tab_id: str = ...
+        self._set: ChromiumFrameSetter = ...
         self._frame_ele: ChromiumElement = ...
         self._backend_id: int = ...
         self._doc_ele: ChromiumElement = ...
@@ -45,7 +45,7 @@ class ChromiumFrame(ChromiumBase):
     def __call__(self,
                  locator: Union[Tuple[str, str], str],
                  index: int = 1,
-                 timeout: float = None) -> Union[ChromiumElement, NoneElement]: ...
+                 timeout: float = None) -> ChromiumElement: ...
 
     def __eq__(self, other: ChromiumFrame) -> bool: ...
 
@@ -85,9 +85,6 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def title(self) -> str: ...
-
-    @property
-    def cookies(self) -> dict: ...
 
     @property
     def attrs(self) -> dict: ...
@@ -133,9 +130,11 @@ class ChromiumFrame(ChromiumBase):
 
     def refresh(self) -> None: ...
 
-    def attr(self, attr: str) -> Union[str, None]: ...
+    def property(self, name: str) -> Union[str, None]: ...
 
-    def remove_attr(self, attr: str) -> None: ...
+    def attr(self, name: str) -> Union[str, None]: ...
+
+    def remove_attr(self, name: str) -> None: ...
 
     def run_js(self,
                script: str,
@@ -144,50 +143,50 @@ class ChromiumFrame(ChromiumBase):
                timeout: float = None) -> Any: ...
 
     def parent(self,
-               level_or_loc: Union[tuple, str, int] = 1,
-               index: int = 1) -> Union[ChromiumElement, NoneElement]: ...
+               level_or_loc: Union[Tuple[str, str], str, int] = 1,
+               index: int = 1) -> ChromiumElement: ...
 
     def prev(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = 0,
-             ele_only: bool = True) -> Union[ChromiumElement, NoneElement, str]: ...
+             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def next(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = 0,
-             ele_only: bool = True) -> Union[ChromiumElement, NoneElement, str]: ...
+             ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def before(self,
-               locator: Union[tuple, str, int] = '',
+               locator: Union[Tuple[str, str], str, int] = '',
                index: int = 1,
                timeout: float = None,
-               ele_only: bool = True) -> Union[ChromiumElement, NoneElement, str]: ...
+               ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def after(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union[ChromiumElement, NoneElement, str]: ...
+              ele_only: bool = True) -> Union[ChromiumElement, str]: ...
 
     def prevs(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = 0,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def nexts(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = 0,
               ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def befores(self,
-                locator: Union[tuple, str] = '',
+                locator: Union[Tuple[str, str], str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 
     def afters(self,
-               locator: Union[tuple, str] = '',
+               locator: Union[Tuple[str, str], str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[ChromiumElement, str]]: ...
 

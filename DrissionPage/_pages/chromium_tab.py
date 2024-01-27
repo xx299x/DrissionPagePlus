@@ -20,20 +20,20 @@ from .._units.waiter import TabWaiter
 
 class ChromiumTab(ChromiumBase):
     """实现浏览器标签页的类"""
-    TABS = {}
+    _TABS = {}
 
     def __new__(cls, page, tab_id):
         """
         :param page: ChromiumPage对象
         :param tab_id: 要控制的标签页id
         """
-        if Settings.singleton_tab_obj and tab_id in cls.TABS:
-            r = cls.TABS[tab_id]
+        if Settings.singleton_tab_obj and tab_id in cls._TABS:
+            r = cls._TABS[tab_id]
             while not hasattr(r, '_frame_id'):
                 sleep(.1)
             return r
         r = object.__new__(cls)
-        cls.TABS[tab_id] = r
+        cls._TABS[tab_id] = r
         return r
 
     def __init__(self, page, tab_id):
@@ -96,7 +96,7 @@ class ChromiumTab(ChromiumBase):
         return f'<ChromiumTab browser_id={self.browser.id} tab_id={self.tab_id}>'
 
     def _on_disconnect(self):
-        ChromiumTab.TABS.pop(self.tab_id, None)
+        ChromiumTab._TABS.pop(self.tab_id, None)
 
 
 class WebPageTab(SessionPage, ChromiumTab, BasePage):
@@ -187,11 +187,6 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
     def mode(self):
         """返回当前模式，'s'或'd' """
         return self._mode
-
-    @property
-    def cookies(self):
-        """以dict方式返回cookies"""
-        return super().cookies
 
     @property
     def user_agent(self):
@@ -357,15 +352,15 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
             user_agent = self.run_cdp('Runtime.evaluate', expression='navigator.userAgent;')['result']['value']
             self._headers.update({"User-Agent": user_agent})
 
-        set_session_cookies(self.session, super(SessionPage, self).get_cookies())
+        set_session_cookies(self.session, super(SessionPage, self).cookies())
 
     def cookies_to_browser(self):
         """把session对象的cookies复制到浏览器"""
         if not self._has_driver:
             return
-        set_browser_cookies(self, super().get_cookies())
+        set_browser_cookies(self, super().cookies())
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
         :param as_dict: 是否以字典方式返回
         :param all_domains: 是否返回所有域的cookies
@@ -373,9 +368,9 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         :return: cookies信息
         """
         if self._mode == 's':
-            return super().get_cookies(as_dict, all_domains, all_info)
+            return super().cookies(as_dict, all_domains, all_info)
         elif self._mode == 'd':
-            return super(SessionPage, self).get_cookies(as_dict, all_domains, all_info)
+            return super(SessionPage, self).cookies(as_dict, all_domains, all_info)
 
     def close(self):
         """关闭当前标签页"""
@@ -400,3 +395,7 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
 
     def __repr__(self):
         return f'<WebPageTab browser_id={self.browser.id} tab_id={self.tab_id}>'
+
+    # --------即将废弃-------
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)

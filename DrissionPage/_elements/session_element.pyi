@@ -9,7 +9,6 @@ from typing import Union, List, Tuple, Optional
 
 from lxml.html import HtmlElement
 
-from .none_element import NoneElement
 from .._base.base import DrissionElement, BaseElement
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
@@ -31,7 +30,7 @@ class SessionElement(DrissionElement):
     def __call__(self,
                  locator: Union[Tuple[str, str], str],
                  index: int = 1,
-                 timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+                 timeout: float = None) -> SessionElement: ...
 
     def __eq__(self, other: SessionElement) -> bool: ...
 
@@ -55,69 +54,69 @@ class SessionElement(DrissionElement):
 
     def parent(self,
                level_or_loc: Union[tuple, str, int] = 1,
-               index: int = 1) -> Union[SessionElement, NoneElement]: ...
+               index: int = 1) -> SessionElement: ...
 
     def child(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
+              ele_only: bool = True) -> Union[SessionElement, str]: ...
 
     def prev(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
+             ele_only: bool = True) -> Union[SessionElement, str]: ...
 
     def next(self,
-             locator: Union[tuple, str, int] = '',
+             locator: Union[Tuple[str, str], str, int] = '',
              index: int = 1,
              timeout: float = None,
-             ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
+             ele_only: bool = True) -> Union[SessionElement, str]: ...
 
     def before(self,
-               locator: Union[tuple, str, int] = '',
+               locator: Union[Tuple[str, str], str, int] = '',
                index: int = 1,
                timeout: float = None,
-               ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
+               ele_only: bool = True) -> Union[SessionElement, str]: ...
 
     def after(self,
-              locator: Union[tuple, str, int] = '',
+              locator: Union[Tuple[str, str], str, int] = '',
               index: int = 1,
               timeout: float = None,
-              ele_only: bool = True) -> Union[SessionElement, str, NoneElement]: ...
+              ele_only: bool = True) -> Union[SessionElement, str]: ...
 
     def children(self,
-                 locator: Union[tuple, str] = '',
+                 locator: Union[Tuple[str, str], str] = '',
                  timeout: float = None,
                  ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def prevs(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def nexts(self,
-              locator: Union[tuple, str] = '',
+              locator: Union[Tuple[str, str], str] = '',
               timeout: float = None,
               ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def befores(self,
-                locator: Union[tuple, str] = '',
+                locator: Union[Tuple[str, str], str] = '',
                 timeout: float = None,
                 ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
     def afters(self,
-               locator: Union[tuple, str] = '',
+               locator: Union[Tuple[str, str], str] = '',
                timeout: float = None,
                ele_only: bool = True) -> List[Union[SessionElement, str]]: ...
 
-    def attr(self, attr: str) -> Optional[str]: ...
+    def attr(self, name: str) -> Optional[str]: ...
 
     def ele(self,
             locator: Union[Tuple[str, str], str],
             index: int = 1,
-            timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+            timeout: float = None) -> SessionElement: ...
 
     def eles(self,
              locator: Union[Tuple[str, str], str],
@@ -125,7 +124,7 @@ class SessionElement(DrissionElement):
 
     def s_ele(self,
               locator: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              index: int = 1) -> SessionElement: ...
 
     def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
@@ -134,7 +133,7 @@ class SessionElement(DrissionElement):
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
-                       raise_err: bool = None) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+                       raise_err: bool = None) -> Union[SessionElement, List[SessionElement]]: ...
 
     def _get_ele_path(self, mode: str) -> str: ...
 
@@ -142,4 +141,4 @@ class SessionElement(DrissionElement):
 def make_session_ele(html_or_ele: Union[str, SessionElement, SessionPage, ChromiumElement, BaseElement, ChromiumFrame,
 ChromiumBase],
                      loc: Union[str, Tuple[str, str]] = None,
-                     index: Optional[int] = 1) -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+                     index: Optional[int] = 1) -> Union[SessionElement, List[SessionElement]]: ...

@@ -119,6 +119,8 @@ class BaseWaiter(object):
         :param cancel_it: 是否取消该任务
         :return: 成功返回任务对象，失败返回False
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         self._driver.browser._dl_mgr.set_flag(self._driver.tab_id, False if cancel_it else True)
         if timeout is None:
             timeout = self._driver.timeout
@@ -232,6 +234,8 @@ class TabWaiter(BaseWaiter):
         :param cancel_if_timeout: 超时时是否取消剩余任务
         :return: 是否等待成功
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr.get_tab_missions(self._driver.tab_id):
                 sleep(.5)
@@ -290,6 +294,8 @@ class PageWaiter(TabWaiter):
         :param cancel_if_timeout: 超时时是否取消剩余任务
         :return: 是否等待成功
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr._missions:
                 sleep(.5)
@@ -458,7 +464,8 @@ class ElementWaiter(object):
             timeout = self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._ele.states.__getattribute__(attr) == mode:
+            a = self._ele.states.__getattribute__(attr)
+            if (a and mode) or (not a and not mode):
                 return True
             sleep(.05)
 

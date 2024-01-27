@@ -474,8 +474,8 @@ class ChromiumBase(BasePage):
                                               show_errmsg=show_errmsg, timeout=timeout)
         return self._url_available
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
-        """获取cookies信息
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
+        """返回cookies信息
         :param as_dict: 为True时返回由{name: value}键值对组成的dict，为True时返回list且all_info无效
         :param all_domains: 是否返回所有域的cookies
         :param all_info: 是否返回所有信息，为False时只返回name、value、domain
@@ -722,8 +722,8 @@ class ChromiumBase(BasePage):
         frames = self._ele(locator, timeout=timeout, index=None, raise_err=False)
         return [i for i in frames if i._type == 'ChromiumFrame']
 
-    def get_session_storage(self, item=None):
-        """获取sessionStorage信息，不设置item则获取全部
+    def session_storage(self, item=None):
+        """返回sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
@@ -743,8 +743,8 @@ class ChromiumBase(BasePage):
             '''
             return {i['key']: i['val'] for i in self.run_js_loaded(js)}
 
-    def get_local_storage(self, item=None):
-        """获取localStorage信息，不设置item则获取全部
+    def local_storage(self, item=None):
+        """返回localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
@@ -930,7 +930,11 @@ class ChromiumBase(BasePage):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
+        p = Path(url)
+        if p.exists():
+            self._url = str(p.absolute())
+        else:
+            self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval
@@ -1033,11 +1037,12 @@ class ChromiumBase(BasePage):
             pic_type = path.suffix.lower()
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
-        width, height = self.rect.size
         if full_page:
+            width, height = self.rect.size
+            if width == 0 or height == 0:
+                raise RuntimeError('页面大小为0，请尝试等待页面加载完成。')
             vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
-            png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                      captureBeyondViewport=True, clip=vp)['data']
+            args = {'format': pic_type, 'captureBeyondViewport': True, 'clip': vp}
         else:
             if left_top and right_bottom:
                 x, y = left_top
@@ -1051,11 +1056,14 @@ class ChromiumBase(BasePage):
                     x += 10
 
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
-                png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=v, clip=vp)['data']
+                args = {'format': pic_type, 'captureBeyondViewport': v, 'clip': vp}
 
             else:
-                png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
+                args = {'format': pic_type}
+
+        if pic_type == 'jpeg':
+            args['quality'] = 100
+        png = self.run_cdp_loaded('Page.captureScreenshot', **args)['data']
 
         if as_base64:
             return png
@@ -1094,6 +1102,15 @@ class ChromiumBase(BasePage):
     def size(self):
         """返回页面总宽高，格式：(宽, 高)"""
         return self.rect.size
+
+    def get_session_storage(self, item=None):
+        return self.session_storage(item)
+
+    def get_local_storage(self, item=None):
+        return self.local_storage(item)
+
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
 
 
 class Timeout(object):

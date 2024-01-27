@@ -171,28 +171,27 @@ class SessionOptions(object):
             self._headers = {key.lower(): headers[key] for key in headers}
         return self
 
-    def set_a_header(self, attr, value):
+    def set_a_header(self, name, value):
         """设置headers中一个项
-        :param attr: 设置名称
+        :param name: 设置名称
         :param value: 设置值
         :return: 返回当前对象
         """
         if self._headers is None:
             self._headers = {}
 
-        self._headers[attr.lower()] = value
+        self._headers[name.lower()] = value
         return self
 
-    def remove_a_header(self, attr):
+    def remove_a_header(self, name):
         """从headers中删除一个设置
-        :param attr: 要删除的设置
+        :param name: 要删除的设置
         :return: 返回当前对象
         """
         if self._headers is None:
             return self
 
-        attr = attr.lower()
-        self._headers.pop(attr, None)
+        self._headers.pop(name.lower(), None)
 
         return self
 

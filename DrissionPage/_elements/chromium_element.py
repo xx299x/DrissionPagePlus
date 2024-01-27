@@ -78,8 +78,7 @@ class ChromiumElement(DrissionElement):
         self._doc_id = doc['objectId'] if doc else None
 
     def __repr__(self):
-        attrs = self.attrs
-        attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
+        attrs = [f"{k}='{v}'" for k, v in self.attrs.items()]
         return f'<ChromiumElement {self.tag} {" ".join(attrs)}>'
 
     def __call__(self, locator, index=1, timeout=None):
@@ -128,10 +127,9 @@ class ChromiumElement(DrissionElement):
     @property
     def raw_text(self):
         """返回未格式化处理的元素内文本"""
-        return self.prop('innerText')
+        return self.property('innerText')
 
     # -----------------d模式独有属性-------------------
-
     @property
     def set(self):
         """返回用于设置元素属性的对象"""
@@ -205,6 +203,29 @@ class ChromiumElement(DrissionElement):
                 self._select = SelectElement(self)
 
         return self._select
+
+    @property
+    def value(self):
+        return self.property('value')
+
+    # -----即将废弃开始--------
+    @property
+    def location(self):
+        """返回元素左上角的绝对坐标"""
+        return self.rect.location
+
+    @property
+    def size(self):
+        """返回元素宽和高组成的元组"""
+        return self.rect.size
+
+    def prop(self, prop):
+        return self.property(prop)
+
+    def get_src(self, timeout=None, base64_to_bytes=True):
+        return self.src(timeout=timeout, base64_to_bytes=base64_to_bytes)
+
+    # -----即将废弃结束--------
 
     def check(self, uncheck=False, by_js=False):
         """选中或取消选中当前元素
@@ -345,10 +366,10 @@ class ChromiumElement(DrissionElement):
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
             else:
-                return make_absolute_link(link, self.prop('baseURI'))
+                return make_absolute_link(link, self.property('baseURI'))
 
         elif attr == 'src':
-            return make_absolute_link(attrs.get('src', None), self.prop('baseURI'))
+            return make_absolute_link(attrs.get('src', None), self.property('baseURI'))
 
         elif attr == 'text':
             return self.text
@@ -365,20 +386,20 @@ class ChromiumElement(DrissionElement):
         else:
             return attrs.get(attr, None)
 
-    def remove_attr(self, attr):
+    def remove_attr(self, name):
         """删除元素一个attribute属性
-        :param attr: 属性名
+        :param name: 属性名
         :return: None
         """
-        self.run_js(f'this.removeAttribute("{attr}");')
+        self.run_js(f'this.removeAttribute("{name}");')
 
-    def prop(self, prop):
+    def property(self, name):
         """获取一个property属性值
-        :param prop: 属性名
+        :param name: 属性名
         :return: 属性值文本
         """
         try:
-            value = self.run_js(f'return this.{prop};')
+            value = self.run_js(f'return this.{name};')
             return format_html(value) if isinstance(value, str) else value
         except:
             return None
@@ -467,7 +488,7 @@ class ChromiumElement(DrissionElement):
             pseudo_ele = f', "{pseudo_ele}"' if pseudo_ele.startswith(':') else f', "::{pseudo_ele}"'
         return self.run_js(f'return window.getComputedStyle(this{pseudo_ele}).getPropertyValue("{style}");')
 
-    def get_src(self, timeout=None, base64_to_bytes=True):
+    def src(self, timeout=None, base64_to_bytes=True):
         """返回元素src资源，base64的可转为bytes返回，其它返回str
         :param timeout: 等待资源加载的超时时间（秒）
         :param base64_to_bytes: 为True时，如果是base64数据，转换为bytes格式
@@ -501,7 +522,7 @@ class ChromiumElement(DrissionElement):
                     break
 
             else:
-                src = self.prop('currentSrc')
+                src = self.property('currentSrc')
                 if not src:
                     continue
 
@@ -533,7 +554,7 @@ class ChromiumElement(DrissionElement):
         :param timeout: 等待资源加载的超时时间（秒）
         :return: 返回保存路径
         """
-        data = self.get_src(timeout=timeout)
+        data = self.src(timeout=timeout)
         if not data:
             raise NoResourceError
 
@@ -543,7 +564,7 @@ class ChromiumElement(DrissionElement):
             if src.lower().startswith('data:image'):
                 r = search(r'data:image/(.*?);base64,', src)
                 name = f'img.{r.group(1)}' if r else None
-        name = name or basename(self.prop('currentSrc'))
+        name = name or basename(self.property('currentSrc'))
         path = get_usable_path(f'{path}{sep}{name}').absolute()
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
@@ -595,7 +616,7 @@ class ChromiumElement(DrissionElement):
                 self.clear(True)
             if isinstance(vals, (list, tuple)):
                 vals = ''.join([str(i) for i in vals])
-            self.set.prop('value', str(vals))
+            self.set.property('value', str(vals))
             self.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
             return
 
@@ -750,18 +771,6 @@ class ChromiumElement(DrissionElement):
             files = files.split('\n')
         files = [str(Path(i).absolute()) for i in files]
         self.page.run_cdp('DOM.setFileInputFiles', files=files, backendNodeId=self._backend_id)
-
-    # -------------即将废弃-------------
-
-    @property
-    def location(self):
-        """返回元素左上角的绝对坐标"""
-        return self.rect.location
-
-    @property
-    def size(self):
-        """返回元素宽和高组成的元组"""
-        return self.rect.size
 
 
 class ShadowRoot(BaseElement):
@@ -1421,7 +1430,7 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
         else:
             raise ElementLostError('原来获取到的元素对象已不在页面内。')
 
-    if res is None and page.states.has_alert:  # 存在alert的情况
+    if res is None and page.states.has_alert:
         return None
 
     exceptionDetails = res.get('exceptionDetails')
