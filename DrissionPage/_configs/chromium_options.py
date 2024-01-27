@@ -23,67 +23,56 @@ class ChromiumOptions(object):
         self.clear_file_flags = False
         self._headless = None
 
-        if read_file is not False:
-            ini_path = str(ini_path) if ini_path else None
-            om = OptionsManager(ini_path)
-            self.ini_path = str(Path(om.ini_path).absolute())
+        if read_file is False:
+            ini_path = False
+            self.ini_path = None
+        elif ini_path:
+            ini_path = Path(ini_path).absolute()
+            if not ini_path.exists():
+                raise ValueError(f'文件不存在：{ini_path}')
+            self.ini_path = str(ini_path)
+        else:
+            self.ini_path = str(Path(__file__).parent / 'configs.ini')
+        om = OptionsManager(ini_path)
 
-            options = om.chromium_options
-            self._download_path = om.paths.get('download_path', None) or None
-            self._tmp_path = om.paths.get('tmp_path', None) or None
-            self._arguments = options.get('arguments', [])
-            self._browser_path = options.get('browser_path', '')
-            self._extensions = options.get('extensions', [])
-            self._prefs = options.get('prefs', {})
-            self._flags = options.get('flags', {})
-            self._address = options.get('address', None)
-            self._load_mode = options.get('load_mode', 'normal')
-            self._system_user_path = options.get('system_user_path', False)
-            self._existing_only = options.get('existing_only', False)
+        options = om.chromium_options
+        self._download_path = om.paths.get('download_path', None) or None
+        self._tmp_path = om.paths.get('tmp_path', None) or None
+        self._arguments = options.get('arguments', [])
+        self._browser_path = options.get('browser_path', '')
+        self._extensions = options.get('extensions', [])
+        self._prefs = options.get('prefs', {})
+        self._flags = options.get('flags', {})
+        self._address = options.get('address', None)
+        self._load_mode = options.get('load_mode', 'normal')
+        self._system_user_path = options.get('system_user_path', False)
+        self._existing_only = options.get('existing_only', False)
 
-            self._proxy = om.proxies.get('http', None) or om.proxies.get('https', None)
+        self._proxy = om.proxies.get('http', None) or om.proxies.get('https', None)
 
-            user_path = user = False
-            for arg in self._arguments:
-                if arg.startswith('--user-data-dir='):
-                    self.set_paths(user_data_path=arg[16:])
-                    user_path = True
-                if arg.startswith('--profile-directory='):
-                    self.set_user(arg[20:])
-                    user = True
-                if user and user_path:
-                    break
+        user_path = user = False
+        for arg in self._arguments:
+            if arg.startswith('--user-data-dir='):
+                self.set_paths(user_data_path=arg[16:])
+                user_path = True
+            if arg.startswith('--profile-directory='):
+                self.set_user(arg[20:])
+                user = True
+            if user and user_path:
+                break
 
-            timeouts = om.timeouts
-            self._timeouts = {'base': timeouts['base'],
-                              'page_load': timeouts['page_load'],
-                              'script': timeouts['script']}
+        timeouts = om.timeouts
+        self._timeouts = {'base': timeouts['base'],
+                          'page_load': timeouts['page_load'],
+                          'script': timeouts['script']}
 
-            self._auto_port = options.get('auto_port', False)
+        self._auto_port = options.get('auto_port', False)
 
-            others = om.others
-            self._retry_times = others.get('retry_times', 3)
-            self._retry_interval = others.get('retry_interval', 2)
+        others = om.others
+        self._retry_times = others.get('retry_times', 3)
+        self._retry_interval = others.get('retry_interval', 2)
 
-            return
-
-        self.ini_path = None
-        self._browser_path = "chrome"
-        self._arguments = []
-        self._download_path = None
-        self._tmp_path = None
-        self._extensions = []
-        self._prefs = {}
-        self._flags = {}
-        self._timeouts = {'base': 10, 'page_load': 30, 'script': 30}
-        self._address = '127.0.0.1:9222'
-        self._load_mode = 'normal'
-        self._proxy = None
-        self._auto_port = False
-        self._system_user_path = False
-        self._existing_only = False
-        self._retry_times = 3
-        self._retry_interval = 2
+        return
 
     @property
     def download_path(self):
@@ -538,8 +527,8 @@ class ChromiumOptions(object):
         for i in attrs:
             om.set_item('chromium_options', i, self.__getattribute__(f'_{i}'))
         # 设置代理
-        om.set_item('proxies', 'http', self._proxy)
-        om.set_item('proxies', 'https', self._proxy)
+        om.set_item('proxies', 'http', self._proxy or '')
+        om.set_item('proxies', 'https', self._proxy or '')
         # 设置路径
         om.set_item('paths', 'download_path', self._download_path or '')
         om.set_item('paths', 'tmp_path', self._tmp_path or '')

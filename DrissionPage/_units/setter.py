@@ -627,7 +627,10 @@ class WindowSetter(object):
         :param bounds: 控制数据
         :return: None
         """
-        self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+        try:
+            self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+        except:
+            raise RuntimeError('浏览器全屏或最小化状态时请先调用set.window.normal()恢复正常状态。')
 
     # ------------即将废除----------
 
