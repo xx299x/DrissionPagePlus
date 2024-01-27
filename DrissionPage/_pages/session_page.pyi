@@ -13,7 +13,6 @@ from requests.structures import CaseInsensitiveDict
 
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
-from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.setter import SessionPageSetter
 
@@ -41,9 +40,9 @@ class SessionPage(BasePage):
     def _create_session(self) -> None: ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, SessionElement],
+                 locator: Union[Tuple[str, str], str, SessionElement],
                  index: int = 1,
-                 timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+                 timeout: float = None) -> SessionElement: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -91,28 +90,29 @@ class SessionPage(BasePage):
             cert: Any | None = ...) -> bool: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+            locator: Union[Tuple[str, str], str, SessionElement],
             index: int = 1,
-            timeout: float = None) -> Union[SessionElement, NoneElement]: ...
+            timeout: float = None) -> SessionElement: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[SessionElement]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str, SessionElement] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              locator: Union[Tuple[str, str], str, SessionElement] = None,
+              index: int = 1) -> SessionElement: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, loc: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, SessionElement],
+                       locator: Union[Tuple[str, str], str, SessionElement],
                        timeout: float = None,
                        index: Optional[int] = 1,
+                       relative: bool = True,
                        raise_err: bool = None) \
-            -> Union[SessionElement, NoneElement, List[SessionElement]]: ...
+            -> Union[SessionElement, List[SessionElement]]: ...
 
-    def get_cookies(self,
+    def cookies(self,
                     as_dict: bool = False,
                     all_domains: bool = False,
                     all_info: bool = False) -> Union[dict, list]: ...

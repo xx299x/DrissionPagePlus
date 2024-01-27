@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 
-from typing import Tuple, Union, List
+from typing import Tuple, Union
 
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase

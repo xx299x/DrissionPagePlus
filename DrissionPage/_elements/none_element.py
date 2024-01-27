@@ -18,6 +18,7 @@ class NoneElement(object):
             self._none_ele_return_value = False
         self.method = method
         self.args = args
+        self._get = None
 
     def __call__(self, *args, **kwargs):
         if not self._none_ele_return_value:
@@ -33,7 +34,7 @@ class NoneElement(object):
             return self
         else:
             if item in ('size', 'link', 'css_path', 'xpath', 'comments', 'texts', 'tag', 'html', 'inner_html',
-                        'attrs', 'text', 'raw_text'):
+                        'attrs', 'text', 'raw_text', 'value', 'attr', 'style', 'src', 'property'):
                 return self._none_ele_value
             else:
                 raise ElementNotFoundError(None, self.method, self.args)

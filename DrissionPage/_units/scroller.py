@@ -87,7 +87,7 @@ class Scroller(object):
         if not self._wait_complete:
             return
 
-        page = self._driver.page if 'ChromiumElement' in str(type(self._driver)) else self._driver
+        page = self._driver.page if self._driver._type == 'ChromiumElement' else self._driver
         r = page.run_cdp('Page.getLayoutMetrics')
         x = r['layoutViewport']['pageX']
         y = r['layoutViewport']['pageY']
@@ -173,5 +173,5 @@ class FrameScroller(PageScroller):
         :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
-        ele = loc_or_ele if 'ChromiumElement' in str(type(loc_or_ele)) else self._driver._ele(loc_or_ele)
+        ele = loc_or_ele if loc_or_ele._type == 'ChromiumElement' else self._driver._ele(loc_or_ele)
         self._to_see(ele, center)

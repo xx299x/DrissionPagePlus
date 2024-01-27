@@ -27,23 +27,24 @@ class SessionElement(DrissionElement):
         """
         super().__init__(page)
         self._inner_ele = ele
+        self._type = 'SessionElement'
 
     @property
     def inner_ele(self):
         return self._inner_ele
 
     def __repr__(self):
-        attrs = [f"{attr}='{self.attrs[attr]}'" for attr in self.attrs]
+        attrs = [f"{k}='{v}'" for k, v in self.attrs.items()]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, loc_or_str, timeout=None):
+    def __call__(self, locator, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self.ele(loc_or_str)
+        return self.ele(locator)
 
     def __eq__(self, other):
         return self.xpath == getattr(other, 'xpath', None)
@@ -80,119 +81,120 @@ class SessionElement(DrissionElement):
         """返回未格式化处理的元素内文本"""
         return str(self._inner_ele.text_content())
 
-    def parent(self, level_or_loc=1):
+    def parent(self, level_or_loc=1, index=1):
         """返回上面某一级父元素，可指定层数或用查询语法定位
         :param level_or_loc: 第几级父元素，或定位符
+        :param index: 当level_or_loc传入定位符，使用此参数选择第几个结果
         :return: 上级元素对象
         """
-        return super().parent(level_or_loc)
+        return super().parent(level_or_loc, index)
 
-    def child(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def child(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素的一个符合条件的直接子元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本
         """
-        return super().child(index, filter_loc, timeout, ele_only=ele_only)
+        return super().child(locator, index, timeout, ele_only=ele_only)
 
-    def prev(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def prev(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().prev(index, filter_loc, timeout, ele_only=ele_only)
+        return super().prev(locator, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def next(self, locator='', index=1, timeout=None, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素
         """
-        return super().next(index, filter_loc, timeout, ele_only=ele_only)
+        return super().next(locator, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def before(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return super().before(index, filter_loc, timeout, ele_only=ele_only)
+        return super().before(locator, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def after(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 第几个查询结果，1开始
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return super().after(index, filter_loc, timeout, ele_only=ele_only)
+        return super().after(locator, index, timeout, ele_only=ele_only)
 
-    def children(self, filter_loc='', timeout=0, ele_only=True):
+    def children(self, locator='', timeout=0, ele_only=True):
         """返回当前元素符合条件的直接子元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 直接子元素或节点文本组成的列表
         """
-        return super().children(filter_loc, timeout, ele_only=ele_only)
+        return super().children(locator, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=None, ele_only=True):
+    def prevs(self, locator='', timeout=None, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return super().prevs(filter_loc, timeout, ele_only=ele_only)
+        return super().prevs(locator, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=None, ele_only=True):
+    def nexts(self, locator='', timeout=None, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return super().nexts(filter_loc, timeout, ele_only=ele_only)
+        return super().nexts(locator, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return super().befores(filter_loc, timeout, ele_only=ele_only)
+        return super().befores(locator, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 此参数不起实际作用
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的元素或节点组成的列表
         """
-        return super().afters(filter_loc, timeout, ele_only=ele_only)
+        return super().afters(locator, timeout, ele_only=ele_only)
 
-    def attr(self, attr):
+    def attr(self, name):
         """返回attribute属性值
-        :param attr: 属性名
+        :param name: 属性名
         :return: 属性值文本，没有该属性返回None
         """
         # 获取href属性时返回绝对url
-        if attr == 'href':
+        if name == 'href':
             link = self.inner_ele.get('href')
             # 若为链接为None、js或邮件，直接返回
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
@@ -201,66 +203,66 @@ class SessionElement(DrissionElement):
             else:  # 其它情况直接返回绝对url
                 return make_absolute_link(link, self.page.url)
 
-        elif attr == 'src':
+        elif name == 'src':
             return make_absolute_link(self.inner_ele.get('src'), self.page.url)
 
-        elif attr == 'text':
+        elif name == 'text':
             return self.text
 
-        elif attr == 'innerText':
+        elif name == 'innerText':
             return self.raw_text
 
-        elif attr in ('html', 'outerHTML'):
+        elif name in ('html', 'outerHTML'):
             return self.html
 
-        elif attr == 'innerHTML':
+        elif name == 'innerHTML':
             return self.inner_html
 
         else:
-            return self.inner_ele.get(attr)
+            return self.inner_ele.get(name)
 
-    def ele(self, loc_or_str, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str, index=index, method='ele()')
+        return self._ele(locator, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
-        :param timeout: 不起实际作用，用于和DriverElement对应，便于无差别调用
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
+        :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def s_ele(self, loc_or_str=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """返回当前元素下级符合条件的一个元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str, index=index, method='s_ele()')
+        return self._ele(locator, index=index, method='s_ele()')
 
-    def s_eles(self, loc_or_str):
+    def s_eles(self, locator):
         """返回当前元素下级所有符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def _find_elements(self, loc_or_str, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """返回当前元素下级符合条件的子元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """
-        return make_session_ele(self, loc_or_str, index=index)
+        return make_session_ele(self, locator, index=index)
 
     def _get_ele_path(self, mode):
         """获取css路径或xpath路径
@@ -304,9 +306,13 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         raise ValueError("定位符必须为str或长度为2的tuple。")
 
     # ---------------根据传入对象类型获取页面对象和lxml元素对象---------------
-    the_type = str(type(html_or_ele))
+    # 直接传入html文本
+    if isinstance(html_or_ele, str):
+        page = None
+        html_or_ele = fromstring(html_or_ele)
+
     # SessionElement
-    if the_type.endswith(".SessionElement'>"):
+    elif html_or_ele._type == 'SessionElement':
         page = html_or_ele.page
 
         loc_str = loc[1]
@@ -327,8 +333,7 @@ def make_session_ele(html_or_ele, loc=None, index=1):
 
         loc = loc[0], loc_str
 
-    # ChromiumElement, DriverElement
-    elif the_type.endswith((".ChromiumElement'>", ".DriverElement'>")):
+    elif html_or_ele._type == 'ChromiumElement':
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
             loc_str = f'.{loc[1]}'
@@ -352,11 +357,6 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         if html.startswith('<?xml '):
             html = sub(r'^<\?xml.*?>', '', html)
         html_or_ele = fromstring(html)
-
-    # 直接传入html文本
-    elif isinstance(html_or_ele, str):
-        page = None
-        html_or_ele = fromstring(html_or_ele)
 
     # ShadowRoot
     elif isinstance(html_or_ele, BaseElement):

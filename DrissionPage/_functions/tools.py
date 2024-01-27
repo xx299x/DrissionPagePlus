@@ -8,13 +8,56 @@
 from pathlib import Path
 from platform import system
 from shutil import rmtree
-from time import perf_counter, sleep
+from tempfile import gettempdir, TemporaryDirectory
+from threading import Lock
+from time import perf_counter
 
 from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
 
 from .._configs.options_manage import OptionsManager
 from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
                       AlertExistsError, WrongURLError, StorageError, CookieFormatError, JavaScriptError)
+
+
+class PortFinder(object):
+    used_port = {}
+    lock = Lock()
+
+    def __init__(self, path=None):
+        """
+        :param path: 临时文件保存路径，为None时使用系统临时文件夹
+        """
+        tmp = Path(path) if path else Path(gettempdir()) / 'DrissionPage'
+        self.tmp_dir = tmp / 'UserTempFolder'
+        self.tmp_dir.mkdir(parents=True, exist_ok=True)
+        if not PortFinder.used_port:
+            clean_folder(self.tmp_dir)
+
+    def get_port(self, scope=None):
+        """查找一个可用端口
+        :param scope: 指定端口范围，不含最后的数字，为None则使用[9600-19600)
+        :return: 可以使用的端口和用户文件夹路径组成的元组
+        """
+        with PortFinder.lock:
+            if scope in (True, None):
+                scope = (9600, 19600)
+            for i in range(scope[0], scope[1]):
+                if i in PortFinder.used_port:
+                    continue
+                elif port_is_using('127.0.0.1', i):
+                    PortFinder.used_port[i] = None
+                    continue
+                path = TemporaryDirectory(dir=self.tmp_dir).name
+                PortFinder.used_port[i] = path
+                return i, path
+
+            for i in range(scope[0], scope[1]):
+                if port_is_using('127.0.0.1', i):
+                    continue
+                rmtree(PortFinder.used_port[i], ignore_errors=True)
+                return i, TemporaryDirectory(dir=self.tmp_dir).name
+
+        raise OSError('未找到可用端口。')
 
 
 def port_is_using(ip, port):
@@ -69,7 +112,7 @@ def show_or_hide_browser(page, hide=True):
     pid = page.process_id
     if not pid:
         return None
-    hds = get_chrome_hwnds_from_pid(pid, page.title)
+    hds = get_hwnds_from_pid(pid, page.title)
     sw = SW_HIDE if hide else SW_SHOW
     for hd in hds:
         ShowWindow(hd, sw)
@@ -98,7 +141,7 @@ def get_browser_progress_id(progress, address):
     return txt.split(' ')[-1]
 
 
-def get_chrome_hwnds_from_pid(pid, title):
+def get_hwnds_from_pid(pid, title):
     """通过PID查询句柄ID
     :param pid: 进程id
     :param title: 窗口标题
@@ -122,40 +165,21 @@ def get_chrome_hwnds_from_pid(pid, title):
     return hwnds
 
 
-def wait_until(page, condition, timeout=10, poll=0.1, raise_err=True):
-    """等待返回值不为False或空，直到超时
-    :param page: DrissionPage对象
-    :param condition: 等待条件，返回值不为False则停止等待
+def wait_until(function, kwargs=None, timeout=10):
+    """等待传入的方法返回值不为假
+    :param function: 要执行的方法
+    :param kwargs: 方法参数
     :param timeout: 超时时间（秒）
-    :param poll: 轮询间隔
-    :param raise_err: 是否抛出异常
-    :return: DP Element or bool
+    :return: 执行结果，超时抛出TimeoutError
     """
+    if kwargs is None:
+        kwargs = {}
     end_time = perf_counter() + timeout
-    if isinstance(condition, str) or isinstance(condition, tuple):
-        if not callable(getattr(page, 's_ele', None)):
-            raise AttributeError('page对象缺少s_ele方法')
-        condition_method = lambda page: page.s_ele(condition)
-    elif callable(condition):
-        condition_method = condition
-    else:
-        raise ValueError('condition必须是函数或者字符串或者元组')
     while perf_counter() < end_time:
-        try:
-            value = condition_method(page)
-            if value:
-                return value
-        except Exception:
-            pass
-
-        sleep(poll)
-        if perf_counter() > end_time:
-            break
-
-    if raise_err:
-        raise TimeoutError(f'等待超时（等待{timeout}秒）。')
-    else:
-        return False
+        value = function(**kwargs)
+        if value:
+            return value
+    raise TimeoutError
 
 
 def stop_process_on_port(port):
@@ -215,10 +239,12 @@ def raise_error(result, ignore=None):
         r = CookieFormatError(f'cookie格式不正确：{result["args"]}')
     elif error == 'Given expression does not evaluate to a function':
         r = JavaScriptError(f'传入的js无法解析成函数：\n{result["args"]["functionDeclaration"]}')
+    elif error.endswith("' wasn't found"):
+        r = RuntimeError(f'你的浏览器可能太旧。\n方法：{result["method"]}\n参数：{result["args"]}')
     elif result['type'] in ('call_method_error', 'timeout'):
         from DrissionPage import __version__
         from time import process_time
-        txt = f'\n错误：{result["error"]}\nmethod：{result["method"]}\nargs：{result["args"]}\n' \
+        txt = f'\n错误：{result["error"]}\n方法：{result["method"]}\n参数：{result["args"]}\n' \
               f'版本：{__version__}\n运行时间：{process_time()}\n出现这个错误可能意味着程序有bug，请把错误信息和重现方法' \
               '告知作者，谢谢。\n报告网站：https://gitee.com/g1879/DrissionPage/issues'
         r = TimeoutError(txt) if result['type'] == 'timeout' else CDPError(txt)

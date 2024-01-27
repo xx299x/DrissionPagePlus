@@ -161,8 +161,8 @@ def is_js_func(func):
     func = func.strip()
     if (func.startswith('function') or func.startswith('async ')) and func.endswith('}'):
         return True
-    elif '=>' in func:
-        return True
+    # elif '=>' in func:
+    #     return True
     return False
 
 
@@ -328,3 +328,38 @@ def is_cookie_in_driver(page, cookie):
             if cookie['name'] == c['name'] and cookie['value'] == c['value']:
                 return True
     return False
+
+
+def get_blob(page, url, as_bytes=True):
+    """获取知道blob资源
+    :param page: 资源所在页面对象
+    :param url: 资源url
+    :param as_bytes: 是否以字节形式返回
+    :return: 资源内容
+    """
+    if not url.startswith('blob'):
+        raise TypeError('该链接非blob类型。')
+    js = """
+       function fetchData(url) {
+      return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+          var reader  = new FileReader();
+          reader.onloadend = function(){resolve(reader.result);}
+          reader.readAsDataURL(xhr.response);
+        };
+        xhr.open('GET', url, true);
+        xhr.send();
+      });
+    }
+"""
+    try:
+        result = page.run_js(js, url)
+    except:
+        raise RuntimeError('无法获取该资源。')
+    if as_bytes:
+        from base64 import b64decode
+        return b64decode(result.split(',', 1)[-1])
+    else:
+        return result

@@ -6,6 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
+from time import sleep
 
 from requests.structures import CaseInsensitiveDict
 
@@ -292,13 +293,13 @@ class SessionPageSetter(BasePageSetter):
         """
         self._page._headers = CaseInsensitiveDict(headers)
 
-    def header(self, attr, value):
+    def header(self, name, value):
         """设置headers中一个项
-        :param attr: 设置名称
+        :param name: 设置名称
         :param value: 设置值
         :return: None
         """
-        self._page._headers[attr] = value
+        self._page._headers[name] = value
 
     def user_agent(self, ua):
         """设置user agent
@@ -449,39 +450,46 @@ class ChromiumElementSetter(object):
         """
         self._ele = ele
 
-    def attr(self, attr, value):
+    def attr(self, name, value):
         """设置元素attribute属性
-        :param attr: 属性名
+        :param name: 属性名
         :param value: 属性值
         :return: None
         """
-        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=attr, value=str(value))
+        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=name, value=str(value))
 
-    def prop(self, prop, value):
+    def property(self, name, value):
         """设置元素property属性
-        :param prop: 属性名
+        :param name: 属性名
         :param value: 属性值
         :return: None
         """
         value = value.replace('"', r'\"')
-        self._ele.run_js(f'this.{prop}="{value}";')
+        self._ele.run_js(f'this.{name}="{value}";')
 
     def innerHTML(self, html):
         """设置元素innerHTML
         :param html: html文本
         :return: None
         """
-        self.prop('innerHTML', html)
+        self.property('innerHTML', html)
+
+    def value(self, value):
+        """设置元素value值
+        :param value: value值
+        :return: None
+        """
+        self.property('value', value)
 
 
 class ChromiumFrameSetter(ChromiumBaseSetter):
-    def attr(self, attr, value):
+    def attr(self, name, value):
         """设置frame元素attribute属性
-        :param attr: 属性名
+        :param name: 属性名
         :param value: 属性值
         :return: None
         """
-        self._page.frame_ele.set.attr(attr, value)
+        self._page.frame_ele.set.attr(name, value)
 
 
 class LoadMode(object):
@@ -608,7 +616,11 @@ class WindowSetter(object):
 
     def _get_info(self):
         """获取窗口位置及大小信息"""
-        return self._page.run_cdp('Browser.getWindowForTarget')
+        for _ in range(50):
+            try:
+                return self._page.run_cdp('Browser.getWindowForTarget')
+            except:
+                sleep(.1)
 
     def _perform(self, bounds):
         """执行改变窗口大小操作

@@ -18,7 +18,6 @@ from .._base.driver import Driver
 from .._configs.chromium_options import ChromiumOptions
 from .._configs.session_options import SessionOptions
 from .._elements.chromium_element import ChromiumElement
-from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.setter import WebPageSetter
 
@@ -31,15 +30,16 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                  chromium_options: Union[ChromiumOptions, bool] = None,
                  session_or_options: Union[Session, SessionOptions, bool] = None) -> None:
         self._mode: str = ...
+        self._set: WebPageSetter = ...
         self._has_driver: bool = ...
         self._has_session: bool = ...
         self._session_options: Union[SessionOptions, None] = ...
         self._chromium_options: Union[ChromiumOptions, None] = ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+                 locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
                  index: int = 1,
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     # -----------------共有属性和方法-------------------
     @property
@@ -65,9 +65,6 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     @property
     def mode(self) -> str: ...
-
-    @property
-    def cookies(self) -> dict: ...
 
     @property
     def user_agent(self) -> str: ...
@@ -105,19 +102,19 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
             cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+            locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
             index: int = 1,
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+            timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, SessionElement]]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              locator: Union[Tuple[str, str], str] = None,
+              index: int = 1) -> SessionElement: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
@@ -125,10 +122,10 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
 
     def cookies_to_browser(self) -> None: ...
 
-    def get_cookies(self,
-                    as_dict: bool = False,
-                    all_domains: bool = False,
-                    all_info: bool = False) -> Union[dict, list]: ...
+    def cookies(self,
+                as_dict: bool = False,
+                all_domains: bool = False,
+                all_info: bool = False) -> Union[dict, list]: ...
 
     def get_tab(self, id_or_num: Union[str, WebPageTab, int] = None) -> WebPageTab: ...
 
@@ -169,12 +166,12 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
     def set(self) -> WebPageSetter: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) \
-            -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement],
+            -> Union[ChromiumElement, SessionElement, ChromiumFrame, List[SessionElement],
             List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
     def _set_start_options(self,

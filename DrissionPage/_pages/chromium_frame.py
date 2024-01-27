@@ -27,15 +27,14 @@ class ChromiumFrame(ChromiumBase):
         :param ele: frame所在元素
         :param info: frame所在元素信息
         """
-        page_type = str(type(page))
-        if 'ChromiumPage' in page_type or 'WebPage' in page_type:
+        if page._type in ('ChromiumPage', 'WebPage'):
             self._page = self._target_page = self.tab = page
             self._browser = page.browser
         else:  # Tab、Frame
             self._page = page.page
             self._browser = self._page.browser
             self._target_page = page
-            self.tab = page.tab if 'ChromiumFrame' in page_type else page
+            self.tab = page.tab if page._type == 'ChromiumFrame' else page
 
         self.address = page.address
         self._tab_id = page.tab_id
@@ -58,28 +57,28 @@ class ChromiumFrame(ChromiumBase):
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
         self._rect = None
+        self._type = 'ChromiumFrame'
         end_time = perf_counter() + 2
         while perf_counter() < end_time:
             if self.url not in (None, 'about:blank'):
                 break
             sleep(.1)
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象或属性、文本
         """
-        return self.ele(loc_or_str, index=index, timeout=timeout)
+        return self.ele(locator, index=index, timeout=timeout)
 
     def __eq__(self, other):
         return self._frame_id == getattr(other, '_frame_id', None)
 
     def __repr__(self):
-        attrs = self._frame_ele.attrs
-        attrs = [f"{attr}='{attrs[attr]}'" for attr in attrs]
+        attrs = [f"{k}='{v}'" for k, v in self._frame_ele.attrs.items()]
         return f'<ChromiumFrame {self.frame_ele.tag} {" ".join(attrs)}>'
 
     def _d_set_runtime_settings(self):
@@ -146,19 +145,6 @@ class ChromiumFrame(ChromiumBase):
             if timeout <= 0:
                 timeout = .5
             self._wait_loaded(timeout)
-            # while perf_counter() < end_time:
-            #     try:
-            #         obj_id = super().run_js('document;', as_expr=True)['objectId']
-            #         self.doc_ele = ChromiumElement(self, obj_id=obj_id)
-            #         break
-            #     except Exception as e:
-            #         sleep(.1)
-            #         if self._debug:
-            #             print(f'获取doc失败，重试 {e}')
-            # else:
-            #     raise GetDocumentError
-
-            # self.driver._debug = d_debug
 
         self._is_loading = False
         self._reloading = False
@@ -208,7 +194,6 @@ class ChromiumFrame(ChromiumBase):
             self._reload()
 
     # ----------挂件----------
-
     @property
     def scroll(self):
         """返回用于滚动的对象"""
@@ -252,7 +237,7 @@ class ChromiumFrame(ChromiumBase):
             self._listener = FrameListener(self)
         return self._listener
 
-    # ----------挂件----------
+    # ----------挂件结束----------
 
     @property
     def _obj_id(self):
@@ -306,11 +291,6 @@ class ChromiumFrame(ChromiumBase):
         return r.text if r else None
 
     @property
-    def cookies(self):
-        """以dict格式返回cookies"""
-        return super().cookies if self._is_diff_domain else self.doc_ele.run_js('return this.cookie;')
-
-    @property
     def attrs(self):
         """返回frame元素所有attribute属性"""
         return self.frame_ele.attrs
@@ -356,23 +336,57 @@ class ChromiumFrame(ChromiumBase):
                 except:
                     return None
 
+    # ----------------即将废弃-----------------
+    @property
+    def is_alive(self):
+        """返回是否仍可用"""
+        return self.states.is_alive
+
+    @property
+    def page_size(self):
+        """返回frame内页面尺寸，格式：(宽,, 高)"""
+        return self.rect.size
+
+    @property
+    def size(self):
+        """返回frame元素大小"""
+        return self.frame_ele.rect.size
+
+    @property
+    def location(self):
+        """返回frame元素左上角的绝对坐标"""
+        return self.frame_ele.rect.location
+
+    @property
+    def locations(self):
+        """返回用于获取元素位置的对象"""
+        return self.frame_ele.rect
+    # ----------------即将废弃结束-----------------
+
     def refresh(self):
         """刷新frame页面"""
         self.doc_ele.run_js('this.location.reload();')
 
-    def attr(self, attr):
-        """返回frame元素attribute属性值
-        :param attr: 属性名
+    def property(self, name):
+        """返回frame元素一个property属性值
+        :param name: 属性名
         :return: 属性值文本，没有该属性返回None
         """
-        return self.frame_ele.attr(attr)
+        return self.frame_ele.property(name)
 
-    def remove_attr(self, attr):
+    def attr(self, name):
+        """返回frame元素一个attribute属性值
+        :param name: 属性名
+        :return: 属性值文本，没有该属性返回None
+        """
+        return self.frame_ele.attr(name)
+
+    def remove_attr(self, name):
         """删除frame元素attribute属性
-        :param attr: 属性名
+        :param name: 属性名
         :return: None
         """
-        self.frame_ele.remove_attr(attr)
+        self.frame_ele.remove_attr(name)
 
     def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
@@ -395,85 +409,85 @@ class ChromiumFrame(ChromiumBase):
         """
         return self.frame_ele.parent(level_or_loc, index)
 
-    def prev(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def prev(self, locator='', index=1, timeout=0, ele_only=True):
         """返回当前元素前面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        return self.frame_ele.prev(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.prev(locator, index, timeout, ele_only=ele_only)
 
-    def next(self, filter_loc='', index=1, timeout=0, ele_only=True):
+    def next(self, locator='', index=1, timeout=0, ele_only=True):
         """返回当前元素后面一个符合条件的同级元素，可用查询语法筛选，可指定返回筛选结果的第几个
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点
         """
-        return self.frame_ele.next(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.next(locator, index, timeout, ele_only=ele_only)
 
-    def before(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def before(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 前面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的某个元素或节点
         """
-        return self.frame_ele.before(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.before(locator, index, timeout, ele_only=ele_only)
 
-    def after(self, filter_loc='', index=1, timeout=None, ele_only=True):
+    def after(self, locator='', index=1, timeout=None, ele_only=True):
         """返回文档中此当前元素后面符合条件的一个元素，可用查询语法筛选，可指定返回筛选结果的第几个
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param index: 后面第几个查询结果，1开始
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素后面的某个元素或节点
         """
-        return self.frame_ele.after(filter_loc, index, timeout, ele_only=ele_only)
+        return self.frame_ele.after(locator, index, timeout, ele_only=ele_only)
 
-    def prevs(self, filter_loc='', timeout=0, ele_only=True):
+    def prevs(self, locator='', timeout=0, ele_only=True):
         """返回当前元素前面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return self.frame_ele.prevs(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.prevs(locator, timeout, ele_only=ele_only)
 
-    def nexts(self, filter_loc='', timeout=0, ele_only=True):
+    def nexts(self, locator='', timeout=0, ele_only=True):
         """返回当前元素后面符合条件的同级元素或节点组成的列表，可用查询语法筛选
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间（秒）
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 同级元素或节点文本组成的列表
         """
-        return self.frame_ele.nexts(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.nexts(locator, timeout, ele_only=ele_only)
 
-    def befores(self, filter_loc='', timeout=None, ele_only=True):
+    def befores(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素前面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self.frame_ele.befores(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.befores(locator, timeout, ele_only=ele_only)
 
-    def afters(self, filter_loc='', timeout=None, ele_only=True):
+    def afters(self, locator='', timeout=None, ele_only=True):
         """返回文档中当前元素后面符合条件的元素或节点组成的列表，可用查询语法筛选
         查找范围不限同级元素，而是整个DOM文档
-        :param filter_loc: 用于筛选的查询语法
+        :param locator: 用于筛选的查询语法
         :param timeout: 查找节点的超时时间
         :param ele_only: 是否只获取元素，为False时把文本、注释节点也纳入
         :return: 本元素前面的元素或节点组成的列表
         """
-        return self.frame_ele.afters(filter_loc, timeout, ele_only=ele_only)
+        return self.frame_ele.afters(locator, timeout, ele_only=ele_only)
 
     def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None):
         """对页面进行截图，可对整个网页、可见网页、指定范围截图。对可视范围外截图需要90以上版本浏览器支持
@@ -562,48 +576,21 @@ class ChromiumFrame(ChromiumBase):
         self.tab.remove_ele(new_ele)
         return r
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """在frame内查找单个元素
-        :param loc_or_ele: 定位符或元素对象
+        :param locator: 定位符或元素对象
         :param timeout: 查找超时时间
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象
         """
-        if isinstance(loc_or_ele, ChromiumElement):
-            return loc_or_ele
+        if isinstance(locator, ChromiumElement):
+            return locator
         self.wait.doc_loaded()
-        return self.doc_ele._ele(loc_or_ele, index=index, timeout=timeout,
-                                 raise_err=raise_err) if index is not None else self.doc_ele.eles(loc_or_ele, timeout)
+        return self.doc_ele._ele(locator, index=index, timeout=timeout,
+                                 raise_err=raise_err) if index is not None else self.doc_ele.eles(locator, timeout)
 
     def _is_inner_frame(self):
         """返回当前frame是否同域"""
         return self._frame_id in str(self._target_page.run_cdp('Page.getFrameTree')['frameTree'])
-
-    # ----------------即将废弃-----------------
-
-    @property
-    def is_alive(self):
-        """返回是否仍可用"""
-        return self.states.is_alive
-
-    @property
-    def page_size(self):
-        """返回frame内页面尺寸，格式：(宽,, 高)"""
-        return self.rect.size
-
-    @property
-    def size(self):
-        """返回frame元素大小"""
-        return self.frame_ele.rect.size
-
-    @property
-    def location(self):
-        """返回frame元素左上角的绝对坐标"""
-        return self.frame_ele.rect.location
-
-    @property
-    def locations(self):
-        """返回用于获取元素位置的对象"""
-        return self.frame_ele.rect

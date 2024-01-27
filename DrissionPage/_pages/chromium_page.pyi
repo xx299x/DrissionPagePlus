@@ -6,6 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
+from threading import Lock
 from typing import Union, Tuple, List, Optional
 
 from .._base.browser import Browser
@@ -18,7 +19,7 @@ from .._units.waiter import PageWaiter
 
 
 class ChromiumPage(ChromiumBase):
-    PAGES: dict = ...
+    _PAGES: dict = ...
 
     def __new__(cls,
                 addr_or_opts: Union[str, int, ChromiumOptions] = None,
@@ -34,6 +35,7 @@ class ChromiumPage(ChromiumBase):
         self._browser_id: str = ...
         self._rect: Optional[TabRect] = ...
         self._is_exist: bool = ...
+        self._lock: Lock = ...
 
     def _handle_options(self, addr_or_opts: Union[str, ChromiumOptions]) -> str: ...
 
@@ -52,9 +54,6 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def wait(self) -> PageWaiter: ...
-
-    @property
-    def main_tab(self) -> str: ...
 
     @property
     def latest_tab(self) -> str: ...

@@ -100,6 +100,9 @@ class Listener(object):
         Manifest, SignedExchange, Ping, CSPViolationReport, Preflight, Other
         :return: None
         """
+        if targets is not None:
+            if is_regex is None:
+                is_regex = False
         if targets or is_regex is not None or method or res_type:
             self.set_targets(targets, is_regex, method, res_type)
         self.clear()

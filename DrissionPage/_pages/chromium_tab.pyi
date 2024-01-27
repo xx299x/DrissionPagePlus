@@ -17,7 +17,6 @@ from .session_page import SessionPage
 from .web_page import WebPage
 from .._base.browser import Browser
 from .._elements.chromium_element import ChromiumElement
-from .._elements.none_element import NoneElement
 from .._elements.session_element import SessionElement
 from .._units.rect import TabRect
 from .._units.setter import TabSetter, WebPageTabSetter
@@ -25,7 +24,7 @@ from .._units.waiter import TabWaiter
 
 
 class ChromiumTab(ChromiumBase):
-    TABS: dict = ...
+    _TABS: dict = ...
 
     def __new__(cls, page: ChromiumPage, tab_id: str): ...
 
@@ -78,9 +77,9 @@ class WebPageTab(SessionPage, ChromiumTab):
         self._has_session = ...
 
     def __call__(self,
-                 loc_or_str: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+                 locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
                  index: int = 1,
-                 timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+                 timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     @property
     def page(self) -> WebPage: ...
@@ -108,9 +107,6 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     @property
     def mode(self) -> str: ...
-
-    @property
-    def cookies(self) -> dict: ...
 
     @property
     def user_agent(self) -> str: ...
@@ -148,19 +144,19 @@ class WebPageTab(SessionPage, ChromiumTab):
             cert: Any | None = ...) -> Union[bool, None]: ...
 
     def ele(self,
-            loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
+            locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement],
             index: int = 1,
-            timeout: float = None) -> Union[ChromiumElement, SessionElement, NoneElement]: ...
+            timeout: float = None) -> Union[ChromiumElement, SessionElement]: ...
 
     def eles(self,
-             loc_or_str: Union[Tuple[str, str], str],
+             locator: Union[Tuple[str, str], str],
              timeout: float = None) -> List[Union[ChromiumElement, SessionElement]]: ...
 
     def s_ele(self,
-              loc_or_ele: Union[Tuple[str, str], str] = None,
-              index: int = 1) -> Union[SessionElement, NoneElement]: ...
+              locator: Union[Tuple[str, str], str] = None,
+              index: int = 1) -> SessionElement: ...
 
-    def s_eles(self, loc_or_str: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def change_mode(self, mode: str = None, go: bool = True, copy_cookies: bool = True) -> None: ...
 
@@ -168,8 +164,8 @@ class WebPageTab(SessionPage, ChromiumTab):
 
     def cookies_to_browser(self) -> None: ...
 
-    def get_cookies(self, as_dict: bool = False, all_domains: bool = False,
-                    all_info: bool = False) -> Union[dict, list]: ...
+    def cookies(self, as_dict: bool = False, all_domains: bool = False,
+                all_info: bool = False) -> Union[dict, list]: ...
 
     def close(self) -> None: ...
 
@@ -198,10 +194,10 @@ class WebPageTab(SessionPage, ChromiumTab):
     def set(self) -> WebPageTabSetter: ...
 
     def _find_elements(self,
-                       loc_or_ele: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
+                       locator: Union[Tuple[str, str], str, ChromiumElement, SessionElement, ChromiumFrame],
                        timeout: float = None,
                        index: Optional[int] = 1,
                        relative: bool = False,
                        raise_err: bool = None) \
-            -> Union[ChromiumElement, SessionElement, ChromiumFrame, NoneElement, List[SessionElement], List[
+            -> Union[ChromiumElement, SessionElement, ChromiumFrame, List[SessionElement], List[
                 Union[ChromiumElement, ChromiumFrame]]]: ...

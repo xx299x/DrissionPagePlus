@@ -47,3 +47,6 @@ def set_browser_cookies(page: ChromiumBase, cookies: Union[RequestsCookieJar, li
 
 
 def is_cookie_in_driver(page: ChromiumBase, cookie: dict) -> bool: ...
+
+
+def get_blob(page: ChromiumBase, url: str, as_bytes: bool = True) -> bytes: ...

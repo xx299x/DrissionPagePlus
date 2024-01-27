@@ -7,12 +7,8 @@
 """
 from pathlib import Path
 from re import search
-from shutil import rmtree
-from tempfile import gettempdir, TemporaryDirectory
-from threading import Lock
 
 from .options_manage import OptionsManager
-from .._functions.tools import port_is_using, clean_folder
 
 
 class ChromiumOptions(object):
@@ -30,7 +26,7 @@ class ChromiumOptions(object):
         if read_file is not False:
             ini_path = str(ini_path) if ini_path else None
             om = OptionsManager(ini_path)
-            self.ini_path = om.ini_path
+            self.ini_path = str(Path(om.ini_path).absolute())
 
             options = om.chromium_options
             self._download_path = om.paths.get('download_path', None) or None
@@ -60,14 +56,10 @@ class ChromiumOptions(object):
 
             timeouts = om.timeouts
             self._timeouts = {'base': timeouts['base'],
-                              'pageLoad': timeouts['page_load'],
+                              'page_load': timeouts['page_load'],
                               'script': timeouts['script']}
 
             self._auto_port = options.get('auto_port', False)
-            if self._auto_port:
-                port, path = PortFinder().get_port()
-                self._address = f'127.0.0.1:{port}'
-                self.set_argument('--user-data-dir', path)
 
             others = om.others
             self._retry_times = others.get('retry_times', 3)
@@ -83,7 +75,7 @@ class ChromiumOptions(object):
         self._extensions = []
         self._prefs = {}
         self._flags = {}
-        self._timeouts = {'base': 10, 'pageLoad': 30, 'script': 30}
+        self._timeouts = {'base': 10, 'page_load': 30, 'script': 30}
         self._address = '127.0.0.1:9222'
         self._load_mode = 'normal'
         self._proxy = None
@@ -170,7 +162,7 @@ class ChromiumOptions(object):
 
     @property
     def is_auto_port(self):
-        """返回是否使用自动端口和用户文件"""
+        """返回是否使用自动端口和用户文件，如指定范围则返回范围tuple"""
         return self._auto_port
 
     @property
@@ -286,18 +278,18 @@ class ChromiumOptions(object):
         self.clear_file_flags = True
         return self
 
-    def set_timeouts(self, base=None, pageLoad=None, script=None, implicit=None):
+    def set_timeouts(self, base=None, page_load=None, script=None, implicit=None):
         """设置超时时间，单位为秒
         :param base: 默认超时时间
-        :param pageLoad: 页面加载超时时间
+        :param page_load: 页面加载超时时间
         :param script: 脚本运行超时时间
         :return: 当前对象
         """
         base = base if base is not None else implicit
         if base is not None:
             self._timeouts['base'] = base
-        if pageLoad is not None:
-            self._timeouts['pageLoad'] = pageLoad
+        if page_load is not None:
+            self._timeouts['page_load'] = page_load
         if script is not None:
             self._timeouts['script'] = script
 
@@ -448,7 +440,6 @@ class ChromiumOptions(object):
         :return: 当前对象
         """
         self._browser_path = str(path)
-        self._auto_port = False
         return self
 
     def set_download_path(self, path):
@@ -494,14 +485,15 @@ class ChromiumOptions(object):
         self._system_user_path = on_off
         return self
 
-    def auto_port(self, on_off=True, tmp_path=None):
+    def auto_port(self, on_off=True, tmp_path=None, scope=None):
         """自动获取可用端口
         :param on_off: 是否开启自动获取端口号
         :param tmp_path: 临时文件保存路径，为None时保存到系统临时文件夹，on_off为False时此参数无效
+        :param scope: 指定端口范围，不含最后的数字，为None则使用[9600-19600)
         :return: 当前对象
         """
         if on_off:
-            self._auto_port = True
+            self._auto_port = scope if scope else True
             if tmp_path:
                 self._tmp_path = str(tmp_path)
         else:
@@ -553,7 +545,7 @@ class ChromiumOptions(object):
         om.set_item('paths', 'tmp_path', self._tmp_path or '')
         # 设置timeout
         om.set_item('timeouts', 'base', self._timeouts['base'])
-        om.set_item('timeouts', 'page_load', self._timeouts['pageLoad'])
+        om.set_item('timeouts', 'page_load', self._timeouts['page_load'])
         om.set_item('timeouts', 'script', self._timeouts['script'])
         # 设置重试
         om.set_item('others', 'retry_times', self.retry_times)
@@ -619,41 +611,3 @@ class ChromiumOptions(object):
         """
         on_off = None if on_off else False
         return self.set_argument('--mute-audio', on_off)
-
-
-class PortFinder(object):
-    used_port = {}
-    lock = Lock()
-
-    def __init__(self, path=None):
-        """
-        :param path: 临时文件保存路径，为None时使用系统临时文件夹
-        """
-        tmp = Path(path) if path else Path(gettempdir()) / 'DrissionPage'
-        self.tmp_dir = tmp / 'UserTempFolder'
-        self.tmp_dir.mkdir(parents=True, exist_ok=True)
-        if not PortFinder.used_port:
-            clean_folder(self.tmp_dir)
-
-    def get_port(self):
-        """查找一个可用端口
-        :return: 可以使用的端口和用户文件夹路径组成的元组
-        """
-        with PortFinder.lock:
-            for i in range(9600, 19600):
-                if i in PortFinder.used_port:
-                    continue
-                elif port_is_using('127.0.0.1', i):
-                    PortFinder.used_port[i] = None
-                    continue
-                path = TemporaryDirectory(dir=self.tmp_dir).name
-                PortFinder.used_port[i] = path
-                return i, path
-
-            for i in range(9600, 19600):
-                if port_is_using('127.0.0.1', i):
-                    continue
-                rmtree(PortFinder.used_port[i], ignore_errors=True)
-                return i, TemporaryDirectory(dir=self.tmp_dir).name
-
-        raise OSError('未找到可用端口。')

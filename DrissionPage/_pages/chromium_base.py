@@ -16,7 +16,7 @@ from urllib.parse import quote
 from DataRecorder.tools import make_valid_name
 
 from .._base.base import BasePage
-from .._elements.chromium_element import ChromiumElement, run_js, make_chromium_eles
+from .._elements.chromium_element import run_js, make_chromium_eles
 from .._elements.none_element import NoneElement
 from .._elements.session_element import make_session_ele
 from .._functions.locator import get_loc, is_loc
@@ -62,6 +62,7 @@ class ChromiumBase(BasePage):
         self._download_path = None
         self._load_end_time = 0
         self._init_jss = []
+        self._type = 'ChromiumBase'
         if not hasattr(self, '_listener'):
             self._listener = None
 
@@ -244,15 +245,15 @@ class ChromiumBase(BasePage):
             self.run_cdp('Page.setInterceptFileChooserDialog', enabled=False)
             self._upload_list = None
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele = page('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 超时时间（秒）
         :return: ChromiumElement对象
         """
-        return self.ele(loc_or_str, index, timeout)
+        return self.ele(locator, index, timeout)
 
     def _wait_to_stop(self):
         """eager策略超时时使页面停止加载"""
@@ -473,8 +474,8 @@ class ChromiumBase(BasePage):
                                               show_errmsg=show_errmsg, timeout=timeout)
         return self._url_available
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
-        """获取cookies信息
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
+        """返回cookies信息
         :param as_dict: 为True时返回由{name: value}键值对组成的dict，为True时返回list且all_info无效
         :param all_domains: 是否返回所有域的cookies
         :param all_info: 是否返回所有信息，为False时只返回name、value、domain
@@ -491,60 +492,60 @@ class ChromiumBase(BasePage):
             return [{'name': cookie['name'], 'value': cookie['value'], 'domain': cookie['domain']}
                     for cookie in cookies]
 
-    def ele(self, loc_or_ele, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """获取一个符合条件的元素对象
-        :param loc_or_ele: 定位符或元素对象
+        :param locator: 定位符或元素对象
         :param index: 获取第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象
         """
-        return self._ele(loc_or_ele, timeout=timeout, index=index, method='ele()')
+        return self._ele(locator, timeout=timeout, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """获取所有符合条件的元素对象
-        :param loc_or_str: 定位符或元素对象
+        :param locator: 定位符或元素对象
         :param timeout: 查找超时时间（秒）
         :return: ChromiumElement对象组成的列表
         """
-        return self._ele(loc_or_str, timeout=timeout, index=None)
+        return self._ele(locator, timeout=timeout, index=None)
 
-    def s_ele(self, loc_or_ele=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """查找一个符合条件的元素以SessionElement形式返回，处理复杂页面时效率很高
-        :param loc_or_ele: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        r = make_session_ele(self, loc_or_ele, index=index)
+        r = make_session_ele(self, locator, index=index)
         if isinstance(r, NoneElement):
             if Settings.raise_when_ele_not_found:
-                raise ElementNotFoundError(None, 's_ele()', {'loc_or_ele': loc_or_ele})
+                raise ElementNotFoundError(None, 's_ele()', {'locator': locator})
             else:
                 r.method = 's_ele()'
-                r.args = {'loc_or_ele': loc_or_ele}
+                r.args = {'locator': locator}
         return r
 
-    def s_eles(self, loc_or_str):
+    def s_eles(self, locator):
         """查找所有符合条件的元素以SessionElement列表形式返回
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :return: SessionElement对象组成的列表
         """
-        return make_session_ele(self, loc_or_str, index=None)
+        return make_session_ele(self, locator, index=None)
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=1, relative=False, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
         """执行元素查找
-        :param loc_or_ele: 定位符或元素对象
+        :param locator: 定位符或元素对象
         :param timeout: 查找超时时间（秒）
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param relative: WebPage用的表示是否相对定位的参数
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: ChromiumElement对象或元素对象组成的列表
         """
-        if isinstance(loc_or_ele, (str, tuple)):
-            loc = get_loc(loc_or_ele)[1]
-        elif isinstance(loc_or_ele, ChromiumElement) or str(type(loc_or_ele)).endswith(".ChromiumFrame'>"):
-            return loc_or_ele
+        if isinstance(locator, (str, tuple)):
+            loc = get_loc(locator)[1]
+        elif locator._type in ('ChromiumElement', 'ChromiumFrame'):
+            return locator
         else:
-            raise ValueError('loc_or_str参数只能是tuple、str、ChromiumElement类型。')
+            raise ValueError('locator参数只能是tuple、str、ChromiumElement类型。')
 
         self.wait.doc_loaded()
         timeout = timeout if timeout is not None else self.timeout
@@ -650,11 +651,13 @@ class ChromiumBase(BasePage):
         """页面停止加载"""
         try:
             self.run_cdp('Page.stopLoading')
+            end_time = perf_counter() + 5
+            while self._ready_state != 'complete' and perf_counter() < end_time:
+                sleep(.1)
         except (PageDisconnectedError, CDPError):
             pass
-        end_time = perf_counter() + self.timeouts.page_load
-        while self._ready_state != 'complete' and perf_counter() < end_time:
-            sleep(.1)
+        finally:
+            self._ready_state = 'complete'
 
     def remove_ele(self, loc_or_ele):
         """从页面上删除一个元素
@@ -680,13 +683,13 @@ class ChromiumBase(BasePage):
             else:
                 xpath = loc_ind_ele
             ele = self._ele(xpath, timeout=timeout)
-            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+            if ele and ele._type != 'ChromiumFrame':
                 raise TypeError('该定位符不是指向frame元素。')
             r = ele
 
         elif isinstance(loc_ind_ele, tuple):
             ele = self._ele(loc_ind_ele, timeout=timeout)
-            if ele and not str(type(ele)).endswith(".ChromiumFrame'>"):
+            if ele and ele._type != 'ChromiumFrame':
                 raise TypeError('该定位符不是指向frame元素。')
             r = ele
 
@@ -698,7 +701,7 @@ class ChromiumBase(BasePage):
             xpath = f'xpath:(//*[name()="frame" or name()="iframe"])[{loc_ind_ele}]'
             r = self._ele(xpath, timeout=timeout)
 
-        elif str(type(loc_ind_ele)).endswith(".ChromiumFrame'>"):
+        elif loc_ind_ele._type == 'ChromiumFrame':
             r = loc_ind_ele
 
         else:
@@ -709,18 +712,18 @@ class ChromiumBase(BasePage):
             r.args = {'loc_ind_ele': loc_ind_ele}
         return r
 
-    def get_frames(self, loc=None, timeout=None):
+    def get_frames(self, locator=None, timeout=None):
         """获取所有符合条件的frame对象
-        :param loc: 定位符，为None时返回所有
+        :param locator: 定位符，为None时返回所有
         :param timeout: 查找超时时间（秒）
         :return: ChromiumFrame对象组成的列表
         """
-        loc = loc or 'xpath://*[name()="iframe" or name()="frame"]'
-        frames = self._ele(loc, timeout=timeout, index=None, raise_err=False)
-        return [i for i in frames if str(type(i)).endswith(".ChromiumFrame'>")]
+        locator = locator or 'xpath://*[name()="iframe" or name()="frame"]'
+        frames = self._ele(locator, timeout=timeout, index=None, raise_err=False)
+        return [i for i in frames if i._type == 'ChromiumFrame']
 
-    def get_session_storage(self, item=None):
-        """获取sessionStorage信息，不设置item则获取全部
+    def session_storage(self, item=None):
+        """返回sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
@@ -740,8 +743,8 @@ class ChromiumBase(BasePage):
             '''
             return {i['key']: i['val'] for i in self.run_js_loaded(js)}
 
-    def get_local_storage(self, item=None):
-        """获取localStorage信息，不设置item则获取全部
+    def local_storage(self, item=None):
+        """返回localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
@@ -826,7 +829,17 @@ class ChromiumBase(BasePage):
     def disconnect(self):
         """断开与页面的连接，不关闭页面"""
         if self._driver:
-            self.driver.stop()
+            self.browser.stop_driver(self._driver)
+
+    def reconnect(self, wait=0):
+        """断开与页面原来的页面，重新建立连接
+        :param wait: 断开后等待若干秒再连接
+        :return: None
+        """
+        t_id = self._target_id
+        self.disconnect()
+        sleep(wait)
+        self._driver = self.browser._get_driver(t_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
@@ -917,7 +930,11 @@ class ChromiumBase(BasePage):
         :param interval: 重试间隔
         :return: 重试次数和间隔组成的tuple
         """
-        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
+        p = Path(url)
+        if p.exists():
+            self._url = str(p.absolute())
+        else:
+            self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
         retry = retry if retry is not None else self.retry_times
         interval = interval if interval is not None else self.retry_interval
         return retry, interval
@@ -1020,11 +1037,12 @@ class ChromiumBase(BasePage):
             pic_type = path.suffix.lower()
             pic_type = 'jpeg' if pic_type == '.jpg' else pic_type[1:]
 
-        width, height = self.rect.size
         if full_page:
+            width, height = self.rect.size
+            if width == 0 or height == 0:
+                raise RuntimeError('页面大小为0，请尝试等待页面加载完成。')
             vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
-            png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                      captureBeyondViewport=True, clip=vp)['data']
+            args = {'format': pic_type, 'captureBeyondViewport': True, 'clip': vp}
         else:
             if left_top and right_bottom:
                 x, y = left_top
@@ -1038,11 +1056,14 @@ class ChromiumBase(BasePage):
                     x += 10
 
                 vp = {'x': x, 'y': y, 'width': w, 'height': h, 'scale': 1}
-                png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type,
-                                          captureBeyondViewport=v, clip=vp)['data']
+                args = {'format': pic_type, 'captureBeyondViewport': v, 'clip': vp}
 
             else:
-                png = self.run_cdp_loaded('Page.captureScreenshot', format=pic_type)['data']
+                args = {'format': pic_type}
+
+        if pic_type == 'jpeg':
+            args['quality'] = 100
+        png = self.run_cdp_loaded('Page.captureScreenshot', **args)['data']
 
         if as_base64:
             return png
@@ -1081,6 +1102,15 @@ class ChromiumBase(BasePage):
     def size(self):
         """返回页面总宽高，格式：(宽, 高)"""
         return self.rect.size
+
+    def get_session_storage(self, item=None):
+        return self.session_storage(item)
+
+    def get_local_storage(self, item=None):
+        return self.local_storage(item)
+
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
 
 
 class Timeout(object):

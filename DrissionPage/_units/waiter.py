@@ -73,14 +73,14 @@ class BaseWaiter(object):
                 return False
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
-    def ele_loaded(self, loc, timeout=None, raise_err=None):
+    def ele_loaded(self, locator, timeout=None, raise_err=None):
         """等待元素加载到DOM
-        :param loc: 要等待的元素，输入定位符
+        :param locator: 要等待的元素，输入定位符
         :param timeout: 超时时间，默认读取页面超时时间
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 成功返回元素对象，失败返回False
         """
-        ele = self._driver._ele(loc, raise_err=False, timeout=timeout)
+        ele = self._driver._ele(locator, raise_err=False, timeout=timeout)
         if ele:
             return ele
         if raise_err is True or Settings.raise_when_wait_failed is True:
@@ -119,6 +119,8 @@ class BaseWaiter(object):
         :param cancel_it: 是否取消该任务
         :return: 成功返回任务对象，失败返回False
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         self._driver.browser._dl_mgr.set_flag(self._driver.tab_id, False if cancel_it else True)
         if timeout is None:
             timeout = self._driver.timeout
@@ -232,6 +234,8 @@ class TabWaiter(BaseWaiter):
         :param cancel_if_timeout: 超时时是否取消剩余任务
         :return: 是否等待成功
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr.get_tab_missions(self._driver.tab_id):
                 sleep(.5)
@@ -290,6 +294,8 @@ class PageWaiter(TabWaiter):
         :param cancel_if_timeout: 超时时是否取消剩余任务
         :return: 是否等待成功
         """
+        if not self._driver.browser._dl_mgr._running:
+            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr._missions:
                 sleep(.5)
@@ -458,7 +464,8 @@ class ElementWaiter(object):
             timeout = self._page.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            if self._ele.states.__getattribute__(attr) == mode:
+            a = self._ele.states.__getattribute__(attr)
+            if (a and mode) or (not a and not mode):
                 return True
             sleep(.05)
 

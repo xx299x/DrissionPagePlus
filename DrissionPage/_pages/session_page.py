@@ -35,6 +35,7 @@ class SessionPage(BasePage):
         self._session = None
         self._set = None
         self._encoding = None
+        self._type = 'SessionPage'
         self._s_set_start_options(session_or_options)
         self._s_set_runtime_settings()
         self._create_session()
@@ -46,8 +47,11 @@ class SessionPage(BasePage):
         :param session_or_options: Session、SessionOptions对象
         :return: None
         """
-        if not session_or_options or isinstance(session_or_options, SessionOptions):
-            self._session_options = session_or_options or SessionOptions(session_or_options)
+        if not session_or_options:
+            self._session_options = SessionOptions(session_or_options)
+
+        elif isinstance(session_or_options, SessionOptions):
+            self._session_options = session_or_options
 
         elif isinstance(session_or_options, Session):
             self._session_options = SessionOptions()
@@ -68,15 +72,15 @@ class SessionPage(BasePage):
         if not self._session:
             self._session, self._headers = self._session_options.make_session()
 
-    def __call__(self, loc_or_str, index=1, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性文本
         """
-        return self.ele(loc_or_str, index=index)
+        return self.ele(locator, index=index)
 
     # -----------------共有属性和方法-------------------
     @property
@@ -175,50 +179,49 @@ class SessionPage(BasePage):
         """
         return self._s_connect(url, 'post', show_errmsg, retry, interval, **kwargs)
 
-    def ele(self, loc_or_ele, index=1, timeout=None):
+    def ele(self, locator, index=1, timeout=None):
         """返回页面中符合条件的一个元素、属性或节点文本
-        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_ele, index=index, method='ele()')
+        return self._ele(locator, index=index, method='ele()')
 
-    def eles(self, loc_or_str, timeout=None):
+    def eles(self, locator, timeout=None):
         """返回页面中所有符合条件的元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和ChromiumElement对应，便于无差别调用
         :return: SessionElement对象或属性、文本组成的列表
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def s_ele(self, loc_or_ele=None, index=1):
+    def s_ele(self, locator=None, index=1):
         """返回页面中符合条件的一个元素、属性或节点文本
-        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        return make_session_ele(self.html) if loc_or_ele is None else self._ele(loc_or_ele,
-                                                                                index=index, method='s_ele()')
+        return make_session_ele(self.html) if locator is None else self._ele(locator, index=index, method='s_ele()')
 
-    def s_eles(self, loc_or_str):
+    def s_eles(self, locator):
         """返回页面中符合条件的所有元素、属性或节点文本
-        :param loc_or_str: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :return: SessionElement对象或属性、文本
         """
-        return self._ele(loc_or_str, index=None)
+        return self._ele(locator, index=None)
 
-    def _find_elements(self, loc_or_ele, timeout=None, index=1, raise_err=None):
+    def _find_elements(self, locator, timeout=None, index=1, relative=True, raise_err=None):
         """返回页面中符合条件的元素、属性或节点文本，默认返回第一个
-        :param loc_or_ele: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
+        :param locator: 元素的定位信息，可以是元素对象，loc元组，或查询字符串
         :param timeout: 不起实际作用，用于和父类对应
         :param index: 第几个结果，从1开始，可传入负数获取倒数第几个，为None返回所有
         :param raise_err: 找不到元素是是否抛出异常，为None时根据全局设置
         :return: SessionElement对象
         """
-        return loc_or_ele if isinstance(loc_or_ele, SessionElement) else make_session_ele(self, loc_or_ele, index=index)
+        return locator if isinstance(locator, SessionElement) else make_session_ele(self, locator, index=index)
 
-    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+    def cookies(self, as_dict=False, all_domains=False, all_info=False):
         """返回cookies
         :param as_dict: 是否以字典方式返回，False则以list返回
         :param all_domains: 是否返回所有域的cookies
@@ -310,7 +313,7 @@ class SessionPage(BasePage):
         parsed_url = urlparse(url)
         hostname = parsed_url.hostname
         scheme = parsed_url.scheme
-        if not check_headers(kwargs, self._headers, 'Referer'):
+        if not check_headers(kwargs['headers'], self._headers, 'Referer'):
             kwargs['headers']['Referer'] = self.url if self.url else f'{scheme}://{hostname}'
         if 'Host' not in kwargs['headers']:
             kwargs['headers']['Host'] = hostname
@@ -364,10 +367,14 @@ class SessionPage(BasePage):
     def __repr__(self):
         return f'<SessionPage url={self.url}>'
 
+    # ---------即将废弃---------
+    def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
+        return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
+
 
 def check_headers(kwargs, headers, arg):
     """检查kwargs或headers中是否有arg所示属性"""
-    return arg in kwargs['headers'] or arg in headers
+    return arg in kwargs or arg in headers
 
 
 def set_charset(response):
