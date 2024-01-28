@@ -267,6 +267,21 @@ class ChromiumOptions(object):
         self.clear_file_flags = True
         return self
 
+    def clear_flags(self):
+        """清空本对象已设置的flag参数"""
+        self._flags = {}
+        return self
+
+    def clear_arguments(self):
+        """清空本对象已设置的argument参数"""
+        self._arguments = []
+        return self
+
+    def clear_prefs(self):
+        """清空本对象已设置的pref参数"""
+        self._prefs = {}
+        return self
+
     def set_timeouts(self, base=None, page_load=None, script=None, implicit=None):
         """设置超时时间，单位为秒
         :param base: 默认超时时间
