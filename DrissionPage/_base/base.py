@@ -405,7 +405,7 @@ class BasePage(BaseParser):
         :return: 重试次数、间隔、是否文件组成的tuple
         """
         is_file = False
-        if isinstance(url, Path) or '://' not in url or ':\\\\' not in url:
+        if isinstance(url, Path) or ('://' not in url and ':\\\\' not in url):
             p = Path(url)
             if p.exists():
                 url = str(p.absolute())

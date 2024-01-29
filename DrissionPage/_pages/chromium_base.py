@@ -668,7 +668,7 @@ class ChromiumBase(BasePage):
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
 
-    def add_ele(self, outerHTML, insert_to, before=None):
+    def add_ele(self, outerHTML, insert_to=None, before=None):
         """新建一个元素
         :param outerHTML: 新元素的html文本
         :param insert_to: 插入到哪个元素中，可接收元素对象和定位符，为None添加到body
