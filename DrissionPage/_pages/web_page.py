@@ -273,12 +273,8 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 if copy_cookies:
                     self.cookies_to_session()
 
-                if go:
-                    url = super(SessionPage, self).url
-                    if url.startswith('http'):
-                        r = self.get(url)
-                        if not r:
-                            raise ConnectionError('s模式访问失败，请设置go=False，自行构造连接参数进行访问。')
+                if go and not self.get(super(SessionPage, self).url):
+                    raise ConnectionError('s模式访问失败，请设置go=False，自行构造连接参数进行访问。')
 
     def cookies_to_session(self, copy_user_agent=True):
         """把driver对象的cookies复制到session对象

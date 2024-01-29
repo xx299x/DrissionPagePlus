@@ -8,7 +8,7 @@
 from pathlib import Path
 from re import search, DOTALL
 from time import sleep
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse
 
 from requests import Session, Response
 from requests.structures import CaseInsensitiveDict
@@ -154,19 +154,16 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        if isinstance(url, Path):
-            url = str(url.absolute())
-        if not url.lower().startswith('http'):
-            if url.startswith('file:///'):
-                url = url[8:]
-            if Path(url).exists():
-                with open(url, 'rb') as f:
-                    r = Response()
-                    r._content = f.read()
-                    r.status_code = 200
-                    self._response = r
-                return
-        return self._s_connect(url, 'get', show_errmsg, retry, interval, **kwargs)
+        retry, interval, is_file = self._before_connect(url.lstrip('file:///'), retry, interval)
+        if is_file:
+            with open(self._url, 'rb') as f:
+                r = Response()
+                r._content = f.read()
+                r.status_code = 200
+                r.url = self._url
+                self._response = r
+            return True
+        return self._s_connect(self._url, 'get', show_errmsg, retry, interval, **kwargs)
 
     def post(self, url, show_errmsg=False, retry=None, interval=None, **kwargs):
         """用post方式跳转到url
@@ -256,18 +253,6 @@ class SessionPage(BasePage):
         if self._response is not None:
             self._response.close()
 
-    def _before_connect(self, url, retry, interval):
-        """连接前的准备
-        :param url: 要访问的url
-        :param retry: 重试次数
-        :param interval: 重试间隔
-        :return: 重试次数和间隔组成的tuple
-        """
-        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
-        retry = retry if retry is not None else self.retry_times
-        interval = interval if interval is not None else self.retry_interval
-        return retry, interval
-
     def _s_connect(self, url, mode, show_errmsg=False, retry=None, interval=None, **kwargs):
         """执行get或post连接
         :param url: 目标url
@@ -278,7 +263,7 @@ class SessionPage(BasePage):
         :param kwargs: 连接参数
         :return: url是否可用
         """
-        retry, interval = self._before_connect(url, retry, interval)
+        retry, interval, is_file = self._before_connect(url, retry, interval)
         self._response, info = self._make_response(self._url, mode, retry, interval, show_errmsg, **kwargs)
 
         if self._response is None:

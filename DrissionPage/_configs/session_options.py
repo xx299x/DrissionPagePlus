@@ -198,6 +198,11 @@ class SessionOptions(object):
 
         return self
 
+    def clear_headers(self):
+        """清空已设置的header参数"""
+        self._headers = None
+        self._del_set.add('headers')
+
     @property
     def cookies(self):
         """以list形式返回cookies"""
