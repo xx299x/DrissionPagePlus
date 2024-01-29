@@ -11,7 +11,6 @@ from pathlib import Path
 from re import findall
 from threading import Thread
 from time import perf_counter, sleep
-from urllib.parse import quote
 
 from DataRecorder.tools import make_valid_name
 
@@ -431,7 +430,7 @@ class ChromiumBase(BasePage):
 
     def run_js(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码
-        :param script: js文本
+        :param script: js文本或js文件路径
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param timeout: js超时时间（秒），为None则使用页面timeouts.script设置
@@ -441,7 +440,7 @@ class ChromiumBase(BasePage):
 
     def run_js_loaded(self, script, *args, as_expr=False, timeout=None):
         """运行javascript代码，执行前等待页面加载完毕
-        :param script: js文本
+        :param script: js文本或js文件路径
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
         :param timeout: js超时时间（秒），为None则使用页面timeouts.script属性值
@@ -451,7 +450,7 @@ class ChromiumBase(BasePage):
         return run_js(self, script, as_expr, self.timeouts.script if timeout is None else timeout, args)
 
     def run_async_js(self, script, *args, as_expr=False):
-        """以异步方式执行js代码
+        """以异步方式执行js代码或js文件路径
         :param script: js文本
         :param args: 参数，按顺序在js文本中对应arguments[0]、arguments[1]...
         :param as_expr: 是否作为表达式运行，为True时args无效
@@ -468,7 +467,7 @@ class ChromiumBase(BasePage):
         :param timeout: 连接超时时间（秒），为None时使用页面对象timeouts.page_load属性值
         :return: 目标url是否可用
         """
-        retry, interval = self._before_connect(url, retry, interval)
+        retry, interval, is_file = self._before_connect(url, retry, interval)
         self._url_available = self._d_connect(self._url, times=retry, interval=interval,
                                               show_errmsg=show_errmsg, timeout=timeout)
         return self._url_available
@@ -668,6 +667,33 @@ class ChromiumBase(BasePage):
         ele = self._ele(loc_or_ele, raise_err=False)
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
+
+    def add_ele(self, outerHTML, insert_to, before=None):
+        """新建一个元素
+        :param outerHTML: 新元素的html文本
+        :param insert_to: 插入到哪个元素中，可接收元素对象和定位符，为None添加到body
+        :param before: 在哪个子节点前面插入，可接收对象和定位符，为None插入到父元素末尾
+        :return: 元素对象
+        """
+        insert_to = self.ele(insert_to) if insert_to else self.ele('t:body')
+        args = [outerHTML, insert_to]
+        if before:
+            args.append(self.ele(before))
+            js = '''
+                 ele = document.createElement(null);
+                 arguments[1].insertBefore(ele, arguments[2]);
+                 ele.outerHTML = arguments[0];
+                 return arguments[2].previousElementSibling;
+                 '''
+        else:
+            js = '''
+                 ele = document.createElement(null);
+                 arguments[1].appendChild(ele);
+                 ele.outerHTML = arguments[0];
+                 return arguments[1].lastElementChild;
+                 '''
+        ele = self.run_js(js, *args)
+        return ele
 
     def get_frame(self, loc_ind_ele, timeout=None):
         """获取页面中一个frame对象
@@ -932,22 +958,6 @@ class ChromiumBase(BasePage):
         except CDPError:
             pass
         return False
-
-    def _before_connect(self, url, retry, interval):
-        """连接前的准备
-        :param url: 要访问的url
-        :param retry: 重试次数
-        :param interval: 重试间隔
-        :return: 重试次数和间隔组成的tuple
-        """
-        p = Path(url)
-        if p.exists():
-            self._url = str(p.absolute())
-        else:
-            self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%') or 'chrome://newtab/'
-        retry = retry if retry is not None else self.retry_times
-        interval = interval if interval is not None else self.retry_interval
-        return retry, interval
 
     def _d_connect(self, to_url, times=0, interval=1, show_errmsg=False, timeout=None):
         """尝试连接，重试若干次

@@ -1409,6 +1409,13 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
     if page.states.has_alert:
         raise AlertExistsError
 
+    try:
+        if Path(script).exists():
+            with open(script, 'r', encoding='utf-8') as f:
+                script = f.read()
+    except OSError:
+        pass
+
     end_time = perf_counter() + timeout
     try:
         if as_expr:

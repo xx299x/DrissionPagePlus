@@ -133,7 +133,7 @@ class Clicker(object):
         x, y = offset_scroll(self._ele, offset_x, offset_y)
         self._click(x, y, button, count)
 
-    def multiple(self, times=2):
+    def multi(self, times=2):
         """多次点击
         :param times: 默认双击
         :return: None
@@ -159,3 +159,10 @@ class Clicker(object):
     def twice(self):
         """双击元素"""
         self.at(count=2)
+
+    def multiple(self, times=2):
+        """多次点击
+        :param times: 默认双击
+        :return: None
+        """
+        self.at(count=times)

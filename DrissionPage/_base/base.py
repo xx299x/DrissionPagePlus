@@ -6,7 +6,9 @@
 @License  : BSD 3-Clause.
 """
 from abc import abstractmethod
+from pathlib import Path
 from re import sub
+from urllib.parse import quote
 
 from DownloadKit import DownloadKit
 
@@ -394,6 +396,24 @@ class BasePage(BaseParser):
         if self._DownloadKit is None:
             self._DownloadKit = DownloadKit(driver=self, goal_path=self.download_path)
         return self._DownloadKit
+
+    def _before_connect(self, url, retry, interval):
+        """连接前的准备
+        :param url: 要访问的url
+        :param retry: 重试次数
+        :param interval: 重试间隔
+        :return: 重试次数、间隔、是否文件组成的tuple
+        """
+        is_file = False
+        if isinstance(url, Path) or '://' not in url or ':\\\\' not in url:
+            p = Path(url)
+            if p.exists():
+                url = str(p.absolute())
+                is_file = True
+        self._url = quote(url, safe='-_.~!*\'"();:@&=+$,/\\?#[]%')
+        retry = retry if retry is not None else self.retry_times
+        interval = interval if interval is not None else self.retry_interval
+        return retry, interval, is_file
 
     # ----------------以下属性或方法由后代实现----------------
     @property
