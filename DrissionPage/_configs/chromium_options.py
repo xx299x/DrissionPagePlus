@@ -532,9 +532,9 @@ class ChromiumOptions(object):
         path = path / 'config.ini' if path.is_dir() else path
 
         if path.exists():
-            om = OptionsManager(str(path))
+            om = OptionsManager(path)
         else:
-            om = OptionsManager(self.ini_path or str(Path(__file__).parent / 'configs.ini'))
+            om = OptionsManager(self.ini_path or (Path(__file__).parent / 'configs.ini'))
 
         # 设置chromium_options
         attrs = ('address', 'browser_path', 'arguments', 'extensions', 'user', 'load_mode',

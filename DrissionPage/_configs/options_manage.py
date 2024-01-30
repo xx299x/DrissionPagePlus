@@ -29,6 +29,8 @@ class OptionsManager(object):
                     self.ini_path = default_configs
             elif path == 'default':
                 self.ini_path = default_configs
+            elif isinstance(path, Path):
+                self.ini_path = path
             else:
                 self.ini_path = Path(path)
 
@@ -147,6 +149,7 @@ class OptionsManager(object):
             path = Path(path).absolute()
 
         path = path / 'config.ini' if path.is_dir() else path
+        path.parent.mkdir(exist_ok=True, parents=True)
 
         path = str(path)
         self._conf.write(open(path, 'w', encoding='utf-8'))

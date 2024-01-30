@@ -7,7 +7,7 @@
 """
 from configparser import RawConfigParser
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 
 class OptionsManager(object):
@@ -15,7 +15,7 @@ class OptionsManager(object):
     file_exists: bool = ...
     _conf: RawConfigParser = ...
 
-    def __init__(self, path: str = None): ...
+    def __init__(self, path: Union[Path, str] = None): ...
 
     def __getattr__(self, item) -> dict: ...
 

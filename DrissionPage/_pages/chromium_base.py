@@ -1064,7 +1064,11 @@ class ChromiumBase(BasePage):
             vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
             args = {'format': pic_type, 'captureBeyondViewport': True, 'clip': vp}
         else:
-            if left_top and right_bottom:
+            if left_top or right_bottom:
+                if not left_top:
+                    left_top = (0, 0)
+                if not right_bottom:
+                    right_bottom = self.rect.size
                 x, y = left_top
                 w = right_bottom[0] - x
                 h = right_bottom[1] - y
