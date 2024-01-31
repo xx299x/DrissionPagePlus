@@ -38,7 +38,7 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'dp = DrissionPage.functions.cli:main',
+            'dp = DrissionPage._functions.cli:main',
         ],
     },
 )

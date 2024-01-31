@@ -255,7 +255,7 @@ class ChromiumBase(BasePage):
 
     def reconnect(self, wait: float = 0) -> None: ...
 
-    def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None,
+    def handle_alert(self, accept: Optional[bool] = True, send: str = None, timeout: float = None,
                      next_one: bool = False) -> Union[str, False]: ...
 
     def _handle_alert(self, accept: bool = True, send: str = None, timeout: float = None,

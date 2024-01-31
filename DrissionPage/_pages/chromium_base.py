@@ -878,7 +878,16 @@ class ChromiumBase(BasePage):
         self._driver = self.browser._get_driver(t_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
+        """处理提示框，可以自动等待提示框出现
+        :param accept: True表示确认，False表示取消，为None不会按按钮但依然返回文本值
+        :param send: 处理prompt提示框时可输入文本
+        :param timeout: 等待提示框出现的超时时间（秒），为None则使用self.timeout属性的值
+        :param next_one: 是否处理下一个出现的提示框，为True时timeout参数无效
+        :return: 提示框内容文本，未等到提示框则返回False
+        """
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
+        if not isinstance(accept, bool):
+            return r
         while self._has_alert:
             sleep(.1)
         return r
@@ -905,6 +914,8 @@ class ChromiumBase(BasePage):
             return False
 
         res_text = self._alert.text
+        if not isinstance(accept, bool):
+            return res_text
         d = {'accept': accept, '_timeout': 0}
         if self._alert.type == 'prompt' and send is not None:
             d['promptText'] = send
