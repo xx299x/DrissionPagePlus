@@ -1447,7 +1447,10 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
     try:
         return parse_js_result(page, page_or_ele, res.get('result'), end_time)
     except Exception:
-        return res
+        from DrissionPage import __version__
+        raise RuntimeError(f'\njs结果解析错误\n内容：{res.get("result")}\n版本：{__version__}\n'
+                           f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
+                           f'报告网站：https://gitee.com/g1879/DrissionPage/issues')
 
 
 def parse_js_result(page, ele, result, end_time):
@@ -1475,11 +1478,7 @@ def parse_js_result(page, ele, result, end_time):
 
         elif sub_type == 'array':
             r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'], ownProperties=True)['result']
-            return [parse_js_result(page, ele, result=i['value'], end_time=end_time) for i in r[:-1]]
-
-        elif 'objectId' in result and result['className'].lower() == 'object':  # dict
-            r = page.run_cdp('Runtime.getProperties', objectId=result['objectId'], ownProperties=True)['result']
-            return {i['name']: parse_js_result(page, ele, result=i['value'], end_time=end_time) for i in r}
+            return [parse_js_result(page, ele, result=i['value'], end_time=end_time) for i in r if i['name'].isdigit()]
 
         elif 'objectId' in result:
             timeout = end_time - perf_counter()
