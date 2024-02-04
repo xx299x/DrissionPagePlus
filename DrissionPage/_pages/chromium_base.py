@@ -747,17 +747,6 @@ class ChromiumBase(BasePage):
         frames = self._ele(locator, timeout=timeout, index=None, raise_err=False)
         return [i for i in frames if i._type == 'ChromiumFrame']
 
-    def upload(self, loc_or_ele, file_paths, by_js=False):
-        """触发上传文件选择框并自动填入指定路径
-        :param loc_or_ele: 被点击后会触发文件选择框的元素或它的定位符
-        :param file_paths: 文件路径，如果上传框支持多文件，可传入列表或字符串，字符串时多个文件用回车分隔
-        :param by_js: 是否用js方式点击
-        :return: None
-        """
-        self.set.upload_files(file_paths)
-        self.ele(loc_or_ele).click(by_js=by_js)
-        self.wait.upload_paths_inputted()
-
     def session_storage(self, item=None):
         """返回sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
@@ -1146,6 +1135,17 @@ class ChromiumBase(BasePage):
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
+
+    def upload(self, loc_or_ele, file_paths, by_js=False):
+        """触发上传文件选择框并自动填入指定路径
+        :param loc_or_ele: 被点击后会触发文件选择框的元素或它的定位符
+        :param file_paths: 文件路径，如果上传框支持多文件，可传入列表或字符串，字符串时多个文件用回车分隔
+        :param by_js: 是否用js方式点击
+        :return: None
+        """
+        self.set.upload_files(file_paths)
+        self.ele(loc_or_ele).click(by_js=by_js)
+        self.wait.upload_paths_inputted()
 
 
 class Timeout(object):

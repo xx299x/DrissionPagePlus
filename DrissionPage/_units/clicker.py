@@ -140,12 +140,13 @@ class Clicker(object):
         """
         self.at(count=times)
 
-    def to_download(self, save_path=None, rename=None, suffix=None, new_tab=False):
+    def to_download(self, save_path=None, rename=None, suffix=None, new_tab=False, by_js=False):
         """点击触发下载
         :param save_path: 保存路径，为None保存在原来设置的，如未设置保存到当前路径
         :param rename: 重命名文件名
         :param suffix: 指定文件后缀
-        :param new_tab: 是否在新tab触发下载
+        :param new_tab: 该下载是否在新tab中触发
+        :param by_js: 是否用js方式点击，逻辑与click()一致
         :return: DownloadMission对象
         """
         if save_path:
@@ -158,8 +159,18 @@ class Clicker(object):
 
         tab = self._ele.page._page if new_tab else self._ele.page
 
-        self._ele.click()
+        self._ele.click(by_js=by_js)
         return tab.wait.download_begin()
+
+    def to_upload(self, file_paths, by_js=False):
+        """触发上传文件选择框并自动填入指定路径
+        :param file_paths: 文件路径，如果上传框支持多文件，可传入列表或字符串，字符串时多个文件用回车分隔
+        :param by_js: 是否用js方式点击，逻辑与click()一致
+        :return: None
+        """
+        self._ele.page.set.upload_files(file_paths)
+        self._ele.click(by_js=by_js)
+        self._ele.page.wait.upload_paths_inputted()
 
     def _click(self, client_x, client_y, button='left', count=1):
         """实施点击
