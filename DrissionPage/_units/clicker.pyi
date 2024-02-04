@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from .downloader import DownloadMission
 from .._elements.chromium_element import ChromiumElement
@@ -16,9 +16,9 @@ class Clicker(object):
     def __init__(self, ele: ChromiumElement):
         self._ele: ChromiumElement = ...
 
-    def __call__(self, by_js: Optional[bool, str] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
+    def __call__(self, by_js: Union[bool, str, None] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
 
-    def left(self, by_js: Optional[bool, str] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
+    def left(self, by_js: Union[bool, str, None] = False, timeout: float = 1.5, wait_stop: bool = True) -> bool: ...
 
     def right(self) -> None: ...
 

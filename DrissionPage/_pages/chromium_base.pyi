@@ -216,8 +216,8 @@ class ChromiumBase(BasePage):
 
     def add_ele(self,
                 outerHTML: str,
-                insert_to: Optional[ChromiumElement, str, Tuple[str, str]] = None,
-                before: Optional[ChromiumElement, str, Tuple[str, str]] = None) -> ChromiumElement: ...
+                insert_to: Union[ChromiumElement, str, Tuple[str, str], None] = None,
+                before: Union[ChromiumElement, str, Tuple[str, str], None] = None) -> ChromiumElement: ...
 
     def get_frame(self, loc_ind_ele: Union[str, int, tuple, ChromiumFrame], timeout: float = None) -> ChromiumFrame: ...
 

@@ -319,12 +319,12 @@ def is_cookie_in_driver(page, cookie):
     :return: bool
     """
     if 'domain' in cookie:
-        for c in page.get_cookies(all_domains=True):
+        for c in page.cookies(all_domains=True):
             if cookie['name'] == c['name'] and cookie['value'] == c['value'] and cookie['domain'] == c.get('domain',
                                                                                                            None):
                 return True
     else:
-        for c in page.get_cookies(all_domains=True):
+        for c in page.cookies(all_domains=True):
             if cookie['name'] == c['name'] and cookie['value'] == c['value']:
                 return True
     return False
@@ -363,3 +363,26 @@ def get_blob(page, url, as_bytes=True):
         return b64decode(result.split(',', 1)[-1])
     else:
         return result
+
+
+def tree(ele_or_page, layer=5, last_one=False, body=''):
+    try:
+        list_ele = ele_or_page.s_ele().children(timeout=0.1)
+    except:
+        list_ele = []
+    length = len(list_ele)
+    body_unit = '    ' if last_one else '│   '
+    tail = '├───'
+    new_body = body + body_unit
+
+    if length > 0 and layer >= 1:
+        new_last_one = False
+        for i in range(length):
+            if i == length - 1:
+                tail = '└───'
+                new_last_one = True
+            e = list_ele[i]
+
+            print(f'{new_body}{tail}{i}<{e.tag}>  {e.attrs}')
+
+            tree(e, layer - 1, new_last_one, new_body)

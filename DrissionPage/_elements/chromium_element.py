@@ -10,7 +10,6 @@ from os.path import basename, sep
 from pathlib import Path
 from re import search
 from time import perf_counter, sleep
-from colorama import Fore, init
 
 from DataRecorder.tools import get_usable_path
 
@@ -124,33 +123,6 @@ class ChromiumElement(DrissionElement):
     def text(self):
         """返回元素内所有文本，文本已格式化"""
         return get_ele_txt(make_session_ele(self.html))
-    
-    def tree(self):
-        """打印当前元素的子元素结构树，默认展开层数是5层"""
-        init()
-        self.__tree(ele=self)
-
-    def __tree(self,ele, layer=5, last_one=False, body=''):
-        try:
-            list_ele = ele.children(timeout=0.1)
-        except:
-            list_ele = []
-        length = len(list_ele)
-        body_unit = '    ' if last_one else '│   '
-        tail = '├───'
-        new_body = body + body_unit
-
-        if length > 0 and layer >= 1:
-            new_last_one = False
-            for i in range(length):
-                if i == length - 1:
-                    tail = '└───'
-                    new_last_one = True
-                e = list_ele[i]
-
-                print(f'{Fore.BLUE}{new_body}{tail}{Fore.CYAN}{i}<{e.tag}>  {Fore.RESET}{e.attrs}')
-
-                self.__tree(e, layer - 1, new_last_one, new_body)
 
     @property
     def raw_text(self):
