@@ -140,6 +140,27 @@ class Clicker(object):
         """
         self.at(count=times)
 
+    def to_download(self, save_path=None, rename=None, suffix=None, new_tab=False):
+        """点击触发下载
+        :param save_path: 保存路径，为None保存在原来设置的，如未设置保存到当前路径
+        :param rename: 重命名文件名
+        :param suffix: 指定文件后缀
+        :param new_tab: 是否在新tab触发下载
+        :return: DownloadMission对象
+        """
+        if save_path:
+            self._ele.page.set.download_path(save_path)
+        elif not self._ele.page._page._browser._dl_mgr._running:
+            self._ele.page.set.download_path('.')
+
+        if rename or suffix:
+            self._ele.page.set.download_file_name(rename, suffix)
+
+        tab = self._ele.page._page if new_tab else self._ele.page
+
+        self._ele.click()
+        return tab.wait.download_begin()
+
     def _click(self, client_x, client_y, button='left', count=1):
         """实施点击
         :param client_x: 视口中的x坐标
