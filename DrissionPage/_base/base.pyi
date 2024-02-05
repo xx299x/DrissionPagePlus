@@ -11,6 +11,7 @@ from typing import Union, Tuple, List, Any, Optional
 from DownloadKit import DownloadKit
 
 from .._elements.none_element import NoneElement
+from .._elements.session_element import SessionElement
 
 
 class BaseParser(object):
@@ -29,9 +30,11 @@ class BaseParser(object):
     @property
     def html(self) -> str: ...
 
-    def s_ele(self, locator: Union[Tuple[str, str], str, BaseElement], index: int = 1): ...
+    def s_ele(self,
+              locator: Union[Tuple[str, str], str, BaseElement, None] = None,
+              index: int = 1) -> SessionElement: ...
 
-    def s_eles(self, locator: Union[Tuple[str, str], str]): ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _ele(self,
              locator: Union[Tuple[str, str], str],

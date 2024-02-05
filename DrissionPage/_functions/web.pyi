@@ -11,7 +11,7 @@ from typing import Union
 from requests import Session
 from requests.cookies import RequestsCookieJar
 
-from .._base.base import BasePage, DrissionElement
+from .._base.base import DrissionElement, BaseParser
 from .._elements.chromium_element import ChromiumElement
 from .._pages.chromium_base import ChromiumBase
 
@@ -52,4 +52,4 @@ def is_cookie_in_driver(page: ChromiumBase, cookie: dict) -> bool: ...
 def get_blob(page: ChromiumBase, url: str, as_bytes: bool = True) -> bytes: ...
 
 
-def tree(ele_or_page, layer=5, last_one=False, body='') -> None: ...
+def tree(ele_or_page:BaseParser) -> None: ...

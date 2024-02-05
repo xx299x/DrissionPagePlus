@@ -36,7 +36,7 @@ class BaseParser(object):
     def html(self):
         return ''
 
-    def s_ele(self, locator):
+    def s_ele(self, locator=None):
         pass
 
     def s_eles(self, locator):

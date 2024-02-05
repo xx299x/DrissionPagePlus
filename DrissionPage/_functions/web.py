@@ -365,24 +365,32 @@ def get_blob(page, url, as_bytes=True):
         return result
 
 
-def tree(ele_or_page, layer=5, last_one=False, body=''):
-    try:
-        list_ele = ele_or_page.s_ele().children(timeout=0.1)
-    except:
-        list_ele = []
-    length = len(list_ele)
-    body_unit = '    ' if last_one else '│   '
-    tail = '├───'
-    new_body = body + body_unit
+def tree(ele_or_page):
+    """把页面或元素对象DOM结构打印出来
+    :param ele_or_page: 页面或元素对象
+    :return: None
+    """
+    def _tree(obj, last_one=True, body=''):
+        list_ele = obj.children()
+        length = len(list_ele)
+        body_unit = '    ' if last_one else '│   '
+        tail = '├───'
+        new_body = body + body_unit
 
-    if length > 0 and layer >= 1:
-        new_last_one = False
-        for i in range(length):
-            if i == length - 1:
-                tail = '└───'
-                new_last_one = True
-            e = list_ele[i]
+        if length > 0:
+            new_last_one = False
+            for i in range(length):
+                if i == length - 1:
+                    tail = '└───'
+                    new_last_one = True
+                e = list_ele[i]
 
-            print(f'{new_body}{tail}{i}<{e.tag}>  {e.attrs}')
+                attrs = ' '.join([f"{k}='{v}'" for k, v in e.attrs.items()])
+                print(f'{new_body}{tail}<{e.tag} {attrs}>'.replace('\n', ' '))
 
-            tree(e, layer - 1, new_last_one, new_body)
+                _tree(e, new_last_one, new_body)
+
+    ele = ele_or_page.s_ele()
+    attrs = ' '.join([f"{k}='{v}'" for k, v in ele.attrs.items()])
+    print(f'<{ele.tag} {attrs}>'.replace('\n', ' '))
+    _tree(ele)
