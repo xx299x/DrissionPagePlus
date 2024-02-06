@@ -157,7 +157,7 @@ def set_prefs(opt):
 
 
 def set_flags(opt):
-    """处理启动配置中的prefs项，目前只能对已存在文件夹配置
+    """处理启动配置中的flags项
     :param opt: ChromiumOptions
     :return: None
     """

@@ -12,7 +12,7 @@ from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
 from time import perf_counter
 
-from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess
+from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess, Process
 
 from .._configs.options_manage import OptionsManager
 from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
@@ -182,9 +182,10 @@ def wait_until(function, kwargs=None, timeout=10):
     raise TimeoutError
 
 
-def stop_process_on_port(port):
+def stop_process_on_port(port, pid=None):
     """强制关闭某个端口内的进程
     :param port: 端口号
+    :param pid: 进程号
     :return: None
     """
     for proc in process_iter(['pid', 'connections']):
@@ -201,6 +202,16 @@ def stop_process_on_port(port):
                 except Exception as e:
                     print(f"{proc.pid} {port}: {e}")
 
+    if pid:
+        for p in Process(pid).children():
+            try:
+                p.terminate()
+            except:
+                pass
+        try:
+            Process(pid).terminate()
+        except:
+            pass
 
 def configs_to_here(save_name=None):
     """把默认ini文件复制到当前目录

@@ -210,7 +210,7 @@ class Browser(object):
             ip, port = self.address.split(':')
             if ip not in ('127.0.0.1', 'localhost'):
                 return
-            stop_process_on_port(port)
+            stop_process_on_port(port, self.process_id)
             return
 
         if self.process_id:
