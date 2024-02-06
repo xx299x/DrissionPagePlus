@@ -188,6 +188,14 @@ def stop_process_on_port(port, pid=None):
     :param pid: 进程号
     :return: None
     """
+    if pid:
+        try:
+            for p in Process(pid).children():
+                p.terminate()
+            Process(pid).terminate()
+        except:
+            pass
+
     for proc in process_iter(['pid', 'connections']):
         try:
             connections = proc.connections()
@@ -202,16 +210,6 @@ def stop_process_on_port(port, pid=None):
                 except Exception as e:
                     print(f"{proc.pid} {port}: {e}")
 
-    if pid:
-        for p in Process(pid).children():
-            try:
-                p.terminate()
-            except:
-                pass
-        try:
-            Process(pid).terminate()
-        except:
-            pass
 
 def configs_to_here(save_name=None):
     """把默认ini文件复制到当前目录
