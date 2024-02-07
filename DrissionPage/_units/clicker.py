@@ -159,7 +159,7 @@ class Clicker(object):
 
         tab = self._ele.page._page if new_tab else self._ele.page
 
-        self._ele.click(by_js=by_js)
+        self.left(by_js=by_js)
         return tab.wait.download_begin()
 
     def to_upload(self, file_paths, by_js=False):
@@ -169,8 +169,19 @@ class Clicker(object):
         :return: None
         """
         self._ele.page.set.upload_files(file_paths)
-        self._ele.click(by_js=by_js)
+        self.left(by_js=by_js)
         self._ele.page.wait.upload_paths_inputted()
+
+    def for_new_tab(self, by_js=False):
+        """点击后等待新tab出现并返回其对象
+        :param by_js: 是否使用js点击，逻辑与click()一致
+        :return: 新标签页对象，如果没有等到新标签页出现则抛出异常
+        """
+        self.left(by_js=by_js)
+        tid = self._ele.page._page.wait.new_tab()
+        if not tid:
+            raise RuntimeError('没有出现新标签页。')
+        return self._ele.page._page.get_tab(tid)
 
     def _click(self, client_x, client_y, button='left', count=1):
         """实施点击

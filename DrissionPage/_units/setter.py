@@ -130,6 +130,8 @@ class ChromiumBaseSetter(BasePageSetter):
 
         if isinstance(files, str):
             files = files.split('\n')
+        elif isinstance(files, Path):
+            files = (files, )
         self._page._upload_list = [str(Path(i).absolute()) for i in files]
 
     def headers(self, headers: dict) -> None:
