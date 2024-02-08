@@ -38,7 +38,8 @@ class Clicker(object):
                     rename: str = None,
                     suffix: str = None,
                     new_tab: bool = False,
-                    by_js: bool = False) -> DownloadMission: ...
+                    by_js: bool = False,
+                    timeout:float=None) -> DownloadMission: ...
 
     def to_upload(self, file_paths: Union[str, Path, list, tuple], by_js: bool = False) -> None: ...
 

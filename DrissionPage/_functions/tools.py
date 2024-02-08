@@ -204,7 +204,12 @@ def stop_process_on_port(port, pid=None):
         for conn in connections:
             if conn.laddr.port == int(port):
                 try:
-                    proc.terminate()
+                    # proc.terminate()
+                    parent = proc.parent()
+                    if parent is None:
+                        proc.kill()
+                    elif parent.name() == 'explorer.exe':
+                        proc.terminate()
                 except (NoSuchProcess, AccessDenied, ZombieProcess):
                     pass
                 except Exception as e:
