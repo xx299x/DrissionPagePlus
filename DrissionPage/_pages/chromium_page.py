@@ -59,6 +59,7 @@ class ChromiumPage(ChromiumBase):
         self._created = True
 
         self._page = self
+        self.tab = self
         self._run_browser()
         super().__init__(self.address, tab_id)
         self._type = 'ChromiumPage'

@@ -12,8 +12,6 @@ from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
 from time import perf_counter
 
-from psutil import process_iter, AccessDenied, NoSuchProcess, ZombieProcess, Process
-
 from .._configs.options_manage import OptionsManager
 from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
                       AlertExistsError, WrongURLError, StorageError, CookieFormatError, JavaScriptError)
@@ -180,35 +178,6 @@ def wait_until(function, kwargs=None, timeout=10):
         if value:
             return value
     raise TimeoutError
-
-
-def stop_process_on_port(port, pid=None):
-    """强制关闭某个端口内的进程
-    :param port: 端口号
-    :param pid: 进程号
-    :return: None
-    """
-    if pid:
-        try:
-            for p in Process(pid).children():
-                p.terminate()
-            Process(pid).terminate()
-        except:
-            pass
-
-    for proc in process_iter(['pid', 'connections']):
-        try:
-            connections = proc.connections()
-        except (AccessDenied, NoSuchProcess):
-            continue
-        for conn in connections:
-            if conn.laddr.port == int(port):
-                try:
-                    proc.terminate()
-                except (NoSuchProcess, AccessDenied, ZombieProcess):
-                    pass
-                except Exception as e:
-                    print(f"{proc.pid} {port}: {e}")
 
 
 def configs_to_here(save_name=None):

@@ -119,10 +119,10 @@ def offset_scroll(ele, offset_x, offset_y):
     cp_x, cp_y = ele.rect.click_point
     lx = loc_x + offset_x if offset_x else cp_x
     ly = loc_y + offset_y if offset_y else cp_y
-    if not location_in_viewport(ele.page, lx, ly):
-        clientWidth = ele.page.run_js('return document.body.clientWidth;')
-        clientHeight = ele.page.run_js('return document.body.clientHeight;')
-        ele.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
+    if not location_in_viewport(ele.owner, lx, ly):
+        clientWidth = ele.owner.run_js('return document.body.clientWidth;')
+        clientHeight = ele.owner.run_js('return document.body.clientHeight;')
+        ele.owner.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
     cl_x, cl_y = ele.rect.viewport_location
     ccp_x, ccp_y = ele.rect.viewport_click_point
     cx = cl_x + offset_x if offset_x else ccp_x

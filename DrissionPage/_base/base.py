@@ -52,8 +52,9 @@ class BaseParser(object):
 class BaseElement(BaseParser):
     """各元素类的基类"""
 
-    def __init__(self, page=None):
-        self.page = page
+    def __init__(self, owner=None):
+        self.owner = owner
+        self.page = owner._page
         self._type = 'BaseElement'
 
     # ----------------以下属性或方法由后代实现----------------
@@ -175,7 +176,7 @@ class DrissionElement(BaseElement):
             raise ElementNotFoundError(None, 'child()', {'locator': locator, 'index': index,
                                                          'ele_only': ele_only})
         else:
-            return NoneElement(self.page, 'child()', {'locator': locator, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.owner, 'child()', {'locator': locator, 'index': index, 'ele_only': ele_only})
 
     def prev(self, locator='', index=1, timeout=None, ele_only=True):
         """返回前面的一个兄弟元素，可用查询语法筛选，可指定返回筛选结果的第几个
@@ -293,7 +294,7 @@ class DrissionElement(BaseElement):
         if Settings.raise_when_ele_not_found:
             raise ElementNotFoundError(None, func, {'locator': locator, 'index': index, 'ele_only': ele_only})
         else:
-            return NoneElement(self.page, func, {'locator': locator, 'index': index, 'ele_only': ele_only})
+            return NoneElement(self.owner, func, {'locator': locator, 'index': index, 'ele_only': ele_only})
 
     def _get_relatives(self, index=None, locator='', direction='following', brother=True, timeout=.5, ele_only=True):
         """按要求返回兄弟元素或节点组成的列表

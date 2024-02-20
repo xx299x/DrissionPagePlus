@@ -87,7 +87,7 @@ class Scroller(object):
         if not self._wait_complete:
             return
 
-        page = self._driver.page if self._driver._type == 'ChromiumElement' else self._driver
+        page = self._driver.owner if self._driver._type == 'ChromiumElement' else self._driver
         r = page.run_cdp('Page.getLayoutMetrics')
         x = r['layoutViewport']['pageX']
         y = r['layoutViewport']['pageY']
@@ -112,11 +112,11 @@ class ElementScroller(Scroller):
         :param center: 是否尽量滚动到页面正中，为None时如果被遮挡，则滚动到页面正中
         :return: None
         """
-        self._driver.page.scroll.to_see(self._driver, center=center)
+        self._driver.owner.scroll.to_see(self._driver, center=center)
 
     def to_center(self):
         """元素尽量滚动到视口中间"""
-        self._driver.page.scroll.to_see(self._driver, center=True)
+        self._driver.owner.scroll.to_see(self._driver, center=True)
 
 
 class PageScroller(Scroller):

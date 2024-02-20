@@ -18,7 +18,7 @@ class ElementRect(object):
     def corners(self):
         """返回元素四个角坐标，顺序：坐上、右上、右下、左下，没有大小的元素抛出NoRectError"""
         vr = self._get_viewport_rect('border')
-        r = self._ele.page.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
+        r = self._ele.owner.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
         sx = r['pageX']
         sy = r['pageY']
         return [(vr[0] + sx, vr[1] + sy), (vr[2] + sx, vr[3] + sy), (vr[4] + sx, vr[5] + sy), (vr[6] + sx, vr[7] + sy)]
@@ -32,8 +32,8 @@ class ElementRect(object):
     @property
     def size(self):
         """返回元素大小，格式(宽, 高)"""
-        border = self._ele.page.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id,
-                                        nodeId=self._ele._node_id, objectId=self._ele._obj_id)['model']['border']
+        border = self._ele.owner.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id,
+                                         nodeId=self._ele._node_id, objectId=self._ele._obj_id)['model']['border']
         return border[2] - border[0], border[5] - border[1]
 
     @property
@@ -75,25 +75,25 @@ class ElementRect(object):
     @property
     def screen_location(self):
         """返回元素左上角在屏幕上坐标，左上角为(0, 0)"""
-        vx, vy = self._ele.page.rect.viewport_location
+        vx, vy = self._ele.owner.rect.viewport_location
         ex, ey = self.viewport_location
-        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        pr = self._ele.owner.run_js('return window.devicePixelRatio;')
         return (vx + ex) * pr, (ey + vy) * pr
 
     @property
     def screen_midpoint(self):
         """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
-        vx, vy = self._ele.page.rect.viewport_location
+        vx, vy = self._ele.owner.rect.viewport_location
         ex, ey = self.viewport_midpoint
-        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        pr = self._ele.owner.run_js('return window.devicePixelRatio;')
         return (vx + ex) * pr, (ey + vy) * pr
 
     @property
     def screen_click_point(self):
         """返回元素中点在屏幕上坐标，左上角为(0, 0)"""
-        vx, vy = self._ele.page.rect.viewport_location
+        vx, vy = self._ele.owner.rect.viewport_location
         ex, ey = self.viewport_click_point
-        pr = self._ele.page.run_js('return window.devicePixelRatio;')
+        pr = self._ele.owner.run_js('return window.devicePixelRatio;')
         return (vx + ex) * pr, (ey + vy) * pr
 
     def _get_viewport_rect(self, quad):
@@ -101,12 +101,12 @@ class ElementRect(object):
         :param quad: 方框类型，margin border padding
         :return: 四个角坐标
         """
-        return self._ele.page.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id,
-                                      nodeId=self._ele._node_id, objectId=self._ele._obj_id)['model'][quad]
+        return self._ele.owner.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id,
+                                       nodeId=self._ele._node_id, objectId=self._ele._obj_id)['model'][quad]
 
     def _get_page_coord(self, x, y):
         """根据视口坐标获取绝对坐标"""
-        r = self._ele.page.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
+        r = self._ele.owner.run_cdp_loaded('Page.getLayoutMetrics')['visualViewport']
         sx = r['pageX']
         sy = r['pageY']
         return x + sx, y + sy

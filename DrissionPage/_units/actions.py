@@ -15,12 +15,12 @@ from .._functions.web import location_in_viewport
 class Actions:
     """用于实现动作链的类"""
 
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: ChromiumBase对象
+        :param owner: ChromiumBase对象
         """
-        self.page = page
-        self._dr = page.driver
+        self.owner = owner
+        self._dr = owner.driver
         self.modifier = 0  # 修饰符，Alt=1, Ctrl=2, Meta/Command=4, Shift=8
         self.curr_x = 0  # 视口坐标
         self.curr_y = 0
@@ -40,23 +40,23 @@ class Actions:
             lx = ele_or_loc[0] + offset_x
             ly = ele_or_loc[1] + offset_y
         elif isinstance(ele_or_loc, str) or ele_or_loc._type == 'ChromiumElement':
-            ele_or_loc = self.page(ele_or_loc)
-            self.page.scroll.to_see(ele_or_loc)
+            ele_or_loc = self.owner(ele_or_loc)
+            self.owner.scroll.to_see(ele_or_loc)
             x, y = ele_or_loc.rect.location if offset_x or offset_y else ele_or_loc.rect.midpoint
             lx = x + offset_x
             ly = y + offset_y
         else:
             raise TypeError('ele_or_loc参数只能接受坐标(x, y)或ChromiumElement对象。')
 
-        if not location_in_viewport(self.page, lx, ly):
+        if not location_in_viewport(self.owner, lx, ly):
             # 把坐标滚动到页面中间
-            clientWidth = self.page.run_js('return document.body.clientWidth;')
-            clientHeight = self.page.run_js('return document.body.clientHeight;')
-            self.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
+            clientWidth = self.owner.run_js('return document.body.clientWidth;')
+            clientHeight = self.owner.run_js('return document.body.clientHeight;')
+            self.owner.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
 
         # 这样设计为了应付那些不随滚动条滚动的元素
         if is_loc:
-            cx, cy = location_to_client(self.page, lx, ly)
+            cx, cy = location_to_client(self.owner, lx, ly)
         else:
             x, y = ele_or_loc.rect.viewport_location if offset_x or offset_y \
                 else ele_or_loc.rect.viewport_midpoint
@@ -255,7 +255,7 @@ class Actions:
 
         data = self._get_key_data(key, 'keyDown')
         data['_ignore'] = AlertExistsError
-        self.page.run_cdp('Input.dispatchKeyEvent', **data)
+        self.owner.run_cdp('Input.dispatchKeyEvent', **data)
         return self
 
     def key_up(self, key):
@@ -270,7 +270,7 @@ class Actions:
 
         data = self._get_key_data(key, 'keyUp')
         data['_ignore'] = AlertExistsError
-        self.page.run_cdp('Input.dispatchKeyEvent', **data)
+        self.owner.run_cdp('Input.dispatchKeyEvent', **data)
         return self
 
     def type(self, keys):
@@ -295,7 +295,7 @@ class Actions:
         :param text: 文本值或按键组合
         :return: self
         """
-        input_text_or_keys(self.page, text)
+        input_text_or_keys(self.owner, text)
         return self
 
     def wait(self, second):

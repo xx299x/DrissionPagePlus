@@ -316,14 +316,20 @@ def get_chrome_path(ini_path):
         return None
 
     # -----------从注册表中获取--------------
-    import winreg
+    from winreg import OpenKey, EnumValue, CloseKey, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ
     try:
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
-                             reserved=0, access=winreg.KEY_READ)
-        k = winreg.EnumValue(key, 0)
-        winreg.CloseKey(key)
-
+        key = OpenKey(HKEY_CURRENT_USER,
+                      r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                      reserved=0, access=KEY_READ)
+        k = EnumValue(key, 0)
+        CloseKey(key)
+        if k[1]:
+            return k[1]
+        key = OpenKey(HKEY_LOCAL_MACHINE,
+                      r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                      reserved=0, access=KEY_READ)
+        k = EnumValue(key, 0)
+        CloseKey(key)
         return k[1]
 
     except FileNotFoundError:

@@ -130,6 +130,8 @@ class ChromiumBaseSetter(BasePageSetter):
 
         if isinstance(files, str):
             files = files.split('\n')
+        elif isinstance(files, Path):
+            files = (files, )
         self._page._upload_list = [str(Path(i).absolute()) for i in files]
 
     def headers(self, headers: dict) -> None:
@@ -456,7 +458,7 @@ class ChromiumElementSetter(object):
         :param value: 属性值
         :return: None
         """
-        self._ele.page.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=name, value=str(value))
+        self._ele.owner.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=name, value=str(value))
 
     def property(self, name, value):
         """设置元素property属性

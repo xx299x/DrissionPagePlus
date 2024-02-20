@@ -45,7 +45,7 @@ class Clicker(object):
 
         if not by_js:  # 模拟点击
             can_click = False
-            timeout = self._ele.page.timeout if timeout is None else timeout
+            timeout = self._ele.owner.timeout if timeout is None else timeout
             rect = None
             if timeout == 0:
                 try:
@@ -85,8 +85,8 @@ class Clicker(object):
                 x = rect[1][0] - (rect[1][0] - rect[0][0]) / 2
                 y = rect[0][0] + 3
                 try:
-                    r = self._ele.page.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
-                                               ignorePointerEventsNone=True)
+                    r = self._ele.owner.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
+                                                ignorePointerEventsNone=True)
                     if r['backendNodeId'] != self._ele._backend_id:
                         vx, vy = self._ele.rect.viewport_midpoint
                     else:
@@ -107,13 +107,13 @@ class Clicker(object):
 
     def right(self):
         """右键单击"""
-        self._ele.page.scroll.to_see(self._ele)
+        self._ele.owner.scroll.to_see(self._ele)
         x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'right')
 
     def middle(self):
         """中键单击"""
-        self._ele.page.scroll.to_see(self._ele)
+        self._ele.owner.scroll.to_see(self._ele)
         x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'middle')
 
@@ -125,7 +125,7 @@ class Clicker(object):
         :param count: 点击次数
         :return: None
         """
-        self._ele.page.scroll.to_see(self._ele)
+        self._ele.owner.scroll.to_see(self._ele)
         if offset_x is None and offset_y is None:
             w, h = self._ele.rect.size
             offset_x = w // 2
@@ -140,27 +140,28 @@ class Clicker(object):
         """
         self.at(count=times)
 
-    def to_download(self, save_path=None, rename=None, suffix=None, new_tab=False, by_js=False):
+    def to_download(self, save_path=None, rename=None, suffix=None, new_tab=False, by_js=False, timeout=None):
         """点击触发下载
         :param save_path: 保存路径，为None保存在原来设置的，如未设置保存到当前路径
         :param rename: 重命名文件名
         :param suffix: 指定文件后缀
         :param new_tab: 该下载是否在新tab中触发
         :param by_js: 是否用js方式点击，逻辑与click()一致
+        :param timeout: 等待下载触发的超时时间，为None则使用页面对象设置
         :return: DownloadMission对象
         """
         if save_path:
-            self._ele.page.set.download_path(save_path)
-        elif not self._ele.page._page._browser._dl_mgr._running:
+            self._ele.owner.tab.set.download_path(save_path)
+        elif not self._ele.page._browser._dl_mgr._running:
             self._ele.page.set.download_path('.')
 
         if rename or suffix:
-            self._ele.page.set.download_file_name(rename, suffix)
+            self._ele.owner.tab.set.download_file_name(rename, suffix)
 
-        tab = self._ele.page._page if new_tab else self._ele.page
+        tab = self._ele.page if new_tab else self._ele.owner
 
-        self._ele.click(by_js=by_js)
-        return tab.wait.download_begin()
+        self.left(by_js=by_js)
+        return tab.wait.download_begin(timeout=timeout)
 
     def to_upload(self, file_paths, by_js=False):
         """触发上传文件选择框并自动填入指定路径
@@ -168,9 +169,20 @@ class Clicker(object):
         :param by_js: 是否用js方式点击，逻辑与click()一致
         :return: None
         """
-        self._ele.page.set.upload_files(file_paths)
-        self._ele.click(by_js=by_js)
-        self._ele.page.wait.upload_paths_inputted()
+        self._ele.owner.set.upload_files(file_paths)
+        self.left(by_js=by_js)
+        self._ele.owner.wait.upload_paths_inputted()
+
+    def for_new_tab(self, by_js=False):
+        """点击后等待新tab出现并返回其对象
+        :param by_js: 是否使用js点击，逻辑与click()一致
+        :return: 新标签页对象，如果没有等到新标签页出现则抛出异常
+        """
+        self.left(by_js=by_js)
+        tid = self._ele.page.wait.new_tab()
+        if not tid:
+            raise RuntimeError('没有出现新标签页。')
+        return self._ele.page.get_tab(tid)
 
     def _click(self, client_x, client_y, button='left', count=1):
         """实施点击
@@ -180,11 +192,11 @@ class Clicker(object):
         :param count: 点击次数
         :return: None
         """
-        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mousePressed', x=client_x,
-                               y=client_y, button=button, clickCount=count, _ignore=AlertExistsError)
+        self._ele.owner.run_cdp('Input.dispatchMouseEvent', type='mousePressed', x=client_x,
+                                y=client_y, button=button, clickCount=count, _ignore=AlertExistsError)
         # sleep(.05)
-        self._ele.page.run_cdp('Input.dispatchMouseEvent', type='mouseReleased', x=client_x,
-                               y=client_y, button=button, _ignore=AlertExistsError)
+        self._ele.owner.run_cdp('Input.dispatchMouseEvent', type='mouseReleased', x=client_x,
+                                y=client_y, button=button, _ignore=AlertExistsError)
 
     # -------------即将废弃--------------
 

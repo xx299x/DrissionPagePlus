@@ -51,7 +51,7 @@ class ElementStates(object):
     def is_in_viewport(self):
         """返回元素是否出现在视口中，以元素click_point为判断"""
         x, y = self._ele.rect.click_point
-        return location_in_viewport(self._ele.page, x, y) if x else False
+        return location_in_viewport(self._ele.owner, x, y) if x else False
 
     @property
     def is_whole_in_viewport(self):
@@ -59,14 +59,14 @@ class ElementStates(object):
         x1, y1 = self._ele.rect.location
         w, h = self._ele.rect.size
         x2, y2 = x1 + w, y1 + h
-        return location_in_viewport(self._ele.page, x1, y1) and location_in_viewport(self._ele.page, x2, y2)
+        return location_in_viewport(self._ele.owner, x1, y1) and location_in_viewport(self._ele.owner, x2, y2)
 
     @property
     def is_covered(self):
         """返回元素是否被覆盖，与是否在视口中无关，如被覆盖返回覆盖元素的backend id，否则返回False"""
         lx, ly = self._ele.rect.click_point
         try:
-            bid = self._ele.page.run_cdp('DOM.getNodeForLocation', x=int(lx), y=int(ly)).get('backendNodeId')
+            bid = self._ele.owner.run_cdp('DOM.getNodeForLocation', x=int(lx), y=int(ly)).get('backendNodeId')
             return bid if bid != self._ele._backend_id else False
         except CDPError:
             return False
@@ -96,7 +96,7 @@ class ShadowRootStates(object):
     def is_alive(self):
         """返回元素是否仍在DOM中"""
         try:
-            self._ele.page.run_cdp('DOM.describeNode', backendNodeId=self._ele._backend_id)
+            self._ele.owner.run_cdp('DOM.describeNode', backendNodeId=self._ele._backend_id)
             return True
         except Exception:
             return False
