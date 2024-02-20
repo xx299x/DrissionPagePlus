@@ -184,6 +184,17 @@ class Clicker(object):
             raise RuntimeError('没有出现新标签页。')
         return self._ele.page.get_tab(tid)
 
+    def for_new_tab(self, by_js=False):
+        """点击后等待新tab出现并返回其对象
+        :param by_js: 是否使用js点击，逻辑与click()一致
+        :return: 新标签页对象，如果没有等到新标签页出现则抛出异常
+        """
+        self.left(by_js=by_js)
+        tid = self._ele.page._page.wait.new_tab()
+        if not tid:
+            raise RuntimeError('没有出现新标签页。')
+        return self._ele.page._page.get_tab(tid)
+
     def _click(self, client_x, client_y, button='left', count=1):
         """实施点击
         :param client_x: 视口中的x坐标

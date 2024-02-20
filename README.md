@@ -123,4 +123,4 @@ python 版本：3.6 及以上
 
 如果本项目对您有所帮助，不妨请作者我喝杯咖啡 ：）
 
-![](https://gitee.com/g1879/DrissionPageDocs/raw/master/docs/imgs/code.jpg)
+![](https://g1879.gitee.io/drissionpagedocs/assets/images/code-cf68de50a2f331a2aa0d39c9aebbbe2c.jpg)
