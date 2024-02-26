@@ -162,6 +162,8 @@ class Listener(object):
         :param gap: 每接收到多少个数据包返回一次数据
         :return: 用于在接收到监听目标时触发动作的可迭代对象
         """
+        if not self.listening:
+            raise RuntimeError('监听未启动或已暂停。')
         caught = 0
         end = perf_counter() + timeout if timeout else None
         while True:
@@ -221,7 +223,7 @@ class Listener(object):
         :return: 返回是否等待成功
         """
         if not self.listening:
-            raise RuntimeError('监听未启动，用listen.start()启动。')
+            raise RuntimeError('监听未启动或已暂停。')
         if timeout is None:
             while (not targets_only and self._running_requests > 0) or (targets_only and self._running_targets > 0):
                 sleep(.1)

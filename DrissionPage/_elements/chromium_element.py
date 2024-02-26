@@ -1271,12 +1271,13 @@ def find_by_css(ele, selector, index, timeout):
     return NoneElement(ele.owner) if index is not None else []
 
 
-def make_chromium_eles(page, _ids, index=1, is_obj_id=True):
+def make_chromium_eles(page, _ids, index=1, is_obj_id=True, ele_only=False):
     """根据node id或object id生成相应元素对象
     :param page: ChromiumPage对象
     :param _ids: 元素的id列表
     :param index: 获取第几个，为None返回全部
     :param is_obj_id: 传入的id是obj id还是node id
+    :param ele_only: 是否只返回ele，在页面查找元素时生效
     :return: 浏览器元素对象或它们组成的列表，生成失败返回False
     """
     if is_obj_id:
@@ -1287,16 +1288,27 @@ def make_chromium_eles(page, _ids, index=1, is_obj_id=True):
         _ids = (_ids,)
 
     if index is not None:  # 获取一个
-        obj_id = _ids[index - 1]
-        return get_node_func(page, obj_id)
+        if ele_only:
+            for obj_id in _ids:
+                tmp = get_node_func(page, obj_id, ele_only)
+                if tmp is False:
+                    return False
+                elif tmp is not None:
+                    return tmp
+            return False
+
+        else:
+            obj_id = _ids[index - 1]
+            return get_node_func(page, obj_id, ele_only)
 
     else:  # 获取全部
         nodes = []
         for obj_id in _ids:
-            tmp = get_node_func(page, obj_id)
+            tmp = get_node_func(page, obj_id, ele_only)
             if tmp is False:
                 return False
-            nodes.append(tmp)
+            elif tmp is not None:
+                nodes.append(tmp)
         return nodes
 
 
@@ -1310,22 +1322,24 @@ def _get_node_info(page, id_type, _id):
     return node
 
 
-def _get_node_by_obj_id(page, obj_id):
+def _get_node_by_obj_id(page, obj_id, ele_only):
+    """根据obj id返回元素对象或文本，ele_only时如果是文本返回None，出错返回False"""
     node = _get_node_info(page, 'objectId', obj_id)
     if node is False:
         return False
     if node['node']['nodeName'] in ('#text', '#comment'):
-        return node['node']['nodeValue']
+        return None if ele_only else node['node']['nodeValue']
     else:
         return _make_ele(page, obj_id, node)
 
 
-def _get_node_by_node_id(page, node_id):
+def _get_node_by_node_id(page, node_id, ele_only):
+    """根据node id返回元素对象或文本，ele_only时如果是文本返回None，出错返回False"""
     node = _get_node_info(page, 'nodeId', node_id)
     if node is False:
         return False
     if node['node']['nodeName'] in ('#text', '#comment'):
-        return node['node']['nodeValue']
+        return None if ele_only else node['node']['nodeValue']
     else:
         obj_id = page.driver.run('DOM.resolveNode', nodeId=node_id)
         if 'error' in obj_id:

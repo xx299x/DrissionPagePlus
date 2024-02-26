@@ -576,7 +576,8 @@ class ChromiumBase(BasePage):
                                             fromIndex=from_index, toIndex=end_index)
                     if __ERROR__ not in nIds:
                         if nIds['nodeIds'][0] != 0:
-                            r = make_chromium_eles(self, _ids=nIds['nodeIds'], index=index_arg, is_obj_id=False)
+                            r = make_chromium_eles(self, _ids=nIds['nodeIds'], index=index_arg,
+                                                   is_obj_id=False, ele_only=True)
                             if r is not False:
                                 break
 

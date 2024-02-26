@@ -356,7 +356,8 @@ def find_by_css(ele: ChromiumElement,
 def make_chromium_eles(page: Union[ChromiumBase, ChromiumPage, WebPage, ChromiumTab, ChromiumFrame],
                        _ids: Union[tuple, list, str, int],
                        index: Optional[int] = 1,
-                       is_obj_id: bool = True
+                       is_obj_id: bool = True,
+                       ele_only: bool = False
                        ) -> Union[ChromiumElement, ChromiumFrame, List[Union[ChromiumElement, ChromiumFrame]]]: ...
 
 
