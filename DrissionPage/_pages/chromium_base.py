@@ -865,6 +865,7 @@ class ChromiumBase(BasePage):
         t_id = self._target_id
         self.disconnect()
         sleep(wait)
+        self.browser.reconnect()
         self._driver = self.browser._get_driver(t_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):

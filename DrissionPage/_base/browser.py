@@ -190,6 +190,14 @@ class Browser(object):
         """
         return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
 
+    def reconnect(self):
+        """断开重连"""
+        self._driver.stop()
+        self._driver = BrowserDriver(self.id, 'browser', self.address, self)
+        self.run_cdp('Target.setDiscoverTargets', discover=True)
+        self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)
+        self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
+
     def quit(self, timeout=5, force=False):
         """关闭浏览器
         :param timeout: 等待浏览器关闭超时时间（秒）
