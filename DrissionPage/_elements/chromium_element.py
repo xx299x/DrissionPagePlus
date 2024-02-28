@@ -1256,7 +1256,7 @@ def find_by_css(ele, selector, index, timeout):
         else:
             obj_ids = [i['value']['objectId'] for i in ele.owner.run_cdp('Runtime.getProperties',
                                                                          objectId=res['result']['objectId'],
-                                                                         ownProperties=True)['result'][:-1]]
+                                                                         ownProperties=True)['result']]
             r = make_chromium_eles(ele.owner, _ids=obj_ids, index=index, is_obj_id=True)
             return None if r is False else r
 
@@ -1291,9 +1291,7 @@ def make_chromium_eles(page, _ids, index=1, is_obj_id=True, ele_only=False):
         if ele_only:
             for obj_id in _ids:
                 tmp = get_node_func(page, obj_id, ele_only)
-                if tmp is False:
-                    return False
-                elif tmp is not None:
+                if tmp is not None:
                     return tmp
             return False
 
