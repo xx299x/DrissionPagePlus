@@ -21,38 +21,38 @@ from ..errors import ContextLostError, ElementLostError, PageDisconnectedError, 
 
 
 class ChromiumFrame(ChromiumBase):
-    def __init__(self, page, ele, info=None):
+    def __init__(self, owner, ele, info=None):
         """
-        :param page: frame所在的页面对象
+        :param owner: frame所在的页面对象
         :param ele: frame所在元素
         :param info: frame所在元素信息
         """
-        if page._type in ('ChromiumPage', 'WebPage'):
-            self._page = self._target_page = self.tab = page
-            self._browser = page.browser
+        if owner._type in ('ChromiumPage', 'WebPage'):
+            self._page = self._target_page = self.tab = owner
+            self._browser = owner.browser
         else:  # Tab、Frame
-            self._page = page.page
+            self._page = owner.page
             self._browser = self._page.browser
-            self._target_page = page
-            self.tab = page.tab if page._type == 'ChromiumFrame' else page
+            self._target_page = owner
+            self.tab = owner.tab if owner._type == 'ChromiumFrame' else owner
 
-        self.address = page.address
-        self._tab_id = page.tab_id
+        self.address = owner.address
+        self._tab_id = owner.tab_id
         self._backend_id = ele._backend_id
         self._frame_ele = ele
         self._states = None
         self._reloading = False
 
-        node = info['node'] if not info else page.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
+        node = info['node'] if not info else owner.run_cdp('DOM.describeNode', backendNodeId=ele._backend_id)['node']
         self._frame_id = node['frameId']
         if self._is_inner_frame():
             self._is_diff_domain = False
             self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
-            super().__init__(page.address, page.tab_id, page.timeout)
+            super().__init__(owner.address, owner.tab_id, owner.timeout)
         else:
             self._is_diff_domain = True
             delattr(self, '_frame_id')
-            super().__init__(page.address, node['frameId'], page.timeout)
+            super().__init__(owner.address, node['frameId'], owner.timeout)
             obj_id = super().run_js('document;', as_expr=True)['objectId']
             self.doc_ele = ChromiumElement(self, obj_id=obj_id)
 
@@ -176,6 +176,7 @@ class ChromiumFrame(ChromiumBase):
                 return True
 
         except:
+            raise
             return False
 
         finally:
@@ -251,7 +252,13 @@ class ChromiumFrame(ChromiumBase):
 
     @property
     def page(self):
+        """返回所属Page对象"""
         return self._page
+
+    @property
+    def owner(self):
+        """返回所属页面对象"""
+        return self.frame_ele.owner
 
     @property
     def frame_ele(self):

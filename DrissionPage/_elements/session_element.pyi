@@ -18,8 +18,9 @@ from .._pages.session_page import SessionPage
 
 class SessionElement(DrissionElement):
 
-    def __init__(self, ele: HtmlElement, page: Union[SessionPage, None] = None):
+    def __init__(self, ele: HtmlElement, owner: Union[SessionPage, None] = None):
         self._inner_ele: HtmlElement = ...
+        self.owner: SessionPage = ...
         self.page: SessionPage = ...
 
     @property

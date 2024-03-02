@@ -36,6 +36,7 @@ class SessionPage(BasePage):
         self._set = None
         self._encoding = None
         self._type = 'SessionPage'
+        self._page = self
         self._s_set_start_options(session_or_options)
         self._s_set_runtime_settings()
         self._create_session()

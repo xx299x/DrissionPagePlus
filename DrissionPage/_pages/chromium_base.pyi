@@ -8,7 +8,8 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Optional, Literal
 
-from .chromium_tab import ChromiumTab
+from .chromium_tab import ChromiumTab, WebPageTab
+from .web_page import WebPage
 from .._base.base import BasePage
 from .._base.browser import Browser
 from .._base.driver import Driver
@@ -35,6 +36,7 @@ class ChromiumBase(BasePage):
                  timeout: float = None):
         self._browser: Browser = ...
         self._page: ChromiumPage = ...
+        self.tab: Union[ChromiumPage, ChromiumTab] = ...
         self.address: str = ...
         self._driver: Driver = ...
         self._frame_id: str = ...
@@ -216,17 +218,12 @@ class ChromiumBase(BasePage):
 
     def add_ele(self,
                 outerHTML: str,
-                insert_to: Optional[ChromiumElement, str, Tuple[str, str]] = None,
-                before: Optional[ChromiumElement, str, Tuple[str, str]] = None) -> ChromiumElement: ...
+                insert_to: Union[ChromiumElement, str, Tuple[str, str], None] = None,
+                before: Union[ChromiumElement, str, Tuple[str, str], None] = None) -> ChromiumElement: ...
 
     def get_frame(self, loc_ind_ele: Union[str, int, tuple, ChromiumFrame], timeout: float = None) -> ChromiumFrame: ...
 
     def get_frames(self, locator: Union[str, tuple] = None, timeout: float = None) -> List[ChromiumFrame]: ...
-
-    def upload(self,
-               loc_or_ele: Union[str, Tuple[str, str], ChromiumElement],
-               file_paths: Union[str, list, tuple],
-               by_js: bool = False) -> None: ...
 
     def run_cdp(self, cmd: str, **cmd_args) -> dict: ...
 
@@ -255,7 +252,7 @@ class ChromiumBase(BasePage):
 
     def reconnect(self, wait: float = 0) -> None: ...
 
-    def handle_alert(self, accept: bool = True, send: str = None, timeout: float = None,
+    def handle_alert(self, accept: Optional[bool] = True, send: str = None, timeout: float = None,
                      next_one: bool = False) -> Union[str, False]: ...
 
     def _handle_alert(self, accept: bool = True, send: str = None, timeout: float = None,

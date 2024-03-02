@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from pathlib import Path
-from typing import Union, Tuple, Literal, Any, Optional
+from typing import Union, Tuple, Literal, Any
 
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
@@ -62,9 +62,9 @@ class ChromiumBaseSetter(BasePageSetter):
 
     def auto_handle_alert(self, on_off: bool = True, accept: bool = True) -> None: ...
 
-    def upload_files(self, files: Union[str, list, tuple]) -> None: ...
+    def upload_files(self, files: Union[str, Path, list, tuple]) -> None: ...
 
-    def blocked_urls(self, urls: Optional[list, tuple, str]) -> None: ...
+    def blocked_urls(self, urls: Union[list, tuple, str, None]) -> None: ...
 
 
 class TabSetter(ChromiumBaseSetter):
@@ -109,7 +109,7 @@ class SessionPageSetter(BasePageSetter):
 
     def timeout(self, second: float) -> None: ...
 
-    def encoding(self, encoding: Optional[str, None], set_all: bool = True) -> None: ...
+    def encoding(self, encoding: Union[str, None], set_all: bool = True) -> None: ...
 
     def headers(self, headers: dict) -> None: ...
 

@@ -46,6 +46,7 @@ class ChromiumTab(ChromiumBase):
         self._created = True
 
         self._page = page
+        self.tab = self
         self._browser = page.browser
         super().__init__(page.address, tab_id, page.timeout)
         self._rect = None

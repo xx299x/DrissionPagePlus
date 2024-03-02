@@ -27,7 +27,7 @@ class SelectElement(object):
         :return: None
         """
         para_type = 'index' if isinstance(text_or_index, int) else 'text'
-        timeout = timeout if timeout is not None else self._ele.page.timeout
+        timeout = timeout if timeout is not None else self._ele.owner.timeout
         return self._select(text_or_index, para_type, timeout=timeout)
 
     @property
@@ -186,7 +186,7 @@ class SelectElement(object):
             raise TypeError('单选列表只能传入str格式。')
 
         mode = 'false' if cancel else 'true'
-        timeout = timeout if timeout is not None else self._ele.page.timeout
+        timeout = timeout if timeout is not None else self._ele.owner.timeout
         condition = set(condition) if isinstance(condition, (list, tuple)) else {condition}
 
         if para_type in ('text', 'value'):
@@ -264,4 +264,4 @@ class SelectElement(object):
 
     def _dispatch_change(self):
         """触发修改动作"""
-        self._ele.run_js('this.dispatchEvent(new Event("change", {bubbles: true}));')
+        self._ele.run_js('this.dispatchEvent(new CustomEvent("change", {bubbles: true}));')

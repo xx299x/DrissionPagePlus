@@ -157,7 +157,7 @@ def set_prefs(opt):
 
 
 def set_flags(opt):
-    """处理启动配置中的prefs项，目前只能对已存在文件夹配置
+    """处理启动配置中的flags项
     :param opt: ChromiumOptions
     :return: None
     """
@@ -316,18 +316,25 @@ def get_chrome_path(ini_path):
         return None
 
     # -----------从注册表中获取--------------
-    import winreg
+    from winreg import OpenKey, EnumValue, CloseKey, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ
+    txt = r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe'
     try:
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
-                             reserved=0, access=winreg.KEY_READ)
-        k = winreg.EnumValue(key, 0)
-        winreg.CloseKey(key)
+        key = OpenKey(HKEY_CURRENT_USER, txt, reserved=0, access=KEY_READ)
+        k = EnumValue(key, 0)
+        CloseKey(key)
+        if k[1]:
+            return k[1]
 
-        return k[1]
+    except (FileNotFoundError, OSError):
+        try:
+            key = OpenKey(HKEY_LOCAL_MACHINE, txt, reserved=0, access=KEY_READ)
+            k = EnumValue(key, 0)
+            CloseKey(key)
+            if k[1]:
+                return k[1]
 
-    except FileNotFoundError:
-        pass
+        except (FileNotFoundError, OSError):
+            pass
 
     # -----------从系统变量中获取--------------
     for path in environ.get('PATH', '').split(';'):

@@ -7,12 +7,12 @@
 """
 from pathlib import Path
 from shutil import rmtree
-from time import sleep, perf_counter
+from time import perf_counter, sleep
 
 from websocket import WebSocketBadStatusException
 
 from .driver import BrowserDriver, Driver
-from .._functions.tools import stop_process_on_port, raise_error
+from .._functions.tools import raise_error
 from .._units.downloader import DownloadManager
 from ..errors import PageDisconnectedError
 
@@ -190,43 +190,55 @@ class Browser(object):
         """
         return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
 
+    def reconnect(self):
+        """断开重连"""
+        self._driver.stop()
+        BrowserDriver.BROWSERS.pop(self.id)
+        self._driver = BrowserDriver(self.id, 'browser', self.address, self)
+        self.run_cdp('Target.setDiscoverTargets', discover=True)
+        self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)
+        self._driver.set_callback('Target.targetCreated', self._onTargetCreated)
+
     def quit(self, timeout=5, force=False):
         """关闭浏览器
         :param timeout: 等待浏览器关闭超时时间（秒）
         :param force: 是否立刻强制终止进程
         :return: None
         """
+        pids = [pid['id'] for pid in self.run_cdp('SystemInfo.getProcessInfo')['processInfo']]
         for tab in self._all_drivers.values():
             for driver in tab:
                 driver.stop()
-        try:
-            self.run_cdp('Browser.close')
-        except PageDisconnectedError:
-            self.driver.stop()
-            return
-        self.driver.stop()
 
         if force:
-            ip, port = self.address.split(':')
-            if ip not in ('127.0.0.1', 'localhost'):
-                return
-            stop_process_on_port(port)
-            return
+            from psutil import Process
+            for pid in pids:
+                Process(pid).kill()
+        else:
+            try:
+                self.run_cdp('Browser.close')
+                self.driver.stop()
+            except PageDisconnectedError:
+                self.driver.stop()
 
-        if self.process_id:
-            from os import popen
-            from platform import system
-            txt = f'tasklist | findstr {self.process_id}' if system().lower() == 'windows' \
-                else f'ps -ef | grep  {self.process_id}'
-            end_time = perf_counter() + timeout
-            while perf_counter() < end_time:
+        from os import popen
+        from platform import system
+        end_time = perf_counter() + timeout
+        while perf_counter() < end_time:
+            ok = True
+            for pid in pids:
+                txt = f'tasklist | findstr {pid}' if system().lower() == 'windows' else f'ps -ef | grep {pid}'
                 p = popen(txt)
-                sleep(.1)
+                sleep(.05)
                 try:
-                    if f'  {self.process_id} ' not in p.read():
-                        return
+                    if f'  {pid} ' in p.read():
+                        ok = False
+                        break
                 except TypeError:
                     pass
+
+            if ok:
+                break
 
     def _on_disconnect(self):
         self.page._on_disconnect()

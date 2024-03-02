@@ -31,13 +31,7 @@ class DownloadManager(object):
         self._flags = {}  # {tab_id: [bool, DownloadMission]}
 
         if self._page.download_path:
-            self._browser.driver.set_callback('Browser.downloadProgress', self._onDownloadProgress)
-            self._browser.driver.set_callback('Browser.downloadWillBegin', self._onDownloadWillBegin)
-            r = self._browser.run_cdp('Browser.setDownloadBehavior', downloadPath=self._page.download_path,
-                                      behavior='allowAndName', eventsEnabled=True)
-            if 'error' in r:
-                print('浏览器版本太低无法使用下载管理功能。')
-            self._running = True
+            self.set_path(self._page, self._page.download_path)
 
         else:
             self._running = False

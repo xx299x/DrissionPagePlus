@@ -20,12 +20,12 @@ from .._functions.web import get_ele_txt, make_absolute_link
 class SessionElement(DrissionElement):
     """session模式的元素对象，包装了一个lxml的Element对象，并封装了常用功能"""
 
-    def __init__(self, ele, page=None):
+    def __init__(self, ele, owner=None):
         """初始化对象
         :param ele: 被包装的HtmlElement元素
-        :param page: 元素所在页面对象，如果是从 html 文本生成的元素，则为 None
+        :param owner: 元素所在页面对象，如果是从 html 文本生成的元素，则为 None
         """
-        super().__init__(page)
+        super().__init__(owner)
         self._inner_ele = ele
         self._type = 'SessionElement'
 
@@ -201,10 +201,10 @@ class SessionElement(DrissionElement):
                 return link
 
             else:  # 其它情况直接返回绝对url
-                return make_absolute_link(link, self.page.url)
+                return make_absolute_link(link, self.owner.url)
 
         elif name == 'src':
-            return make_absolute_link(self.inner_ele.get('src'), self.page.url)
+            return make_absolute_link(self.inner_ele.get('src'), self.owner.url)
 
         elif name == 'text':
             return self.text
@@ -313,7 +313,7 @@ def make_session_ele(html_or_ele, loc=None, index=1):
 
     # SessionElement
     elif html_or_ele._type == 'SessionElement':
-        page = html_or_ele.page
+        page = html_or_ele.owner
 
         loc_str = loc[1]
         if loc[0] == 'xpath' and loc[1].lstrip().startswith('/'):
@@ -323,8 +323,8 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         # 若css以>开头，表示找元素的直接子元素，要用page以绝对路径才能找到
         elif loc[0] == 'css selector' and loc[1].lstrip().startswith('>'):
             loc_str = f'{html_or_ele.css_path}{loc[1]}'
-            if html_or_ele.page:
-                html_or_ele = fromstring(html_or_ele.page.html)
+            if html_or_ele.owner:
+                html_or_ele = fromstring(html_or_ele.owner.html)
             else:  # 接收html文本，无page的情况
                 html_or_ele = fromstring(html_or_ele('xpath:/ancestor::*').html)
 
@@ -342,11 +342,11 @@ def make_session_ele(html_or_ele, loc=None, index=1):
         loc = loc[0], loc_str
 
         # 获取整个页面html再定位到当前元素，以实现查找上级元素
-        page = html_or_ele.page
+        page = html_or_ele.owner
         xpath = html_or_ele.xpath
         # ChromiumElement，兼容传入的元素在iframe内的情况
-        html = html_or_ele.page.run_cdp('DOM.getOuterHTML', objectId=html_or_ele._doc_id)['outerHTML'] \
-            if html_or_ele._doc_id else html_or_ele.page.html
+        html = html_or_ele.owner.run_cdp('DOM.getOuterHTML', objectId=html_or_ele._doc_id)['outerHTML'] \
+            if html_or_ele._doc_id else html_or_ele.owner.html
         html_or_ele = fromstring(html)
         html_or_ele = html_or_ele.xpath(xpath)[0]
 
@@ -360,7 +360,7 @@ def make_session_ele(html_or_ele, loc=None, index=1):
 
     # ShadowRoot
     elif isinstance(html_or_ele, BaseElement):
-        page = html_or_ele.page
+        page = html_or_ele.owner
         html_or_ele = fromstring(html_or_ele.html)
 
     else:

@@ -119,10 +119,10 @@ def offset_scroll(ele, offset_x, offset_y):
     cp_x, cp_y = ele.rect.click_point
     lx = loc_x + offset_x if offset_x else cp_x
     ly = loc_y + offset_y if offset_y else cp_y
-    if not location_in_viewport(ele.page, lx, ly):
-        clientWidth = ele.page.run_js('return document.body.clientWidth;')
-        clientHeight = ele.page.run_js('return document.body.clientHeight;')
-        ele.page.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
+    if not location_in_viewport(ele.owner, lx, ly):
+        clientWidth = ele.owner.run_js('return document.body.clientWidth;')
+        clientHeight = ele.owner.run_js('return document.body.clientHeight;')
+        ele.owner.scroll.to_location(lx - clientWidth // 2, ly - clientHeight // 2)
     cl_x, cl_y = ele.rect.viewport_location
     ccp_x, ccp_y = ele.rect.viewport_click_point
     cx = cl_x + offset_x if offset_x else ccp_x
@@ -319,12 +319,12 @@ def is_cookie_in_driver(page, cookie):
     :return: bool
     """
     if 'domain' in cookie:
-        for c in page.get_cookies(all_domains=True):
+        for c in page.cookies(all_domains=True):
             if cookie['name'] == c['name'] and cookie['value'] == c['value'] and cookie['domain'] == c.get('domain',
                                                                                                            None):
                 return True
     else:
-        for c in page.get_cookies(all_domains=True):
+        for c in page.cookies(all_domains=True):
             if cookie['name'] == c['name'] and cookie['value'] == c['value']:
                 return True
     return False
@@ -363,3 +363,34 @@ def get_blob(page, url, as_bytes=True):
         return b64decode(result.split(',', 1)[-1])
     else:
         return result
+
+
+def tree(ele_or_page):
+    """把页面或元素对象DOM结构打印出来
+    :param ele_or_page: 页面或元素对象
+    :return: None
+    """
+    def _tree(obj, last_one=True, body=''):
+        list_ele = obj.children()
+        length = len(list_ele)
+        body_unit = '    ' if last_one else '│   '
+        tail = '├───'
+        new_body = body + body_unit
+
+        if length > 0:
+            new_last_one = False
+            for i in range(length):
+                if i == length - 1:
+                    tail = '└───'
+                    new_last_one = True
+                e = list_ele[i]
+
+                attrs = ' '.join([f"{k}='{v}'" for k, v in e.attrs.items()])
+                print(f'{new_body}{tail}<{e.tag} {attrs}>'.replace('\n', ' '))
+
+                _tree(e, new_last_one, new_body)
+
+    ele = ele_or_page.s_ele()
+    attrs = ' '.join([f"{k}='{v}'" for k, v in ele.attrs.items()])
+    print(f'<{ele.tag} {attrs}>'.replace('\n', ' '))
+    _tree(ele)

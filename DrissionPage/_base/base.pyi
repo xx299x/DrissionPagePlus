@@ -11,6 +11,10 @@ from typing import Union, Tuple, List, Any, Optional
 from DownloadKit import DownloadKit
 
 from .._elements.none_element import NoneElement
+from .._elements.session_element import SessionElement
+from .._pages.chromium_page import ChromiumPage
+from .._pages.session_page import SessionPage
+from .._pages.web_page import WebPage
 
 
 class BaseParser(object):
@@ -29,9 +33,11 @@ class BaseParser(object):
     @property
     def html(self) -> str: ...
 
-    def s_ele(self, locator: Union[Tuple[str, str], str, BaseElement], index: int = 1): ...
+    def s_ele(self,
+              locator: Union[Tuple[str, str], str, BaseElement, None] = None,
+              index: int = 1) -> SessionElement: ...
 
-    def s_eles(self, locator: Union[Tuple[str, str], str]): ...
+    def s_eles(self, locator: Union[Tuple[str, str], str]) -> List[SessionElement]: ...
 
     def _ele(self,
              locator: Union[Tuple[str, str], str],
@@ -50,8 +56,9 @@ class BaseParser(object):
 
 class BaseElement(BaseParser):
 
-    def __init__(self, page: BasePage = None):
-        self.page: BasePage = ...
+    def __init__(self, owner: BasePage = None):
+        self.owner: BasePage = ...
+        self.page: Union[ChromiumPage, SessionPage, WebPage] = ...
 
     # ----------------以下属性或方法由后代实现----------------
     @property
@@ -78,9 +85,7 @@ class BaseElement(BaseParser):
 
 class DrissionElement(BaseElement):
 
-    def __init__(self,
-                 page: BasePage = ...):
-        self.page: BasePage = ...
+    def __init__(self, owner: BasePage = None): ...
 
     @property
     def link(self) -> str: ...
@@ -199,6 +204,7 @@ class BasePage(BaseParser):
         self._DownloadKit: DownloadKit = ...
         self._none_ele_return_value: bool = ...
         self._none_ele_value: Any = ...
+        self._page: Union[ChromiumPage, SessionPage, WebPage]=...
 
     @property
     def title(self) -> Union[str, None]: ...

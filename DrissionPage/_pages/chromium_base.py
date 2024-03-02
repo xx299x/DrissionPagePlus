@@ -576,7 +576,8 @@ class ChromiumBase(BasePage):
                                             fromIndex=from_index, toIndex=end_index)
                     if __ERROR__ not in nIds:
                         if nIds['nodeIds'][0] != 0:
-                            r = make_chromium_eles(self, _ids=nIds['nodeIds'], index=index_arg, is_obj_id=False)
+                            r = make_chromium_eles(self, _ids=nIds['nodeIds'], index=index_arg,
+                                                   is_obj_id=False, ele_only=True)
                             if r is not False:
                                 break
 
@@ -747,17 +748,6 @@ class ChromiumBase(BasePage):
         frames = self._ele(locator, timeout=timeout, index=None, raise_err=False)
         return [i for i in frames if i._type == 'ChromiumFrame']
 
-    def upload(self, loc_or_ele, file_paths, by_js=False):
-        """触发上传文件选择框并自动填入指定路径
-        :param loc_or_ele: 被点击后会触发文件选择框的元素或它的定位符
-        :param file_paths: 文件路径，如果上传框支持多文件，可传入列表或字符串，字符串时多个文件用回车分隔
-        :param by_js: 是否用js方式点击
-        :return: None
-        """
-        self.set.upload_files(file_paths)
-        self.ele(loc_or_ele).click(by_js=by_js)
-        self.wait.upload_paths_inputted()
-
     def session_storage(self, item=None):
         """返回sessionStorage信息，不设置item则获取全部
         :param item: 要获取的项，不设置则返回全部
@@ -875,10 +865,20 @@ class ChromiumBase(BasePage):
         t_id = self._target_id
         self.disconnect()
         sleep(wait)
+        self.browser.reconnect()
         self._driver = self.browser._get_driver(t_id, self)
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
+        """处理提示框，可以自动等待提示框出现
+        :param accept: True表示确认，False表示取消，为None不会按按钮但依然返回文本值
+        :param send: 处理prompt提示框时可输入文本
+        :param timeout: 等待提示框出现的超时时间（秒），为None则使用self.timeout属性的值
+        :param next_one: 是否处理下一个出现的提示框，为True时timeout参数无效
+        :return: 提示框内容文本，未等到提示框则返回False
+        """
         r = self._handle_alert(accept=accept, send=send, timeout=timeout, next_one=next_one)
+        if not isinstance(accept, bool):
+            return r
         while self._has_alert:
             sleep(.1)
         return r
@@ -905,6 +905,8 @@ class ChromiumBase(BasePage):
             return False
 
         res_text = self._alert.text
+        if not isinstance(accept, bool):
+            return res_text
         d = {'accept': accept, '_timeout': 0}
         if self._alert.type == 'prompt' and send is not None:
             d['promptText'] = send
@@ -1064,7 +1066,11 @@ class ChromiumBase(BasePage):
             vp = {'x': 0, 'y': 0, 'width': width, 'height': height, 'scale': 1}
             args = {'format': pic_type, 'captureBeyondViewport': True, 'clip': vp}
         else:
-            if left_top and right_bottom:
+            if left_top or right_bottom:
+                if not left_top:
+                    left_top = (0, 0)
+                if not right_bottom:
+                    right_bottom = self.rect.size
                 x, y = left_top
                 w = right_bottom[0] - x
                 h = right_bottom[1] - y
@@ -1131,6 +1137,17 @@ class ChromiumBase(BasePage):
 
     def get_cookies(self, as_dict=False, all_domains=False, all_info=False):
         return self.cookies(as_dict=as_dict, all_domains=all_domains, all_info=all_info)
+
+    def upload(self, loc_or_ele, file_paths, by_js=False):
+        """触发上传文件选择框并自动填入指定路径
+        :param loc_or_ele: 被点击后会触发文件选择框的元素或它的定位符
+        :param file_paths: 文件路径，如果上传框支持多文件，可传入列表或字符串，字符串时多个文件用回车分隔
+        :param by_js: 是否用js方式点击
+        :return: None
+        """
+        self.set.upload_files(file_paths)
+        self.ele(loc_or_ele).click(by_js=by_js)
+        self.wait.upload_paths_inputted()
 
 
 class Timeout(object):
