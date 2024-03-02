@@ -18,12 +18,17 @@ class BaseWaiter(object):
         """
         self._driver = page_or_ele
 
-    def __call__(self, second):
-        """等待若干秒
+    def __call__(self, second, scope=None):
+        """等待若干秒，如传入两个参数，等待时间为这两个数间的一个随机数
         :param second: 秒数
+        :param scope: 随机数范围
         :return: None
         """
-        sleep(second)
+        if scope is None:
+            sleep(second)
+        else:
+            from random import uniform
+            sleep(uniform(second, scope))
 
     def ele_deleted(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素从DOM中删除
@@ -328,12 +333,17 @@ class ElementWaiter(object):
         self._page = page
         self._ele = ele
 
-    def __call__(self, second):
-        """等待若干秒
+    def __call__(self, second, scope=None):
+        """等待若干秒，如传入两个参数，等待时间为这两个数间的一个随机数
         :param second: 秒数
+        :param scope: 随机数范围
         :return: None
         """
-        sleep(second)
+        if scope is None:
+            sleep(second)
+        else:
+            from random import uniform
+            sleep(uniform(second, scope))
 
     def deleted(self, timeout=None, raise_err=None):
         """等待元素从dom删除

@@ -193,6 +193,7 @@ class Browser(object):
     def reconnect(self):
         """断开重连"""
         self._driver.stop()
+        BrowserDriver.BROWSERS.pop(self.id)
         self._driver = BrowserDriver(self.id, 'browser', self.address, self)
         self.run_cdp('Target.setDiscoverTargets', discover=True)
         self._driver.set_callback('Target.targetDestroyed', self._onTargetDestroyed)

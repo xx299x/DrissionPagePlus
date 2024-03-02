@@ -1447,12 +1447,10 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
     except TimeoutError:
         raise TimeoutError(f'执行js超时（等待{timeout}秒）。')
     except ContextLostError:
-        if is_page:
-            raise ContextLostError('页面已被刷新，请尝试等待页面加载完成再执行操作。')
-        else:
-            raise ElementLostError('原来获取到的元素对象已不在页面内。')
+        raise ContextLostError('页面已被刷新，请尝试等待页面加载完成再执行操作。') if is_page else ElementLostError(
+            '原来获取到的元素对象已不在页面内。')
 
-    if res is None and page.states.has_alert:
+    if not res:  # _timeout=0或js激活alert时
         return None
 
     exceptionDetails = res.get('exceptionDetails')
@@ -1463,7 +1461,7 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
         return parse_js_result(page, page_or_ele, res.get('result'), end_time)
     except Exception:
         from DrissionPage import __version__
-        raise RuntimeError(f'\njs结果解析错误\n内容：{res.get("result")}\n版本：{__version__}\n'
+        raise RuntimeError(f'\njs结果解析错误\n版本：{__version__}\n内容：{res}\njs：{script}\n'
                            f'出现这个错误可能意味着程序有bug，请把错误信息和重现方法告知作者，谢谢。\n'
                            f'报告网站：https://gitee.com/g1879/DrissionPage/issues')
 
