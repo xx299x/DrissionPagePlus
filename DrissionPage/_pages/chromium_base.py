@@ -867,6 +867,8 @@ class ChromiumBase(BasePage):
         sleep(wait)
         self.browser.reconnect()
         self._driver = self.browser._get_driver(t_id, self)
+        self._driver_init(t_id)
+        self._get_document()
 
     def handle_alert(self, accept=True, send=None, timeout=None, next_one=False):
         """处理提示框，可以自动等待提示框出现
