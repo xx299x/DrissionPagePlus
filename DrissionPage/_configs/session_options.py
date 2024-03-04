@@ -11,7 +11,7 @@ from requests import Session
 from requests.structures import CaseInsensitiveDict
 
 from .options_manage import OptionsManager
-from .._functions.web import cookies_to_tuple, set_session_cookies
+from .._functions.web import cookies_to_tuple, set_session_cookies, format_headers
 
 
 class SessionOptions(object):
@@ -171,6 +171,7 @@ class SessionOptions(object):
             self._headers = None
             self._del_set.add('headers')
         else:
+            headers = format_headers(headers)
             self._headers = {key.lower(): headers[key] for key in headers}
         return self
 

@@ -37,14 +37,15 @@ class SessionElement(DrissionElement):
         attrs = [f"{k}='{v}'" for k, v in self.attrs.items()]
         return f'<SessionElement {self.tag} {" ".join(attrs)}>'
 
-    def __call__(self, locator, timeout=None):
+    def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素
         例：ele2 = ele1('@id=ele_id')
         :param locator: 元素的定位信息，可以是loc元组，或查询字符串
+        :param index: 第几个元素，从1开始，可传入负数获取倒数第几个
         :param timeout: 不起实际作用
         :return: SessionElement对象或属性、文本
         """
-        return self.ele(locator)
+        return self.ele(locator, index=index)
 
     def __eq__(self, other):
         return self.xpath == getattr(other, 'xpath', None)

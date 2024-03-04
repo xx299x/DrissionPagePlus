@@ -17,7 +17,7 @@ from tldextract import extract
 from .._base.base import BasePage
 from .._configs.session_options import SessionOptions
 from .._elements.session_element import SessionElement, make_session_ele
-from .._functions.web import cookie_to_dict
+from .._functions.web import cookie_to_dict, format_headers
 from .._units.setter import SessionPageSetter
 
 
@@ -293,7 +293,7 @@ class SessionPage(BasePage):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
         else:
-            kwargs['headers'] = CaseInsensitiveDict(kwargs['headers'])
+            kwargs['headers'] = CaseInsensitiveDict(format_headers(kwargs['headers']))
 
         # 设置referer和host值
         parsed_url = urlparse(url)

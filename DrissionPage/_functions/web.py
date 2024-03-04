@@ -394,3 +394,18 @@ def tree(ele_or_page):
     attrs = ' '.join([f"{k}='{v}'" for k, v in ele.attrs.items()])
     print(f'<{ele.tag} {attrs}>'.replace('\n', ' '))
     _tree(ele)
+
+
+def format_headers(txt):
+    """从浏览器复制的文本生成dict格式headers，文本用换行分隔
+    :param txt: 从浏览器复制的原始文本格式headers
+    :return: dict格式headers
+    """
+    if not isinstance(txt, str):
+        return txt
+    headers = {}
+    for header in txt.split('\n'):
+        if header:
+            name, value = header.split(': ', maxsplit=1)
+            headers[name] = value
+    return headers

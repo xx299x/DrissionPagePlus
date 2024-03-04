@@ -12,6 +12,7 @@ from requests.structures import CaseInsensitiveDict
 
 from .cookies_setter import SessionCookiesSetter, CookiesSetter, WebPageCookiesSetter
 from .._functions.tools import show_or_hide_browser
+from .._functions.web import format_headers
 
 
 class BasePageSetter(object):
@@ -134,13 +135,13 @@ class ChromiumBaseSetter(BasePageSetter):
             files = (files, )
         self._page._upload_list = [str(Path(i).absolute()) for i in files]
 
-    def headers(self, headers: dict) -> None:
+    def headers(self, headers) -> None:
         """设置固定发送的headers
         :param headers: dict格式的headers数据
         :return: None
         """
         self._page.run_cdp('Network.enable')
-        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=headers)
+        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=format_headers(headers))
 
     def auto_handle_alert(self, on_off=True, accept=True):
         """设置是否启用自动处理弹窗
@@ -293,7 +294,7 @@ class SessionPageSetter(BasePageSetter):
         :param headers: dict形式的headers
         :return: None
         """
-        self._page._headers = CaseInsensitiveDict(headers)
+        self._page._headers = CaseInsensitiveDict(format_headers(headers))
 
     def header(self, name, value):
         """设置headers中一个项
