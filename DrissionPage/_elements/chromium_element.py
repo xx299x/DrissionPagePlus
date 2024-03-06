@@ -505,11 +505,12 @@ class ChromiumElement(DrissionElement):
                 sleep(.1)
 
         src = self.attr('src')
+        if not src:
+            raise RuntimeError('元素没有src值或该值为空。')
         if src.lower().startswith('data:image'):
             if base64_to_bytes:
                 from base64 import b64decode
                 return b64decode(src.split(',', 1)[-1])
-
             else:
                 return src.split(',', 1)[-1]
 

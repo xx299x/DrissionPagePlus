@@ -17,7 +17,7 @@ from .._pages.web_page import WebPage
 
 
 class CookiesSetter(object):
-    _page: ChromiumBase
+    _owner: ChromiumBase
 
     def __init__(self, page: ChromiumBase): ...
 
@@ -29,7 +29,7 @@ class CookiesSetter(object):
 
 
 class SessionCookiesSetter(object):
-    _page: SessionPage
+    _owner: SessionPage
 
     def __init__(self, page: SessionPage): ...
 
@@ -41,7 +41,7 @@ class SessionCookiesSetter(object):
 
 
 class WebPageCookiesSetter(CookiesSetter, SessionCookiesSetter):
-    _page: Union[WebPage, WebPageTab]
+    _owner: Union[WebPage, WebPageTab]
 
     def __init__(self, page: SessionPage): ...
 

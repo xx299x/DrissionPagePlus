@@ -272,7 +272,6 @@ class TabWaiter(BaseWaiter):
 class PageWaiter(TabWaiter):
     def __init__(self, page):
         super().__init__(page)
-        # self._listener = None
 
     def new_tab(self, timeout=None, raise_err=None):
         """等待新标签页出现
@@ -325,12 +324,12 @@ class PageWaiter(TabWaiter):
 class ElementWaiter(object):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
-    def __init__(self, page, ele):
+    def __init__(self, owner, ele):
         """等待元素在dom中某种状态，如删除、显示、隐藏
-        :param page: 元素所在页面
+        :param owner: 元素所在页面
         :param ele: 要等待的元素
         """
-        self._page = page
+        self._owner = owner
         self._ele = ele
 
     def __call__(self, second, scope=None):
@@ -408,7 +407,7 @@ class ElementWaiter(object):
         :return: 是否等待成功
         """
         if timeout is None:
-            timeout = self._page.timeout
+            timeout = self._owner.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if not self._ele.states.is_enabled or not self._ele.states.is_alive:
@@ -428,7 +427,7 @@ class ElementWaiter(object):
         :return: 是否等待成功
         """
         if timeout is None:
-            timeout = self._page.timeout
+            timeout = self._owner.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             try:
@@ -471,7 +470,7 @@ class ElementWaiter(object):
         """
         err_text = err_text or '等待元素状态改变失败（等待{}秒）。'
         if timeout is None:
-            timeout = self._page.timeout
+            timeout = self._owner.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             a = self._ele.states.__getattribute__(attr)

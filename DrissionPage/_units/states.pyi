@@ -59,8 +59,8 @@ class ShadowRootStates(object):
 
 
 class PageStates(object):
-    def __init__(self, page: ChromiumBase):
-        self._page: ChromiumBase = ...
+    def __init__(self, owner: ChromiumBase):
+        self._owner: ChromiumBase = ...
 
     @property
     def is_loading(self) -> bool: ...

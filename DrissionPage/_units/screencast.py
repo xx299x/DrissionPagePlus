@@ -16,8 +16,8 @@ from time import sleep, time
 
 
 class Screencast(object):
-    def __init__(self, page):
-        self._page = page
+    def __init__(self, owner):
+        self._owner = owner
         self._path = None
         self._tmp_path = None
         self._running = False
@@ -39,16 +39,16 @@ class Screencast(object):
             raise ValueError('save_path必须设置。')
 
         if self._mode in ('frugal_video', 'video'):
-            if self._page.browser.page._chromium_options.tmp_path:
+            if self._owner.browser.page._chromium_options.tmp_path:
                 self._tmp_path = Path(
-                    self._page.browser.page._chromium_options.tmp_path) / f'screencast_tmp_{time()}_{randint(0, 100)}'
+                    self._owner.browser.page._chromium_options.tmp_path) / f'screencast_tmp_{time()}_{randint(0, 100)}'
             else:
                 self._tmp_path = Path(gettempdir()) / 'DrissionPage' / f'screencast_tmp_{time()}_{randint(0, 100)}'
             self._tmp_path.mkdir(parents=True, exist_ok=True)
 
         if self._mode.startswith('frugal'):
-            self._page.driver.set_callback('Page.screencastFrame', self._onScreencastFrame)
-            self._page.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
+            self._owner.driver.set_callback('Page.screencastFrame', self._onScreencastFrame)
+            self._owner.run_cdp('Page.startScreencast', everyNthFrame=1, quality=100)
 
         elif not self._mode.startswith('js'):
             self._running = True
@@ -79,8 +79,8 @@ class Screencast(object):
               }
             '''
             print('请手动选择要录制的目标。')
-            self._page.run_js('var DrissionPage_Screencast_blob;var DrissionPage_Screencast_blob_ok=false;')
-            self._page.run_js(js)
+            self._owner.run_js('var DrissionPage_Screencast_blob;var DrissionPage_Screencast_blob_ok=false;')
+            self._owner.run_js(js)
 
     def stop(self, video_name=None):
         """停止录屏
@@ -93,19 +93,19 @@ class Screencast(object):
         path = f'{self._path}{sep}{name}'
 
         if self._mode.startswith('js'):
-            self._page.run_js('mediaRecorder.stop();', as_expr=True)
-            while not self._page.run_js('return DrissionPage_Screencast_blob_ok;'):
+            self._owner.run_js('mediaRecorder.stop();', as_expr=True)
+            while not self._owner.run_js('return DrissionPage_Screencast_blob_ok;'):
                 sleep(.1)
-            blob = self._page.run_js('return DrissionPage_Screencast_blob;')
-            uuid = self._page.run_cdp('IO.resolveBlob', objectId=blob['result']['objectId'])['uuid']
-            data = self._page.run_cdp('IO.read', handle=f'blob:{uuid}')['data']
+            blob = self._owner.run_js('return DrissionPage_Screencast_blob;')
+            uuid = self._owner.run_cdp('IO.resolveBlob', objectId=blob['result']['objectId'])['uuid']
+            data = self._owner.run_cdp('IO.read', handle=f'blob:{uuid}')['data']
             with open(path, 'wb') as f:
                 f.write(b64decode(data))
             return path
 
         if self._mode.startswith('frugal'):
-            self._page.driver.set_callback('Page.screencastFrame', None)
-            self._page.run_cdp('Page.stopScreencast')
+            self._owner.driver.set_callback('Page.screencastFrame', None)
+            self._owner.run_cdp('Page.stopScreencast')
         else:
             self._enable = False
             while self._running:
@@ -155,7 +155,7 @@ class Screencast(object):
         self._running = True
         path = self._tmp_path or self._path
         while self._enable:
-            self._page.get_screenshot(path=path, name=f'{time()}.jpg')
+            self._owner.get_screenshot(path=path, name=f'{time()}.jpg')
             sleep(.04)
         self._running = False
 
@@ -164,7 +164,7 @@ class Screencast(object):
         path = self._tmp_path or self._path
         with open(f'{path}{sep}{kwargs["metadata"]["timestamp"]}.jpg', 'wb') as f:
             f.write(b64decode(kwargs['data']))
-        self._page.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
+        self._owner.run_cdp('Page.screencastFrameAck', sessionId=kwargs['sessionId'])
 
 
 class ScreencastMode(object):

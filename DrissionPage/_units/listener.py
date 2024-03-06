@@ -21,13 +21,13 @@ from ..errors import WaitTimeoutError
 class Listener(object):
     """监听器基类"""
 
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: ChromiumBase对象
+        :param owner: ChromiumBase对象
         """
-        self._page = page
-        self._address = page.address
-        self._target_id = page._target_id
+        self._owner = owner
+        self._address = owner.address
+        self._target_id = owner._target_id
         self._driver = None
         self._running_requests = 0
         self._running_targets = 0
@@ -237,16 +237,16 @@ class Listener(object):
         else:
             return False
 
-    def _to_target(self, target_id, address, page):
+    def _to_target(self, target_id, address, owner):
         """切换监听的页面对象
         :param target_id: 新页面对象_target_id
         :param address: 新页面对象address
-        :param page: 新页面对象
+        :param owner: 新页面对象
         :return: None
         """
         self._target_id = target_id
         self._address = address
-        self._page = page
+        self._owner = owner
         debug = False
         if self._driver:
             debug = self._driver._debug
@@ -275,7 +275,7 @@ class Listener(object):
                     and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
                 self._running_targets += 1
                 rid = kwargs['requestId']
-                p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, True))
+                p = self._request_ids.setdefault(rid, DataPacket(self._owner.tab_id, True))
                 p._raw_request = kwargs
                 if kwargs['request'].get('hasPostData', None) and not kwargs['request'].get('postData', None):
                     p._raw_post_data = self._driver.run('Network.getRequestPostData',
@@ -289,7 +289,7 @@ class Listener(object):
                         and (self._method is True or kwargs['request']['method'] in self._method)
                         and (self._res_type is True or kwargs.get('type', '').upper() in self._res_type)):
                     self._running_targets += 1
-                    p = self._request_ids.setdefault(rid, DataPacket(self._page.tab_id, target))
+                    p = self._request_ids.setdefault(rid, DataPacket(self._owner.tab_id, target))
                     p._raw_request = kwargs
                     break
 
@@ -390,13 +390,13 @@ class Listener(object):
 class FrameListener(Listener):
     def _requestWillBeSent(self, **kwargs):
         """接收到请求时的回调函数"""
-        if not self._page._is_diff_domain and kwargs.get('frameId', None) != self._page._frame_id:
+        if not self._owner._is_diff_domain and kwargs.get('frameId', None) != self._owner._frame_id:
             return
         super()._requestWillBeSent(**kwargs)
 
     def _response_received(self, **kwargs):
         """接收到返回信息时处理方法"""
-        if not self._page._is_diff_domain and kwargs.get('frameId', None) != self._page._frame_id:
+        if not self._owner._is_diff_domain and kwargs.get('frameId', None) != self._owner._frame_id:
             return
         super()._response_received(**kwargs)
 

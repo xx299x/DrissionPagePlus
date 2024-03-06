@@ -105,22 +105,22 @@ class ShadowRootStates(object):
 class PageStates(object):
     """Page对象、Tab对象使用"""
 
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: ChromiumBase对象
+        :param owner: ChromiumBase对象
         """
-        self._page = page
+        self._owner = owner
 
     @property
     def is_loading(self):
         """返回页面是否在加载状态"""
-        return self._page._is_loading
+        return self._owner._is_loading
 
     @property
     def is_alive(self):
         """返回页面对象是否仍然可用"""
         try:
-            self._page.run_cdp('Page.getLayoutMetrics')
+            self._owner.run_cdp('Page.getLayoutMetrics')
             return True
         except PageDisconnectedError:
             return False
@@ -128,12 +128,12 @@ class PageStates(object):
     @property
     def ready_state(self):
         """返回当前页面加载状态，'connecting' 'loading' 'interactive' 'complete'"""
-        return self._page._ready_state
+        return self._owner._ready_state
 
     @property
     def has_alert(self):
         """返回当前页面是否存在弹窗"""
-        return self._page._has_alert
+        return self._owner._has_alert
 
 
 class FrameStates(object):

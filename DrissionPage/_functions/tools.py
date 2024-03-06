@@ -107,7 +107,7 @@ def show_or_hide_browser(page, hide=True):
     except ImportError:
         raise ImportError('请先安装：pip install pypiwin32')
 
-    pid = page.process_id
+    pid = page._page.process_id
     if not pid:
         return None
     hds = get_hwnds_from_pid(pid, page.title)

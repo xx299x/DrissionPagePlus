@@ -87,15 +87,15 @@ class Scroller(object):
         if not self._wait_complete:
             return
 
-        page = self._driver.owner if self._driver._type == 'ChromiumElement' else self._driver
-        r = page.run_cdp('Page.getLayoutMetrics')
+        owner = self._driver.owner if self._driver._type == 'ChromiumElement' else self._driver
+        r = owner.run_cdp('Page.getLayoutMetrics')
         x = r['layoutViewport']['pageX']
         y = r['layoutViewport']['pageY']
 
-        end_time = perf_counter() + page.timeout
+        end_time = perf_counter() + owner.timeout
         while perf_counter() < end_time:
             sleep(.1)
-            r = page.run_cdp('Page.getLayoutMetrics')
+            r = owner.run_cdp('Page.getLayoutMetrics')
             x1 = r['layoutViewport']['pageX']
             y1 = r['layoutViewport']['pageY']
 
@@ -120,11 +120,11 @@ class ElementScroller(Scroller):
 
 
 class PageScroller(Scroller):
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: 页面对象
+        :param owner: 页面对象
         """
-        super().__init__(page)
+        super().__init__(owner)
         self.t1 = 'window'
         self.t2 = 'document.documentElement'
 

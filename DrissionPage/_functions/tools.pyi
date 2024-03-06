@@ -10,7 +10,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Union, Tuple
 
-from .._pages.chromium_page import ChromiumPage
+from .._pages.chromium_base import ChromiumBase
 
 
 class PortFinder(object):
@@ -30,7 +30,7 @@ def port_is_using(ip: str, port: Union[str, int]) -> bool: ...
 def clean_folder(folder_path: Union[str, Path], ignore: Union[tuple, list] = None) -> None: ...
 
 
-def show_or_hide_browser(page: ChromiumPage, hide: bool = True) -> None: ...
+def show_or_hide_browser(page: ChromiumBase, hide: bool = True) -> None: ...
 
 
 def get_browser_progress_id(progress: Union[popen, None], address: str) -> Union[str, None]: ...

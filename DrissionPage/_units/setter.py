@@ -16,8 +16,11 @@ from .._functions.web import format_headers
 
 
 class BasePageSetter(object):
-    def __init__(self, page):
-        self._page = page
+    def __init__(self, owner):
+        """
+        :param owner: BasePage对象
+        """
+        self._owner = owner
 
     def NoneElement_value(self, value=None, on_off=True):
         """设置空元素是否返回设定值
@@ -25,39 +28,42 @@ class BasePageSetter(object):
         :param on_off: 是否启用
         :return: None
         """
-        self._page._none_ele_return_value = on_off
-        self._page._none_ele_value = value
+        self._owner._none_ele_return_value = on_off
+        self._owner._none_ele_value = value
 
 
 class ChromiumBaseSetter(BasePageSetter):
-    def __init__(self, page):
-        super().__init__(page)
+    def __init__(self, owner):
+        """
+        :param owner: ChromiumBase对象
+        """
+        super().__init__(owner)
         self._cookies_setter = None
 
     @property
     def load_mode(self):
         """返回用于设置页面加载策略的对象"""
-        return LoadMode(self._page)
+        return LoadMode(self._owner)
 
     @property
     def scroll(self):
         """返回用于设置页面滚动设置的对象"""
-        return PageScrollSetter(self._page.scroll)
+        return PageScrollSetter(self._owner.scroll)
 
     @property
     def cookies(self):
         """返回用于设置cookies的对象"""
         if self._cookies_setter is None:
-            self._cookies_setter = CookiesSetter(self._page)
+            self._cookies_setter = CookiesSetter(self._owner)
         return self._cookies_setter
 
     def retry_times(self, times):
         """设置连接失败重连次数"""
-        self._page.retry_times = times
+        self._owner.retry_times = times
 
     def retry_interval(self, interval):
         """设置连接失败重连间隔"""
-        self._page.retry_interval = interval
+        self._owner.retry_interval = interval
 
     def timeouts(self, base=None, page_load=None, script=None, implicit=None):
         """设置超时时间，单位为秒
@@ -68,14 +74,14 @@ class ChromiumBaseSetter(BasePageSetter):
         """
         base = base if base is not None else implicit
         if base is not None:
-            self._page.timeouts.base = base
-            self._page._timeout = base
+            self._owner.timeouts.base = base
+            self._owner._timeout = base
 
         if page_load is not None:
-            self._page.timeouts.page_load = page_load
+            self._owner.timeouts.page_load = page_load
 
         if script is not None:
-            self._page.timeouts.script = script
+            self._owner.timeouts.script = script
 
     def user_agent(self, ua, platform=None):
         """为当前tab设置user agent，只在当前tab有效
@@ -86,7 +92,7 @@ class ChromiumBaseSetter(BasePageSetter):
         keys = {'userAgent': ua}
         if platform:
             keys['platform'] = platform
-        self._page.run_cdp('Emulation.setUserAgentOverride', **keys)
+        self._owner.run_cdp('Emulation.setUserAgentOverride', **keys)
 
     def session_storage(self, item, value):
         """设置或删除某项sessionStorage信息
@@ -94,15 +100,15 @@ class ChromiumBaseSetter(BasePageSetter):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        self._page.run_cdp_loaded('DOMStorage.enable')
-        i = self._page.run_cdp('Storage.getStorageKeyForFrame', frameId=self._page._frame_id)['storageKey']
+        self._owner.run_cdp_loaded('DOMStorage.enable')
+        i = self._owner.run_cdp('Storage.getStorageKeyForFrame', frameId=self._owner._frame_id)['storageKey']
         if value is False:
-            self._page.run_cdp('DOMStorage.removeDOMStorageItem',
-                               storageId={'storageKey': i, 'isLocalStorage': False}, key=item)
+            self._owner.run_cdp('DOMStorage.removeDOMStorageItem',
+                                storageId={'storageKey': i, 'isLocalStorage': False}, key=item)
         else:
-            self._page.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': False},
-                               key=item, value=value)
-        self._page.run_cdp_loaded('DOMStorage.disable')
+            self._owner.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': False},
+                                key=item, value=value)
+        self._owner.run_cdp_loaded('DOMStorage.disable')
 
     def local_storage(self, item, value):
         """设置或删除某项localStorage信息
@@ -110,38 +116,38 @@ class ChromiumBaseSetter(BasePageSetter):
         :param value: 项的值，设置为False时，删除该项
         :return: None
         """
-        self._page.run_cdp_loaded('DOMStorage.enable')
-        i = self._page.run_cdp('Storage.getStorageKeyForFrame', frameId=self._page._frame_id)['storageKey']
+        self._owner.run_cdp_loaded('DOMStorage.enable')
+        i = self._owner.run_cdp('Storage.getStorageKeyForFrame', frameId=self._owner._frame_id)['storageKey']
         if value is False:
-            self._page.run_cdp('DOMStorage.removeDOMStorageItem',
-                               storageId={'storageKey': i, 'isLocalStorage': True}, key=item)
+            self._owner.run_cdp('DOMStorage.removeDOMStorageItem',
+                                storageId={'storageKey': i, 'isLocalStorage': True}, key=item)
         else:
-            self._page.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': True},
-                               key=item, value=value)
-        self._page.run_cdp_loaded('DOMStorage.disable')
+            self._owner.run_cdp('DOMStorage.setDOMStorageItem', storageId={'storageKey': i, 'isLocalStorage': True},
+                                key=item, value=value)
+        self._owner.run_cdp_loaded('DOMStorage.disable')
 
     def upload_files(self, files):
         """等待上传的文件路径
         :param files: 文件路径列表或字符串，字符串时多个文件用回车分隔
         :return: None
         """
-        if not self._page._upload_list:
-            self._page.driver.set_callback('Page.fileChooserOpened', self._page._onFileChooserOpened)
-            self._page.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
+        if not self._owner._upload_list:
+            self._owner.driver.set_callback('Page.fileChooserOpened', self._owner._onFileChooserOpened)
+            self._owner.run_cdp('Page.setInterceptFileChooserDialog', enabled=True)
 
         if isinstance(files, str):
             files = files.split('\n')
         elif isinstance(files, Path):
-            files = (files, )
-        self._page._upload_list = [str(Path(i).absolute()) for i in files]
+            files = (files,)
+        self._owner._upload_list = [str(Path(i).absolute()) for i in files]
 
     def headers(self, headers) -> None:
         """设置固定发送的headers
         :param headers: dict格式的headers数据
         :return: None
         """
-        self._page.run_cdp('Network.enable')
-        self._page.run_cdp('Network.setExtraHTTPHeaders', headers=format_headers(headers))
+        self._owner.run_cdp('Network.enable')
+        self._owner.run_cdp('Network.setExtraHTTPHeaders', headers=format_headers(headers))
 
     def auto_handle_alert(self, on_off=True, accept=True):
         """设置是否启用自动处理弹窗
@@ -149,7 +155,7 @@ class ChromiumBaseSetter(BasePageSetter):
         :param accept: bool表示确定还是取消
         :return: None
         """
-        self._page._alert.auto = accept if on_off else None
+        self._owner._alert.auto = accept if on_off else None
 
     def blocked_urls(self, urls):
         """设置要忽略的url
@@ -162,25 +168,28 @@ class ChromiumBaseSetter(BasePageSetter):
             urls = (urls,)
         if not isinstance(urls, (list, tuple)):
             raise TypeError('urls需传入str、list或tuple类型。')
-        self._page.run_cdp('Network.enable')
-        self._page.run_cdp('Network.setBlockedURLs', urls=urls)
+        self._owner.run_cdp('Network.enable')
+        self._owner.run_cdp('Network.setBlockedURLs', urls=urls)
 
     # --------------即将废弃---------------
 
     @property
     def load_strategy(self):
         """返回用于设置页面加载策略的对象"""
-        return LoadMode(self._page)
+        return LoadMode(self._owner)
 
 
 class TabSetter(ChromiumBaseSetter):
-    def __init__(self, page):
-        super().__init__(page)
+    def __init__(self, owner):
+        """
+        :param owner: 标签页对象
+        """
+        super().__init__(owner)
 
     @property
     def window(self):
         """返回用于设置浏览器窗口的对象"""
-        return WindowSetter(self._page)
+        return WindowSetter(self._owner)
 
     def download_path(self, path):
         """设置下载路径
@@ -188,10 +197,10 @@ class TabSetter(ChromiumBaseSetter):
         :return: None
         """
         path = str(Path(path).absolute())
-        self._page._download_path = path
-        self._page.browser._dl_mgr.set_path(self._page, path)
-        if self._page._DownloadKit:
-            self._page._DownloadKit.set.goal_path(path)
+        self._owner._download_path = path
+        self._owner.browser._dl_mgr.set_path(self._owner, path)
+        if self._owner._DownloadKit:
+            self._owner._DownloadKit.set.goal_path(path)
 
     def download_file_name(self, name=None, suffix=None):
         """设置下一个被下载文件的名称
@@ -199,7 +208,7 @@ class TabSetter(ChromiumBaseSetter):
         :param suffix: 后缀名，显式设置后缀名，不使用远程文件后缀
         :return: None
         """
-        self._page.browser._dl_mgr.set_rename(self._page.tab_id, name, suffix)
+        self._owner.browser._dl_mgr.set_rename(self._owner.tab_id, name, suffix)
 
     def when_download_file_exists(self, mode):
         """设置当存在同名文件时的处理方式
@@ -212,11 +221,11 @@ class TabSetter(ChromiumBaseSetter):
         if mode not in types:
             raise ValueError(f'''mode参数只能是 '{"', '".join(types.keys())}' 之一，现在是：{mode}''')
 
-        self._page.browser._dl_mgr.set_file_exists(self._page.tab_id, mode)
+        self._owner.browser._dl_mgr.set_file_exists(self._owner.tab_id, mode)
 
     def activate(self):
         """使标签页处于最前面"""
-        self._page.browser.activate_tab(self._page.tab_id)
+        self._owner.browser.activate_tab(self._owner.tab_id)
 
 
 class ChromiumPageSetter(TabSetter):
@@ -227,39 +236,34 @@ class ChromiumPageSetter(TabSetter):
         :return: None
         """
         if not tab_or_id:
-            tab_or_id = self._page.tab_id
+            tab_or_id = self._owner.tab_id
         elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
-        self._page.browser.activate_tab(tab_or_id)
-
-    @property
-    def window(self):
-        """返回用于设置浏览器窗口的对象"""
-        return PageWindowSetter(self._page)
+        self._owner.browser.activate_tab(tab_or_id)
 
 
 class SessionPageSetter(BasePageSetter):
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: SessionPage对象
+        :param owner: SessionPage对象
         """
-        super().__init__(page)
+        super().__init__(owner)
         self._cookies_setter = None
 
     @property
     def cookies(self):
         """返回用于设置cookies的对象"""
         if self._cookies_setter is None:
-            self._cookies_setter = SessionCookiesSetter(self._page)
+            self._cookies_setter = SessionCookiesSetter(self._owner)
         return self._cookies_setter
 
     def retry_times(self, times):
         """设置连接失败时重连次数"""
-        self._page.retry_times = times
+        self._owner.retry_times = times
 
     def retry_interval(self, interval):
         """设置连接失败时重连间隔"""
-        self._page.retry_interval = interval
+        self._owner.retry_interval = interval
 
     def download_path(self, path):
         """设置下载路径
@@ -267,16 +271,16 @@ class SessionPageSetter(BasePageSetter):
         :return: None
         """
         path = str(Path(path).absolute())
-        self._page._download_path = path
-        if self._page._DownloadKit:
-            self._page._DownloadKit.set.goal_path(path)
+        self._owner._download_path = path
+        if self._owner._DownloadKit:
+            self._owner._DownloadKit.set.goal_path(path)
 
     def timeout(self, second):
         """设置连接超时时间
         :param second: 秒数
         :return: None
         """
-        self._page.timeout = second
+        self._owner.timeout = second
 
     def encoding(self, encoding, set_all=True):
         """设置编码
@@ -285,16 +289,16 @@ class SessionPageSetter(BasePageSetter):
         :return: None
         """
         if set_all:
-            self._page._encoding = encoding if encoding else None
-        if self._page.response:
-            self._page.response.encoding = encoding
+            self._owner._encoding = encoding if encoding else None
+        if self._owner.response:
+            self._owner.response.encoding = encoding
 
     def headers(self, headers):
         """设置通用的headers
         :param headers: dict形式的headers
         :return: None
         """
-        self._page._headers = CaseInsensitiveDict(format_headers(headers))
+        self._owner._headers = CaseInsensitiveDict(format_headers(headers))
 
     def header(self, name, value):
         """设置headers中一个项
@@ -302,14 +306,14 @@ class SessionPageSetter(BasePageSetter):
         :param value: 设置值
         :return: None
         """
-        self._page._headers[name] = value
+        self._owner._headers[name] = value
 
     def user_agent(self, ua):
         """设置user agent
         :param ua: user agent
         :return: None
         """
-        self._page._headers['user-agent'] = ua
+        self._owner._headers['user-agent'] = ua
 
     def proxies(self, http=None, https=None):
         """设置proxies参数
@@ -317,63 +321,63 @@ class SessionPageSetter(BasePageSetter):
         :param https: https代理地址
         :return: None
         """
-        self._page.session.proxies = {'http': http, 'https': https}
+        self._owner.session.proxies = {'http': http, 'https': https}
 
     def auth(self, auth):
         """设置认证元组或对象
         :param auth: 认证元组或对象
         :return: None
         """
-        self._page.session.auth = auth
+        self._owner.session.auth = auth
 
     def hooks(self, hooks):
         """设置回调方法
         :param hooks: 回调方法
         :return: None
         """
-        self._page.session.hooks = hooks
+        self._owner.session.hooks = hooks
 
     def params(self, params):
         """设置查询参数字典
         :param params: 查询参数字典
         :return: None
         """
-        self._page.session.params = params
+        self._owner.session.params = params
 
     def verify(self, on_off):
         """设置是否验证SSL证书
         :param on_off: 是否验证 SSL 证书
         :return: None
         """
-        self._page.session.verify = on_off
+        self._owner.session.verify = on_off
 
     def cert(self, cert):
         """SSL客户端证书文件的路径(.pem格式)，或(‘cert’, ‘key’)元组
         :param cert: 证书路径或元组
         :return: None
         """
-        self._page.session.cert = cert
+        self._owner.session.cert = cert
 
     def stream(self, on_off):
         """设置是否使用流式响应内容
         :param on_off: 是否使用流式响应内容
         :return: None
         """
-        self._page.session.stream = on_off
+        self._owner.session.stream = on_off
 
     def trust_env(self, on_off):
         """设置是否信任环境
         :param on_off: 是否信任环境
         :return: None
         """
-        self._page.session.trust_env = on_off
+        self._owner.session.trust_env = on_off
 
     def max_redirects(self, times):
         """设置最大重定向次数
         :param times: 最大重定向次数
         :return: None
         """
-        self._page.session.max_redirects = times
+        self._owner.session.max_redirects = times
 
     def add_adapter(self, url, adapter):
         """添加适配器
@@ -381,20 +385,20 @@ class SessionPageSetter(BasePageSetter):
         :param adapter: 适配器对象
         :return: None
         """
-        self._page.session.mount(url, adapter)
+        self._owner.session.mount(url, adapter)
 
 
 class WebPageSetter(ChromiumPageSetter):
-    def __init__(self, page):
-        super().__init__(page)
-        self._session_setter = SessionPageSetter(self._page)
-        self._chromium_setter = ChromiumPageSetter(self._page)
+    def __init__(self, owner):
+        super().__init__(owner)
+        self._session_setter = SessionPageSetter(self._owner)
+        self._chromium_setter = ChromiumPageSetter(self._owner)
 
     @property
     def cookies(self):
         """返回用于设置cookies的对象"""
         if self._cookies_setter is None:
-            self._cookies_setter = WebPageCookiesSetter(self._page)
+            self._cookies_setter = WebPageCookiesSetter(self._owner)
         return self._cookies_setter
 
     def headers(self, headers) -> None:
@@ -402,30 +406,30 @@ class WebPageSetter(ChromiumPageSetter):
         :param headers: dict格式的headers数据
         :return: None
         """
-        if self._page.mode == 's':
+        if self._owner.mode == 's':
             self._session_setter.headers(headers)
         else:
             self._chromium_setter.headers(headers)
 
     def user_agent(self, ua, platform=None):
         """设置user agent，d模式下只有当前tab有效"""
-        if self._page.mode == 's':
+        if self._owner.mode == 's':
             self._session_setter.user_agent(ua)
         else:
             self._chromium_setter.user_agent(ua, platform)
 
 
 class WebPageTabSetter(TabSetter):
-    def __init__(self, page):
-        super().__init__(page)
-        self._session_setter = SessionPageSetter(self._page)
-        self._chromium_setter = ChromiumBaseSetter(self._page)
+    def __init__(self, owner):
+        super().__init__(owner)
+        self._session_setter = SessionPageSetter(self._owner)
+        self._chromium_setter = ChromiumBaseSetter(self._owner)
 
     @property
     def cookies(self):
         """返回用于设置cookies的对象"""
         if self._cookies_setter is None:
-            self._cookies_setter = WebPageCookiesSetter(self._page)
+            self._cookies_setter = WebPageCookiesSetter(self._owner)
         return self._cookies_setter
 
     def headers(self, headers) -> None:
@@ -433,16 +437,16 @@ class WebPageTabSetter(TabSetter):
         :param headers: dict格式的headers数据
         :return: None
         """
-        if self._page._has_session:
+        if self._owner._has_session:
             self._session_setter.headers(headers)
-        if self._page._has_driver:
+        if self._owner._has_driver:
             self._chromium_setter.headers(headers)
 
     def user_agent(self, ua, platform=None):
         """设置user agent，d模式下只有当前tab有效"""
-        if self._page._has_session:
+        if self._owner._has_session:
             self._session_setter.user_agent(ua)
-        if self._page._has_driver:
+        if self._owner._has_driver:
             self._chromium_setter.user_agent(ua, platform)
 
 
@@ -492,17 +496,17 @@ class ChromiumFrameSetter(ChromiumBaseSetter):
         :param value: 属性值
         :return: None
         """
-        self._page.frame_ele.set.attr(name, value)
+        self._owner.frame_ele.set.attr(name, value)
 
 
 class LoadMode(object):
     """用于设置页面加载策略的类"""
 
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: ChromiumBase对象
+        :param owner: ChromiumBase对象
         """
-        self._page = page
+        self._owner = owner
 
     def __call__(self, value):
         """设置加载策略
@@ -511,23 +515,26 @@ class LoadMode(object):
         """
         if value.lower() not in ('normal', 'eager', 'none'):
             raise ValueError("只能选择 'normal', 'eager', 'none'。")
-        self._page._load_mode = value
+        self._owner._load_mode = value
 
     def normal(self):
         """设置页面加载策略为normal"""
-        self._page._load_mode = 'normal'
+        self._owner._load_mode = 'normal'
 
     def eager(self):
         """设置页面加载策略为eager"""
-        self._page._load_mode = 'eager'
+        self._owner._load_mode = 'eager'
 
     def none(self):
         """设置页面加载策略为none"""
-        self._page._load_mode = 'none'
+        self._owner._load_mode = 'none'
 
 
 class PageScrollSetter(object):
     def __init__(self, scroll):
+        """
+        :param scroll: PageScroller对象
+        """
         self._scroll = scroll
 
     def wait_complete(self, on_off=True):
@@ -554,11 +561,11 @@ class PageScrollSetter(object):
 class WindowSetter(object):
     """用于设置窗口大小的类"""
 
-    def __init__(self, page):
+    def __init__(self, owner):
         """
-        :param page: 页面对象
+        :param owner: 页面对象
         """
-        self._page = page
+        self._owner = owner
         self._window_id = self._get_info()['windowId']
 
     def max(self):
@@ -621,7 +628,7 @@ class WindowSetter(object):
         """获取窗口位置及大小信息"""
         for _ in range(50):
             try:
-                return self._page.run_cdp('Browser.getWindowForTarget')
+                return self._owner.run_cdp('Browser.getWindowForTarget')
             except:
                 sleep(.1)
 
@@ -631,7 +638,7 @@ class WindowSetter(object):
         :return: None
         """
         try:
-            self._page.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
+            self._owner.run_cdp('Browser.setWindowBounds', windowId=self._window_id, bounds=bounds)
         except:
             raise RuntimeError('浏览器全屏或最小化状态时请先调用set.window.normal()恢复正常状态。')
 
@@ -649,12 +656,10 @@ class WindowSetter(object):
         """设置窗口为全屏"""
         self.full()
 
-
-class PageWindowSetter(WindowSetter):
     def hide(self):
         """隐藏浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=True)
+        show_or_hide_browser(self._owner, hide=True)
 
     def show(self):
         """显示浏览器窗口，只在Windows系统可用"""
-        show_or_hide_browser(self._page, hide=False)
+        show_or_hide_browser(self._owner, hide=False)
