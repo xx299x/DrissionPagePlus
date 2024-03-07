@@ -200,12 +200,12 @@ class SessionElement(DrissionElement):
             # 若为链接为None、js或邮件，直接返回
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
-
             else:  # 其它情况直接返回绝对url
-                return make_absolute_link(link, self.owner.url)
+                return make_absolute_link(link, self.owner.url) if self.owner else link
 
         elif name == 'src':
-            return make_absolute_link(self.inner_ele.get('src'), self.owner.url)
+            return make_absolute_link(self.inner_ele.get('src'),
+                                      self.owner.url) if self.owner else self.inner_ele.get('src')
 
         elif name == 'text':
             return self.text
@@ -350,6 +350,10 @@ def make_session_ele(html_or_ele, loc=None, index=1):
             if html_or_ele._doc_id else html_or_ele.owner.html
         html_or_ele = fromstring(html)
         html_or_ele = html_or_ele.xpath(xpath)[0]
+
+    elif html_or_ele._type == 'ChromiumFrame':
+        page = html_or_ele
+        html_or_ele = fromstring(html_or_ele.inner_html)
 
     # 各种页面对象
     elif isinstance(html_or_ele, BasePage):

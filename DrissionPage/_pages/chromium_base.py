@@ -162,7 +162,7 @@ class ChromiumBase(BasePage):
             try:
                 b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
                 timeout = end_time - perf_counter()
-                timeout = .5 if timeout <= 0 else timeout
+                timeout = 1 if timeout <= 1 else timeout
                 self._root_id = self.run_cdp('DOM.resolveNode', backendNodeId=b_id,
                                              _timeout=timeout)['object']['objectId']
                 result = True

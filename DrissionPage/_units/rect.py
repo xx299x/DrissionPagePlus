@@ -114,11 +114,14 @@ class ElementRect(object):
 
 class TabRect(object):
     def __init__(self, owner):
+        """
+        :param owner: Page对象和Tab对象
+        """
         self._owner = owner
 
     @property
     def window_state(self):
-        """返回窗口状态：normal、fullscreen、maximized、 minimized"""
+        """返回窗口状态：normal、fullscreen、maximized、minimized"""
         return self._get_window_rect()['windowState']
 
     @property
@@ -187,6 +190,9 @@ class FrameRect(object):
     """异域iframe使用"""
 
     def __init__(self, frame):
+        """
+        :param frame: ChromiumFrame对象
+        """
         self._frame = frame
 
     @property

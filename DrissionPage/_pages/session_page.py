@@ -200,7 +200,7 @@ class SessionPage(BasePage):
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        return make_session_ele(self.html) if locator is None else self._ele(locator, index=index, method='s_ele()')
+        return make_session_ele(self) if locator is None else self._ele(locator, index=index, method='s_ele()')
 
     def s_eles(self, locator):
         """返回页面中符合条件的所有元素、属性或节点文本

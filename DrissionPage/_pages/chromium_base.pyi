@@ -8,8 +8,7 @@
 from pathlib import Path
 from typing import Union, Tuple, List, Any, Optional, Literal
 
-from .chromium_tab import ChromiumTab, WebPageTab
-from .web_page import WebPage
+from .chromium_tab import ChromiumTab
 from .._base.base import BasePage
 from .._base.browser import Browser
 from .._base.driver import Driver

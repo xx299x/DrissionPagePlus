@@ -62,7 +62,7 @@ class ElementRect(object):
 
 
 class TabRect(object):
-    def __init__(self, owner: Union[ChromiumPage, ChromiumTab, WebPage, WebPageTab]):
+    def __init__(self, owner: ChromiumBase):
         self._owner: Union[ChromiumPage, ChromiumTab, WebPage, WebPageTab] = ...
 
     @property

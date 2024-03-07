@@ -123,7 +123,7 @@ class ChromiumElement(DrissionElement):
     @property
     def text(self):
         """返回元素内所有文本，文本已格式化"""
-        return get_ele_txt(make_session_ele(self.html))
+        return get_ele_txt(make_session_ele(self))
 
     @property
     def raw_text(self):
@@ -447,10 +447,7 @@ class ChromiumElement(DrissionElement):
         :param index: 获取第几个，从1开始，可传入负数获取倒数第几个
         :return: SessionElement对象或属性、文本
         """
-        if self.tag in __FRAME_ELEMENT__:
-            r = make_session_ele(self.inner_html, locator, index=index)
-        else:
-            r = make_session_ele(self, locator, index=index)
+        r = make_session_ele(self, locator, index=index)
         if isinstance(r, NoneElement):
             if Settings.raise_when_ele_not_found:
                 raise ElementNotFoundError(None, 's_ele()', {'locator': locator})
@@ -464,8 +461,6 @@ class ChromiumElement(DrissionElement):
         :param locator: 定位符
         :return: SessionElement或属性、文本组成的列表
         """
-        if self.tag in __FRAME_ELEMENT__:
-            return make_session_ele(self.inner_html, locator, index=None)
         return make_session_ele(self, locator, index=None)
 
     def _find_elements(self, locator, timeout=None, index=1, relative=False, raise_err=None):
@@ -1080,7 +1075,7 @@ class ShadowRoot(BaseElement):
                     return None if r is False else r
 
             else:
-                eles = make_session_ele(self.html).eles(loc)
+                eles = make_session_ele(self, loc, index=None)
                 if not eles:
                     return None
 

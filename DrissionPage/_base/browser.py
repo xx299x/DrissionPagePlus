@@ -213,7 +213,10 @@ class Browser(object):
         if force:
             from psutil import Process
             for pid in pids:
-                Process(pid).kill()
+                try:
+                    Process(pid).kill()
+                except:
+                    pass
         else:
             try:
                 self.run_cdp('Browser.close')
