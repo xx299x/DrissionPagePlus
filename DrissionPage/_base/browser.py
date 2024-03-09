@@ -129,7 +129,7 @@ class Browser(object):
         return len([i for i in j if i['type'] in ('page', 'webview') and not i['url'].startswith('devtools://')])
 
     @property
-    def tabs(self):
+    def tab_ids(self):
         """返回所有标签页id组成的列表"""
         j = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp，因为顺序不对
         return [i['id'] for i in j if i['type'] in ('page', 'webview') and not i['url'].startswith('devtools://')]
@@ -139,13 +139,12 @@ class Browser(object):
         """返回浏览器进程id"""
         return self._process_id
 
-    def find_tabs(self, title=None, url=None, tab_type=None, single=True):
-        """查找符合条件的tab，返回它们的id组成的列表
+    def find_tabs(self, title=None, url=None, tab_type=None):
+        """查找符合条件的tab，返回它们组成的列表
         :param title: 要匹配title的文本
         :param url: 要匹配url的文本
         :param tab_type: tab类型，可用列表输入多个
-        :param single: 是否返回首个结果的id，为False返回所有信息
-        :return: tab id或tab列表
+        :return: dict格式的tab信息列表列表
         """
         tabs = self._driver.get(f'http://{self.address}/json').json()  # 不要改用cdp
 
@@ -156,9 +155,8 @@ class Browser(object):
         elif tab_type is not None:
             raise TypeError('tab_type只能是set、list、tuple、str、None。')
 
-        r = [i for i in tabs if ((title is None or title in i['title']) and (url is None or url in i['url'])
-                                 and (tab_type is None or i['type'] in tab_type))]
-        return r[0]['id'] if r and single else r
+        return [i for i in tabs if ((title is None or title in i['title']) and (url is None or url in i['url'])
+                                    and (tab_type is None or i['type'] in tab_type))]
 
     def close_tab(self, tab_id):
         """关闭标签页

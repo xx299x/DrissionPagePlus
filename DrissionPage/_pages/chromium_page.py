@@ -124,14 +124,14 @@ class ChromiumPage(ChromiumBase):
         return self.browser.tabs_count
 
     @property
-    def tabs(self):
+    def tab_ids(self):
         """返回所有标签页id组成的列表"""
-        return self.browser.tabs
+        return self.browser.tab_ids
 
     @property
     def latest_tab(self):
-        """返回最新的标签页id，最新标签页指最后创建或最后被激活的"""
-        return self.tabs[0]
+        """返回最新的标签页对象，最新标签页指最后创建或最后被激活的"""
+        return self.get_tab(self.tab_ids[0])
 
     @property
     def process_id(self):
@@ -148,32 +148,51 @@ class ChromiumPage(ChromiumBase):
         """
         return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
 
-    def get_tab(self, id_or_num=None):
-        """获取一个标签页对象
-        :param id_or_num: 要获取的标签页id或序号，为None时获取当前tab，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
-        :return: 标签页对象
+    def get_tab(self, id_or_num=None, title=None, url=None, tab_type=None, as_id=False):
+        """获取一个标签页对象，id_or_num不为None时，后面几个参数无效
+        :param id_or_num: 要获取的标签页id或序号，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
+        :param title: 要匹配title的文本，模糊匹配，为None则匹配所有
+        :param url: 要匹配url的文本，模糊匹配，为None则匹配所有
+        :param tab_type: tab类型，可用列表输入多个，如 'page', 'iframe' 等，为None则匹配所有
+        :param as_id: 是否返回标签页id而不是标签页对象
+        :return: ChromiumTab对象
         """
-        with self._lock:
+        if id_or_num is not None:
             if isinstance(id_or_num, str):
-                return ChromiumTab(self, id_or_num)
+                id_or_num = id_or_num
             elif isinstance(id_or_num, int):
-                return ChromiumTab(self, self.tabs[id_or_num - 1 if id_or_num > 0 else id_or_num])
-            elif id_or_num is None:
-                return ChromiumTab(self, self.tab_id)
+                id_or_num = self.tab_ids[id_or_num - 1 if id_or_num > 0 else id_or_num]
             elif isinstance(id_or_num, ChromiumTab):
-                return id_or_num
-            else:
-                raise TypeError(f'id_or_num需传入tab id或序号，非{id_or_num}。')
+                return id_or_num.tab_id if as_id else id_or_num
 
-    def find_tabs(self, title=None, url=None, tab_type=None, single=True):
-        """查找符合条件的tab，返回它们的id组成的列表
-        :param title: 要匹配title的文本
-        :param url: 要匹配url的文本
-        :param tab_type: tab类型，可用列表输入多个
-        :param single: 是否返回首个结果的id，为False返回所有信息
-        :return: tab id或tab列表
+        elif title == url == tab_type is None:
+            id_or_num = self.tab_id
+
+        else:
+            id_or_num = self._browser.find_tabs(title, url, tab_type)
+            if id_or_num:
+                id_or_num = id_or_num[0]
+            else:
+                return None
+
+        if as_id:
+            return id_or_num
+
+        with self._lock:
+            return ChromiumTab(self, id_or_num)
+
+    def get_tabs(self, title=None, url=None, tab_type=None, as_id=False):
+        """查找符合条件的tab，返回它们组成的列表
+        :param title: 要匹配title的文本，模糊匹配，为None则匹配所有
+        :param url: 要匹配url的文本，模糊匹配，为None则匹配所有
+        :param tab_type: tab类型，可用列表输入多个，如 'page', 'iframe' 等，为None则匹配所有
+        :param as_id: 是否返回标签页id而不是标签页对象
+        :return: ChromiumTab对象组成的列表
         """
-        return self._browser.find_tabs(title, url, tab_type, single)
+        if as_id:
+            return [tab['id'] for tab in self._browser.find_tabs(title, url, tab_type)]
+        with self._lock:
+            return [ChromiumTab(self, tab['id']) for tab in self._browser.find_tabs(title, url, tab_type)]
 
     def new_tab(self, url=None, new_window=False, background=False, new_context=False):
         """新建一个标签页
@@ -219,7 +238,7 @@ class ChromiumPage(ChromiumBase):
         :param others: 是否关闭指定标签页之外的
         :return: None
         """
-        all_tabs = set(self.tabs)
+        all_tabs = set(self.tab_ids)
         if isinstance(tabs_or_ids, str):
             tabs = {tabs_or_ids}
         elif isinstance(tabs_or_ids, ChromiumTab):
@@ -268,6 +287,22 @@ class ChromiumPage(ChromiumBase):
         :return: None
         """
         self.close_tabs(tabs_or_ids, True)
+
+    @property
+    def tabs(self):
+        """返回所有标签页id组成的列表"""
+        return self.browser.tab_ids
+
+    def find_tabs(self, title=None, url=None, tab_type=None, single=True):
+        """查找符合条件的tab，返回它们组成的列表
+        :param title: 要匹配title的文本
+        :param url: 要匹配url的文本
+        :param tab_type: tab类型，可用列表输入多个
+        :param single: 是否返回首个结果的id，为False返回所有信息
+        :return: tab id或tab列表
+        """
+        r = self._browser.find_tabs(title, url, tab_type)
+        return r[0]['id'] if r and single else r
 
 
 def handle_options(addr_or_opts):

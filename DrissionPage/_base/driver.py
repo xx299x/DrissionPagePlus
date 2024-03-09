@@ -30,7 +30,7 @@ class Driver(object):
         self.address = address
         self.type = tab_type
         self.owner = owner
-        self._debug = False
+        # self._debug = False
         self.alert_flag = False  # 标记alert出现，跳过一条请求后复原
 
         self._websocket_url = f'ws://{address}/devtools/{tab_type}/{tab_id}'
@@ -180,7 +180,6 @@ class Driver(object):
     def run(self, _method, **kwargs):
         """执行cdp方法
         :param _method: cdp方法名
-        :param args: cdp参数
         :param kwargs: cdp参数
         :return: 执行结果
         """
