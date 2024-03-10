@@ -753,42 +753,16 @@ class ChromiumBase(BasePage):
         :param item: 要获取的项，不设置则返回全部
         :return: sessionStorage一个或所有项内容
         """
-        if item:
-            js = f'sessionStorage.getItem("{item}");'
-            return self.run_js_loaded(js, as_expr=True)
-        else:
-            js = '''
-            var dp_ls_len = sessionStorage.length;
-            var dp_ls_arr = new Array();
-            for(var i = 0; i < dp_ls_len; i++) {
-                var getKey = sessionStorage.key(i);
-                var getVal = sessionStorage.getItem(getKey);
-                dp_ls_arr[i] = {'key': getKey, 'val': getVal}
-            }
-            return dp_ls_arr;
-            '''
-            return {i['key']: i['val'] for i in self.run_js_loaded(js)}
+        js = f'sessionStorage.getItem("{item}")' if item else 'sessionStorage'
+        return self.run_js_loaded(js, as_expr=True)
 
     def local_storage(self, item=None):
         """返回localStorage信息，不设置item则获取全部
         :param item: 要获取的项目，不设置则返回全部
         :return: localStorage一个或所有项内容
         """
-        if item:
-            js = f'localStorage.getItem("{item}");'
-            return self.run_js_loaded(js, as_expr=True)
-        else:
-            js = '''
-            var dp_ls_len = localStorage.length;
-            var dp_ls_arr = new Array();
-            for(var i = 0; i < dp_ls_len; i++) {
-                var getKey = localStorage.key(i);
-                var getVal = localStorage.getItem(getKey);
-                dp_ls_arr[i] = {'key': getKey, 'val': getVal}
-            }
-            return dp_ls_arr;
-            '''
-            return {i['key']: i['val'] for i in self.run_js_loaded(js)}
+        js = f'localStorage.getItem("{item}")' if item else 'localStorage'
+        return self.run_js_loaded(js, as_expr=True)
 
     def get_screenshot(self, path=None, name=None, as_bytes=None, as_base64=None,
                        full_page=False, left_top=None, right_bottom=None):
@@ -1233,7 +1207,7 @@ def get_mhtml(page, path=None, name=None):
     Path(path).mkdir(parents=True, exist_ok=True)
     name = make_valid_name(name or page.title)
     with open(f'{path}{sep}{name}.mhtml', 'w', encoding='utf-8') as f:
-        f.write(r)
+        f.write(r.replace('\r\n', '\n'))
     return r
 
 

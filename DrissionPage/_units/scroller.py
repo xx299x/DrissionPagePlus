@@ -146,7 +146,7 @@ class PageScroller(Scroller):
         txt = 'true' if center else 'false'
         ele.run_js(f'this.scrollIntoViewIfNeeded({txt});')
         if center or (center is not False and ele.states.is_covered):
-            ele.run_js('''function getWindowScrollTop() {var scroll_top = 0;
+            ele.run_js('''function getWindowScrollTop() {let scroll_top = 0;
                     if (document.documentElement && document.documentElement.scrollTop) {
                       scroll_top = document.documentElement.scrollTop;
                     } else if (document.body) {scroll_top = document.body.scrollTop;}

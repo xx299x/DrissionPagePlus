@@ -722,7 +722,7 @@ class ChromiumElement(DrissionElement):
     def _get_ele_path(self, mode):
         """返获取绝对的css路径或xpath路径"""
         if mode == 'xpath':
-            txt1 = 'var tag = el.nodeName.toLowerCase();'
+            txt1 = 'let tag = el.nodeName.toLowerCase();'
             txt3 = ''' && sib.nodeName.toLowerCase()==tag'''
             txt4 = '''
             if(nth>1){path = '/' + tag + '[' + nth + ']' + path;}
@@ -741,10 +741,10 @@ class ChromiumElement(DrissionElement):
         js = '''function(){
         function e(el) {
             if (!(el instanceof Element)) return;
-            var path = '';
+            let path = '';
             while (el.nodeType === Node.ELEMENT_NODE) {
                 ''' + txt1 + '''
-                    var sib = el, nth = 0;
+                    let sib = el, nth = 0;
                     while (sib) {
                         if(sib.nodeType === Node.ELEMENT_NODE''' + txt3 + '''){nth += 1;}
                         sib = sib.previousSibling;
@@ -1372,8 +1372,8 @@ else{return e.singleNodeValue;}'''
     # 按顺序获取所有元素、节点或属性
     elif type_txt == '7':
         for_txt = """
-var a=new Array();
-for(var i = 0; i <e.snapshotLength ; i++){
+let a=new Array();
+for(let i = 0; i <e.snapshotLength ; i++){
 if(e.snapshotItem(i).constructor.name=="Text"){a.push(e.snapshotItem(i).data);}
 else if(e.snapshotItem(i).constructor.name=="Attr"){a.push(e.snapshotItem(i).nodeValue);}
 else if(e.snapshotItem(i).constructor.name=="Comment"){a.push(e.snapshotItem(i).nodeValue);}
@@ -1388,7 +1388,7 @@ else{a.push(e.snapshotItem(i));}}"""
         return_txt = 'return e.singleNodeValue;'
 
     xpath = xpath.replace(r"'", r"\'")
-    js = f'function(){{var e=document.evaluate(\'{xpath}\',{node_txt},null,{type_txt},null);\n{for_txt}\n{return_txt}}}'
+    js = f'function(){{let e=document.evaluate(\'{xpath}\',{node_txt},null,{type_txt},null);\n{for_txt}\n{return_txt}}}'
 
     return js
 

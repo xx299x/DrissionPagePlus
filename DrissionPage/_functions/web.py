@@ -97,7 +97,7 @@ def location_in_viewport(page, loc_x, loc_y):
     :param loc_y: 页面绝对坐标y
     :return: bool
     """
-    js = f'''function(){{var x = {loc_x}; var y = {loc_y};
+    js = f'''function(){{let x = {loc_x}; let y = {loc_y};
     const scrollLeft = document.documentElement.scrollLeft;
     const scrollTop = document.documentElement.scrollTop;
     const vWidth = document.documentElement.clientWidth;
@@ -342,10 +342,10 @@ def get_blob(page, url, as_bytes=True):
     js = """
        function fetchData(url) {
       return new Promise((resolve, reject) => {
-        var xhr = new XMLHttpRequest();
+        let xhr = new XMLHttpRequest();
         xhr.responseType = 'blob';
         xhr.onload = function() {
-          var reader  = new FileReader();
+          let reader  = new FileReader();
           reader.onloadend = function(){resolve(reader.result);}
           reader.readAsDataURL(xhr.response);
         };
