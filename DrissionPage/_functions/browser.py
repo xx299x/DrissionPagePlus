@@ -176,8 +176,8 @@ def set_flags(opt):
             states_dict = load(f)
         except JSONDecodeError:
             states_dict = {}
-        flags_list = [] if opt.clear_file_flags else states_dict.setdefault(
-            'browser', {}).setdefault('enabled_labs_experiments', [])
+        states_dict.setdefault('browser', {}).setdefault('enabled_labs_experiments', [])
+        flags_list = [] if opt.clear_file_flags else states_dict['browser']['enabled_labs_experiments']
         flags_dict = {}
         for i in flags_list:
             f = str(i).split('@', 1)

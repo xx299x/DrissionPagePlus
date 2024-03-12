@@ -203,24 +203,31 @@ class Browser(object):
         :param force: 是否立刻强制终止进程
         :return: None
         """
-        pids = [pid['id'] for pid in self.run_cdp('SystemInfo.getProcessInfo')['processInfo']]
-        for tab in self._all_drivers.values():
+        try:
+            self.run_cdp('Browser.close')
+        except PageDisconnectedError:
+            pass
+        self.driver.stop()
+
+        drivers = list(self._all_drivers.values())
+        for tab in drivers:
             for driver in tab:
                 driver.stop()
 
-        if force:
-            from psutil import Process
-            for pid in pids:
-                try:
-                    Process(pid).kill()
-                except:
-                    pass
-        else:
+        if not force:
+            return
+
+        try:
+            pids = [pid['id'] for pid in self.run_cdp('SystemInfo.getProcessInfo')['processInfo']]
+        except:
+            return
+
+        from psutil import Process
+        for pid in pids:
             try:
-                self.run_cdp('Browser.close')
-                self.driver.stop()
-            except PageDisconnectedError:
-                self.driver.stop()
+                Process(pid).kill()
+            except:
+                pass
 
         from os import popen
         from platform import system
