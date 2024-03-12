@@ -93,6 +93,13 @@ class ChromiumElement(DrissionElement):
     def __eq__(self, other):
         return self._backend_id == getattr(other, '_backend_id', None)
 
+    def __getattr__(self, item):
+        """获取元素属性
+        :param item: 属性名
+        :return: 属性值
+        """
+        return self.attr(item) or self.property(item)
+
     @property
     def tag(self):
         """返回元素tag"""

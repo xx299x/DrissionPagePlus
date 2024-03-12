@@ -164,7 +164,7 @@ class ChromiumFrame(ChromiumBase):
                 self.doc_ele = ChromiumElement(self._target_page, backend_id=node['contentDocument']['backendNodeId'])
 
             else:
-                timeout = timeout if timeout >= .5 else .5
+                timeout = max(timeout, 2)
                 b_id = self.run_cdp('DOM.getDocument', _timeout=timeout)['root']['backendNodeId']
                 self.doc_ele = ChromiumElement(self, backend_id=b_id)
 
@@ -176,7 +176,6 @@ class ChromiumFrame(ChromiumBase):
                 return True
 
         except:
-            raise
             return False
 
         finally:

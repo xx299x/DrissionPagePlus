@@ -50,6 +50,13 @@ class SessionElement(DrissionElement):
     def __eq__(self, other):
         return self.xpath == getattr(other, 'xpath', None)
 
+    def __getattr__(self, item):
+        """获取元素属性
+        :param item: 属性名
+        :return: 属性值
+        """
+        return self.attr(item)
+
     @property
     def tag(self):
         """返回元素类型"""

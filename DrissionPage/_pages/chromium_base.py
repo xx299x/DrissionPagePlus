@@ -156,7 +156,7 @@ class ChromiumBase(BasePage):
         if self._is_reading:
             return
         self._is_reading = True
-        timeout = timeout if timeout >= .5 else .5
+        timeout = max(timeout, 2)
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             try:
