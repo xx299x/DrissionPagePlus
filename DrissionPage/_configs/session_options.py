@@ -5,6 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
+from copy import copy
 from pathlib import Path
 
 from requests import Session
@@ -441,7 +442,7 @@ class SessionOptions(object):
         :param headers: headers
         :return: 当前对象
         """
-        self._headers = CaseInsensitiveDict(**session.headers, **headers) if headers else session.headers
+        self._headers = CaseInsensitiveDict(copy(session.headers).update(headers)) if headers else session.headers
         self._cookies = session.cookies
         self._auth = session.auth
         self._proxies = session.proxies

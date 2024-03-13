@@ -98,7 +98,8 @@ class ChromiumElement(DrissionElement):
         :param item: 属性名
         :return: 属性值
         """
-        return self.attr(item) or self.property(item)
+        a = self.attr(item)
+        return a if a is not None else self.property(item)
 
     @property
     def tag(self):

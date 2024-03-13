@@ -5,6 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
+from copy import copy
 from pathlib import Path
 from re import search, DOTALL
 from time import sleep
@@ -56,9 +57,9 @@ class SessionPage(BasePage):
 
         elif isinstance(session_or_options, Session):
             self._session_options = SessionOptions()
-            self._headers = session_or_options.headers
-            session_or_options.headers = None
-            self._session = session_or_options
+            self._session = copy(session_or_options)
+            self._headers = self._session.headers
+            self._session.headers = None
 
     def _s_set_runtime_settings(self):
         """设置运行时用到的属性"""
