@@ -171,7 +171,7 @@ class ChromiumPage(ChromiumBase):
         else:
             id_or_num = self._browser.find_tabs(title, url, tab_type)
             if id_or_num:
-                id_or_num = id_or_num[0]
+                id_or_num = id_or_num[0]['id']
             else:
                 return None
 
