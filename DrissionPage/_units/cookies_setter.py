@@ -22,8 +22,6 @@ class CookiesSetter(object):
         :param cookies: cookies信息
         :return: None
         """
-        if (isinstance(cookies, dict) and 'name' in cookies and 'value' in cookies) or isinstance(cookies, Cookie):
-            cookies = [cookies]
         set_browser_cookies(self._owner, cookies)
 
     def remove(self, name, url=None, domain=None, path=None):
@@ -59,8 +57,6 @@ class SessionCookiesSetter(object):
         :param cookies: cookies信息
         :return: None
         """
-        if (isinstance(cookies, dict) and 'name' in cookies and 'value' in cookies) or isinstance(cookies, Cookie):
-            cookies = [cookies]
         set_session_cookies(self._owner.session, cookies)
 
     def remove(self, name):

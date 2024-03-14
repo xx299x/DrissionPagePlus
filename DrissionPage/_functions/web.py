@@ -181,17 +181,14 @@ def cookie_to_dict(cookie):
         cookie_dict = cookie
 
     elif isinstance(cookie, str):
-        cookie = cookie.rstrip(';,').split(',' if ',' in cookie else ';')
         cookie_dict = {}
-
-        for key, attr in enumerate(cookie):
-            attr_val = attr.lstrip().split('=', 1)
-
-            if key == 0:
+        for attr in cookie.strip().rstrip(';,').split(',' if ',' in cookie else ';'):
+            attr_val = attr.strip().split('=', 1)
+            if attr_val[0] in ('domain', 'path', 'expires', 'max-age', 'HttpOnly', 'secure', 'expiry', 'name', 'value'):
+                cookie_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else ''
+            else:
                 cookie_dict['name'] = attr_val[0]
                 cookie_dict['value'] = attr_val[1] if len(attr_val) == 2 else ''
-            else:
-                cookie_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else ''
 
         return cookie_dict
 
@@ -210,10 +207,17 @@ def cookies_to_tuple(cookies):
         cookies = tuple(cookie_to_dict(cookie) for cookie in cookies)
 
     elif isinstance(cookies, str):
-        cookies = tuple(cookie_to_dict(c.lstrip()) for c in cookies.rstrip(';,').split(',' if ',' in cookies else ';'))
+        c_dict = {}
+        for attr in cookies.strip().rstrip(';,').split(',' if ',' in cookies else ';'):
+            attr_val = attr.strip().split('=', 1)
+            c_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else ''
+        cookies = _dict_cookies_to_tuple(c_dict)
 
     elif isinstance(cookies, dict):
-        cookies = tuple({'name': cookie, 'value': cookies[cookie]} for cookie in cookies)
+        cookies = _dict_cookies_to_tuple(cookies)
+
+    elif isinstance(cookies, Cookie):
+        cookies = (cookie_to_dict(cookies),)
 
     else:
         raise TypeError('cookies参数必须为RequestsCookieJar、list、tuple、str或dict类型。')
@@ -370,6 +374,7 @@ def tree(ele_or_page):
     :param ele_or_page: 页面或元素对象
     :return: None
     """
+
     def _tree(obj, last_one=True, body=''):
         list_ele = obj.children()
         length = len(list_ele)
@@ -409,3 +414,15 @@ def format_headers(txt):
             name, value = header.split(': ', maxsplit=1)
             headers[name] = value
     return headers
+
+
+def _dict_cookies_to_tuple(cookies: dict):
+    """把dict形式的cookies转换为tuple形式
+    :param cookies: 单个或多个cookies，单个时包含'name'和'value'
+    :return: 多个dict格式cookies组成的列表
+    """
+    if 'name' in cookies and 'value' in cookies:  # 单个cookie
+        return (cookies,)
+    keys = ('domain', 'path', 'expires', 'max-age', 'HttpOnly', 'secure', 'expiry')
+    template = {k: v for k, v in cookies.items() if k in keys}
+    return tuple(dict(**{'name': k, 'value': v}, **template) for k, v in cookies.items() if k not in keys)
