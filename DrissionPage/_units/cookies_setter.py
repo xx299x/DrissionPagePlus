@@ -5,8 +5,6 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
-from http.cookiejar import Cookie
-
 from .._functions.web import set_browser_cookies, set_session_cookies
 
 

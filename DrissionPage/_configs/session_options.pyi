@@ -5,13 +5,13 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
+from http.cookiejar import CookieJar, Cookie
 from pathlib import Path
 from typing import Any, Union, Tuple, Optional
 
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
-from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 
@@ -60,7 +60,7 @@ class SessionOptions(object):
     @property
     def cookies(self) -> list: ...
 
-    def set_cookies(self, cookies: Union[RequestsCookieJar, list, tuple, str, dict, None]) -> SessionOptions: ...
+    def set_cookies(self, cookies: Union[Cookie, CookieJar, list, tuple, str, dict, None]) -> SessionOptions: ...
 
     @property
     def auth(self) -> Union[Tuple[str, str], HTTPBasicAuth]: ...

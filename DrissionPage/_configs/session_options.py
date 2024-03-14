@@ -213,8 +213,8 @@ class SessionOptions(object):
         return self._cookies
 
     def set_cookies(self, cookies):
-        """设置cookies信息
-        :param cookies: cookies，可为CookieJar, list, tuple, str, dict，传入None可在ini文件标记删除
+        """设置一个或多个cookies信息
+        :param cookies: cookies，可为Cookie, CookieJar, list, tuple, str, dict，传入None可在ini文件标记删除
         :return: 返回当前对象
         """
         cookies = cookies if cookies is None else list(cookies_to_tuple(cookies))

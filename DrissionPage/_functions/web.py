@@ -7,11 +7,10 @@
 """
 from datetime import datetime
 from html import unescape
-from http.cookiejar import Cookie
+from http.cookiejar import Cookie, CookieJar
 from re import sub
 from urllib.parse import urlparse, urljoin, urlunparse
 
-from requests.cookies import RequestsCookieJar
 from tldextract import extract
 
 
@@ -203,7 +202,7 @@ def cookies_to_tuple(cookies):
     :param cookies: cookies信息，可为CookieJar, list, tuple, str, dict
     :return: 返回tuple形式的cookies
     """
-    if isinstance(cookies, (list, tuple, RequestsCookieJar)):
+    if isinstance(cookies, (list, tuple, CookieJar)):
         cookies = tuple(cookie_to_dict(cookie) for cookie in cookies)
 
     elif isinstance(cookies, str):
@@ -220,7 +219,7 @@ def cookies_to_tuple(cookies):
         cookies = (cookie_to_dict(cookies),)
 
     else:
-        raise TypeError('cookies参数必须为RequestsCookieJar、list、tuple、str或dict类型。')
+        raise TypeError('cookies参数必须为Cookie、CookieJar、list、tuple、str或dict类型。')
 
     return cookies
 
@@ -231,8 +230,7 @@ def set_session_cookies(session, cookies):
     :param cookies: cookies信息
     :return: None
     """
-    cookies = cookies_to_tuple(cookies)
-    for cookie in cookies:
+    for cookie in cookies_to_tuple(cookies):
         if cookie['value'] is None:
             cookie['value'] = ''
 
