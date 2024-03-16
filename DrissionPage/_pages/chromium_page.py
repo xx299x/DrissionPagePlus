@@ -14,6 +14,7 @@ from requests import get
 from .._base.browser import Browser
 from .._configs.chromium_options import ChromiumOptions
 from .._functions.browser import connect_browser
+from .._functions.settings import Settings
 from .._functions.tools import PortFinder
 from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf, Timeout
 from .._pages.chromium_tab import ChromiumTab
@@ -130,8 +131,9 @@ class ChromiumPage(ChromiumBase):
 
     @property
     def latest_tab(self):
-        """返回最新的标签页对象，最新标签页指最后创建或最后被激活的"""
-        return self.get_tab(self.tab_ids[0])
+        """返回最新的标签页，最新标签页指最后创建或最后被激活的
+        当Settings.singleton_tab_obj==True时返回Tab对象，否则返回tab id"""
+        return self.get_tab(self.tab_ids[0], as_id=not Settings.singleton_tab_obj)
 
     @property
     def process_id(self):
@@ -163,7 +165,12 @@ class ChromiumPage(ChromiumBase):
             elif isinstance(id_or_num, int):
                 id_or_num = self.tab_ids[id_or_num - 1 if id_or_num > 0 else id_or_num]
             elif isinstance(id_or_num, ChromiumTab):
-                return id_or_num.tab_id if as_id else id_or_num
+                if as_id:
+                    return id_or_num.tab_id
+                elif Settings.singleton_tab_obj:
+                    return id_or_num
+                else:
+                    return self.get_tab(id_or_num.tab_id)
 
         elif title == url == tab_type is None:
             id_or_num = self.tab_id
@@ -202,31 +209,10 @@ class ChromiumPage(ChromiumBase):
         :param new_context: 是否创建新的上下文
         :return: 新标签页对象
         """
-        tab = ChromiumTab(self, tab_id=self._new_tab(new_window, background, new_context))
+        tab = ChromiumTab(self, tab_id=self.browser.new_tab(new_window, background, new_context))
         if url:
             tab.get(url)
         return tab
-
-    def _new_tab(self, new_window=False, background=False, new_context=False):
-        """新建一个标签页
-        :param new_window: 是否在新窗口打开标签页
-        :param background: 是否不激活新标签页，如new_window为True则无效
-        :param new_context: 是否创建新的上下文
-        :return: 新标签页对象
-        """
-        bid = None
-        if new_context:
-            bid = self.browser.run_cdp('Target.createBrowserContext')['browserContextId']
-
-        kwargs = {'url': ''}
-        if new_window:
-            kwargs['newWindow'] = True
-        if background:
-            kwargs['background'] = True
-        if bid:
-            kwargs['browserContextId'] = bid
-
-        return self.browser.run_cdp('Target.createTarget', **kwargs)['targetId']
 
     def close(self):
         """关闭Page管理的标签页"""

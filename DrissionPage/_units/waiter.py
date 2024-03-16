@@ -11,13 +11,7 @@ from .._functions.settings import Settings
 from ..errors import WaitTimeoutError, NoRectError
 
 
-class BaseWaiter(object):
-    def __init__(self, page_or_ele):
-        """
-        :param page_or_ele: 页面对象或元素对象
-        """
-        self._driver = page_or_ele
-
+class OriginWaiter(object):
     def __call__(self, second, scope=None):
         """等待若干秒，如传入两个参数，等待时间为这两个数间的一个随机数
         :param second: 秒数
@@ -29,6 +23,14 @@ class BaseWaiter(object):
         else:
             from random import uniform
             sleep(uniform(second, scope))
+
+
+class BaseWaiter(OriginWaiter):
+    def __init__(self, page_or_ele):
+        """
+        :param page_or_ele: 页面对象或元素对象
+        """
+        self._driver = page_or_ele
 
     def ele_deleted(self, loc_or_ele, timeout=None, raise_err=None):
         """等待元素从DOM中删除
@@ -125,7 +127,7 @@ class BaseWaiter(object):
         :return: 成功返回任务对象，失败返回False
         """
         if not self._driver.browser._dl_mgr._running:
-            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
+            raise RuntimeError('此功能需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         self._driver.browser._dl_mgr.set_flag(self._driver.tab_id, False if cancel_it else True)
         if timeout is None:
             timeout = self._driver.timeout
@@ -240,7 +242,7 @@ class TabWaiter(BaseWaiter):
         :return: 是否等待成功
         """
         if not self._driver.browser._dl_mgr._running:
-            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
+            raise RuntimeError('此功能需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr.get_tab_missions(self._driver.tab_id):
                 sleep(.5)
@@ -282,9 +284,9 @@ class PageWaiter(TabWaiter):
         timeout = timeout if timeout is not None else self._driver.timeout
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
-            latest_tab = self._driver.latest_tab
-            if self._driver.tab_id != latest_tab:
-                return latest_tab
+            latest_tid = self._driver.tab_ids[0]
+            if self._driver.tab_id != latest_tid:
+                return latest_tid
             sleep(.01)
 
         if raise_err is True or Settings.raise_when_wait_failed is True:
@@ -299,7 +301,7 @@ class PageWaiter(TabWaiter):
         :return: 是否等待成功
         """
         if not self._driver.browser._dl_mgr._running:
-            raise RuntimeError('使用下载管理功能前需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
+            raise RuntimeError('此功能需显式设置下载路径（使用set.download_path()方法、配置对象或ini文件均可）。')
         if not timeout:
             while self._driver.browser._dl_mgr._missions:
                 sleep(.5)
@@ -321,7 +323,7 @@ class PageWaiter(TabWaiter):
                 return True
 
 
-class ElementWaiter(object):
+class ElementWaiter(OriginWaiter):
     """等待元素在dom中某种状态，如删除、显示、隐藏"""
 
     def __init__(self, owner, ele):
@@ -331,18 +333,6 @@ class ElementWaiter(object):
         """
         self._owner = owner
         self._ele = ele
-
-    def __call__(self, second, scope=None):
-        """等待若干秒，如传入两个参数，等待时间为这两个数间的一个随机数
-        :param second: 秒数
-        :param scope: 随机数范围
-        :return: None
-        """
-        if scope is None:
-            sleep(second)
-        else:
-            from random import uniform
-            sleep(uniform(second, scope))
 
     def deleted(self, timeout=None, raise_err=None):
         """等待元素从dom删除
@@ -457,7 +447,7 @@ class ElementWaiter(object):
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 是否等待成功
         """
-        return self._wait_state('has_rect', True, timeout, raise_err, err_text='等待元素拥有大小及位置属性失败（等待{}秒）。')
+        return self._wait_state('has_rect', True, timeout, raise_err, err_text='等待元素拥有大小及位置失败（等{}秒）。')
 
     def _wait_state(self, attr, mode=False, timeout=None, raise_err=None, err_text=None):
         """等待元素某个元素状态到达指定状态

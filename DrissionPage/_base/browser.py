@@ -72,7 +72,9 @@ class Browser(object):
         :param owner: 使用该驱动的对象
         :return: Driver对象
         """
-        d = self._drivers.pop(tab_id, Driver(tab_id, 'page', self.address))
+        d = self._drivers.pop(tab_id, None)
+        if not d:
+            d = Driver(tab_id, 'page', self.address)
         d.owner = owner
         self._all_drivers.setdefault(tab_id, set()).add(d)
         return d
@@ -187,6 +189,30 @@ class Browser(object):
         :return: 窗口大小字典
         """
         return self.run_cdp('Browser.getWindowForTarget', targetId=tab_id or self.id)['bounds']
+
+    def new_tab(self, new_window=False, background=False, new_context=False):
+        """新建一个标签页
+        :param new_window: 是否在新窗口打开标签页
+        :param background: 是否不激活新标签页，如new_window为True则无效
+        :param new_context: 是否创建新的上下文
+        :return: 新标签页id
+        """
+        bid = None
+        if new_context:
+            bid = self.run_cdp('Target.createBrowserContext')['browserContextId']
+
+        kwargs = {'url': ''}
+        if new_window:
+            kwargs['newWindow'] = True
+        if background:
+            kwargs['background'] = True
+        if bid:
+            kwargs['browserContextId'] = bid
+
+        tid = self.run_cdp('Target.createTarget', **kwargs)['targetId']
+        while tid not in self._drivers:
+            sleep(.1)
+        return tid
 
     def reconnect(self):
         """断开重连"""

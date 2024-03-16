@@ -298,10 +298,13 @@ class Actions:
         input_text_or_keys(self.owner, text)
         return self
 
-    def wait(self, second):
-        """等待若干秒"""
-        sleep(second)
-        return self
+    def wait(self, second, scope=None):
+        """等待若干秒，如传入两个参数，等待时间为这两个数间的一个随机数
+        :param second: 秒数
+        :param scope: 随机数范围
+        :return: None
+        """
+        self.owner.wait(second=second, scope=scope)
 
     def _get_key_data(self, key, action):
         """获取用于发送的按键信息

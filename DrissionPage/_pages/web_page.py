@@ -362,7 +362,7 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
         :param new_context: 是否创建新的上下文
         :return: 新标签页对象
         """
-        tab = WebPageTab(self, tab_id=self._new_tab(new_window, background, new_context))
+        tab = WebPageTab(self, tab_id=self.browser.new_tab(new_window, background, new_context))
         if url:
             tab.get(url)
         return tab

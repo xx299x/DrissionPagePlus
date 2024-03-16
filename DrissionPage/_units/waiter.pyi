@@ -14,7 +14,11 @@ from .._pages.chromium_frame import ChromiumFrame
 from .._pages.chromium_page import ChromiumPage
 
 
-class BaseWaiter(object):
+class OriginWaiter(object):
+    def __call__(self, second: float, scope: float = None) -> None: ...
+
+
+class BaseWaiter(OriginWaiter):
     def __init__(self, page: ChromiumBase):
         self._driver: ChromiumBase = ...
 
@@ -73,7 +77,7 @@ class PageWaiter(TabWaiter):
     def all_downloads_done(self, timeout: float = None, cancel_if_timeout: bool = True) -> bool: ...
 
 
-class ElementWaiter(object):
+class ElementWaiter(OriginWaiter):
     def __init__(self, owner: ChromiumBase, ele: ChromiumElement):
         self._ele: ChromiumElement = ...
         self._owner: ChromiumBase = ...
