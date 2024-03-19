@@ -529,7 +529,13 @@ class Request(object):
         return self._postData
 
     @property
+    def cookies(self):
+        """以list形式返回发送的cookies"""
+        return [c['cookie'] for c in self.extra_info.associatedCookies if not c['blockedReasons']]
+
+    @property
     def extra_info(self):
+        """返回额外数据"""
         return RequestExtraInfo(self._data_packet._request_extra_info or {})
 
 

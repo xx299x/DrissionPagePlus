@@ -305,6 +305,7 @@ class Actions:
         :return: None
         """
         self.owner.wait(second=second, scope=scope)
+        return self
 
     def _get_key_data(self, key, action):
         """获取用于发送的按键信息

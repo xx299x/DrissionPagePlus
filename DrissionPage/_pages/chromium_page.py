@@ -71,8 +71,9 @@ class ChromiumPage(ChromiumBase):
     def _run_browser(self):
         """连接浏览器"""
         self._browser = Browser(self._chromium_options.address, self._browser_id, self)
-        if (self._is_exist and self._chromium_options._headless is False and
-                'headless' in self._browser.run_cdp('Browser.getVersion')['userAgent'].lower()):
+        r = self._browser.run_cdp('Browser.getVersion')
+        self._browser_version = r['product']
+        if self._is_exist and self._chromium_options._headless is False and 'headless' in r['userAgent'].lower():
             self._browser.quit(3)
             connect_browser(self._chromium_options)
             ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
@@ -139,6 +140,11 @@ class ChromiumPage(ChromiumBase):
     def process_id(self):
         """返回浏览器进程id"""
         return self.browser.process_id
+
+    @property
+    def browser_version(self):
+        """返回所控制的浏览器版本号"""
+        return self._browser_version
 
     def save(self, path=None, name=None, as_pdf=False, **kwargs):
         """把当前页面保存为文件，如果path和name参数都为None，只返回文本

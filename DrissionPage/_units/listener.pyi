@@ -62,6 +62,11 @@ class Listener(object):
              fit_count: bool = True,
              raise_err: bool = None) -> Union[List[DataPacket], DataPacket, None]: ...
 
+    def steps(self,
+              count: int = None,
+              timeout: float = None,
+              gap=1) -> Iterable[Union[DataPacket, List[DataPacket]]]: ...
+
     @property
     def results(self) -> Union[DataPacket, Dict[str, List[DataPacket]], False]: ...
 
@@ -82,11 +87,6 @@ class Listener(object):
     def _loading_finished(self, **kwargs) -> None: ...
 
     def _loading_failed(self, **kwargs) -> None: ...
-
-    def steps(self,
-              count: int = None,
-              timeout: float = None,
-              gap=1) -> Iterable[Union[DataPacket, List[DataPacket]]]: ...
 
     def _set_callback(self) -> None: ...
 
@@ -173,6 +173,9 @@ class Request(object):
 
     @property
     def postData(self) -> Any: ...
+
+    @property
+    def cookies(self) -> List[dict]: ...
 
     @property
     def extra_info(self) -> Optional[RequestExtraInfo]: ...
