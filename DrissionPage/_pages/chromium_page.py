@@ -156,7 +156,7 @@ class ChromiumPage(ChromiumBase):
         """
         return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
 
-    def get_tab(self, id_or_num=None, title=None, url=None, tab_type=None, as_id=False):
+    def get_tab(self, id_or_num=None, title=None, url=None, tab_type='page', as_id=False):
         """获取一个标签页对象，id_or_num不为None时，后面几个参数无效
         :param id_or_num: 要获取的标签页id或序号，序号从1开始，可传入负数获取倒数第几个，不是视觉排列顺序，而是激活顺序
         :param title: 要匹配title的文本，模糊匹配，为None则匹配所有
@@ -194,7 +194,7 @@ class ChromiumPage(ChromiumBase):
         with self._lock:
             return ChromiumTab(self, id_or_num)
 
-    def get_tabs(self, title=None, url=None, tab_type=None, as_id=False):
+    def get_tabs(self, title=None, url=None, tab_type='page', as_id=False):
         """查找符合条件的tab，返回它们组成的列表
         :param title: 要匹配title的文本，模糊匹配，为None则匹配所有
         :param url: 要匹配url的文本，模糊匹配，为None则匹配所有

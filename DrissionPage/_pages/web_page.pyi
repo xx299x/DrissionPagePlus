@@ -131,13 +131,13 @@ class WebPage(SessionPage, ChromiumPage, BasePage):
                 id_or_num: Union[str, WebPageTab, int] = None,
                 title: str = None,
                 url: str = None,
-                tab_type: Union[str, list, tuple] = None,
+                tab_type: Union[str, list, tuple] = 'page',
                 as_id: bool = False) -> Union[WebPageTab, str, None]: ...
 
     def get_tabs(self,
                  title: str = None,
                  url: str = None,
-                 tab_type: Union[str, list, tuple] = None,
+                 tab_type: Union[str, list, tuple] = 'page',
                  as_id: bool = False) -> Union[List[WebPageTab], List[str]]: ...
 
     def new_tab(self,

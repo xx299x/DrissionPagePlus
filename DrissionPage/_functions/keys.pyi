@@ -12,6 +12,12 @@ from .._pages.chromium_base import ChromiumBase
 
 class Keys:
     """特殊按键"""
+    CTRL_A: tuple
+    CTRL_C: tuple
+    CTRL_X: tuple
+    CTRL_V: tuple
+    CTRL_Z: tuple
+    CTRL_Y: tuple
 
     NULL: str
     CANCEL: str

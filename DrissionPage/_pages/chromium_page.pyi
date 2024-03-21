@@ -94,13 +94,13 @@ class ChromiumPage(ChromiumBase):
                 id_or_num: Union[str, ChromiumTab, int] = None,
                 title: str = None,
                 url: str = None,
-                tab_type: Union[str, list, tuple] = None,
+                tab_type: Union[str, list, tuple] = 'page',
                 as_id: bool = False) -> Union[ChromiumTab, str, None]: ...
 
     def get_tabs(self,
                  title: str = None,
                  url: str = None,
-                 tab_type: Union[str, list, tuple] = None,
+                 tab_type: Union[str, list, tuple] = 'page',
                  as_id: bool = False) -> Union[List[ChromiumTab], List[str]]: ...
 
     def new_tab(self, url: str = None, new_window: bool = False, background: bool = False,

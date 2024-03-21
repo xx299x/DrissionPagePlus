@@ -11,7 +11,7 @@ from pathlib import Path
 from re import search
 from time import perf_counter, sleep
 
-from DataRecorder.tools import get_usable_path
+from DataRecorder.tools import get_usable_path, make_valid_name
 
 from .none_element import NoneElement
 from .session_element import make_session_ele
@@ -569,8 +569,11 @@ class ChromiumElement(DrissionElement):
             if src.lower().startswith('data:image'):
                 r = search(r'data:image/(.*?);base64,', src)
                 name = f'img.{r.group(1)}' if r else None
-        name = name or basename(self.property('currentSrc'))
-        path = get_usable_path(f'{path}{sep}{name}').absolute()
+        path = Path(path) / make_valid_name(name or basename(self.property('currentSrc')))
+        if not path.suffix:
+            path = path.with_suffix('.jpg')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path = path.absolute()
         write_type = 'wb' if isinstance(data, bytes) else 'w'
 
         with open(path, write_type) as f:
