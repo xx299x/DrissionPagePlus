@@ -216,9 +216,10 @@ class Listener(object):
         self._running_requests = 0
         self._running_targets = 0
 
-    def wait_silent(self, timeout=None, targets_only=False):
+    def wait_silent(self, timeout=None, delay=0, targets_only=False):
         """等待所有请求结束
         :param timeout: 超时，为None时无限等待
+        :param delay: 等待成功后延后若干秒再检测，返回最终结果
         :param targets_only: 是否只等待targets指定的请求结束
         :return: 返回是否等待成功
         """
@@ -227,12 +228,16 @@ class Listener(object):
         if timeout is None:
             while (not targets_only and self._running_requests > 0) or (targets_only and self._running_targets > 0):
                 sleep(.1)
-            return True
+            sleep(delay)
+            return self._running_targets <= 0 if targets_only else self._running_requests <= 0
 
+        delaying = False
         end_time = perf_counter() + timeout
         while perf_counter() < end_time:
             if (not targets_only and self._running_requests <= 0) or (targets_only and self._running_targets <= 0):
-                return True
+                if delaying:
+                    return True
+                sleep(delay)
             sleep(.1)
         else:
             return False

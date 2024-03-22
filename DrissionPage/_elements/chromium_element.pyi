@@ -208,7 +208,11 @@ class ChromiumElement(DrissionElement):
 
     def src(self, timeout: float = None, base64_to_bytes: bool = True) -> Union[bytes, str, None]: ...
 
-    def save(self, path: [str, bool] = None, name: str = None, timeout: float = None) -> str: ...
+    def save(self,
+             path: [str, bool] = None,
+             name: str = None,
+             timeout: float = None,
+             rename: bool = True) -> str: ...
 
     def get_screenshot(self,
                        path: [str, Path] = None,

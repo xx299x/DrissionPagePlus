@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from json import loads
-from os.path import basename, sep
+from os.path import basename
 from pathlib import Path
 from re import search
 from time import perf_counter, sleep
@@ -552,11 +552,12 @@ class ChromiumElement(DrissionElement):
         else:
             return result['content']
 
-    def save(self, path=None, name=None, timeout=None):
+    def save(self, path=None, name=None, timeout=None, rename=True):
         """保存图片或其它有src属性的元素的资源
         :param path: 文件保存路径，为None时保存到当前文件夹
         :param name: 文件名称，为None时从资源url获取
         :param timeout: 等待资源加载的超时时间（秒）
+        :param rename: 是否覆盖重名文件
         :return: 返回保存路径
         """
         data = self.src(timeout=timeout)
@@ -572,6 +573,8 @@ class ChromiumElement(DrissionElement):
         path = Path(path) / make_valid_name(name or basename(self.property('currentSrc')))
         if not path.suffix:
             path = path.with_suffix('.jpg')
+        if rename:
+            path = get_usable_path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path = path.absolute()
         write_type = 'wb' if isinstance(data, bytes) else 'w'
