@@ -557,7 +557,7 @@ class ChromiumElement(DrissionElement):
         :param path: 文件保存路径，为None时保存到当前文件夹
         :param name: 文件名称，为None时从资源url获取
         :param timeout: 等待资源加载的超时时间（秒）
-        :param rename: 是否覆盖重名文件
+        :param rename: 遇到重名文件时是否自动重命名
         :return: 返回保存路径
         """
         data = self.src(timeout=timeout)
@@ -612,7 +612,7 @@ class ChromiumElement(DrissionElement):
         return self.owner._get_screenshot(path, name, as_bytes=as_bytes, as_base64=as_base64, full_page=False,
                                           left_top=left_top, right_bottom=right_bottom, ele=self)
 
-    def input(self, vals, clear=True, by_js=False):
+    def input(self, vals, clear=False, by_js=False):
         """输入文本或组合键，也可用于输入文件路径到input元素（路径间用\n间隔）
         :param vals: 文本值或按键组合
         :param clear: 输入前是否清空文本框
