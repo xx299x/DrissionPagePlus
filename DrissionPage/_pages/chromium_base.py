@@ -901,6 +901,8 @@ class ChromiumBase(BasePage):
 
         if self._alert.auto is not None:
             self._handle_alert(self._alert.auto)
+        elif Settings.auto_handle_alert is not None:
+            self._handle_alert(Settings.auto_handle_alert)
         elif self._alert.handle_next is not None:
             self._handle_alert(self._alert.handle_next, self._alert.next_text)
             self._alert.handle_next = None

@@ -131,7 +131,7 @@ class ChromiumElement(DrissionElement):
     @property
     def text(self):
         """返回元素内所有文本，文本已格式化"""
-        return get_ele_txt(make_session_ele(self))
+        return get_ele_txt(make_session_ele(self.html))
 
     @property
     def raw_text(self):

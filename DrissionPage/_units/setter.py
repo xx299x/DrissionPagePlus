@@ -11,6 +11,7 @@ from time import sleep
 from requests.structures import CaseInsensitiveDict
 
 from .cookies_setter import SessionCookiesSetter, CookiesSetter, WebPageCookiesSetter
+from .._functions.settings import Settings
 from .._functions.tools import show_or_hide_browser
 from .._functions.web import format_headers
 
@@ -240,6 +241,18 @@ class ChromiumPageSetter(TabSetter):
         elif not isinstance(tab_or_id, str):  # 传入Tab对象
             tab_or_id = tab_or_id.tab_id
         self._owner.browser.activate_tab(tab_or_id)
+
+    def auto_handle_alert(self, on_off=True, accept=True, all_tabs=False):
+        """设置是否启用自动处理弹窗
+        :param on_off: bool表示开或关
+        :param accept: bool表示确定还是取消
+        :param all_tabs: 是否为全局设置
+        :return: None
+        """
+        if all_tabs:
+            Settings.auto_handle_alert = on_off
+        else:
+            self._owner._alert.auto = accept if on_off else None
 
 
 class SessionPageSetter(BasePageSetter):

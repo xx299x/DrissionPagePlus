@@ -13,3 +13,4 @@ class Settings(object):
     raise_when_wait_failed = False
     singleton_tab_obj = True
     cdp_timeout = 30
+    auto_handle_alert = None

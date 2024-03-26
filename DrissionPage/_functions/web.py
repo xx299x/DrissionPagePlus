@@ -278,15 +278,19 @@ def set_browser_cookies(page, cookies):
             cookie['value'] = ''
         elif not isinstance(cookie['value'], str):
             cookie['value'] = str(cookie['value'])
-        if cookie['name'].startswith('__Secure-'):
-            cookie['secure'] = True
 
         if cookie['name'].startswith('__Host-'):
             cookie['path'] = '/'
             cookie['secure'] = True
-            cookie['url'] = page.url
+            if not page.url.startswith('http'):
+                cookie['name'] = cookie['name'].replace('__Host-', '__Secure-', 1)
+            else:
+                cookie['url'] = page.url
             page.run_cdp_loaded('Network.setCookie', **cookie)
             continue  # 不用设置域名，可退出
+
+        if cookie['name'].startswith('__Secure-'):
+            cookie['secure'] = True
 
         if cookie.get('domain', None):
             try:

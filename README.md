@@ -12,6 +12,8 @@ DrissionPage 是一个基于 python 的网页自动化工具。
 
 ---
 
+官方网站：[https://drissionpage.cn](https://drissionpage.cn)
+
 <a href='https://gitee.com/g1879/DrissionPage/stargazers'><img src='https://gitee.com/g1879/DrissionPage/badge/star.svg?theme=dark' alt='star'></img></a> <a href='https://gitee.com/g1879/DrissionPage/members'><img src='https://gitee.com/g1879/DrissionPage/badge/fork.svg?theme=dark' alt='fork'></img></a>
 
 项目地址：[gitee](https://gitee.com/g1879/DrissionPage)    |    [github](https://github.com/g1879/DrissionPage) 
@@ -36,18 +38,6 @@ python 版本：3.6 及以上
 
 ---
 
-# 📕 背景
-
-用 requests 做数据采集面对要登录的网站时，要分析数据包、JS 源码，构造复杂的请求，往往还要应付验证码、JS 混淆、签名参数等反爬手段，门槛较高，开发效率不高。
-使用浏览器，可以很大程度上绕过这些坑，但浏览器运行效率不高。
-
-因此，这个库设计初衷，是将它们合而为一，同时实现“写得快”和“跑得快”。能够在不同需要时切换相应模式，并提供一种人性化的使用方法，提高开发和运行效率。  
-除了合并两者，本库还以网页为单位封装了常用功能，提供非常简便的操作和语句，使用户可减少考虑细节，专注功能实现。 以简单的方式实现强大的功能，使代码更优雅。
-
-以前的版本是对 selenium 进行重新封装实现的。从 3.0 开始，作者另起炉灶，对底层进行了重新开发，摆脱对 selenium 的依赖，增强了功能，提升了运行效率。
-
---- 
-
 # 💡 理念
 
 简洁而强大！
@@ -60,7 +50,7 @@ python 版本：3.6 及以上
 
 ## 🎇 强大的自研内核
 
-本库采用全自研的内核，内置了 N 多实用功能，对常用功能作了整合和优化，对比 selenium，有以下优点：
+本库采用全自研的内核，内置无数实用功能，对常用功能作了整合和优化，对比 selenium，有以下优点：
 
 - 无 webdriver 特征
 - 无需为不同版本的浏览器下载不同的驱动
@@ -87,18 +77,14 @@ python 版本：3.6 及以上
 - 高度集成的便利功能，从每个细节中体现
 - 还有很多细节，这里不一一列举，欢迎实际使用中体验：）
 
----
-
-# 🔖 版本历史
-
-[点击查看版本历史](https://g1879.gitee.io/drissionpagedocs/history/introduction/)
-
 --- 
 
 # 🖐🏻 免责声明
 
-请勿将 DrissionPage 应用到任何可能会违反法律规定和道德约束的工作中,请友善使用 DrissionPage，遵守蜘蛛协议，不要将 DrissionPage 用于任何非法用途。如您选择使用 DrissionPage
-即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
+禁止将 DrissionPage 应用到任何可能会违反法律规定和道德约束的项目中。  
+友善使用 DrissionPage，遵守蜘蛛协议，禁止将 DrissionPage 用于任何可能有损他人的项目中。  
+如您选择使用 DrissionPage 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失。  
+同时，作者不对 DrissionPage 可能存在的缺陷导致的损失承担任何责任，一切后果由您承担。
 
 ---  
 
