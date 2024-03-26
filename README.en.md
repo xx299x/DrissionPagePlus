@@ -30,7 +30,7 @@ Supported browsers: Chromium core browsers (such as Chrome and Edge), electron a
 
 # 🛠 How to use
 
-**📖 Usage documentation:** [Click to view](https://g1879.gitee.io/drissionpagedocs)
+**📖 Usage documentation:** [Click to view](https://drissionpage.cn)
 
 **Communication QQ group:** 636361957
 
@@ -86,12 +86,6 @@ In addition to the above advantages, this library also has numerous built-in hum
 - Encapsulated using POM mode, which can be directly used for testing and easy to expand.
 - Highly integrated convenient functions, reflected in every detail
 - There are many details, so I won’t list them all here. You are welcome to experience them in actual use:)
-
----
-
-# 🔖 Version History
-
-[Click to view version history](https://g1879.gitee.io/drissionpagedocs/history/introduction/)
 
 ---
 

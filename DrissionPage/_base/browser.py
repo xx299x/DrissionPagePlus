@@ -5,6 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
+from os import waitpid
 from pathlib import Path
 from shutil import rmtree
 from time import perf_counter, sleep
@@ -273,6 +274,8 @@ class Browser(object):
 
             if ok:
                 break
+        if self.process_id:
+            waitpid(self.process_id, 0)
 
     def _on_disconnect(self):
         self.page._on_disconnect()

@@ -37,10 +37,12 @@ class Clicker(object):
         :return: 是否点击成功
         """
         if self._ele.tag == 'option':
-            if self._ele.states.is_selected:
-                self._ele.parent('t:select').select.cancel_by_option(self._ele)
-            else:
+            if not self._ele.states.is_selected:
                 self._ele.parent('t:select').select.by_option(self._ele)
+            else:
+                select = self._ele.parent('t:select')
+                if select.select.is_multi:
+                    self._ele.parent('t:select').select.cancel_by_option(self._ele)
             return
 
         if not by_js:  # 模拟点击
