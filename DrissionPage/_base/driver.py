@@ -201,7 +201,13 @@ class Driver(object):
         try:
             self._ws = create_connection(self._websocket_url, enable_multithread=True, suppress_origin=True)
         except WebSocketBadStatusException as e:
-            raise TargetNotFoundError(f'找不到页面：{self.id}。') if 'No such target id' in str(e) else e
+            txt = str(e)
+            if 'No such target id' in txt:
+                raise TargetNotFoundError(f'找不到页面：{self.id}。')
+            elif 'Handshake status 403 Forbidden' in txt:
+                raise RuntimeError('请升级websocket-client库。')
+            else:
+                raise e
         self._recv_th.start()
         self._handle_event_th.start()
         return True
