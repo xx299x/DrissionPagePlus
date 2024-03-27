@@ -80,16 +80,26 @@ class BaseWaiter(OriginWaiter):
                 return False
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
-    def ele_loaded(self, locator, timeout=None, raise_err=None):
+    def eles_loaded(self, locators, timeout=None, any_one=False, raise_err=None):
         """等待元素加载到DOM
-        :param locator: 要等待的元素，输入定位符
+        :param locators: 要等待的元素，输入定位符，用list输入多个
         :param timeout: 超时时间，默认读取页面超时时间
+        :param any_one: 是否等待到一个就返回
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
-        :return: 成功返回元素对象，失败返回False
+        :return: 成功返回True，失败返回False
         """
-        ele = self._driver._ele(locator, raise_err=False, timeout=timeout)
-        if ele:
-            return ele
+        if isinstance(locators, (str, tuple)):
+            locators = (locators,)
+        timeout = self._driver.timeout if timeout is None else timeout
+        end_time = perf_counter() + timeout
+        if any_one:
+            while perf_counter() < end_time:
+                if any([self._driver._ele(l, raise_err=False, timeout=0)for l in locators]):
+                    return True
+        else:
+            while perf_counter() < end_time:
+                if all([self._driver._ele(l, raise_err=False, timeout=0) for l in locators]):
+                    return True
         if raise_err is True or Settings.raise_when_wait_failed is True:
             raise WaitTimeoutError(f'等待元素加载失败（等待{timeout}秒）。')
         else:
@@ -231,6 +241,21 @@ class BaseWaiter(OriginWaiter):
         :return: 是否等待成功
         """
         return self._loading(timeout=timeout, start=False, raise_err=raise_err)
+
+    def ele_loaded(self, locator, timeout=None, raise_err=None):
+        """等待元素加载到DOM
+        :param locator: 要等待的元素，输入定位符
+        :param timeout: 超时时间，默认读取页面超时时间
+        :param raise_err: 等待失败时是否报错，为None时根据Settings设置
+        :return: 成功返回元素对象，失败返回False
+        """
+        ele = self._driver._ele(locator, raise_err=False, timeout=timeout)
+        if ele:
+            return ele
+        if raise_err is True or Settings.raise_when_wait_failed is True:
+            raise WaitTimeoutError(f'等待元素加载失败（等待{timeout}秒）。')
+        else:
+            return False
 
 
 class TabWaiter(BaseWaiter):
