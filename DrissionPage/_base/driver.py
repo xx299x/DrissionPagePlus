@@ -229,14 +229,15 @@ class Driver(object):
             self._ws.close()
             self._ws = None
 
-        try:
-            while not self.event_queue.empty():
-                event = self.event_queue.get_nowait()
-                function = self.event_handlers.get(event['method'])
-                if function:
-                    function(**event['params'])
-        except:
-            pass
+        # try:
+        #     while not self.event_queue.empty():
+        #         event = self.event_queue.get_nowait()
+        #         function = self.event_handlers.get(event['method'])
+        #         if function:
+        #             function(**event['params'])
+        #         sleep(.1)
+        # except:
+        #     pass
 
         self.event_handlers.clear()
         self.method_results.clear()

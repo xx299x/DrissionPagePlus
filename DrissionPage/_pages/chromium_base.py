@@ -168,9 +168,13 @@ class ChromiumBase(BasePage):
                 result = True
                 break
 
+            except PageDisconnectedError:
+                result = False
+                break
             except:
                 timeout = end_time - perf_counter()
                 timeout = .5 if timeout <= 0 else timeout
+            sleep(.1)
 
         else:
             result = False
