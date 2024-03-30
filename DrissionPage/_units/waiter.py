@@ -7,6 +7,7 @@
 """
 from time import sleep, perf_counter
 
+from .._functions.locator import get_loc
 from .._functions.settings import Settings
 from ..errors import WaitTimeoutError, NoRectError
 
@@ -81,27 +82,47 @@ class BaseWaiter(OriginWaiter):
         return ele.wait.hidden(timeout, raise_err=raise_err)
 
     def eles_loaded(self, locators, timeout=None, any_one=False, raise_err=None):
-        """等待元素加载到DOM
+        """等待元素加载到DOM，可等待全部或任意一个
         :param locators: 要等待的元素，输入定位符，用list输入多个
         :param timeout: 超时时间，默认读取页面超时时间
         :param any_one: 是否等待到一个就返回
         :param raise_err: 等待失败时是否报错，为None时根据Settings设置
         :return: 成功返回True，失败返回False
         """
-        if isinstance(locators, (str, tuple)):
-            locators = (locators,)
+
+        def _find(loc, driver):
+            r = driver.run('DOM.performSearch', query=loc, includeUserAgentShadowDOM=True)
+            if not r or 'error' in r:
+                return False
+            elif r['resultCount'] == 0:
+                driver.run('DOM.discardSearchResults', searchId=r['searchId'])
+                return False
+            searchId = r['searchId']
+            ids = driver.run('DOM.getSearchResults', searchId=r['searchId'], fromIndex=0,
+                             toIndex=r['resultCount'] - 1)['nodeIds']
+            res = False
+            for i in ids:
+                r = driver.run('DOM.describeNode', nodeId=i)
+                if 'error' in r or r['node']['nodeName'] in ('#text', '#comment'):
+                    continue
+                else:
+                    res = True
+                    break
+            driver.run('DOM.discardSearchResults', searchId=searchId)
+            return res
+
+        by = ('id', 'xpath', 'link text', 'partial link text', 'name', 'tag name', 'class name', 'css selector')
+        locators = ((get_loc(locators)[1],) if (isinstance(locators, str) or isinstance(locators, tuple)
+                                                and locators[0] in by and len(locators) == 2)
+                    else [get_loc(l)[1] for l in locators])
         timeout = self._driver.timeout if timeout is None else timeout
         end_time = perf_counter() + timeout
-        if any_one:
-            while perf_counter() < end_time:
-                if any([self._driver._ele(l, raise_err=False, timeout=0)for l in locators]):
-                    return True
-        else:
-            while perf_counter() < end_time:
-                if all([self._driver._ele(l, raise_err=False, timeout=0) for l in locators]):
-                    return True
+        method = any if any_one else all
+        while perf_counter() < end_time:
+            if method([_find(l, self._driver.driver) for l in locators]):
+                return True
         if raise_err is True or Settings.raise_when_wait_failed is True:
-            raise WaitTimeoutError(f'等待元素加载失败（等待{timeout}秒）。')
+            raise WaitTimeoutError(f'等待元素{locators}加载失败（等待{timeout}秒）。')
         else:
             return False
 

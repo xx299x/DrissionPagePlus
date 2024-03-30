@@ -38,7 +38,7 @@ class BaseWaiter(OriginWaiter):
                    raise_err: bool = None) -> bool: ...
 
     def eles_loaded(self,
-                    locators: Union[Tuple[str, str], str],
+                    locators: Union[Tuple[str, str], str, list, tuple],
                     timeout: float = None,
                     any_one: bool = False,
                     raise_err: bool = None) -> bool: ...

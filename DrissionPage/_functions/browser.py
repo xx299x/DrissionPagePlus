@@ -94,12 +94,12 @@ def get_launch_args(opt):
         opt.set_user_data_path(path)
         result.add(f'--user-data-dir={path}')
 
-    if headless is None and system().lower() == 'linux':
-        from os import popen
-        r = popen('systemctl list-units | grep graphical.target')
-        if 'graphical.target' not in r.read():
-            headless = True
-            result.add('--headless=new')
+    # if headless is None and system().lower() == 'linux':  # 无界面Linux自动加入无头
+    #     from os import popen
+    #     r = popen('systemctl list-units | grep graphical.target')
+    #     if 'graphical.target' not in r.read():
+    #         headless = True
+    #         result.add('--headless=new')
 
     result = list(result)
     opt._headless = headless

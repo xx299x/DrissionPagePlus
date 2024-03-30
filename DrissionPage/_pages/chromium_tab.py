@@ -106,6 +106,9 @@ class WebPageTab(SessionPage, ChromiumTab, BasePage):
         :param page: WebPage对象
         :param tab_id: 要控制的标签页id
         """
+        if Settings.singleton_tab_obj and hasattr(self, '_created'):
+            return
+
         self._mode = 'd'
         self._has_driver = True
         self._has_session = True
