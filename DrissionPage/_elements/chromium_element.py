@@ -520,13 +520,15 @@ class ChromiumElement(DrissionElement):
         is_blob = src.startswith('blob')
         result = None
         end_time = perf_counter() + timeout
-        while perf_counter() < end_time:
-            if is_blob:
+        if is_blob:
+            while perf_counter() < end_time:
                 result = get_blob(self.owner, src, base64_to_bytes)
                 if result:
                     break
+                sleep(.05)
 
-            else:
+        else:
+            while perf_counter() < end_time:
                 src = self.property('currentSrc')
                 if not src:
                     continue
@@ -538,7 +540,8 @@ class ChromiumElement(DrissionElement):
                     result = self.owner.run_cdp('Page.getResourceContent', frameId=frame, url=src)
                     break
                 except CDPError:
-                    sleep(.1)
+                    pass
+                sleep(.1)
 
         if not result:
             return None
@@ -1428,6 +1431,7 @@ def run_js(page_or_ele, script, as_expr, timeout, args=None):
             obj_id = page_or_ele._root_id
             if obj_id is not None:
                 break
+            sleep(.01)
         else:
             raise RuntimeError('js运行环境出错。')
 
@@ -1528,7 +1532,7 @@ def convert_argument(arg):
     if isinstance(arg, ChromiumElement):
         return {'objectId': arg._obj_id}
 
-    elif isinstance(arg, (int, float, str, bool)):
+    elif isinstance(arg, (int, float, str, bool, dict)):
         return {'value': arg}
 
     from math import inf

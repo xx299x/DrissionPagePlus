@@ -673,30 +673,60 @@ class ChromiumBase(BasePage):
         if ele:
             self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
 
-    def add_ele(self, outerHTML, insert_to=None, before=None):
+    def add_ele(self, html_or_info, insert_to=None, before=None):
         """新建一个元素
-        :param outerHTML: 新元素的html文本
-        :param insert_to: 插入到哪个元素中，可接收元素对象和定位符，为None添加到body
+        :param html_or_info: 新元素的html文本或信息。信息格式为：(tag, {attr1: value, ...})
+        :param insert_to: 插入到哪个元素中，可接收元素对象和定位符，为None且为html添加到body，不为html不插入
         :param before: 在哪个子节点前面插入，可接收对象和定位符，为None插入到父元素末尾
         :return: 元素对象
         """
-        insert_to = self.ele(insert_to) if insert_to else self.ele('t:body')
-        args = [outerHTML, insert_to]
-        if before:
-            args.append(self.ele(before))
-            js = '''
-                 ele = document.createElement(null);
-                 arguments[1].insertBefore(ele, arguments[2]);
-                 ele.outerHTML = arguments[0];
-                 return arguments[2].previousElementSibling;
-                 '''
+        if isinstance(html_or_info, str):
+            insert_to = self.ele(insert_to) if insert_to else self.ele('t:body')
+            args = [html_or_info, insert_to]
+            if before:
+                args.append(self.ele(before))
+                js = '''
+                     ele = document.createElement(null);
+                     arguments[1].insertBefore(ele, arguments[2]);
+                     ele.outerHTML = arguments[0];
+                     return arguments[2].previousElementSibling;
+                     '''
+            else:
+                js = '''
+                     ele = document.createElement(null);
+                     arguments[1].appendChild(ele);
+                     ele.outerHTML = arguments[0];
+                     return arguments[1].lastElementChild;
+                     '''
+
+        elif isinstance(html_or_info, tuple):
+            args = [html_or_info[0], html_or_info[1]]
+            txt = ''
+            if insert_to:
+                args.append(self.ele(insert_to))
+                if before:
+                    args.append(self.ele(before))
+                    txt = '''
+                         arguments[2].insertBefore(ele, arguments[3]);
+                         '''
+                else:
+                    txt = '''
+                         arguments[2].appendChild(ele);
+                         '''
+            js = f'''
+                     ele = document.createElement(arguments[0]);
+                     for(let k in arguments[1]){{
+                        if(k=="innerHTML"){{ele.innerHTML=arguments[1][k]}}
+                        else if(k=="innerText"){{ele.innerText=arguments[1][k]}}
+                        else{{ele.setAttribute(k, arguments[1][k]);}}
+                     }}
+                     {txt}
+                     return ele;
+                     '''
+
         else:
-            js = '''
-                 ele = document.createElement(null);
-                 arguments[1].appendChild(ele);
-                 ele.outerHTML = arguments[0];
-                 return arguments[1].lastElementChild;
-                 '''
+            raise TypeError('html_or_info参数必须是html文本或tuple，tuple格式为(tag, {name: value})。')
+
         ele = self.run_js(js, *args)
         return ele
 
@@ -1188,6 +1218,7 @@ def close_privacy_dialog(page, tid):
                 break
             except KeyError:
                 pass
+            sleep(.05)
         driver.run('DOM.discardSearchResults', searchId=sid)
         r = driver.run('DOM.resolveNode', backendNodeId=r)['object']['objectId']
         r = driver.run('Runtime.callFunctionOn', objectId=r,

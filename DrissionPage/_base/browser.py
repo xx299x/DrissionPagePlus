@@ -274,6 +274,8 @@ class Browser(object):
 
             if ok:
                 break
+            sleep(.05)
+
         if self.process_id:
             waitpid(self.process_id, 0)
 
@@ -291,3 +293,4 @@ class Browser(object):
                     break
                 except (PermissionError, FileNotFoundError, OSError):
                     pass
+                sleep(.05)

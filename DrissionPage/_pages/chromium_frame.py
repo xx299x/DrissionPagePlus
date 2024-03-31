@@ -59,7 +59,7 @@ class ChromiumFrame(ChromiumBase):
         self._rect = None
         self._type = 'ChromiumFrame'
         end_time = perf_counter() + 2
-        while perf_counter() < end_time:
+        while perf_counter() < end_time:  # todo: 优化
             if self.url not in (None, 'about:blank'):
                 break
             sleep(.1)
@@ -119,6 +119,7 @@ class ChromiumFrame(ChromiumBase):
                 node = self._target_page.run_cdp('DOM.describeNode', backendNodeId=self._frame_ele._backend_id)['node']
                 if 'frameId' in node:
                     break
+                sleep(.05)
 
             else:
                 return

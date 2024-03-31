@@ -10,7 +10,7 @@ from platform import system
 from shutil import rmtree
 from tempfile import gettempdir, TemporaryDirectory
 from threading import Lock
-from time import perf_counter
+from time import perf_counter, sleep
 
 from .._configs.options_manage import OptionsManager
 from ..errors import (ContextLostError, ElementLostError, CDPError, PageDisconnectedError, NoRectError,
@@ -177,6 +177,7 @@ def wait_until(function, kwargs=None, timeout=10):
         value = function(**kwargs)
         if value:
             return value
+        sleep(.01)
     raise TimeoutError
 
 

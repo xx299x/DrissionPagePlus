@@ -121,6 +121,7 @@ class BaseWaiter(OriginWaiter):
         while perf_counter() < end_time:
             if method([_find(l, self._driver.driver) for l in locators]):
                 return True
+            sleep(.01)
         if raise_err is True or Settings.raise_when_wait_failed is True:
             raise WaitTimeoutError(f'等待元素{locators}加载失败（等待{timeout}秒）。')
         else:
@@ -170,6 +171,7 @@ class BaseWaiter(OriginWaiter):
             if not isinstance(v, bool):
                 r = v
                 break
+            sleep(.005)
 
         self._driver.browser._dl_mgr.set_flag(self._driver.tab_id, None)
         return r
@@ -472,6 +474,7 @@ class ElementWaiter(OriginWaiter):
                 break
             except NoRectError:
                 pass
+            sleep(.005)
         else:
             raise NoRectError
 

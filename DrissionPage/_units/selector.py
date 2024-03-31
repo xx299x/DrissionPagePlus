@@ -5,7 +5,7 @@
 @Copyright: (c) 2024 by g1879, Inc. All Rights Reserved.
 @License  : BSD 3-Clause.
 """
-from time import perf_counter
+from time import perf_counter, sleep
 
 
 class SelectElement(object):
@@ -215,6 +215,7 @@ class SelectElement(object):
             if len(eles) >= text_len:
                 ok = True
                 break
+            sleep(.01)
 
         if ok:
             self._select_options(eles, mode)
@@ -237,6 +238,7 @@ class SelectElement(object):
             if len(self.options) >= text_len:
                 ok = True
                 break
+            sleep(.01)
 
         if ok:
             eles = self.options
