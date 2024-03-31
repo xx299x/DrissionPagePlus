@@ -207,9 +207,9 @@ def cookies_to_tuple(cookies):
 
     elif isinstance(cookies, str):
         c_dict = {}
-        for attr in cookies.strip().rstrip(';,').split(',' if ',' in cookies else ';'):
+        for attr in cookies.strip().rstrip(';, ').split(',' if ',' in cookies else ';'):
             attr_val = attr.strip().split('=', 1)
-            c_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else ''
+            c_dict[attr_val[0]] = attr_val[1] if len(attr_val) == 2 else True
         cookies = _dict_cookies_to_tuple(c_dict)
 
     elif isinstance(cookies, dict):
@@ -299,6 +299,9 @@ def set_browser_cookies(page, cookies):
                     continue
             except Exception:
                 pass
+
+        if not page._browser_url.startswith('http'):
+            raise RuntimeError(f'未设置域名，请设置cookie的domain参数或先访问一个网站。{cookie}')
 
         ex_url = extract(page._browser_url)
         d_list = ex_url.subdomain.split('.')

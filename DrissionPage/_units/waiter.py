@@ -98,8 +98,12 @@ class BaseWaiter(OriginWaiter):
                 driver.run('DOM.discardSearchResults', searchId=r['searchId'])
                 return False
             searchId = r['searchId']
-            ids = driver.run('DOM.getSearchResults', searchId=r['searchId'], fromIndex=0,
-                             toIndex=r['resultCount'] - 1)['nodeIds']
+            ids = driver.run('DOM.getSearchResults', searchId=searchId, fromIndex=0,
+                             toIndex=r['resultCount'])
+            if 'error' in ids:
+                return False
+
+            ids = ids['nodeIds']
             res = False
             for i in ids:
                 r = driver.run('DOM.describeNode', nodeId=i)
