@@ -300,10 +300,10 @@ def set_browser_cookies(page, cookies):
             except Exception:
                 pass
 
-        if not page._browser_url.startswith('http'):
+        url = page._browser_url
+        if not url.startswith('http'):
             raise RuntimeError(f'未设置域名，请设置cookie的domain参数或先访问一个网站。{cookie}')
-
-        ex_url = extract(page._browser_url)
+        ex_url = extract(url)
         d_list = ex_url.subdomain.split('.')
         d_list.append(f'{ex_url.domain}.{ex_url.suffix}' if ex_url.suffix else ex_url.domain)
 

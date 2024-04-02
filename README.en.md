@@ -62,7 +62,7 @@ After long-term practice, the author has stepped through countless pitfalls, and
 
 This library uses a fully self-developed kernel, has built-in N number of practical functions, and has integrated and optimized common functions. Compared with selenium, it has the following advantages:
 
-- No webdriver features
+- Not base on webdriver
 - No need to download different drivers for different browser versions
 - Runs faster
 - Can find elements across `<iframe>` without switching in and out
