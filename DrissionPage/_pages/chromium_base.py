@@ -30,7 +30,7 @@ from .._units.scroller import PageScroller
 from .._units.setter import ChromiumBaseSetter
 from .._units.states import PageStates
 from .._units.waiter import BaseWaiter
-from ..errors import ContextLostError, CDPError, PageDisconnectedError, ElementNotFoundError
+from ..errors import ContextLostError, CDPError, PageDisconnectedError, ElementNotFoundError, ElementLostError
 
 __ERROR__ = 'error'
 
@@ -671,7 +671,7 @@ class ChromiumBase(BasePage):
             return
         ele = self._ele(loc_or_ele, raise_err=False)
         if ele:
-            self.run_cdp('DOM.removeNode', nodeId=ele._node_id)
+            self.run_cdp('DOM.removeNode', nodeId=ele._node_id, _ignore=ElementLostError)
 
     def add_ele(self, html_or_info, insert_to=None, before=None):
         """新建一个元素

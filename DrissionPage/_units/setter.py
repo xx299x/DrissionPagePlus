@@ -14,6 +14,7 @@ from .cookies_setter import SessionCookiesSetter, CookiesSetter, WebPageCookiesS
 from .._functions.settings import Settings
 from .._functions.tools import show_or_hide_browser
 from .._functions.web import format_headers
+from ..errors import ElementLostError
 
 
 class BasePageSetter(object):
@@ -476,7 +477,13 @@ class ChromiumElementSetter(object):
         :param value: 属性值
         :return: None
         """
-        self._ele.owner.run_cdp('DOM.setAttributeValue', nodeId=self._ele._node_id, name=name, value=str(value))
+        try:
+            self._ele.owner.run_cdp('DOM.setAttributeValue',
+                                    nodeId=self._ele._node_id, name=name, value=str(value))
+        except ElementLostError:
+            self._ele._refresh_id()
+            self._ele.owner.run_cdp('DOM.setAttributeValue',
+                                    nodeId=self._ele._node_id, name=name, value=str(value))
 
     def property(self, name, value):
         """设置元素property属性

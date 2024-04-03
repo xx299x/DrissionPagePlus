@@ -125,6 +125,10 @@ class ChromiumElement(DrissionElement):
         try:
             attrs = self.owner.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
             return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
+        except ElementLostError:
+            self._refresh_id()
+            attrs = self.owner.run_cdp('DOM.getAttributes', nodeId=self._node_id)['attributes']
+            return {attrs[i]: attrs[i + 1] for i in range(0, len(attrs), 2)}
         except CDPError:  # 文档根元素不能调用此方法
             return {}
 
@@ -736,6 +740,11 @@ class ChromiumElement(DrissionElement):
         self._tag = n['localName']
         return n['backendNodeId']
 
+    def _refresh_id(self):
+        """根据backend id刷新其它id"""
+        self._obj_id = self._get_obj_id(backend_id=self._backend_id)
+        self._node_id = self._get_node_id(obj_id=self._obj_id)
+
     def _get_ele_path(self, mode):
         """返获取绝对的css路径或xpath路径"""
         if mode == 'xpath':
@@ -1106,8 +1115,8 @@ class ShadowRoot(BaseElement):
                     r = make_chromium_eles(self.owner, _ids=node_id, is_obj_id=False)
                     return None if r is False else r
                 else:
-                    node_ids = [self.owner.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
-                                for i in css]
+                    node_ids = [self.owner.run_cdp('DOM.querySelector',
+                                                   nodeId=self._node_id, selector=i)['nodeId'] for i in css]
                     if 0 in node_ids:
                         return None
                     r = make_chromium_eles(self.owner, _ids=node_ids, index=index, is_obj_id=False)

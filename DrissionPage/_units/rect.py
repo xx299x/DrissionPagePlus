@@ -102,7 +102,8 @@ class ElementRect(object):
         :return: 四个角坐标
         """
         return self._ele.owner.run_cdp('DOM.getBoxModel', backendNodeId=self._ele._backend_id,
-                                       nodeId=self._ele._node_id, objectId=self._ele._obj_id)['model'][quad]
+                                       # nodeId=self._ele._node_id, objectId=self._ele._obj_id
+                                       )['model'][quad]
 
     def _get_page_coord(self, x, y):
         """根据视口坐标获取绝对坐标"""
