@@ -375,14 +375,14 @@ class ChromiumElement(DrissionElement):
         """
         attrs = self.attrs
         if attr == 'href':  # 获取href属性时返回绝对url
-            link = attrs.get('href', None)
+            link = attrs.get('href')
             if not link or link.lower().startswith(('javascript:', 'mailto:')):
                 return link
             else:
                 return make_absolute_link(link, self.property('baseURI'))
 
         elif attr == 'src':
-            return make_absolute_link(attrs.get('src', None), self.property('baseURI'))
+            return make_absolute_link(attrs.get('src'), self.property('baseURI'))
 
         elif attr == 'text':
             return self.text
@@ -686,7 +686,7 @@ class ChromiumElement(DrissionElement):
         """拖拽当前元素到相对位置
         :param offset_x: x变化值
         :param offset_y: y变化值
-        :param duration: 拖动用时，传入0即瞬间到j达
+        :param duration: 拖动用时，传入0即瞬间到达
         :return: None
         """
         curr_x, curr_y = self.rect.midpoint
@@ -1115,8 +1115,8 @@ class ShadowRoot(BaseElement):
                     r = make_chromium_eles(self.owner, _ids=node_id, is_obj_id=False)
                     return None if r is False else r
                 else:
-                    node_ids = [self.owner.run_cdp('DOM.querySelector',
-                                                   nodeId=self._node_id, selector=i)['nodeId'] for i in css]
+                    node_ids = [self.owner.run_cdp('DOM.querySelector', nodeId=self._node_id, selector=i)['nodeId']
+                                for i in css]
                     if 0 in node_ids:
                         return None
                     r = make_chromium_eles(self.owner, _ids=node_ids, index=index, is_obj_id=False)

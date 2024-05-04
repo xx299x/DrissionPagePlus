@@ -9,14 +9,15 @@ from pathlib import Path
 from threading import Lock
 from time import sleep, perf_counter
 
-from requests import get
+from requests import Session
 
 from .._base.browser import Browser
 from .._configs.chromium_options import ChromiumOptions
 from .._functions.browser import connect_browser
 from .._functions.settings import Settings
 from .._functions.tools import PortFinder
-from .._pages.chromium_base import ChromiumBase, get_mhtml, get_pdf, Timeout
+from .._functions.web import save_page
+from .._pages.chromium_base import ChromiumBase, Timeout
 from .._pages.chromium_tab import ChromiumTab
 from .._units.setter import ChromiumPageSetter
 from .._units.waiter import PageWaiter
@@ -76,9 +77,13 @@ class ChromiumPage(ChromiumBase):
         if self._is_exist and self._chromium_options._headless is False and 'headless' in r['userAgent'].lower():
             self._browser.quit(3)
             connect_browser(self._chromium_options)
-            ws = get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
-            ws = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
-            self._browser = Browser(self._chromium_options.address, ws, self)
+            s = Session()
+            s.trust_env = False
+            ws = s.get(f'http://{self._chromium_options.address}/json/version', headers={'Connection': 'close'})
+            bid = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
+            self._browser = Browser(self._chromium_options.address, bid, self)
+            ws.close()
+            s.close()
 
     def _d_set_runtime_settings(self):
         """设置运行时用到的属性"""
@@ -154,7 +159,7 @@ class ChromiumPage(ChromiumBase):
         :param kwargs: pdf生成参数
         :return: as_pdf为True时返回bytes，否则返回文件文本
         """
-        return get_pdf(self, path, name, kwargs) if as_pdf else get_mhtml(self, path, name)
+        return save_page(self, path, name, as_pdf, kwargs)
 
     def get_tab(self, id_or_num=None, title=None, url=None, tab_type='page', as_id=False):
         """获取一个标签页对象，id_or_num不为None时，后面几个参数无效
@@ -336,12 +341,16 @@ def run_browser(chromium_options):
     """连接浏览器"""
     is_exist = connect_browser(chromium_options)
     try:
-        ws = get(f'http://{chromium_options.address}/json/version', headers={'Connection': 'close'})
+        s = Session()
+        s.trust_env = False
+        ws = s.get(f'http://{chromium_options.address}/json/version', headers={'Connection': 'close'})
         if not ws:
             raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
         browser_id = ws.json()['webSocketDebuggerUrl'].split('/')[-1]
+        ws.close()
+        s.close()
     except KeyError:
-        raise BrowserConnectError('浏览器版本太旧，请升级。')
+        raise BrowserConnectError('浏览器版本太旧或此浏览器不支持接管。')
     except:
         raise BrowserConnectError('\n浏览器连接失败，如使用全局代理，须设置不代理127.0.0.1地址。')
     return is_exist, browser_id

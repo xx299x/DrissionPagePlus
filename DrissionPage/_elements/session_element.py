@@ -6,7 +6,7 @@
 @License  : BSD 3-Clause.
 """
 from html import unescape
-from re import match, sub, DOTALL
+from re import match, sub, DOTALL, search
 
 from lxml.etree import tostring
 from lxml.html import HtmlElement, fromstring
@@ -373,7 +373,11 @@ def make_session_ele(html_or_ele, loc=None, index=1):
     # ShadowRoot
     elif isinstance(html_or_ele, BaseElement):
         page = html_or_ele.owner
-        html_or_ele = fromstring(html_or_ele.html)
+        html = html_or_ele.html
+        r = search(r'^<shadow_root>[ \n]*?<html>[ \n]*?(.*?)[ \n]*?</html>[ \n]*?</shadow_root>$', html)
+        if r:
+            html = r.group(1)
+        html_or_ele = fromstring(html)
 
     else:
         raise TypeError('html_or_ele参数只能是元素、页面对象或html文本。')

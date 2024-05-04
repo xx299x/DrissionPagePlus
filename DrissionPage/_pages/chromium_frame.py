@@ -58,11 +58,11 @@ class ChromiumFrame(ChromiumBase):
 
         self._rect = None
         self._type = 'ChromiumFrame'
-        end_time = perf_counter() + 2
-        while perf_counter() < end_time:  # todo: 优化
-            if self.url not in (None, 'about:blank'):
-                break
-            sleep(.1)
+        # end_time = perf_counter() + 2
+        # while perf_counter() < end_time:
+        #     if self.url not in (None, 'about:blank'):
+        #         break
+        #     sleep(.1)
 
     def __call__(self, locator, index=1, timeout=None):
         """在内部查找元素

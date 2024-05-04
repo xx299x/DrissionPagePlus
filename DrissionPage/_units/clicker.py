@@ -87,8 +87,8 @@ class Clicker(object):
                 x = rect[1][0] - (rect[1][0] - rect[0][0]) / 2
                 y = rect[0][0] + 3
                 try:
-                    r = self._ele.owner.run_cdp('DOM.getNodeForLocation', x=x, y=y, includeUserAgentShadowDOM=True,
-                                                ignorePointerEventsNone=True)
+                    r = self._ele.owner.run_cdp('DOM.getNodeForLocation', x=int(x), y=int(y),
+                                                includeUserAgentShadowDOM=True, ignorePointerEventsNone=True)
                     if r['backendNodeId'] != self._ele._backend_id:
                         vx, vy = self._ele.rect.viewport_midpoint
                     else:
@@ -113,11 +113,19 @@ class Clicker(object):
         x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'right')
 
-    def middle(self):
-        """中键单击"""
+    def middle(self, get_tab=True):
+        """中键单击，默认返回新出现的tab对象
+        :param get_tab: 是否返回新tab对象，为False则返回None
+        :return: Tab对象或None
+        """
         self._ele.owner.scroll.to_see(self._ele)
         x, y = self._ele.rect.viewport_click_point
         self._click(x, y, 'middle')
+        if get_tab:
+            tid = self._ele.page.wait.new_tab()
+            if not tid:
+                raise RuntimeError('没有出现新标签页。')
+            return self._ele.page.get_tab(tid)
 
     def at(self, offset_x=None, offset_y=None, button='left', count=1):
         """带偏移量点击本元素，相对于左上角坐标。不传入x或y值时点击元素中间点

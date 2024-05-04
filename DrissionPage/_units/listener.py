@@ -128,7 +128,7 @@ class Listener(object):
             raise RuntimeError('监听未启动或已暂停。')
         if not timeout:
             while self._caught.qsize() < count:
-                sleep(.05)
+                sleep(.03)
             fail = False
 
         else:
@@ -140,6 +140,7 @@ class Listener(object):
                 if self._caught.qsize() >= count:
                     fail = False
                     break
+                sleep(.03)
 
         if fail:
             if fit_count or not self._caught.qsize():
@@ -177,7 +178,7 @@ class Listener(object):
                     caught += gap
                     if caught >= count:
                         return
-            sleep(.05)
+            sleep(.03)
 
     def stop(self):
         """停止监听，清空已监听到的列表"""

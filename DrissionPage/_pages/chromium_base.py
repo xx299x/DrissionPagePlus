@@ -1065,7 +1065,7 @@ class ChromiumBase(BasePage):
                     name = f'{self.title}.jpg'
                 elif not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
                     name = f'{name}.jpg'
-                path = f'{path}{sep}{name}'
+                path = f'{path}{sep}{make_valid_name(name)}'
 
             path = Path(path)
             pic_type = path.suffix.lower()
@@ -1228,50 +1228,3 @@ def close_privacy_dialog(page, tid):
 
     except:
         pass
-
-
-def get_mhtml(page, path=None, name=None):
-    """把当前页面保存为mhtml文件，如果path和name参数都为None，只返回mhtml文本
-    :param page: 要保存的页面对象
-    :param path: 保存路径，为None且name不为None时保存在当前路径
-    :param name: 文件名，为None且path不为None时用title属性值
-    :return: mhtml文本
-    """
-    r = page.run_cdp('Page.captureSnapshot')['data']
-    if path is None and name is None:
-        return r
-    path = path or '.'
-    Path(path).mkdir(parents=True, exist_ok=True)
-    name = make_valid_name(name or page.title)
-    with open(f'{path}{sep}{name}.mhtml', 'w', encoding='utf-8') as f:
-        f.write(r.replace('\r\n', '\n'))
-    return r
-
-
-def get_pdf(page, path=None, name=None, kwargs=None):
-    """把当前页面保存为pdf文件，如果path和name参数都为None，只返回字节
-    :param page: 要保存的页面对象
-    :param path: 保存路径，为None且name不为None时保存在当前路径
-    :param name: 文件名，为None且path不为None时用title属性值
-    :param kwargs: pdf生成参数
-    :return: pdf文本
-    """
-    if not kwargs:
-        kwargs = {}
-    kwargs['transferMode'] = 'ReturnAsBase64'
-    if 'printBackground' not in kwargs:
-        kwargs['printBackground'] = True
-    try:
-        r = page.run_cdp('Page.printToPDF', **kwargs)['data']
-    except:
-        raise RuntimeError('保存失败，可能浏览器版本不支持。')
-    from base64 import b64decode
-    r = b64decode(r)
-    if path is None and name is None:
-        return r
-    path = path or '.'
-    Path(path).mkdir(parents=True, exist_ok=True)
-    name = make_valid_name(name or page.title)
-    with open(f'{path}{sep}{name}.pdf', 'wb') as f:
-        f.write(r)
-    return r
